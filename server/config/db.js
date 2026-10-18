@@ -1,27 +1,33 @@
 ﻿import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { User } from '../models/userModel.js';
 import { Category } from '../models/categoryModel.js';
 import { Product } from '../models/productModel.js';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-let rawUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Roveandamber';
-if (rawUri.includes('<username>') || rawUri.includes('<password>')) {
-  console.warn('⚠️ [MongoDB]: Placeholder credentials detected in MONGODB_URI.');
-  console.warn('🔄 Falling back to local MongoDB at mongodb://127.0.0.1:27017/Roveandamber');
-  rawUri = 'mongodb://127.0.0.1:27017/Roveandamber';
+// Explicitly load server/.env so it works regardless of working directory
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('❌ [MongoDB Error]: MONGODB_URI is not defined in environment variables.');
+  console.error('👉 Please define MONGODB_URI in your server/.env file.');
 }
 
-const MONGODB_URI = rawUri;
-
 export const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(MONGODB_URI, {
-      dbName: 'Roveandamber'
-    });
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error('MONGODB_URI is missing from environment variables (.env)');
+  }
 
+  try {
+    const conn = await mongoose.connect(uri);
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
