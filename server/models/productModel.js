@@ -1,70 +1,166 @@
-import { db } from '../config/db.js';
+import mongoose from 'mongoose';
+
+const productSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'Product name is required'],
+      trim: true
+    },
+    price: {
+      type: Number,
+      required: [true, 'Product price is required'],
+      min: [0, 'Price must be positive']
+    },
+    stock: {
+      type: Number,
+      default: 0,
+      min: [0, 'Stock cannot be negative']
+    },
+    image: {
+      type: String,
+      default: ''
+    },
+    category_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      default: null
+    },
+    sizes: {
+      type: String,
+      default: ''
+    }
+  },
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        ret.id = ret._id.toString();
+        return ret;
+      }
+    },
+    toObject: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        ret.id = ret._id.toString();
+        return ret;
+      }
+    }
+  }
+);
+
+productSchema.virtual('id').get(function () {
+  return this._id ? this._id.toString() : null;
+});
+
+export const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
 
 export const ProductModel = {
   findAll: async ({ categoryId, search } = {}) => {
-    let sql = `
-      SELECT p.*, c.name AS category_name 
-      FROM products p 
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE 1=1
-    `;
-    const params = [];
-
-    if (categoryId) {
-      sql += ` AND (p.category_id = ? OR c.name LIKE ?)`;
-      params.push(categoryId, `%${categoryId}%`);
-    }
+    const query = {};
 
     if (search) {
-      sql += ` AND (p.name LIKE ? OR c.name LIKE ?)`;
-      params.push(`%${search}%`, `%${search}%`);
+      query.name = { $regex: search.trim(), $options: 'i' };
     }
 
-    sql += ` ORDER BY p.id DESC`;
-    return await db.all(sql, params);
+    let products = await Product.find(query).populate('category_id').sort({ createdAt: -1 });
+
+    if (categoryId) {
+      const catSearch = String(categoryId).trim().toLowerCase();
+      products = products.filter(p => {
+        const catObj = p.category_id;
+        if (!catObj) return false;
+        const catIdMatch = String(catObj._id) === String(categoryId) || String(catObj.id) === String(categoryId);
+        const catNameMatch = catObj.name && catObj.name.toLowerCase().includes(catSearch);
+        return catIdMatch || catNameMatch;
+      });
+    }
+
+    return products.map(p => {
+      const obj = p.toObject();
+      return {
+        ...obj,
+        id: p._id.toString(),
+        _id: p._id.toString(),
+        category_name: p.category_id ? p.category_id.name : ''
+      };
+    });
   },
 
   findById: async (id) => {
-    return await db.get(`
-      SELECT p.*, c.name AS category_name 
-      FROM products p 
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.id = ?
-    `, [id]);
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const product = await Product.findById(id).populate('category_id');
+    if (!product) return null;
+    const obj = product.toObject();
+    return {
+      ...obj,
+      id: product._id.toString(),
+      _id: product._id.toString(),
+      category_name: product.category_id ? product.category_id.name : ''
+    };
   },
 
   create: async ({ name, price, stock = 0, image = '', category_id, sizes = '' }) => {
     const finalSizes = typeof sizes === 'object' ? JSON.stringify(sizes) : (sizes || '');
-    const result = await db.run(
-      `INSERT INTO products (name, price, stock, image, category_id, sizes) VALUES (?, ?, ?, ?, ?, ?)`,
-      [name, price, stock, image, category_id, finalSizes]
-    );
-    return { id: result.lastID, name, price, stock, image, category_id, sizes: finalSizes };
+    const validCategoryId = mongoose.Types.ObjectId.isValid(category_id) ? category_id : null;
+
+    const product = await Product.create({
+      name: name.trim(),
+      price: Number(price),
+      stock: Number(stock),
+      image,
+      category_id: validCategoryId,
+      sizes: finalSizes
+    });
+
+    const populated = await Product.findById(product._id).populate('category_id');
+    const obj = populated.toObject();
+    return {
+      ...obj,
+      id: populated._id.toString(),
+      _id: populated._id.toString(),
+      category_name: populated.category_id ? populated.category_id.name : ''
+    };
   },
 
   update: async (id, { name, price, stock, image, category_id, sizes }) => {
-    const existing = await db.get(`SELECT * FROM products WHERE id = ?`, [id]);
-    const finalImage = image !== undefined ? image : (existing ? existing.image : '');
-    const finalSizes = sizes !== undefined 
-      ? (typeof sizes === 'object' ? JSON.stringify(sizes) : sizes) 
-      : (existing ? existing.sizes : '');
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const product = await Product.findById(id);
+    if (!product) return null;
 
-    await db.run(`
-      UPDATE products 
-      SET name = ?, price = ?, stock = ?, image = ?, category_id = ?, sizes = ?
-      WHERE id = ?
-    `, [name, price, stock, finalImage, category_id, finalSizes, id]);
+    if (name !== undefined) product.name = name.trim();
+    if (price !== undefined) product.price = Number(price);
+    if (stock !== undefined) product.stock = Number(stock);
+    if (image !== undefined) product.image = image;
+    if (category_id !== undefined) {
+      product.category_id = mongoose.Types.ObjectId.isValid(category_id) ? category_id : null;
+    }
+    if (sizes !== undefined) {
+      product.sizes = typeof sizes === 'object' ? JSON.stringify(sizes) : sizes;
+    }
 
-    return { id, name, price, stock, image: finalImage, category_id, sizes: finalSizes };
+    await product.save();
+
+    const populated = await Product.findById(id).populate('category_id');
+    const obj = populated.toObject();
+    return {
+      ...obj,
+      id: populated._id.toString(),
+      _id: populated._id.toString(),
+      category_name: populated.category_id ? populated.category_id.name : ''
+    };
   },
 
   delete: async (id) => {
-    const result = await db.run(`DELETE FROM products WHERE id = ?`, [id]);
-    return result.changes > 0;
+    if (!mongoose.Types.ObjectId.isValid(id)) return false;
+    const result = await Product.findByIdAndDelete(id);
+    return !!result;
   },
 
   decrementStock: async (id, size, quantity) => {
-    const product = await db.get(`SELECT * FROM products WHERE id = ?`, [id]);
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const product = await Product.findById(id);
     if (!product) return null;
 
     let sizesMap = {};
@@ -86,12 +182,10 @@ export const ProductModel = {
       sizesMap[normalizedSize] = 0;
     }
 
-    const updatedSizes = JSON.stringify(sizesMap);
-
-    await db.run(
-      `UPDATE products SET stock = MAX(0, stock - ?), sizes = ? WHERE id = ?`,
-      [quantity, updatedSizes, id]
-    );
+    product.stock = Math.max(0, product.stock - quantity);
+    product.sizes = JSON.stringify(sizesMap);
+    await product.save();
+    return product;
   }
 };
 

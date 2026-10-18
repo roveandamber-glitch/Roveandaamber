@@ -48,20 +48,23 @@ const parseSizesMap = (sizesField, totalStock = 0) => {
 // Helper to format product data for frontend consistency
 const formatProduct = (p) => {
   if (!p) return null;
-  const imageList = parseImages(p.image, p.name);
+  const doc = p.toObject ? p.toObject() : p;
+  const idStr = String(doc._id || doc.id);
+  const imageList = parseImages(doc.image, doc.name);
   const primaryImage = imageList.length > 0 ? imageList[0].url : '';
-  const sizeMap = parseSizesMap(p.sizes, p.stock);
+  const sizeMap = parseSizesMap(doc.sizes, doc.stock);
   const sizeKeys = Object.keys(sizeMap);
 
   return {
-    ...p,
-    _id: String(p.id),
-    category: p.category_name || (typeof p.category_id === 'string' ? p.category_id : ''),
+    ...doc,
+    id: idStr,
+    _id: idStr,
+    category: doc.category_name || (doc.category_id && doc.category_id.name ? doc.category_id.name : (typeof doc.category_id === 'string' ? doc.category_id : '')),
     image: primaryImage,
     images: imageList,
     sizes_stock: sizeMap,
     sizes: sizeKeys,
-    status: p.stock > 0 ? 'In Stock' : 'Out of Stock',
+    status: doc.stock > 0 ? 'In Stock' : 'Out of Stock',
     isFeatured: true
   };
 };

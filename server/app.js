@@ -39,8 +39,8 @@ app.use('/api/admin', adminRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
-    database: 'SQLite (SQL)',
-    architecture: 'MVC',
+    database: 'MongoDB Atlas',
+    architecture: 'MVC + Mongoose',
     timestamp: new Date().toISOString()
   });
 });

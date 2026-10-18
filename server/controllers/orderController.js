@@ -62,13 +62,15 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     const updated = await OrderModel.updateStatus(id, status);
+    const ordId = updated.orderId || `#ORD-${String(updated.id || updated._id).slice(-4).toUpperCase()}`;
     return res.json({
       success: true,
       message: `Order status updated to "${status}".`,
       data: {
         ...updated,
-        _id: String(updated.id),
-        orderId: `#ORD-${String(updated.id).padStart(4, '0')}`
+        id: String(updated.id || updated._id),
+        _id: String(updated.id || updated._id),
+        orderId: ordId
       }
     });
   } catch (error) {
@@ -79,13 +81,14 @@ export const updateOrderStatus = async (req, res) => {
 
 export const getMyOrders = async (req, res) => {
   try {
-    const orders = await OrderModel.findByUserId(req.user.id);
+    const orders = await OrderModel.findByUserId(req.user.id || req.user._id);
     return res.json({
       success: true,
       data: orders.map(o => ({
         ...o,
-        _id: String(o.id),
-        orderId: `#ORD-${String(o.id).padStart(4, '0')}`
+        id: String(o.id || o._id),
+        _id: String(o.id || o._id),
+        orderId: o.orderId || `#ORD-${String(o.id || o._id).slice(-4).toUpperCase()}`
       }))
     });
   } catch (error) {
@@ -100,20 +103,22 @@ export const getAllOrders = async (req, res) => {
 
     const formattedOrders = orders.map(o => {
       const firstItem = o.items && o.items[0];
+      const ordId = o.orderId || `#ORD-${String(o.id || o._id).slice(-4).toUpperCase()}`;
       return {
         ...o,
-        _id: String(o.id),
-        orderId: `#ORD-${String(o.id).padStart(4, '0')}`,
+        id: String(o.id || o._id),
+        _id: String(o.id || o._id),
+        orderId: ordId,
         customerName: o.customer_name || o.user_name || 'Valued Customer',
         phone: o.phone || o.user_email || 'N/A',
         address: o.address || 'Standard Delivery',
-        productName: firstItem ? (firstItem.product_name + (o.items.length > 1 ? ` (+${o.items.length - 1} more)` : '')) : 'Fashion Item',
-        productImage: firstItem ? firstItem.product_image : '',
+        productName: firstItem ? ((firstItem.name || firstItem.product_name) + (o.items.length > 1 ? ` (+${o.items.length - 1} more)` : '')) : 'Fashion Item',
+        productImage: firstItem ? (firstItem.image || firstItem.product_image) : '',
         quantity: firstItem ? firstItem.quantity : 1,
         size: firstItem ? (firstItem.size || 'M') : 'M',
         status: o.status,
-        date: new Date(o.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        createdAt: o.created_at
+        date: new Date(o.createdAt || o.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        createdAt: o.createdAt || o.created_at
       };
     });
 

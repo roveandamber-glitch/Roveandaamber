@@ -1,8 +1,107 @@
-import { db } from '../config/db.js';
-import { ProductModel } from './productModel.js';
+import mongoose from 'mongoose';
+import { ProductModel, Product } from './productModel.js';
+import { User } from './userModel.js';
+
+const orderItemSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    product_id: {
+      type: String
+    },
+    name: {
+      type: String,
+      required: true
+    },
+    product_name: {
+      type: String
+    },
+    price: {
+      type: Number,
+      required: true
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      default: 1
+    },
+    size: {
+      type: String,
+      default: 'M'
+    },
+    image: {
+      type: String,
+      default: ''
+    },
+    product_image: {
+      type: String,
+      default: ''
+    }
+  },
+  { _id: true }
+);
+
+const orderSchema = new mongoose.Schema(
+  {
+    orderId: {
+      type: String
+    },
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    customer_name: {
+      type: String,
+      default: 'Direct Customer'
+    },
+    phone: {
+      type: String,
+      default: ''
+    },
+    address: {
+      type: String,
+      default: ''
+    },
+    total_amount: {
+      type: Number,
+      required: true
+    },
+    status: {
+      type: String,
+      default: 'Processing'
+    },
+    items: [orderItemSchema]
+  },
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        ret.id = ret._id.toString();
+        return ret;
+      }
+    },
+    toObject: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        ret.id = ret._id.toString();
+        return ret;
+      }
+    }
+  }
+);
+
+orderSchema.virtual('id').get(function () {
+  return this._id ? this._id.toString() : null;
+});
+
+export const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
 export const OrderModel = {
-  // Place a new order with verified server-side prices and size-specific stock checks
   createOrder: async ({ userId, customerName, phone, address, items }) => {
     if (!items || items.length === 0) {
       throw new Error('Order must contain at least one item');
@@ -13,27 +112,25 @@ export const OrderModel = {
 
     // Step 1: Verify each product, its price, and check size-specific stock availability
     for (const item of items) {
-      const pid = parseInt(item.productId, 10);
+      const pid = item.productId || item.product_id;
       const qty = parseInt(item.quantity, 10) || 1;
       const size = (item.size || 'M').toUpperCase();
 
-      const product = await db.get(`SELECT * FROM products WHERE id = ?`, [pid]);
+      const product = await ProductModel.findById(pid);
       if (!product) {
-        throw new Error(`Product with ID ${item.productId} not found`);
+        throw new Error(`Product with ID ${pid} not found`);
       }
 
       // Check size-specific stock if size inventory exists
       if (product.sizes) {
         try {
-          const sizesMap = JSON.parse(product.sizes);
+          const sizesMap = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
           if (sizesMap[size] !== undefined && sizesMap[size] < qty) {
             throw new Error(
               `Insufficient stock for "${product.name}" in Size ${size}. Available: ${sizesMap[size]}, Requested: ${qty}`
             );
           }
-        } catch (e) {
-          // If JSON parse fails, fallback to general stock check
-        }
+        } catch (e) {}
       }
 
       if (product.stock < qty) {
@@ -46,105 +143,104 @@ export const OrderModel = {
       calculatedTotal += itemTotal;
 
       verifiedItems.push({
-        productId: product.id,
+        productId: product._id,
+        product_id: product._id.toString(),
         name: product.name,
+        product_name: product.name,
         price: product.price,
         quantity: qty,
         size,
-        image: product.image
+        image: product.image,
+        product_image: product.image
       });
     }
 
-    const effectiveUserId = userId || 1;
-
-    // Step 2: Insert into orders table
-    const orderResult = await db.run(
-      `INSERT INTO orders (user_id, customer_name, phone, address, total_amount, status) VALUES (?, ?, ?, ?, ?, 'Processing')`,
-      [effectiveUserId, customerName || 'Direct Customer', phone || '', address || '', calculatedTotal]
-    );
-    const orderId = orderResult.lastID;
-
-    // Step 3: Insert order_items and decrement product stock & size-wise stock
-    for (const item of verifiedItems) {
-      await db.run(
-        `INSERT INTO order_items (order_id, product_id, quantity, price, size) VALUES (?, ?, ?, ?, ?)`,
-        [orderId, item.productId, item.quantity, item.price, item.size]
-      );
-
-      // Decrement size-wise stock and total stock atomically
-      await ProductModel.decrementStock(item.productId, item.size, item.quantity);
+    // Step 2: Ensure valid user ID
+    let effectiveUserId = userId;
+    if (!effectiveUserId || !mongoose.Types.ObjectId.isValid(effectiveUserId)) {
+      const existingUser = await User.findOne();
+      effectiveUserId = existingUser ? existingUser._id : new mongoose.Types.ObjectId();
     }
 
-    return {
-      id: orderId,
-      _id: String(orderId),
-      orderId: `#ORD-${String(orderId).padStart(4, '0')}`,
+    // Generate readable orderId code
+    const count = await Order.countDocuments();
+    const displayOrderId = `#ORD-${String(count + 1001).padStart(4, '0')}`;
+
+    // Step 3: Create order document
+    const order = await Order.create({
+      orderId: displayOrderId,
       user_id: effectiveUserId,
-      customer_name: customerName,
-      phone,
-      address,
+      customer_name: customerName || 'Direct Customer',
+      phone: phone || '',
+      address: address || '',
       total_amount: calculatedTotal,
       status: 'Processing',
       items: verifiedItems
+    });
+
+    // Step 4: Decrement product stock & size-wise stock
+    for (const item of verifiedItems) {
+      await ProductModel.decrementStock(item.productId, item.size, item.quantity);
+    }
+
+    const doc = order.toObject();
+    return {
+      ...doc,
+      id: order._id.toString(),
+      _id: order._id.toString(),
+      orderId: displayOrderId
     };
   },
 
   findById: async (id) => {
-    const order = await db.get(`SELECT * FROM orders WHERE id = ?`, [id]);
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const order = await Order.findById(id).populate('user_id', 'name email');
     if (!order) return null;
-    order.items = await db.all(`
-      SELECT oi.*, p.name AS product_name, p.image AS product_image
-      FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
-      WHERE oi.order_id = ?
-    `, [order.id]);
-    return order;
+    const doc = order.toObject();
+    return {
+      ...doc,
+      id: order._id.toString(),
+      _id: order._id.toString()
+    };
   },
 
-  // Update order status (Admin)
   updateStatus: async (id, status) => {
-    await db.run(`UPDATE orders SET status = ? WHERE id = ?`, [status, id]);
-    return await db.get(`SELECT * FROM orders WHERE id = ?`, [id]);
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
+    if (!order) return null;
+    const doc = order.toObject();
+    return {
+      ...doc,
+      id: order._id.toString(),
+      _id: order._id.toString()
+    };
   },
 
-  // Get orders placed by a specific user
   findByUserId: async (userId) => {
-    const orders = await db.all(
-      `SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC`,
-      [userId]
-    );
-
-    for (const order of orders) {
-      order.items = await db.all(`
-        SELECT oi.*, p.name AS product_name, p.image AS product_image
-        FROM order_items oi
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE oi.order_id = ?
-      `, [order.id]);
-    }
-
-    return orders;
+    if (!mongoose.Types.ObjectId.isValid(userId)) return [];
+    const orders = await Order.find({ user_id: userId }).sort({ createdAt: -1 });
+    return orders.map(o => {
+      const doc = o.toObject();
+      return {
+        ...doc,
+        id: o._id.toString(),
+        _id: o._id.toString()
+      };
+    });
   },
 
-  // Admin: Get all orders across all users with buyer details and item breakdown
   findAll: async () => {
-    const orders = await db.all(`
-      SELECT o.*, u.name AS user_name, u.email AS user_email
-      FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
-      ORDER BY o.id DESC
-    `);
-
-    for (const order of orders) {
-      order.items = await db.all(`
-        SELECT oi.*, p.name AS product_name, p.image AS product_image
-        FROM order_items oi
-        LEFT JOIN products p ON oi.product_id = p.id
-        WHERE oi.order_id = ?
-      `, [order.id]);
-    }
-
-    return orders;
+    const orders = await Order.find().populate('user_id', 'name email').sort({ createdAt: -1 });
+    return orders.map(o => {
+      const doc = o.toObject();
+      return {
+        ...doc,
+        id: o._id.toString(),
+        _id: o._id.toString(),
+        user_name: o.user_id ? o.user_id.name : '',
+        user_email: o.user_id ? o.user_id.email : ''
+      };
+    });
   }
 };
 
