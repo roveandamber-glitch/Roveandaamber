@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom luxury theme utilities */
+.bg-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 50%);
+}
+
+/* Override Ant Design primary and hover colors to luxury black */
+.ant-btn-primary {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus,
+.ant-btn-primary:active {
+  background-color: #262626 !important;
+  border-color: #262626 !important;
+  color: #ffffff !important;
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: #1a1a1a !important;
+  box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.08) !important;
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover {
+  border-color: #404040 !important;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.ant-checkbox:hover .ant-checkbox-inner {
+  border-color: #000000 !important;
+}
+
+/* ==========================================================================
+   LUXURY TOAST & POP-UP NOTIFICATION OVERRIDES
+   ========================================================================== */
+.ant-message {
+  top: 32px !important;
+}
+
+.ant-message .ant-message-notice {
+  padding: 4px !important;
+}
+
+.ant-message .ant-message-notice-content {
+  background-color: #141416 !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 9999px !important;
+  padding: 10px 24px !important;
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  font-family: "Inter", sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.ant-message .ant-message-custom-content {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Success Toast Icon */
+.ant-message .anticon-check-circle {
+  color: #10B981 !important;
+  font-size: 16px !important;
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4));
+}
+
+/* Error Toast Icon */
+.ant-message .anticon-close-circle {
+  color: #EF4444 !important;
+  font-size: 16px !important;
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4));
+}
+
+/* Info & Warning Toast Icon */
+.ant-message .anticon-info-circle,
+.ant-message .anticon-exclamation-circle {
+  color: #F59E0B !important;
+  font-size: 16px !important;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4));
+}
+
+.ant-message .anticon-loading {
+  color: #FFFFFF !important;
+  font-size: 15px !important;
+}
