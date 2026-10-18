@@ -112,3 +112,62 @@
   color: #FFFFFF !important;
   font-size: 15px !important;
 }
+
+/* ==========================================================================
+   ROVE & AMBER LUXURY TYPOGRAPHY SYSTEM
+   Font Pairing: Playfair Display (Serif) + Inter (Sans-serif)
+   ========================================================================== */
+.font-playfair,
+.font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-inter,
+.font-sans {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Headings with Playfair Display */
+.font-heading {
+  font-family: 'Playfair Display', Georgia, serif;
+  letter-spacing: -0.015em;
+}
+
+/* Body text with Inter */
+.font-body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Eyebrow / Label (Micro luxury tag) */
+.eyebrow-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Luxury Display Headline */
+.luxury-display {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* Luxury Subheading */
+.luxury-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+/* Poetic sensory quote / brand voice */
+.luxury-quote {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  line-height: 1.6;
+}
