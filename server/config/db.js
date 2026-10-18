@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { User } from '../models/userModel.js';
@@ -7,23 +7,25 @@ import { Product } from '../models/productModel.js';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://<username>:<password>@cluster0.mongodb.net/Roveandamber?retryWrites=true&w=majority';
+let rawUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Roveandamber';
+if (rawUri.includes('<username>') || rawUri.includes('<password>')) {
+  console.warn('⚠️ [MongoDB]: Placeholder credentials detected in MONGODB_URI.');
+  console.warn('🔄 Falling back to local MongoDB at mongodb://127.0.0.1:27017/Roveandamber');
+  rawUri = 'mongodb://127.0.0.1:27017/Roveandamber';
+}
+
+const MONGODB_URI = rawUri;
 
 export const connectDB = async () => {
   try {
-    if (MONGODB_URI.includes('<username>') || MONGODB_URI.includes('<password>')) {
-      console.warn('⚠️ [MongoDB Atlas]: Placeholder credentials detected in MONGODB_URI.');
-      console.warn('⚠️ Please set your valid MongoDB Atlas connection string in server/.env');
-    }
-
     const conn = await mongoose.connect(MONGODB_URI, {
       dbName: 'Roveandamber'
     });
 
-    console.log(`✅ MongoDB Atlas Connected: ${conn.connection.host}`);
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
-    console.error(`❌ MongoDB Atlas Connection Error: ${error.message}`);
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
     throw error;
   }
 };
@@ -45,7 +47,7 @@ export const initDB = async () => {
         password: hashedPassword,
         role: 'admin'
       });
-      console.log(' Seeded default admin account: admin@roveandamber.com');
+      console.log('✅ Seeded default admin account: admin@roveandamber.com');
     }
 
     // 2. Seed default categories if empty
@@ -64,7 +66,7 @@ export const initDB = async () => {
         const createdCat = await Category.create(cat);
         categoriesMap[cat.name] = createdCat._id;
       }
-      console.log('✨ Seeded default luxury fashion categories');
+      console.log('✅ Seeded default luxury fashion categories');
     } else {
       const allCategories = await Category.find();
       for (const cat of allCategories) {
@@ -72,7 +74,7 @@ export const initDB = async () => {
       }
     }
 
-    // 4. Seed initial products if empty
+    // 3. Seed initial products if empty
     const productCount = await Product.countDocuments();
     if (productCount === 0) {
       const initialProducts = [
@@ -153,7 +155,7 @@ export const initDB = async () => {
           sizes: p.sizes
         });
       }
-      console.log('✨ Seeded initial product catalog into MongoDB Atlas');
+      console.log('✅ Seeded initial product catalog into MongoDB');
     }
   } catch (error) {
     console.error('Database initialization error:', error.message);
