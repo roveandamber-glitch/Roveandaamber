@@ -30,7 +30,7 @@ const orderItemSchema = new mongoose.Schema(
     },
     size: {
       type: String,
-      default: 'M'
+      default: '50ml'
     },
     image: {
       type: String,
@@ -47,7 +47,8 @@ const orderItemSchema = new mongoose.Schema(
 const orderSchema = new mongoose.Schema(
   {
     orderId: {
-      type: String
+      type: String,
+      index: true
     },
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -62,9 +63,33 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    email: {
+      type: String,
+      default: ''
+    },
     address: {
       type: String,
       default: ''
+    },
+    subtotal: {
+      type: Number,
+      default: 0
+    },
+    discountAmount: {
+      type: Number,
+      default: 0
+    },
+    couponCode: {
+      type: String,
+      default: ''
+    },
+    shippingFee: {
+      type: Number,
+      default: 0
+    },
+    giftWrapFee: {
+      type: Number,
+      default: 0
     },
     total_amount: {
       type: Number,
@@ -72,7 +97,66 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: 'Processing'
+      enum: ['Pending', 'Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'],
+      default: 'Pending'
+    },
+    // 3.2: Razorpay Payment Tracking Fields
+    paymentMethod: {
+      type: String,
+      enum: ['Razorpay', 'Cash on Delivery', 'Mock'],
+      default: 'Razorpay'
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['Pending', 'Paid', 'Failed', 'Refunded'],
+      default: 'Pending',
+      index: true
+    },
+    razorpayOrderId: {
+      type: String,
+      default: '',
+      index: true
+    },
+    razorpayPaymentId: {
+      type: String,
+      default: ''
+    },
+    razorpaySignature: {
+      type: String,
+      default: ''
+    },
+    paymentDetails: {
+      transactionId: { type: String, default: '' },
+      method: { type: String, default: '' },
+      bank: { type: String, default: '' },
+      wallet: { type: String, default: '' },
+      paidAt: { type: Date, default: null },
+      failureReason: { type: String, default: '' }
+    },
+    // 2.4: Gift Shopping – For Him and Her
+    isGift: {
+      type: Boolean,
+      default: false
+    },
+    occasion: {
+      type: String,
+      default: ''
+    },
+    giftMessage: {
+      type: String,
+      default: ''
+    },
+    giftWrap: {
+      type: Boolean,
+      default: false
+    },
+    giftRecipient: {
+      name: { type: String, default: '' },
+      phone: { type: String, default: '' },
+      address: { type: String, default: '' },
+      city: { type: String, default: '' },
+      postalCode: { type: String, default: '' },
+      email: { type: String, default: '' }
     },
     items: [orderItemSchema]
   },
@@ -102,19 +186,38 @@ orderSchema.virtual('id').get(function () {
 export const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
 export const OrderModel = {
-  createOrder: async ({ userId, customerName, phone, address, items }) => {
+  createOrder: async ({
+    userId,
+    customerName,
+    phone,
+    email,
+    address,
+    items,
+    discountAmount = 0,
+    couponCode = '',
+    shippingFee = 0,
+    giftWrapFee = 0,
+    paymentMethod = 'Razorpay',
+    paymentStatus = 'Pending',
+    razorpayOrderId = '',
+    isGift = false,
+    occasion = '',
+    giftMessage = '',
+    giftWrap = false,
+    giftRecipient = {}
+  }) => {
     if (!items || items.length === 0) {
       throw new Error('Order must contain at least one item');
     }
 
-    let calculatedTotal = 0;
+    let calculatedSubtotal = 0;
     const verifiedItems = [];
 
-    // Step 1: Verify each product, its price, and check size-specific stock availability
+    // Step 1: Verify each product, its live price, and verify stock availability
     for (const item of items) {
       const pid = item.productId || item.product_id;
       const qty = parseInt(item.quantity, 10) || 1;
-      const size = (item.size || 'M').toUpperCase();
+      const size = item.size || '50ml';
 
       const product = await ProductModel.findById(pid);
       if (!product) {
@@ -140,7 +243,7 @@ export const OrderModel = {
       }
 
       const itemTotal = product.price * qty;
-      calculatedTotal += itemTotal;
+      calculatedSubtotal += itemTotal;
 
       verifiedItems.push({
         productId: product._id,
@@ -155,7 +258,9 @@ export const OrderModel = {
       });
     }
 
-    // Step 2: Ensure valid user ID
+    const calculatedTotal = Math.max(0, calculatedSubtotal - discountAmount + shippingFee + giftWrapFee);
+
+    // Step 2: Ensure valid user ID or fallback
     let effectiveUserId = userId;
     if (!effectiveUserId || !mongoose.Types.ObjectId.isValid(effectiveUserId)) {
       const existingUser = await User.findOne();
@@ -172,15 +277,38 @@ export const OrderModel = {
       user_id: effectiveUserId,
       customer_name: customerName || 'Direct Customer',
       phone: phone || '',
+      email: email || '',
       address: address || '',
+      subtotal: calculatedSubtotal,
+      discountAmount,
+      couponCode,
+      shippingFee,
+      giftWrapFee,
       total_amount: calculatedTotal,
-      status: 'Processing',
+      status: paymentStatus === 'Paid' ? 'Processing' : 'Pending',
+      paymentMethod,
+      paymentStatus,
+      razorpayOrderId,
+      isGift: !!isGift,
+      occasion: occasion || '',
+      giftMessage: giftMessage || '',
+      giftWrap: !!giftWrap,
+      giftRecipient: {
+        name: giftRecipient?.name || '',
+        phone: giftRecipient?.phone || '',
+        address: giftRecipient?.address || '',
+        city: giftRecipient?.city || '',
+        postalCode: giftRecipient?.postalCode || '',
+        email: giftRecipient?.email || ''
+      },
       items: verifiedItems
     });
 
-    // Step 4: Decrement product stock & size-wise stock
-    for (const item of verifiedItems) {
-      await ProductModel.decrementStock(item.productId, item.size, item.quantity);
+    // If order is paid upfront (e.g. COD or instant paid), decrement stock
+    if (paymentStatus === 'Paid' || paymentMethod === 'Cash on Delivery') {
+      for (const item of verifiedItems) {
+        await ProductModel.decrementStock(item.productId, item.size, item.quantity);
+      }
     }
 
     const doc = order.toObject();
@@ -193,8 +321,17 @@ export const OrderModel = {
   },
 
   findById: async (id) => {
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const order = await Order.findById(id).populate('user_id', 'name email');
+    if (!id) return null;
+    let order = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id).populate('user_id', 'name email');
+    }
+    if (!order) {
+      order = await Order.findOne({ orderId: id }).populate('user_id', 'name email');
+    }
+    if (!order) {
+      order = await Order.findOne({ razorpayOrderId: id }).populate('user_id', 'name email');
+    }
     if (!order) return null;
     const doc = order.toObject();
     return {
@@ -202,6 +339,67 @@ export const OrderModel = {
       id: order._id.toString(),
       _id: order._id.toString()
     };
+  },
+
+  findByRazorpayOrderId: async (razorpayOrderId) => {
+    if (!razorpayOrderId) return null;
+    return Order.findOne({ razorpayOrderId });
+  },
+
+  markAsPaid: async (id, { razorpayPaymentId, razorpaySignature, paymentDetails = {} }) => {
+    const order = await Order.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(id) ? id : null },
+        { orderId: id },
+        { razorpayOrderId: id }
+      ]
+    });
+
+    if (!order) return null;
+
+    // Only decrement stock if it wasn't already paid
+    if (order.paymentStatus !== 'Paid') {
+      for (const item of order.items) {
+        await ProductModel.decrementStock(item.productId, item.size, item.quantity);
+      }
+    }
+
+    order.paymentStatus = 'Paid';
+    order.status = 'Processing';
+    if (razorpayPaymentId) order.razorpayPaymentId = razorpayPaymentId;
+    if (razorpaySignature) order.razorpaySignature = razorpaySignature;
+    order.paymentDetails = {
+      transactionId: razorpayPaymentId || paymentDetails.transactionId || '',
+      method: paymentDetails.method || 'Razorpay',
+      bank: paymentDetails.bank || '',
+      wallet: paymentDetails.wallet || '',
+      paidAt: new Date(),
+      failureReason: ''
+    };
+
+    await order.save();
+    return order.toObject();
+  },
+
+  markAsFailed: async (id, failureReason = 'Payment failed') => {
+    const order = await Order.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(id) ? id : null },
+        { orderId: id },
+        { razorpayOrderId: id }
+      ]
+    });
+
+    if (!order) return null;
+
+    order.paymentStatus = 'Failed';
+    order.paymentDetails = {
+      ...order.paymentDetails,
+      failureReason: failureReason || 'Transaction declined or failed'
+    };
+
+    await order.save();
+    return order.toObject();
   },
 
   updateStatus: async (id, status) => {

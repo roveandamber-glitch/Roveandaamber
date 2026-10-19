@@ -2,14 +2,28 @@ import { OrderModel } from '../models/orderModel.js';
 
 export const createOrder = async (req, res) => {
   try {
-    let { items, productId, quantity, size, customerName, name, phone, address } = req.body;
+    let {
+      items,
+      productId,
+      quantity,
+      size,
+      customerName,
+      name,
+      phone,
+      address,
+      isGift,
+      occasion,
+      giftMessage,
+      giftWrap,
+      giftRecipient
+    } = req.body;
 
     // Support single product format or array of items
     if (!items && productId) {
-      items = [{ 
-        productId: parseInt(productId, 10), 
+      items = [{
+        productId: productId,
         quantity: parseInt(quantity, 10) || 1,
-        size: (size || req.body.size || 'M').toUpperCase()
+        size: (size || req.body.size || '50ml')
       }];
     }
 
@@ -20,17 +34,22 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const userId = req.user ? req.user.id : 1;
+    const userId = req.user ? (req.user.id || req.user._id) : null;
     const finalCustomerName = customerName || name || (req.user ? req.user.name : 'Valued Customer');
-    const finalPhone = phone || (req.user ? req.user.email : '');
-    const finalAddress = address || 'Standard Delivery';
+    const finalPhone = phone || (req.user ? req.user.phone : '');
+    const finalAddress = address || (req.user ? req.user.address : 'Standard Delivery');
 
     const order = await OrderModel.createOrder({
       userId,
       customerName: finalCustomerName,
       phone: finalPhone,
       address: finalAddress,
-      items
+      items,
+      isGift,
+      occasion,
+      giftMessage,
+      giftWrap,
+      giftRecipient
     });
 
     return res.status(201).json({
@@ -112,11 +131,16 @@ export const getAllOrders = async (req, res) => {
         customerName: o.customer_name || o.user_name || 'Valued Customer',
         phone: o.phone || o.user_email || 'N/A',
         address: o.address || 'Standard Delivery',
-        productName: firstItem ? ((firstItem.name || firstItem.product_name) + (o.items.length > 1 ? ` (+${o.items.length - 1} more)` : '')) : 'Fashion Item',
+        productName: firstItem ? ((firstItem.name || firstItem.product_name) + (o.items.length > 1 ? ` (+${o.items.length - 1} more)` : '')) : 'Luxury Perfume',
         productImage: firstItem ? (firstItem.image || firstItem.product_image) : '',
         quantity: firstItem ? firstItem.quantity : 1,
-        size: firstItem ? (firstItem.size || 'M') : 'M',
+        size: firstItem ? (firstItem.size || '50ml') : '50ml',
         status: o.status,
+        isGift: !!o.isGift,
+        occasion: o.occasion || '',
+        giftMessage: o.giftMessage || '',
+        giftWrap: !!o.giftWrap,
+        giftRecipient: o.giftRecipient || {},
         date: new Date(o.createdAt || o.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         createdAt: o.createdAt || o.created_at
       };

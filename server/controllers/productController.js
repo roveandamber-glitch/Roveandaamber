@@ -1,11 +1,32 @@
 import { ProductModel } from '../models/productModel.js';
 
 // Helper to parse images whether stored as single path, JSON array, or CSV
-const parseImages = (imgField, name) => {
-  if (!imgField) return [];
+const parseImages = (imgField, imagesField, name) => {
+  const result = [];
+
+  if (Array.isArray(imagesField) && imagesField.length > 0) {
+    imagesField.forEach(img => {
+      if (typeof img === 'string') result.push({ url: img, alt: name });
+      else if (img && img.url) result.push({ url: img.url, alt: img.alt || name });
+    });
+    return result;
+  }
+
+  if (typeof imagesField === 'string' && imagesField.trim()) {
+    try {
+      const parsed = JSON.parse(imagesField);
+      if (Array.isArray(parsed)) {
+        return parsed.map(u => ({ url: typeof u === 'string' ? u : u.url, alt: name }));
+      }
+    } catch (e) {}
+  }
+
+  if (!imgField) return result;
+
   if (Array.isArray(imgField)) {
     return imgField.map(u => ({ url: typeof u === 'string' ? u : u.url, alt: name }));
   }
+
   if (typeof imgField === 'string') {
     const trimmed = imgField.trim();
     if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
@@ -19,14 +40,15 @@ const parseImages = (imgField, name) => {
     }
     return [{ url: trimmed, alt: name }];
   }
+
   return [{ url: String(imgField), alt: name }];
 };
 
 // Helper to parse sizes map
 const parseSizesMap = (sizesField, totalStock = 0) => {
   if (!sizesField) {
-    const defaultQty = Math.max(1, Math.floor((totalStock || 12) / 4));
-    return { 'S': defaultQty, 'M': defaultQty, 'L': defaultQty, 'XL': defaultQty };
+    const defaultQty = Math.max(1, Math.floor((totalStock || 12) / 2));
+    return { '50ml': defaultQty, '100ml': defaultQty };
   }
   if (typeof sizesField === 'object' && !Array.isArray(sizesField)) {
     return sizesField;
@@ -37,21 +59,23 @@ const parseSizesMap = (sizesField, totalStock = 0) => {
       if (typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
       if (Array.isArray(parsed)) {
         const map = {};
-        parsed.forEach(s => { map[s] = Math.max(1, Math.floor((totalStock || 12) / parsed.length)); });
+        parsed.forEach(s => {
+          map[s] = Math.max(1, Math.floor((totalStock || 12) / parsed.length));
+        });
         return map;
       }
     } catch (e) {}
   }
-  return { 'S': 3, 'M': 5, 'L': 4, 'XL': 2 };
+  return { '50ml': 6, '100ml': 4 };
 };
 
 // Helper to format product data for frontend consistency
-const formatProduct = (p) => {
+export const formatProduct = (p) => {
   if (!p) return null;
   const doc = p.toObject ? p.toObject() : p;
   const idStr = String(doc._id || doc.id);
-  const imageList = parseImages(doc.image, doc.name);
-  const primaryImage = imageList.length > 0 ? imageList[0].url : '';
+  const imageList = parseImages(doc.image, doc.images, doc.name);
+  const primaryImage = imageList.length > 0 ? imageList[0].url : (doc.image || '');
   const sizeMap = parseSizesMap(doc.sizes, doc.stock);
   const sizeKeys = Object.keys(sizeMap);
 
@@ -59,21 +83,85 @@ const formatProduct = (p) => {
     ...doc,
     id: idStr,
     _id: idStr,
-    category: doc.category_name || (doc.category_id && doc.category_id.name ? doc.category_id.name : (typeof doc.category_id === 'string' ? doc.category_id : '')),
+    slug: doc.slug || doc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    category: doc.category_name || (doc.category_id && doc.category_id.name ? doc.category_id.name : (doc.categoryName || '')),
     image: primaryImage,
     images: imageList,
+    video: doc.video || '',
     sizes_stock: sizeMap,
     sizes: sizeKeys,
-    status: doc.stock > 0 ? 'In Stock' : 'Out of Stock',
-    isFeatured: true
+    fragranceFamily: doc.fragranceFamily || 'Amber & Woods',
+    gender: doc.gender || 'unisex',
+    rating: doc.rating !== undefined ? doc.rating : 4.8,
+    reviewsCount: doc.reviewsCount || 0,
+    popularity: doc.popularity || 0,
+    isFeatured: !!doc.isFeatured,
+    isNewArrival: !!doc.isNewArrival,
+    isBestSeller: !!doc.isBestSeller,
+    isGiftEligible: doc.isGiftEligible !== undefined ? !!doc.isGiftEligible : true,
+    giftOccasions: doc.giftOccasions || ['Birthday', 'Anniversary', 'Special Occasions'],
+    giftOptions: doc.giftOptions || { allowGiftWrap: true, allowPersonalizedMessage: true, wrapPrice: 0 },
+    status: (doc.stock > 0) ? 'In Stock' : 'Out of Stock'
   };
 };
 
+// 1. Browsing & Advanced Filters: Get all products
 export const getProducts = async (req, res) => {
   try {
-    const { category, search, featured } = req.query;
-    const rawProducts = await ProductModel.findAll({ categoryId: category, search });
+    const {
+      category,
+      collection,
+      search,
+      fragranceFamily,
+      gender,
+      minPrice,
+      maxPrice,
+      size,
+      occasion,
+      featured,
+      newArrival,
+      bestSeller,
+      isGift,
+      sort,
+      page,
+      limit
+    } = req.query;
+
+    const rawProducts = await ProductModel.findAll({
+      category: category || collection,
+      search,
+      fragranceFamily,
+      gender,
+      minPrice,
+      maxPrice,
+      size,
+      occasion,
+      featured,
+      newArrival,
+      bestSeller,
+      isGift,
+      sort: sort || 'newest'
+    });
+
     const formatted = rawProducts.map(formatProduct);
+
+    // Optional pagination
+    if (page && limit) {
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 12;
+      const startIndex = (pageNum - 1) * limitNum;
+      const paginated = formatted.slice(startIndex, startIndex + limitNum);
+
+      return res.json({
+        success: true,
+        data: {
+          products: paginated,
+          total: formatted.length,
+          page: pageNum,
+          totalPages: Math.ceil(formatted.length / limitNum)
+        }
+      });
+    }
 
     return res.json({
       success: true,
@@ -88,6 +176,7 @@ export const getProducts = async (req, res) => {
   }
 };
 
+// 2. View product details by ID or Slug (with images, notes, video, sizes)
 export const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -107,9 +196,148 @@ export const getProductById = async (req, res) => {
   }
 };
 
+// 3. Featured perfumes showcase
+export const getFeaturedProducts = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 8;
+    const products = await ProductModel.findFeatured(limit);
+    return res.json({
+      success: true,
+      data: products.map(formatProduct)
+    });
+  } catch (error) {
+    console.error('Get featured products error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch featured products.' });
+  }
+};
+
+// 4. New arrivals
+export const getNewArrivals = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 8;
+    const products = await ProductModel.findNewArrivals(limit);
+    return res.json({
+      success: true,
+      data: products.map(formatProduct)
+    });
+  } catch (error) {
+    console.error('Get new arrivals error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch new arrivals.' });
+  }
+};
+
+// 5. Bestsellers
+export const getBestSellers = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 8;
+    const products = await ProductModel.findBestSellers(limit);
+    return res.json({
+      success: true,
+      data: products.map(formatProduct)
+    });
+  } catch (error) {
+    console.error('Get best sellers error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch best sellers.' });
+  }
+};
+
+// 6. Dedicated collections (For Him, For Her, Unisex, Signature)
+export const getCollections = async (req, res) => {
+  try {
+    const { collection } = req.params;
+    const { sort } = req.query;
+
+    let products;
+    const lower = (collection || '').toLowerCase();
+
+    if (['him', 'men', 'male', 'for-him'].includes(lower)) {
+      products = await ProductModel.findByGender('him', sort);
+    } else if (['her', 'women', 'female', 'for-her'].includes(lower)) {
+      products = await ProductModel.findByGender('her', sort);
+    } else if (['unisex', 'shared'].includes(lower)) {
+      products = await ProductModel.findByGender('unisex', sort);
+    } else {
+      products = await ProductModel.findAll({ category: collection, sort });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        collection,
+        products: products.map(formatProduct),
+        total: products.length
+      }
+    });
+  } catch (error) {
+    console.error('Get collections error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch collection.' });
+  }
+};
+
+// 7. Gift Shopping – For Him and Her, Birthdays, Anniversaries, Special Occasions
+export const getGiftSelections = async (req, res) => {
+  try {
+    const { occasion, gender, minPrice, maxPrice } = req.query;
+
+    const products = await ProductModel.findGiftSelections({
+      occasion,
+      gender,
+      minPrice,
+      maxPrice
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        giftSelections: products.map(formatProduct),
+        total: products.length,
+        filters: { occasion, gender, minPrice, maxPrice }
+      }
+    });
+  } catch (error) {
+    console.error('Get gift selections error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch gift selections.' });
+  }
+};
+
+// 8. Dynamic Filter Options (Categories, Fragrance Families, Price Range, Sizes, Occasions)
+export const getFilterOptions = async (req, res) => {
+  try {
+    const options = await ProductModel.getFilterOptions();
+    return res.json({
+      success: true,
+      data: options
+    });
+  } catch (error) {
+    console.error('Get filter options error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch filter options.' });
+  }
+};
+
+// 9. Admin Create Product
 export const createProduct = async (req, res) => {
   try {
-    const { name, price, stock, category_id, category, sizes } = req.body;
+    const {
+      name,
+      slug,
+      price,
+      originalPrice,
+      stock,
+      category_id,
+      categoryName,
+      subcategory,
+      description,
+      fragranceFamily,
+      gender,
+      sizes,
+      details,
+      video,
+      giftOccasions,
+      isFeatured,
+      isNewArrival,
+      isBestSeller,
+      isGiftEligible
+    } = req.body;
 
     if (!name || price === undefined) {
       return res.status(400).json({
@@ -127,47 +355,76 @@ export const createProduct = async (req, res) => {
       }
     }
 
-    // Calculate total stock from size-wise quantities if provided
     let calculatedStock = parseInt(stock, 10) || 0;
     if (Object.keys(parsedSizesMap).length > 0) {
       calculatedStock = Object.values(parsedSizesMap).reduce((sum, val) => sum + (parseInt(val, 10) || 0), 0);
     } else {
       parsedSizesMap = {
-        'S': Math.floor(calculatedStock * 0.25) || 3,
-        'M': Math.floor(calculatedStock * 0.35) || 5,
-        'L': Math.floor(calculatedStock * 0.25) || 4,
-        'XL': Math.floor(calculatedStock * 0.15) || 2
+        '50ml': Math.floor(calculatedStock * 0.6) || 6,
+        '100ml': Math.floor(calculatedStock * 0.4) || 4
       };
       calculatedStock = Object.values(parsedSizesMap).reduce((sum, val) => sum + val, 0);
     }
 
-    let imagePaths = [];
+    let imageList = [];
     if (req.files && req.files.length > 0) {
-      imagePaths = req.files.map(f => `/uploads/${f.filename}`);
+      imageList = req.files.map(f => ({ url: `/uploads/${f.filename}`, alt: name }));
     } else if (req.file) {
-      imagePaths = [`/uploads/${req.file.filename}`];
+      imageList = [{ url: `/uploads/${req.file.filename}`, alt: name }];
     } else if (req.body.images) {
-      imagePaths = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+      const raw = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+      imageList = raw.map(u => (typeof u === 'string' ? { url: u, alt: name } : u));
     } else if (req.body.image) {
-      imagePaths = [req.body.image];
+      imageList = [{ url: req.body.image, alt: name }];
     }
 
-    const finalImageString = imagePaths.length > 0
-      ? (imagePaths.length > 1 ? JSON.stringify(imagePaths) : imagePaths[0])
-      : '';
+    const primaryImage = imageList.length > 0 ? imageList[0].url : '';
+
+    let parsedDetails = details;
+    if (typeof details === 'string') {
+      try {
+        parsedDetails = JSON.parse(details);
+      } catch (e) {
+        parsedDetails = details.split('\n').filter(Boolean);
+      }
+    }
+
+    let parsedOccasions = giftOccasions;
+    if (typeof giftOccasions === 'string') {
+      try {
+        parsedOccasions = JSON.parse(giftOccasions);
+      } catch (e) {
+        parsedOccasions = giftOccasions.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
 
     const product = await ProductModel.create({
       name,
+      slug,
       price: parseFloat(price),
+      originalPrice: originalPrice ? parseFloat(originalPrice) : parseFloat(price),
       stock: calculatedStock,
-      image: finalImageString,
-      category_id: category_id || category || null,
-      sizes: JSON.stringify(parsedSizesMap)
+      image: primaryImage,
+      images: imageList,
+      video: video || '',
+      category_id,
+      categoryName,
+      subcategory,
+      description,
+      fragranceFamily,
+      gender: gender || 'unisex',
+      sizes: JSON.stringify(parsedSizesMap),
+      details: Array.isArray(parsedDetails) ? parsedDetails : [],
+      giftOccasions: Array.isArray(parsedOccasions) ? parsedOccasions : ['Birthday', 'Anniversary'],
+      isFeatured: isFeatured === 'true' || isFeatured === true,
+      isNewArrival: isNewArrival === 'true' || isNewArrival === true,
+      isBestSeller: isBestSeller === 'true' || isBestSeller === true,
+      isGiftEligible: isGiftEligible === undefined || isGiftEligible === 'true' || isGiftEligible === true
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Product created successfully with size inventory.',
+      message: 'Perfume created successfully.',
       data: formatProduct(product)
     });
   } catch (error) {
@@ -176,10 +433,31 @@ export const createProduct = async (req, res) => {
   }
 };
 
+// 10. Admin Update Product
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, stock, category_id, category, sizes } = req.body;
+    const {
+      name,
+      slug,
+      price,
+      originalPrice,
+      stock,
+      category_id,
+      categoryName,
+      subcategory,
+      description,
+      fragranceFamily,
+      gender,
+      sizes,
+      details,
+      video,
+      giftOccasions,
+      isFeatured,
+      isNewArrival,
+      isBestSeller,
+      isGiftEligible
+    } = req.body;
 
     let parsedSizesMap;
     let calculatedStock = stock !== undefined ? parseInt(stock, 10) : undefined;
@@ -191,27 +469,50 @@ export const updateProduct = async (req, res) => {
       } catch (e) {}
     }
 
-    let finalImageString;
+    let imageList;
     if (req.files && req.files.length > 0) {
-      const uploaded = req.files.map(f => `/uploads/${f.filename}`);
-      finalImageString = uploaded.length > 1 ? JSON.stringify(uploaded) : uploaded[0];
+      imageList = req.files.map(f => ({ url: `/uploads/${f.filename}`, alt: name || '' }));
     } else if (req.file) {
-      finalImageString = `/uploads/${req.file.filename}`;
+      imageList = [{ url: `/uploads/${req.file.filename}`, alt: name || '' }];
     } else if (req.body.images !== undefined) {
-      const imgs = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
-      finalImageString = imgs.length > 1 ? JSON.stringify(imgs) : (imgs[0] || '');
-    } else if (req.body.image !== undefined) {
-      finalImageString = req.body.image;
+      const raw = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+      imageList = raw.map(u => (typeof u === 'string' ? { url: u, alt: name || '' } : u));
     }
 
-    const updated = await ProductModel.update(id, {
-      name,
-      price: price !== undefined ? parseFloat(price) : undefined,
-      stock: calculatedStock,
-      image: finalImageString,
-      category_id: category_id || category,
-      sizes: parsedSizesMap ? JSON.stringify(parsedSizesMap) : undefined
-    });
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (slug !== undefined) updateData.slug = slug;
+    if (price !== undefined) updateData.price = parseFloat(price);
+    if (originalPrice !== undefined) updateData.originalPrice = parseFloat(originalPrice);
+    if (calculatedStock !== undefined) updateData.stock = calculatedStock;
+    if (category_id !== undefined) updateData.category_id = category_id;
+    if (categoryName !== undefined) updateData.categoryName = categoryName;
+    if (subcategory !== undefined) updateData.subcategory = subcategory;
+    if (description !== undefined) updateData.description = description;
+    if (fragranceFamily !== undefined) updateData.fragranceFamily = fragranceFamily;
+    if (gender !== undefined) updateData.gender = gender;
+    if (parsedSizesMap) updateData.sizes = JSON.stringify(parsedSizesMap);
+    if (video !== undefined) updateData.video = video;
+
+    if (imageList) {
+      updateData.images = imageList;
+      updateData.image = imageList.length > 0 ? imageList[0].url : '';
+    } else if (req.body.image !== undefined) {
+      updateData.image = req.body.image;
+    }
+
+    if (details !== undefined) {
+      updateData.details = typeof details === 'string' ? JSON.parse(details) : details;
+    }
+    if (giftOccasions !== undefined) {
+      updateData.giftOccasions = typeof giftOccasions === 'string' ? JSON.parse(giftOccasions) : giftOccasions;
+    }
+    if (isFeatured !== undefined) updateData.isFeatured = isFeatured === 'true' || isFeatured === true;
+    if (isNewArrival !== undefined) updateData.isNewArrival = isNewArrival === 'true' || isNewArrival === true;
+    if (isBestSeller !== undefined) updateData.isBestSeller = isBestSeller === 'true' || isBestSeller === true;
+    if (isGiftEligible !== undefined) updateData.isGiftEligible = isGiftEligible === 'true' || isGiftEligible === true;
+
+    const updated = await ProductModel.update(id, updateData);
 
     return res.json({
       success: true,
@@ -224,6 +525,7 @@ export const updateProduct = async (req, res) => {
   }
 };
 
+// 11. Admin Delete Product
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;

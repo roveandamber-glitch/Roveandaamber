@@ -5,12 +5,12 @@ import {
   getMyOrders,
   getAllOrders
 } from '../controllers/orderController.js';
-import { protect, adminOnly } from '../middlewares/authMiddleware.js';
+import { protect, optionalAuth, adminOnly } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Order Placement (Protected for logged-in users)
-router.post('/', protect, createOrder);
+// Order Placement (Supports logged-in users and guest gift shoppers)
+router.post('/', optionalAuth, createOrder);
 
 // Authenticated customer view personal orders (Read-only status tracking)
 router.get('/my', protect, getMyOrders);
