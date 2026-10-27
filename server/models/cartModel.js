@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { ProductModel, Product } from './productModel.js';
 import { CouponModel } from './couponModel.js';
-import { formatProduct } from '../controllers/productController.js';
+import { formatProduct } from '../controllers/user/productController.js';
 
 const cartItemSchema = new mongoose.Schema(
   {
