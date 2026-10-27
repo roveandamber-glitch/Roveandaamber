@@ -12,8 +12,10 @@ import {
   updateProduct,
   deleteProduct
 } from '../controllers/productController.js';
-import { protect, adminOnly } from '../middlewares/authMiddleware.js';
+import { protect, adminOnly, optionalAuth } from '../middlewares/authMiddleware.js';
 import { upload } from '../middlewares/uploadMiddleware.js';
+import { getProductReviews, submitProductReview } from '../controllers/adminController.js';
+import { validateReviewSubmission } from '../validators/adminValidator.js';
 
 const router = express.Router();
 
@@ -30,6 +32,10 @@ router.get('/collections/:collection', getCollections);
 
 // 2.3: Product Images, Videos & Individual details
 router.get('/:id', getProductById);
+
+// 9.5: Product Reviews & Feedback
+router.get('/:id/reviews', getProductReviews);
+router.post('/:id/reviews', optionalAuth, validateReviewSubmission, submitProductReview);
 
 // Admin-only: Product Management
 router.post('/', protect, adminOnly, upload.any(), createProduct);

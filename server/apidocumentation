@@ -1632,6 +1632,787 @@ All endpoints in this module are strictly protected and require the client's JWT
 }
 ```
 
+---
+
+## 9. Admin Dashboard and Product Management
+
+The admin dashboard provides a centralized, secure interface for managing the website's primary business operations.
+All admin endpoints are strictly protected by `protect` and `adminOnly` middlewares. Requests must contain:
+`Authorization: Bearer <admin_jwt_token>` or `x-admin-key: <token>`.
+
+---
+
+### Dashboard Overview & Analytics
+
+#### 49. Admin Dashboard Telemetry & Metrics
+- **Method & Route**: `GET /admin/stats`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "totalProducts": 14,
+      "outOfStockProducts": 1,
+      "totalOrders": 38,
+      "giftOrdersCount": 12,
+      "totalCategories": 5,
+      "activeBanners": 3,
+      "pendingReviews": 2,
+      "totalRevenue": 154800,
+      "ordersByStatus": {
+        "Pending": 4,
+        "Processing": 8,
+        "Confirmed": 6,
+        "Shipped": 11,
+        "Delivered": 7,
+        "Cancelled": 2
+      }
+    },
+    "topProducts": [
+      {
+        "id": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "sales": 28,
+        "revenue": 125972,
+        "image": "/images/perfumes/amber_oud_perfume.jpg"
+      }
+    ],
+    "recentOrders": [
+      {
+        "id": "671e548f98a2b1f4c7810500",
+        "orderId": "#ORD-1003",
+        "customerName": "Rohan Mehra",
+        "email": "rohan@example.com",
+        "createdAt": "2026-10-27T14:50:00.000Z",
+        "totalPrice": 4199,
+        "status": "Processing",
+        "paymentStatus": "Paid",
+        "isGift": true
+      }
+    ]
+  }
+}
+```
+
+#### 50. View Customer Accounts List
+- **Method & Route**: `GET /admin/users`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "671e548f98a2b1f4c7810101",
+      "userId": "#USR-0101",
+      "name": "Rohan Mehra",
+      "email": "rohan@example.com",
+      "role": "user",
+      "phone": "+91 9876501234",
+      "createdAt": "2026-10-27T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 9.1: Product Management
+• Add, edit, and remove perfume products.
+• Update product names, descriptions, prices, and images.
+• Manage product sizes, categories, and availability.
+• Maintain accurate product catalogue information.
+
+#### 51. List Admin Products with Catalogue Filters
+- **Method & Route**: `GET /admin/products`
+- **Query Parameters**:
+  - `search`: Filter by name, fragrance family, or description
+  - `category`: Filter by category name
+  - `gender`: `him`, `her`, `unisex`
+  - `availability`: `in_stock`, `out_of_stock`
+  - `page`: Page number (default: 1)
+  - `limit`: Items per page (default: 50)
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "id": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "slug": "amber-oud",
+        "price": 4499,
+        "originalPrice": 4999,
+        "stock": 18,
+        "sizes": {
+          "50ml": 10,
+          "100ml": 8
+        },
+        "status": "In Stock",
+        "categoryName": "Haute Parfumerie",
+        "fragranceFamily": "Oriental Woody",
+        "gender": "unisex",
+        "rating": 4.9,
+        "reviewsCount": 24,
+        "image": "/images/perfumes/amber_oud_perfume.jpg",
+        "isFeatured": true,
+        "isNewArrival": false,
+        "isBestSeller": true,
+        "isGiftEligible": true
+      }
+    ],
+    "pagination": {
+      "total": 14,
+      "page": 1,
+      "totalPages": 1,
+      "limit": 50
+    }
+  }
+}
+```
+
+#### 52. Add New Perfume Product
+- **Method & Route**: `POST /admin/products`
+- **Headers**: `Authorization: Bearer <admin_token>`, `Content-Type: multipart/form-data` or `application/json`
+- **Request Payload**:
+```json
+{
+  "name": "Rose de Taif & Smoked Saffron",
+  "slug": "rose-de-taif-smoked-saffron",
+  "price": 5499,
+  "originalPrice": 5999,
+  "categoryName": "Signature Collection",
+  "description": "Distilled morning Taif mountain roses blended with precious saffron stigmata and smoky Somali frankincense.",
+  "fragranceFamily": "Floral Oriental",
+  "gender": "unisex",
+  "sizes": "{\"50ml\": 15, \"100ml\": 10}",
+  "stock": 25,
+  "details": ["Top notes: Taif Rose, Bergamot", "Heart notes: Kashmiri Saffron, Bulgarian Rose", "Base notes: Ambergris, Somali Frankincense"],
+  "giftOccasions": ["Anniversary", "Special Occasions", "Wedding"],
+  "isFeatured": true,
+  "isNewArrival": true,
+  "isGiftEligible": true,
+  "image": "/images/perfumes/rose_taif.jpg"
+}
+```
+- **Response `201 Created`**:
+```json
+{
+  "success": true,
+  "message": "Product added successfully to catalogue.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810999",
+    "name": "Rose de Taif & Smoked Saffron",
+    "price": 5499,
+    "stock": 25,
+    "sizes": {
+      "50ml": 15,
+      "100ml": 10
+    },
+    "status": "In Stock",
+    "image": "/images/perfumes/rose_taif.jpg"
+  }
+}
+```
+
+#### 53. Edit Perfume Product Catalogue Details
+- **Method & Route**: `PUT /admin/products/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`, `Content-Type: multipart/form-data` or `application/json`
+- **Request Payload**:
+```json
+{
+  "price": 5299,
+  "description": "Updated master perfume formulation with heightened French oakmoss base notes.",
+  "isBestSeller": true
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Product updated successfully.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810999",
+    "name": "Rose de Taif & Smoked Saffron",
+    "price": 5299,
+    "isBestSeller": true,
+    "status": "In Stock"
+  }
+}
+```
+
+#### 54. Manage Product Sizes, Stock Levels, and Availability
+- **Method & Route**: `PATCH /admin/products/:id/stock`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "sizes": {
+    "50ml": 8,
+    "100ml": 0
+  },
+  "status": "In Stock"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Product stock updated to 8 units (In Stock).",
+  "data": {
+    "id": "671e548f98a2b1f4c7810999",
+    "stock": 8,
+    "sizes": {
+      "50ml": 8,
+      "100ml": 0
+    },
+    "status": "In Stock"
+  }
+}
+```
+
+#### 55. Remove Perfume Product
+- **Method & Route**: `DELETE /admin/products/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Product removed from catalogue successfully."
+}
+```
+
+---
+
+### 9.2: Banner Management
+• Upload and update homepage promotional banners.
+• Highlight featured collections, new arrivals, and special offers.
+• Manage banner content and destination links.
+• Update promotional content without modifying application code for routine changes.
+
+#### 56. List All Promotional Banners (Admin)
+- **Method & Route**: `GET /admin/banners`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "671e548f98a2b1f4c7810301",
+      "title": "Imperial Oud & Golden Amber",
+      "subtitle": "Pure Cambodian wild oud steeped with aged resins and Turkish damask rose.",
+      "badge": "NEW ARRIVAL",
+      "highlightType": "hero",
+      "image": "/images/perfumes/hero_desert_fragrance.jpg",
+      "linkUrl": "/product/amber-oud",
+      "buttonText": "DISCOVER AMBER OUD",
+      "displayOrder": 1,
+      "isActive": true
+    }
+  ]
+}
+```
+
+#### 57. Create Promotional Banner (with File Upload or URL)
+- **Method & Route**: `POST /admin/banners`
+- **Headers**: `Authorization: Bearer <admin_token>`, `Content-Type: multipart/form-data` or `application/json`
+- **Request Payload**:
+```json
+{
+  "title": "Autumn Solstice Special Offers",
+  "subtitle": "Complimentary bespoke discovery atomiser with every 100ml signature flacon purchase.",
+  "badge": "LIMITED TIME",
+  "highlightType": "special_offer",
+  "image": "/images/perfumes/autumn_offer.jpg",
+  "linkUrl": "/shop?sort=bestseller",
+  "buttonText": "CLAIM OFFER",
+  "displayOrder": 2,
+  "isActive": true,
+  "startDate": "2026-10-25T00:00:00.000Z",
+  "endDate": "2026-11-15T23:59:59.000Z"
+}
+```
+- **Response `201 Created`**:
+```json
+{
+  "success": true,
+  "message": "Promotional banner created successfully.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810305",
+    "title": "Autumn Solstice Special Offers",
+    "highlightType": "special_offer",
+    "isActive": true,
+    "displayOrder": 2
+  }
+}
+```
+
+#### 58. Update Promotional Banner Content & Destination Links
+- **Method & Route**: `PUT /admin/banners/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "buttonText": "SHOP AUTUMN OFFER",
+  "linkUrl": "/collections/signature"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Banner updated successfully.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810305",
+    "buttonText": "SHOP AUTUMN OFFER",
+    "linkUrl": "/collections/signature"
+  }
+}
+```
+
+#### 59. Toggle Banner Active / Visible Status
+- **Method & Route**: `PATCH /admin/banners/:id/toggle`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Banner deactivated successfully.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810305",
+    "isActive": false
+  }
+}
+```
+
+#### 60. Delete Promotional Banner
+- **Method & Route**: `DELETE /admin/banners/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Banner deleted successfully."
+}
+```
+
+#### 61. Public Showcase Banners (Frontend Consumer Route)
+- **Method & Route**: `GET /banners`
+- **Query Parameters**: `?highlightType=hero` (optional)
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "671e548f98a2b1f4c7810301",
+      "title": "Imperial Oud & Golden Amber",
+      "badge": "NEW ARRIVAL",
+      "highlightType": "hero",
+      "image": "/images/perfumes/hero_desert_fragrance.jpg",
+      "linkUrl": "/product/amber-oud",
+      "buttonText": "DISCOVER AMBER OUD"
+    }
+  ]
+}
+```
+
+---
+
+### 9.3: Order Management
+• View customer orders and associated details.
+• Monitor order and payment statuses.
+• Update order processing and delivery information.
+• Access customer and delivery details for fulfilment.
+
+#### 62. List Orders with Filters & Search (Admin)
+- **Method & Route**: `GET /admin/orders`
+- **Query Parameters**:
+  - `status`: `Pending`, `Processing`, `Confirmed`, `Shipped`, `Delivered`, `Cancelled`
+  - `paymentStatus`: `Pending`, `Paid`, `Failed`, `Refunded`
+  - `search`: Search across Order ID, customer name, email, or phone
+  - `startDate`, `endDate`: ISO format (`YYYY-MM-DD`)
+  - `page`: Page index
+  - `limit`: Limit per page
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "orders": [
+      {
+        "id": "671e548f98a2b1f4c7810500",
+        "orderId": "#ORD-1003",
+        "customerName": "Rohan Mehra",
+        "email": "rohan@example.com",
+        "phone": "+91 9876501234",
+        "address": "Flat 802, Prestige Tower, MG Road, Mumbai 400001",
+        "total_amount": 4199,
+        "status": "Processing",
+        "paymentMethod": "Razorpay",
+        "paymentStatus": "Paid",
+        "isGift": true,
+        "itemsCount": 1,
+        "createdAt": "2026-10-27T14:50:00.000Z"
+      }
+    ],
+    "pagination": {
+      "total": 38,
+      "page": 1,
+      "totalPages": 2,
+      "limit": 20
+    }
+  }
+}
+```
+
+#### 63. Access Comprehensive Order Details for Fulfilment
+- **Method & Route**: `GET /admin/orders/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "671e548f98a2b1f4c7810500",
+    "orderId": "#ORD-1003",
+    "customer_name": "Rohan Mehra",
+    "email": "rohan@example.com",
+    "phone": "+91 9876501234",
+    "address": "Flat 802, Prestige Tower, MG Road, Mumbai 400001",
+    "items": [
+      {
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "price": 4499,
+        "quantity": 1,
+        "size": "50ml",
+        "image": "/images/perfumes/amber_oud_perfume.jpg"
+      }
+    ],
+    "subtotal": 4499,
+    "discountAmount": 450,
+    "giftWrapFee": 150,
+    "total_amount": 4199,
+    "status": "Processing",
+    "paymentMethod": "Razorpay",
+    "paymentStatus": "Paid",
+    "isGift": true,
+    "giftRecipient": {
+      "name": "Pooja Varma",
+      "phone": "+91 9123456789",
+      "address": "Villa 12, Palm Meadows, Bengaluru 560066",
+      "email": "pooja@example.com"
+    },
+    "giftMessage": "To many more fragrant years together.",
+    "tracking": {
+      "courierName": "BlueDart Luxury Express",
+      "trackingNumber": "BD-481920491",
+      "trackingUrl": "https://www.bluedart.com",
+      "currentLocation": "Maison Central Fulfillment Hub, Mumbai",
+      "history": [
+        {
+          "stage": "Processing",
+          "title": "Order Processing",
+          "description": "Atelier bottling and quality control verification complete.",
+          "location": "Maison Central Fulfillment Hub, Mumbai",
+          "timestamp": "2026-10-27T14:52:00.000Z"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 64. Update Order Processing, Status & Delivery Info
+- **Method & Route**: `PUT /admin/orders/:id/status`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "status": "Shipped",
+  "courierName": "BlueDart Luxury Express",
+  "trackingNumber": "BD-889102451IN",
+  "trackingUrl": "https://www.bluedart.com/track/BD-889102451IN",
+  "currentLocation": "Express Transit Sorting Hub, Mumbai Airport",
+  "estimatedDelivery": "2026-10-30T18:00:00.000Z",
+  "statusNote": "Consignment dispatched via air express with secure tamper-evident wax seal."
+}
+```
+*(Automatically triggers email dispatch: customer receives immediate Luxury Dispatch Notice with live tracking link and estimated arrival)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Order status updated to Shipped successfully.",
+  "data": {
+    "orderId": "#ORD-1003",
+    "status": "Shipped",
+    "tracking": {
+      "courierName": "BlueDart Luxury Express",
+      "trackingNumber": "BD-889102451IN",
+      "currentLocation": "Express Transit Sorting Hub, Mumbai Airport"
+    }
+  }
+}
+```
+
+---
+
+### 9.4: Gift Order Management
+• Identify orders marked as gifts.
+• View personalized gift messages and recipient details.
+• Manage gift-related fulfilment information.
+
+#### 65. Identify & View Gift Orders
+- **Method & Route**: `GET /admin/gifts`
+- **Query Parameters**:
+  - `fulfillmentStatus`: `Pending Packaging`, `Box Handcrafted & Wrapped`, `Card Handwritten`, `Ready for Dispatch`, `Dispatched`
+  - `occasion`: Filter by occasion keyword (e.g. `Birthday`, `Anniversary`)
+  - `page`: Page index
+  - `limit`: Limit per page
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "giftOrders": [
+      {
+        "id": "671e548f98a2b1f4c7810500",
+        "orderId": "#ORD-1003",
+        "senderName": "Rohan Mehra",
+        "senderEmail": "rohan@example.com",
+        "isGift": true,
+        "occasion": "Anniversary",
+        "giftMessage": "To many more fragrant years together.",
+        "giftWrap": true,
+        "giftRecipient": {
+          "name": "Pooja Varma",
+          "phone": "+91 9123456789",
+          "address": "Villa 12, Palm Meadows, Bengaluru 560066",
+          "city": "Bengaluru",
+          "email": "pooja@example.com"
+        },
+        "giftFulfillment": {
+          "status": "Pending Packaging",
+          "greetingCardPrinted": false,
+          "ribbonSealed": false,
+          "packagingNotes": ""
+        },
+        "orderStatus": "Processing",
+        "totalAmount": 4199
+      }
+    ],
+    "pagination": {
+      "total": 12,
+      "page": 1,
+      "totalPages": 1,
+      "limit": 20
+    }
+  }
+}
+```
+
+#### 66. Update Gift Fulfillment Workflow
+- **Method & Route**: `PUT /admin/gifts/:id/fulfillment`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "status": "Box Handcrafted & Wrapped",
+  "greetingCardPrinted": true,
+  "ribbonSealed": true,
+  "packagingNotes": "Custom gold-foil anniversary calligraphy card sealed with royal burgundy wax."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Gift order fulfillment details updated successfully.",
+  "data": {
+    "orderId": "#ORD-1003",
+    "giftFulfillment": {
+      "status": "Box Handcrafted & Wrapped",
+      "greetingCardPrinted": true,
+      "ribbonSealed": true,
+      "packagingNotes": "Custom gold-foil anniversary calligraphy card sealed with royal burgundy wax.",
+      "updatedAt": "2026-10-27T15:20:00.000Z"
+    }
+  }
+}
+```
+
+---
+
+### 9.5: Review Management
+• View and moderate submitted reviews.
+• Manage review visibility.
+• Monitor customer feedback and product ratings.
+
+#### 67. View Customer Reviews for Moderation (Admin)
+- **Method & Route**: `GET /admin/reviews`
+- **Query Parameters**:
+  - `status`: `pending`, `approved`, `rejected`
+  - `rating`: `1`, `2`, `3`, `4`, `5`
+  - `productId`: MongoDB Product ObjectId
+  - `page`: Page index
+  - `limit`: Limit per page
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "reviews": [
+      {
+        "id": "671e548f98a2b1f4c7810701",
+        "product": {
+          "id": "671e548f98a2b1f4c78101a1",
+          "name": "Amber Oud",
+          "slug": "amber-oud",
+          "image": "/images/perfumes/amber_oud_perfume.jpg"
+        },
+        "customerName": "Kabir Singhania",
+        "customerEmail": "kabir@example.com",
+        "rating": 5,
+        "title": "Unrivaled Sillage and Richness",
+        "comment": "The opening smoky oud blends seamlessly into radiant amber. Lasts over 14 hours on skin.",
+        "status": "approved",
+        "isVisible": true,
+        "isVerifiedPurchase": true,
+        "createdAt": "2026-10-27T12:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "total": 45,
+      "page": 1,
+      "totalPages": 3,
+      "limit": 20
+    }
+  }
+}
+```
+
+#### 68. Moderate Review & Manage Visibility
+- **Method & Route**: `PUT /admin/reviews/:id/moderate`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "status": "approved",
+  "isVisible": true
+}
+```
+*(Automatically updates Product average `rating` and `reviewsCount` in real time)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Review approved successfully.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810701",
+    "status": "approved",
+    "isVisible": true,
+    "moderatedAt": "2026-10-27T15:25:00.000Z"
+  }
+}
+```
+
+#### 69. Delete Inappropriate Review
+- **Method & Route**: `DELETE /admin/reviews/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Review deleted and product ratings recalculated."
+}
+```
+
+#### 70. Monitor Customer Feedback & Rating Analytics
+- **Method & Route**: `GET /admin/reviews/stats`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "totalReviews": 45,
+    "approvedReviews": 43,
+    "pendingReviews": 2,
+    "rejectedReviews": 0,
+    "overallAvgRating": 4.9,
+    "ratingDistribution": {
+      "1": 0,
+      "2": 1,
+      "3": 2,
+      "4": 6,
+      "5": 36
+    }
+  }
+}
+```
+
+#### 71. Public: View Approved Customer Reviews for a Fragrance
+- **Method & Route**: `GET /products/:id/reviews`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "reviews": [
+      {
+        "id": "671e548f98a2b1f4c7810701",
+        "customerName": "Kabir Singhania",
+        "rating": 5,
+        "title": "Unrivaled Sillage and Richness",
+        "comment": "The opening smoky oud blends seamlessly into radiant amber. Lasts over 14 hours on skin.",
+        "isVerifiedPurchase": true,
+        "createdAt": "2026-10-27T12:00:00.000Z"
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+#### 72. Public/Customer: Submit Fragrance Review
+- **Method & Route**: `POST /products/:id/reviews`
+- **Headers**: `Authorization: Bearer <token>` *(optional for verified purchaser tag)*
+- **Request Payload**:
+```json
+{
+  "productId": "671e548f98a2b1f4c78101a1",
+  "customerName": "Rohan Mehra",
+  "customerEmail": "rohan@example.com",
+  "rating": 5,
+  "title": "Pure Opulence",
+  "comment": "A true signature perfume. The amber drydown is warm and deeply hypnotic."
+}
+```
+- **Response `201 Created`**:
+```json
+{
+  "success": true,
+  "message": "Thank you for sharing your olfactory review.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810710",
+    "rating": 5,
+    "isVerifiedPurchase": true,
+    "status": "approved"
+  }
+}
+```
+
+
 
 
 

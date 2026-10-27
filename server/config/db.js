@@ -5,6 +5,8 @@ import { User } from '../models/userModel.js';
 import { Category } from '../models/categoryModel.js';
 import { Product } from '../models/productModel.js';
 import { CouponModel } from '../models/couponModel.js';
+import { BannerModel } from '../models/bannerModel.js';
+import { ReviewModel } from '../models/reviewModel.js';
 
 dotenv.config();
 
@@ -526,6 +528,12 @@ export const initDB = async () => {
 
     // 4. Seed default promotional luxury coupons
     await CouponModel.seedDefaultCoupons();
+
+    // 5. Seed default promotional luxury banners
+    await BannerModel.seedDefaultBanners();
+
+    // 6. Seed default customer reviews and synchronize perfume ratings
+    await ReviewModel.seedDefaultReviews();
   } catch (error) {
     console.error('Database initialization notice:', error.message);
   }
