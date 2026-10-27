@@ -174,6 +174,18 @@ const orderSchema = new mongoose.Schema(
       postalCode: { type: String, default: '' },
       email: { type: String, default: '' }
     },
+    // 9.4: Gift Order Fulfillment Management
+    giftFulfillment: {
+      status: {
+        type: String,
+        enum: ['Pending Packaging', 'Box Handcrafted & Wrapped', 'Card Handwritten', 'Ready for Dispatch', 'Dispatched'],
+        default: 'Pending Packaging'
+      },
+      greetingCardPrinted: { type: Boolean, default: false },
+      ribbonSealed: { type: Boolean, default: false },
+      packagingNotes: { type: String, default: '' },
+      updatedAt: { type: Date, default: null }
+    },
     // 4.2 Delivery & Courier Tracking Details
     tracking: {
       courierName: { type: String, default: 'BlueDart Luxury Express' },

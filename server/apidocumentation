@@ -1244,5 +1244,394 @@ The system automatically delivers beautifully styled gold & obsidian luxury emai
 }
 ```
 
+---
+
+## 8. Customer Account and Order History
+
+All endpoints in this module are strictly protected and require the client's JWT token in the `Authorization: Bearer <token>` header.
+
+### 8.1: Customer Account Access & Summary
+
+#### 37. Get Customer Account Overview
+- **Method & Route**: `GET /user/account` (or `GET /user/overview`)
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "profile": {
+      "id": "671e548f98a2b1f4c7810100",
+      "name": "Rohan Mehra",
+      "email": "rohan@example.com",
+      "phone": "+91 9876501234",
+      "address": "Flat 802, Prestige Tower, MG Road, Mumbai",
+      "memberSince": "2026-10-15T10:00:00.000Z"
+    },
+    "metrics": {
+      "totalOrdersCount": 4,
+      "activeOrdersCount": 1,
+      "previousOrdersCount": 3,
+      "totalSpent": 18496
+    },
+    "defaultDeliveryAddress": {
+      "_id": "671e548f98a2b1f4c7810101",
+      "title": "Home",
+      "name": "Rohan Mehra",
+      "phone": "+91 9876501234",
+      "addressLine1": "Flat 802, Prestige Tower",
+      "addressLine2": "MG Road",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postalCode": "400001",
+      "country": "India",
+      "isDefault": true
+    },
+    "recentOrders": [
+      {
+        "orderId": "#ORD-1003",
+        "date": "2026-10-27T14:50:00.000Z",
+        "status": "Processing",
+        "totalAmount": 4199,
+        "itemsCount": 1,
+        "firstItemName": "Amber Oud",
+        "firstItemImage": "/images/perfumes/amber_oud_perfume.jpg"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 8.2: View Current & Previous Orders
+
+#### 38. View Current & Previous Orders
+- **Method & Route**: `GET /user/orders`
+- **Query Parameters**:
+  - `type`: `current` *(Pending, Processing, Confirmed, Shipped, Return Requested)* | `previous` *(Delivered, Cancelled, Returned)*
+  - `status`: Specific status filter (e.g. `Delivered`)
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "filter": "current",
+    "totalCount": 1,
+    "orders": [
+      {
+        "id": "671e548f98a2b1f4c7810500",
+        "orderId": "#ORD-1003",
+        "invoiceNumber": "INV-ORD-1003",
+        "createdAt": "2026-10-27T14:50:00.000Z",
+        "dateFormatted": "Oct 27, 2026",
+        "status": "Processing",
+        "paymentStatus": "Paid",
+        "paymentMethod": "Razorpay",
+        "totalAmount": 4199,
+        "itemsCount": 1,
+        "items": [
+          {
+            "productId": "671e548f98a2b1f4c78101a1",
+            "name": "Amber Oud",
+            "size": "50ml",
+            "quantity": 1,
+            "price": 4499,
+            "image": "/images/perfumes/amber_oud_perfume.jpg"
+          }
+        ],
+        "delivery": {
+          "courierName": "BlueDart Luxury Express",
+          "trackingNumber": "BD-481920491",
+          "estimatedDelivery": "2026-10-31T14:50:00.000Z"
+        },
+        "eligibility": {
+          "canCancel": true,
+          "canReturn": false,
+          "returnWindowDaysRemaining": 0
+        },
+        "invoiceDownloadUrl": "/api/orders/#ORD-1003/invoice/download"
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### 39. View Specific Order Details
+- **Method & Route**: `GET /user/orders/:id`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "order": {
+      "id": "671e548f98a2b1f4c7810500",
+      "orderId": "#ORD-1003",
+      "status": "Processing",
+      "paymentStatus": "Paid",
+      "subtotal": 4499,
+      "discountAmount": 450,
+      "giftWrapFee": 150,
+      "total_amount": 4199,
+      "tracking": { "courierName": "BlueDart Luxury Express", "history": [ "..." ] }
+    },
+    "eligibility": {
+      "canCancel": true,
+      "canReturn": false,
+      "returnPolicy": "Returns eligible within 7 days of delivery for untampered, sealed luxury flacons.",
+      "returnWindowDaysRemaining": 0
+    }
+  }
+}
+```
+
+---
+
+### 8.3: Cancellation & Return Options
+
+#### 40. Check Cancellation & Return Eligibility
+- **Method & Route**: `GET /user/orders/:id/eligibility`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": "#ORD-1003",
+    "status": "Processing",
+    "cancellation": {
+      "eligible": true,
+      "reason": "Eligible for instant cancellation before dispatch.",
+      "refundNotice": "Full refund will be reversed to your original payment method within 3-5 business days."
+    },
+    "returnOption": {
+      "eligible": false,
+      "reason": "Returns can only be requested after the parcel has been delivered.",
+      "daysRemaining": 0,
+      "policy": "Flacons must remain sealed, un-sprayed, and housed in original presentation coffrets."
+    }
+  }
+}
+```
+
+---
+
+#### 41. Cancel Order (Eligible before dispatch)
+- **Method & Route**: `POST /user/orders/:id/cancel`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Request Payload**:
+```json
+{
+  "reason": "Ordered by mistake, would like to purchase the 100ml flacon instead."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Order cancelled successfully. Inventory restored.",
+  "data": {
+    "orderId": "#ORD-1003",
+    "status": "Cancelled",
+    "cancellation": {
+      "isCancelled": true,
+      "cancelledAt": "2026-10-27T15:10:00.000Z",
+      "reason": "Ordered by mistake, would like to purchase the 100ml flacon instead.",
+      "refundStatus": "Pending",
+      "refundAmount": 4199
+    }
+  }
+}
+```
+- **Error Response `400 Bad Request`** *(If already shipped)*:
+```json
+{
+  "success": false,
+  "message": "Order cannot be cancelled because it is already \"Shipped\". Packages that have dispatched cannot be cancelled in transit."
+}
+```
+
+---
+
+#### 42. Request Order Return (Within 7 days of delivery)
+- **Method & Route**: `POST /user/orders/:id/return`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Request Payload**:
+```json
+{
+  "reason": "Outer packaging damaged during transit. Atomizer leaked.",
+  "comment": "Flacon remains in original presentation box. Requesting replacement or refund."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Return request submitted successfully. Concierge will contact you within 24 hours.",
+  "data": {
+    "orderId": "#ORD-1003",
+    "status": "Return Requested",
+    "returnDetails": {
+      "isReturnRequested": true,
+      "requestedAt": "2026-10-27T15:15:00.000Z",
+      "reason": "Outer packaging damaged during transit. Atomizer leaked.",
+      "status": "Pending",
+      "refundAmount": 4199
+    }
+  }
+}
+```
+
+---
+
+### 8.4: Manage Saved Delivery Addresses
+
+#### 43. View Saved Delivery Addresses
+- **Method & Route**: `GET /user/addresses`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "count": 1,
+    "addresses": [
+      {
+        "_id": "671e548f98a2b1f4c7810101",
+        "title": "Home",
+        "name": "Rohan Mehra",
+        "phone": "+91 9876501234",
+        "addressLine1": "Flat 802, Prestige Tower",
+        "addressLine2": "MG Road",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "postalCode": "400001",
+        "country": "India",
+        "isDefault": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### 44. Add Saved Delivery Address
+- **Method & Route**: `POST /user/addresses`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Request Payload**:
+```json
+{
+  "title": "Office",
+  "name": "Rohan Mehra",
+  "phone": "+91 9876501234",
+  "addressLine1": "Executive Suite 404, World Trade Centre",
+  "addressLine2": "Cuffe Parade",
+  "city": "Mumbai",
+  "state": "Maharashtra",
+  "postalCode": "400005",
+  "country": "India",
+  "isDefault": false
+}
+```
+- **Response `201 Created`**:
+```json
+{
+  "success": true,
+  "message": "Delivery address saved successfully.",
+  "data": {
+    "_id": "671e548f98a2b1f4c7810102",
+    "title": "Office",
+    "name": "Rohan Mehra",
+    "isDefault": false
+  }
+}
+```
+
+---
+
+#### 45. Update Saved Delivery Address
+- **Method & Route**: `PUT /user/addresses/:addressId`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Request Payload**:
+```json
+{
+  "addressLine1": "Suite 505, World Trade Centre"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Delivery address updated.",
+  "data": { "..." : "Returns updated address object" }
+}
+```
+
+---
+
+#### 46. Delete Saved Delivery Address
+- **Method & Route**: `DELETE /user/addresses/:addressId`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Delivery address removed.",
+  "data": { "remainingCount": 1 }
+}
+```
+
+---
+
+#### 47. Set Default Delivery Address
+- **Method & Route**: `PATCH /user/addresses/:addressId/default`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Default delivery address updated.",
+  "data": {
+    "_id": "671e548f98a2b1f4c7810102",
+    "isDefault": true
+  }
+}
+```
+
+---
+
+### 8.5: Access Wishlist Items Directly from Account
+
+#### 48. Account Wishlist Shortcut
+- **Method & Route**: `GET /user/wishlist`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "count": 1,
+    "items": [
+      {
+        "itemId": "671e548f98a2b1f4c7810201",
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "price": 4499,
+        "size": "50ml",
+        "stock": 20,
+        "status": "In Stock",
+        "image": "/images/perfumes/amber_oud_perfume.jpg"
+      }
+    ]
+  }
+}
+```
+
+
 
 
