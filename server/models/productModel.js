@@ -26,6 +26,25 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Stock cannot be negative']
     },
+    sku: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    lowStockThreshold: {
+      type: Number,
+      default: 5,
+      min: [0, 'Threshold cannot be negative']
+    },
+    reorderQuantity: {
+      type: Number,
+      default: 15,
+      min: [1, 'Reorder quantity must be at least 1']
+    },
+    lastRestockedAt: {
+      type: Date,
+      default: null
+    },
     category_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
@@ -627,8 +646,26 @@ export const ProductModel = {
 
     product.stock = (product.stock || 0) + quantity;
     product.sizes = JSON.stringify(sizesMap);
+    product.lastRestockedAt = new Date();
     await product.save();
     return product;
+  },
+
+  findLowStock: async (thresholdOverride = null) => {
+    const products = await Product.find().sort({ stock: 1 }).lean();
+    return products.filter(p => {
+      const threshold = thresholdOverride !== null ? Number(thresholdOverride) : (p.lowStockThreshold !== undefined ? p.lowStockThreshold : 5);
+      return (p.stock || 0) <= threshold;
+    });
+  },
+
+  updateThresholds: async (id, { lowStockThreshold, reorderQuantity, sku }) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const update = {};
+    if (lowStockThreshold !== undefined) update.lowStockThreshold = Number(lowStockThreshold);
+    if (reorderQuantity !== undefined) update.reorderQuantity = Number(reorderQuantity);
+    if (sku !== undefined) update.sku = sku;
+    return Product.findByIdAndUpdate(id, update, { new: true });
   }
 };
 

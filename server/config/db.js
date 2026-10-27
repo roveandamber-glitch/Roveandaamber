@@ -7,6 +7,7 @@ import { Product } from '../models/productModel.js';
 import { CouponModel } from '../models/couponModel.js';
 import { BannerModel } from '../models/bannerModel.js';
 import { ReviewModel } from '../models/reviewModel.js';
+import { InventoryModel } from '../models/inventoryModel.js';
 
 dotenv.config();
 
@@ -534,6 +535,9 @@ export const initDB = async () => {
 
     // 6. Seed default customer reviews and synchronize perfume ratings
     await ReviewModel.seedDefaultReviews();
+
+    // 7. Seed initial inventory movements and audit history
+    await InventoryModel.seedDefaultInventoryHistory();
   } catch (error) {
     console.error('Database initialization notice:', error.message);
   }

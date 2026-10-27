@@ -83,4 +83,10 @@ router.get('/reviews/stats', getReviewStats);
 router.put('/reviews/:id/moderate', validateReviewModeration, moderateReview);
 router.delete('/reviews/:id', deleteAdminReview);
 
+/* --------------------------------------------------------------------------
+   10. INVENTORY AND STOCK MANAGEMENT
+   -------------------------------------------------------------------------- */
+import inventoryRoutes from './inventoryRoutes.js';
+router.use('/inventory', inventoryRoutes);
+
 export default router;

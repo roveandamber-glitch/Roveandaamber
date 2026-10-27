@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { ProductModel, Product } from './productModel.js';
 import { User } from './userModel.js';
+import { InventoryModel } from './inventoryModel.js';
 
 const orderItemSchema = new mongoose.Schema(
   {
@@ -396,10 +397,26 @@ export const OrderModel = {
       items: verifiedItems
     });
 
-    // If order is paid upfront (e.g. COD or instant paid), decrement stock
+    // If order is paid upfront (e.g. COD or instant paid), decrement stock and record movement
     if (paymentStatus === 'Paid' || paymentMethod === 'Cash on Delivery') {
       for (const item of verifiedItems) {
+        const prod = await ProductModel.findById(item.productId);
+        const prevStock = prod ? prod.stock : 0;
         await ProductModel.decrementStock(item.productId, item.size, item.quantity);
+        const updated = await ProductModel.findById(item.productId);
+        InventoryModel.recordMovement({
+          productId: item.productId,
+          productName: item.name,
+          sku: prod?.sku || `RA-${item.name.slice(0, 3).toUpperCase()}`,
+          changeType: 'Order Placed',
+          quantityChange: -item.quantity,
+          previousStock: prevStock,
+          newStock: updated ? updated.stock : Math.max(0, prevStock - item.quantity),
+          size: item.size || '50ml',
+          referenceId: displayOrderId,
+          reason: `Customer purchase: ${displayOrderId}`,
+          performedBy: customerName || 'Checkout System'
+        }).catch(err => console.warn('Inventory log error on order:', err.message));
       }
     }
 
