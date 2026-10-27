@@ -1,6 +1,7 @@
 import { OrderModel } from '../models/orderModel.js';
 import { CartModel } from '../models/cartModel.js';
 import { razorpayService } from '../services/razorpayService.js';
+import { emailService } from '../services/emailService.js';
 
 // Helper to extract identity
 const getIdentity = (req) => {
@@ -196,6 +197,14 @@ export const verifyPayment = async (req, res) => {
 
     // Clear user's shopping cart upon successful checkout
     await CartModel.clearCart({ userId, guestId });
+
+    // 7. Automated Email Notifications: Send payment receipt and invoice access
+    emailService.sendPaymentConfirmation(paidOrder).catch(err => {
+      console.warn('⚠️ [Automated Email Notice]: Failed to send payment confirmation email:', err.message);
+    });
+    emailService.sendInvoiceEmail(paidOrder).catch(err => {
+      console.warn('⚠️ [Automated Email Notice]: Failed to send invoice email:', err.message);
+    });
 
     return res.json({
       success: true,

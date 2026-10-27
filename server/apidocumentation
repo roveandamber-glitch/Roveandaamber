@@ -1,0 +1,1248 @@
+# ROVE & AMBER API Documentation: Customer Shopping Experience & Payments
+
+**Base URL**: `http://localhost:5000/api`  
+**Standard Headers**:
+- `Content-Type: application/json`
+- `Authorization: Bearer <jwt_token>` *(optional for guest users)*
+- `x-guest-id: <guest_unique_id>` *(recommended for guest cart and wishlist session persistence)*
+
+---
+
+## 2. Customer Shopping Experience
+
+### 2.1 & 2.2: Product Browsing, Collections & Advanced Filters
+
+#### 1. Get All Products (with Search, Filters & Sorting)
+- **Method & Route**: `GET /products`
+- **Query Parameters**:
+  - `category` *(string)*: Filter by category name or ObjectId (e.g. `Eau de Parfum`)
+  - `fragranceFamily` *(string)*: Filter by olfactory notes (e.g. `Woody & Smoky Amber`)
+  - `gender` *(string)*: `him` | `her` | `unisex`
+  - `minPrice` / `maxPrice` *(number)*: Price range boundary (e.g. `minPrice=3000&maxPrice=5000`)
+  - `size` *(string)*: e.g. `50ml` or `100ml`
+  - `search` *(string)*: Keyword search across perfume names, notes, and descriptions
+  - `sort` *(string)*: `price_asc` | `price_desc` | `popularity` | `rating` | `newest`
+  - `page` & `limit` *(numbers)*: Pagination controls (e.g. `page=1&limit=12`)
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "id": "671e548f98a2b1f4c78101a1",
+        "_id": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "slug": "amber-oud",
+        "price": 4499,
+        "originalPrice": 5999,
+        "category": "Eau de Parfum",
+        "subcategory": "Signature Scents",
+        "fragranceFamily": "Woody & Smoky Amber",
+        "gender": "him",
+        "sizes": ["50ml", "100ml"],
+        "sizes_stock": { "50ml": 12, "100ml": 8 },
+        "stock": 20,
+        "status": "In Stock",
+        "rating": 4.9,
+        "reviewsCount": 38,
+        "popularity": 95,
+        "image": "/images/perfumes/amber_oud_perfume.jpg",
+        "images": [
+          { "url": "/images/perfumes/amber_oud_perfume.jpg", "alt": "Amber Oud Front Bottle View" },
+          { "url": "/images/perfumes/velvet_amber.jpg", "alt": "Amber Oud Presentation" }
+        ],
+        "video": "/images/perfumes/amber_oud_showcase.mp4",
+        "details": [
+          "Top Notes: Italian Bergamot, Pink Peppercorn",
+          "Heart Notes: Aged Golden Amber, Damask Rose",
+          "Base Notes: Wild Cambodian Oud, Benzoin, Madagascar Vanilla"
+        ],
+        "isFeatured": true,
+        "isNewArrival": false,
+        "isBestSeller": true,
+        "isGiftEligible": true,
+        "giftOccasions": ["Anniversary", "Special Occasions"]
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+---
+
+#### 2. Get Dynamic Filter Options
+- **Method & Route**: `GET /products/filter-options`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "categories": [
+      { "id": "671e548f98a2b1f4c7810111", "name": "Eau de Parfum", "slug": "eau-de-parfum" },
+      { "id": "671e548f98a2b1f4c7810112", "name": "Men's Fragrances", "slug": "mens-fragrances" },
+      { "id": "671e548f98a2b1f4c7810113", "name": "Women's Fragrances", "slug": "womens-fragrances" }
+    ],
+    "fragranceFamilies": [
+      "Woody & Smoky Amber",
+      "Amber & Saffron Nectar",
+      "Velvet Musk & Sandalwood",
+      "Turkish Damask Rose & Amber"
+    ],
+    "sizes": ["50ml", "100ml", "Discovery Set"],
+    "giftOccasions": ["Birthday", "Anniversary", "Special Occasions", "Wedding"],
+    "genders": [
+      { "label": "All Fragrances", "value": "all" },
+      { "label": "For Him", "value": "him" },
+      { "label": "For Her", "value": "her" },
+      { "label": "Unisex", "value": "unisex" }
+    ],
+    "priceRange": {
+      "min": 2999,
+      "max": 5999
+    }
+  }
+}
+```
+
+---
+
+#### 3. Dedicated Collections (For Him, For Her, Unisex)
+- **Method & Route**: `GET /products/collections/:collection`
+- **Example Route**: `GET /products/collections/him` *(supports `him`, `her`, `unisex`, or category slugs)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "collection": "him",
+    "products": [
+      {
+        "id": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "slug": "amber-oud",
+        "price": 4499,
+        "gender": "him",
+        "fragranceFamily": "Woody & Smoky Amber",
+        "image": "/images/perfumes/amber_oud_perfume.jpg"
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+---
+
+#### 4. Product Highlights (Featured, New Arrivals, Best Sellers)
+- **Method & Routes**:
+  - `GET /products/featured?limit=8`
+  - `GET /products/new-arrivals?limit=8`
+  - `GET /products/bestsellers?limit=8`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "671e548f98a2b1f4c78101a8",
+      "name": "Signature No. 01 Coffret",
+      "slug": "signature-no-01",
+      "price": 4899,
+      "originalPrice": 6200,
+      "isFeatured": true,
+      "isBestSeller": true,
+      "image": "/images/perfumes/liquid_gold_perfume.jpg"
+    }
+  ]
+}
+```
+
+---
+
+### 2.3: Product Media, Visuals & Videos
+
+#### 5. View Single Product Details
+- **Method & Route**: `GET /products/:id` *(accepts ObjectId or slug, e.g. `amber-oud`)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "671e548f98a2b1f4c78101a1",
+    "name": "Amber Oud",
+    "slug": "amber-oud",
+    "price": 4499,
+    "originalPrice": 5999,
+    "category": "Eau de Parfum",
+    "fragranceFamily": "Woody & Smoky Amber",
+    "gender": "him",
+    "sizes": ["50ml", "100ml"],
+    "sizes_stock": { "50ml": 12, "100ml": 8 },
+    "stock": 20,
+    "status": "In Stock",
+    "image": "/images/perfumes/amber_oud_perfume.jpg",
+    "images": [
+      { "url": "/images/perfumes/amber_oud_perfume.jpg", "alt": "Amber Oud Bottle Front" },
+      { "url": "/images/perfumes/velvet_amber.jpg", "alt": "Amber Oud Presentation" }
+    ],
+    "video": "/images/perfumes/amber_oud_showcase.mp4",
+    "details": [
+      "Top Notes: Italian Bergamot, Pink Peppercorn",
+      "Heart Notes: Aged Golden Amber, Damask Rose",
+      "Base Notes: Wild Cambodian Oud, Benzoin, Madagascar Vanilla"
+    ]
+  }
+}
+```
+
+---
+
+### 2.4: Gift Shopping – For Him and Her
+
+#### 6. Curated Gift Selections
+- **Method & Route**: `GET /products/gifts`
+- **Query Parameters**:
+  - `occasion`: `Birthday` | `Anniversary` | `Special Occasions` | `Wedding`
+  - `gender`: `him` | `her` | `unisex`
+  - `minPrice` / `maxPrice`: Budget constraints
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "giftSelections": [
+      {
+        "id": "671e548f98a2b1f4c78101a9",
+        "name": "L'Honneur Pour Homme Gift Coffret",
+        "price": 5999,
+        "originalPrice": 7500,
+        "gender": "him",
+        "giftOccasions": ["Birthday", "Anniversary", "Special Occasions"],
+        "image": "/images/perfumes/signature_collection.jpg"
+      }
+    ],
+    "total": 1,
+    "filters": {
+      "occasion": "Anniversary",
+      "gender": "him",
+      "minPrice": null,
+      "maxPrice": null
+    }
+  }
+}
+```
+
+---
+
+### 2.5: Wishlist and Save for Later
+
+#### 7. Retrieve Wishlist
+- **Method & Route**: `GET /wishlist`
+- **Headers**: `x-guest-id: guest_12345` or `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "671e548f98a2b1f4c7810200",
+    "guestId": "guest_12345",
+    "count": 1,
+    "items": [
+      {
+        "itemId": "671e548f98a2b1f4c7810201",
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "slug": "amber-oud",
+        "price": 4499,
+        "originalPrice": 5999,
+        "image": "/images/perfumes/amber_oud_perfume.jpg",
+        "size": "50ml",
+        "sizes": ["50ml", "100ml"],
+        "stock": 20,
+        "status": "In Stock",
+        "addedAt": "2026-10-27T14:45:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### 8. Add Product to Wishlist
+- **Method & Route**: `POST /wishlist`
+- **Request Payload**:
+```json
+{
+  "productId": "671e548f98a2b1f4c78101a1",
+  "size": "50ml"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Perfume saved to your wishlist.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810200",
+    "count": 1,
+    "items": [
+      {
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "size": "50ml"
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### 9. Move Wishlist Item Directly to Cart
+- **Method & Route**: `POST /wishlist/move-to-cart`
+- **Request Payload**:
+```json
+{
+  "productId": "671e548f98a2b1f4c78101a1",
+  "size": "50ml",
+  "quantity": 1
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "\"Amber Oud\" moved to cart successfully.",
+  "data": {
+    "cartItem": {
+      "id": "671e548f98a2b1f4c78101a1",
+      "productId": "671e548f98a2b1f4c78101a1",
+      "name": "Amber Oud",
+      "slug": "amber-oud",
+      "price": 4499,
+      "image": "/images/perfumes/amber_oud_perfume.jpg",
+      "size": "50ML",
+      "quantity": 1,
+      "maxStock": 20
+    }
+  }
+}
+```
+
+---
+
+#### 10. Remove Item / Clear Wishlist
+- **Remove Single Item**: `DELETE /wishlist/:productId`
+- **Clear All**: `DELETE /wishlist`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Product removed from wishlist.",
+  "data": {
+    "count": 0,
+    "items": []
+  }
+}
+```
+
+---
+
+## 3. Shopping Cart and Secure Payments
+
+### 3.1: Shopping Cart and Checkout
+
+#### 11. Retrieve Shopping Cart & Totals
+- **Method & Route**: `GET /cart`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "671e548f98a2b1f4c7810300",
+    "guestId": "guest_12345",
+    "items": [
+      {
+        "itemId": "671e548f98a2b1f4c7810301",
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "slug": "amber-oud",
+        "price": 4499,
+        "originalPrice": 5999,
+        "image": "/images/perfumes/amber_oud_perfume.jpg",
+        "size": "50ml",
+        "quantity": 1,
+        "maxStock": 12,
+        "inStock": true,
+        "itemTotal": 4499
+      }
+    ],
+    "itemCount": 1,
+    "totalQuantity": 1,
+    "subtotal": 4499,
+    "discountAmount": 450,
+    "coupon": {
+      "code": "ROVE10",
+      "discountType": "percentage",
+      "discountValue": 10,
+      "discountAmount": 450,
+      "description": "10% off on your luxury fragrance purchase"
+    },
+    "giftWrapFee": 150,
+    "shippingFee": 0,
+    "total": 4199,
+    "isGift": true,
+    "occasion": "Anniversary",
+    "giftMessage": "Wishing you eternal luxury and love.",
+    "giftWrap": true,
+    "giftRecipient": {
+      "name": "Aarav Sharma",
+      "phone": "+91 9876543210",
+      "address": "4B Amber Heights, Bandra West",
+      "city": "Mumbai",
+      "postalCode": "400050",
+      "email": "aarav@example.com"
+    }
+  }
+}
+```
+
+---
+
+#### 12. Add Item to Cart
+- **Method & Route**: `POST /cart/items`
+- **Request Payload**:
+```json
+{
+  "productId": "671e548f98a2b1f4c78101a1",
+  "size": "50ml",
+  "quantity": 1
+}
+```
+- **Response `201 Created`**:
+```json
+{
+  "success": true,
+  "message": "Product added to shopping cart.",
+  "data": {
+    "id": "671e548f98a2b1f4c7810300",
+    "itemCount": 1,
+    "subtotal": 4499,
+    "total": 4499
+  }
+}
+```
+
+---
+
+#### 13. Update Item Quantity & Remove Item
+- **Update Quantity**: `PUT /cart/items/:itemId`
+  - **Request Payload**:
+  ```json
+  {
+    "quantity": 2
+  }
+  ```
+- **Remove Item**: `DELETE /cart/items/:itemId`
+- **Clear Cart**: `DELETE /cart`
+
+---
+
+#### 14. Promotional Coupon Application
+- **Apply Coupon**: `POST /cart/apply-coupon`
+  - **Request Payload**:
+  ```json
+  {
+    "code": "ROVE10"
+  }
+  ```
+  - **Response `200 OK`**:
+  ```json
+  {
+    "success": true,
+    "message": "Promotional code \"ROVE10\" applied successfully!",
+    "data": {
+      "id": "671e548f98a2b1f4c7810300",
+      "subtotal": 4499,
+      "discountAmount": 450,
+      "total": 4049
+    }
+  }
+  ```
+- **Remove Coupon**: `DELETE /cart/remove-coupon`
+
+---
+
+#### 15. Set Gift Preferences & Recipient Details
+- **Method & Route**: `PUT /cart/gift-options`
+- **Request Payload**:
+```json
+{
+  "isGift": true,
+  "occasion": "Birthday",
+  "giftMessage": "Happy Birthday! May your day be as exquisite as this fragrance.",
+  "giftWrap": true,
+  "giftRecipient": {
+    "name": "Pooja Varma",
+    "phone": "+91 9123456789",
+    "address": "Villa 12, Palm Meadows",
+    "city": "Bengaluru",
+    "postalCode": "560066",
+    "email": "pooja@example.com"
+  }
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Gift preferences updated.",
+  "data": {
+    "isGift": true,
+    "giftWrap": true,
+    "giftWrapFee": 150
+  }
+}
+```
+
+---
+
+#### 16. Review Checkout Summary
+- **Method & Route**: `GET /cart/checkout-summary`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "orderSummary": {
+      "items": [
+        {
+          "itemId": "671e548f98a2b1f4c7810301",
+          "productId": "671e548f98a2b1f4c78101a1",
+          "name": "Amber Oud",
+          "price": 4499,
+          "quantity": 1,
+          "size": "50ml",
+          "itemTotal": 4499
+        }
+      ],
+      "itemCount": 1,
+      "subtotal": 4499,
+      "discountAmount": 450,
+      "coupon": { "code": "ROVE10", "discountAmount": 450 },
+      "giftWrapFee": 150,
+      "shippingFee": 0,
+      "totalPayable": 4199,
+      "currency": "INR"
+    },
+    "giftDetails": {
+      "isGift": true,
+      "occasion": "Birthday",
+      "giftMessage": "Happy Birthday! May your day be as exquisite as this fragrance.",
+      "giftWrap": true,
+      "giftRecipient": {
+        "name": "Pooja Varma",
+        "phone": "+91 9123456789",
+        "address": "Villa 12, Palm Meadows",
+        "city": "Bengaluru",
+        "postalCode": "560066",
+        "email": "pooja@example.com"
+      }
+    }
+  }
+}
+```
+
+---
+
+### 3.2: Razorpay Payment Integration
+
+#### 17. Initialize Razorpay Payment Order
+- **Method & Route**: `POST /payment/create-order`
+- **Request Payload** *(Cart-driven checkout)*:
+```json
+{
+  "customerName": "Rohan Mehra",
+  "phone": "+91 9876501234",
+  "email": "rohan@example.com",
+  "address": "Flat 802, Prestige Tower, MG Road, Mumbai"
+}
+```
+*(Alternatively, pass `orderId` if retrying payment for an existing pending order).*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Razorpay payment order initialized.",
+  "data": {
+    "razorpayOrderId": "order_NXd48Fhd7sYg",
+    "amount": 419900,
+    "currency": "INR",
+    "keyId": "rzp_test_placeholder",
+    "orderId": "#ORD-1002",
+    "internalId": "671e548f98a2b1f4c7810400",
+    "customer": {
+      "name": "Rohan Mehra",
+      "email": "rohan@example.com",
+      "phone": "+91 9876501234"
+    },
+    "isMock": false
+  }
+}
+```
+
+---
+
+#### 18. Backend Cryptographic Verification (HMAC-SHA256)
+- **Method & Route**: `POST /payment/verify`
+- **Request Payload** *(Returned by Razorpay checkout modal)*:
+```json
+{
+  "razorpay_order_id": "order_NXd48Fhd7sYg",
+  "razorpay_payment_id": "pay_NXd5PqRsTuVw",
+  "razorpay_signature": "9b12a819b183cfa612d...",
+  "orderId": "#ORD-1002"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Payment verified successfully. Order confirmed!",
+  "data": {
+    "orderId": "#ORD-1002",
+    "paymentStatus": "Paid",
+    "status": "Processing",
+    "totalAmount": 4199,
+    "transactionId": "pay_NXd5PqRsTuVw",
+    "paidAt": "2026-10-27T14:52:10.000Z"
+  }
+}
+```
+
+---
+
+#### 19. Handle Payment Failure / Cancellation
+- **Method & Route**: `POST /payment/failure`
+- **Request Payload**:
+```json
+{
+  "razorpay_order_id": "order_NXd48Fhd7sYg",
+  "orderId": "#ORD-1002",
+  "error_code": "BAD_REQUEST_ERROR",
+  "error_description": "Payment was cancelled by the user."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": "#ORD-1002",
+    "status": "Processing",
+    "paymentStatus": "Paid",
+    "paymentMethod": "Razorpay",
+    "totalAmount": 4199,
+    "transactionId": "pay_NXd5PqRsTuVw",
+    "paidAt": "2026-10-27T14:52:10.000Z",
+    "failureReason": ""
+  }
+}
+```
+
+---
+
+## 4. Order Management, Tracking and Invoices
+
+### 4.1: Order Confirmation & Management
+
+#### 21. Place Order & Generate Records
+- **Method & Route**: `POST /orders`
+- **Headers**: `Content-Type: application/json`, `Authorization: Bearer <token>` *(optional for guest checkout)*
+- **Request Payload**:
+```json
+{
+  "customerName": "Rohan Mehra",
+  "phone": "+91 9876501234",
+  "email": "rohan@example.com",
+  "address": "Flat 802, Prestige Tower, MG Road, Mumbai 400001",
+  "items": [
+    {
+      "productId": "671e548f98a2b1f4c78101a1",
+      "quantity": 1,
+      "size": "50ml"
+    }
+  ],
+  "isGift": true,
+  "occasion": "Anniversary",
+  "giftMessage": "To many more fragrant years together.",
+  "giftWrap": true,
+  "giftRecipient": {
+    "name": "Pooja Varma",
+    "phone": "+91 9123456789",
+    "address": "Villa 12, Palm Meadows, Bengaluru 560066",
+    "email": "pooja@example.com"
+  },
+  "paymentMethod": "Razorpay"
+}
+```
+- **Response `201 Created`**:
+```json
+{
+  "success": true,
+  "message": "Order placed successfully. Confirmation generated.",
+  "data": {
+    "orderId": "#ORD-1003",
+    "id": "671e548f98a2b1f4c7810500",
+    "invoiceNumber": "INV-ORD-1003",
+    "totalAmount": 4199,
+    "paymentStatus": "Pending",
+    "status": "Pending",
+    "customerName": "Rohan Mehra",
+    "estimatedDelivery": "2026-10-31T14:50:00.000Z"
+  }
+}
+```
+
+---
+
+#### 22. Display Order Confirmation & Payment Summary
+- **Method & Route**: `GET /orders/confirmation/:id`
+- **Query Parameters** *(For guest checkout verification)*: `?email=rohan@example.com` or `?phone=+919876501234`
+- **Headers**: `Authorization: Bearer <token>` *(if logged in)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Order confirmation retrieved.",
+  "data": {
+    "orderId": "#ORD-1003",
+    "id": "671e548f98a2b1f4c7810500",
+    "invoiceNumber": "INV-ORD-1003",
+    "createdAt": "2026-10-27T14:50:00.000Z",
+    "status": "Processing",
+    "payment": {
+      "method": "Razorpay",
+      "status": "Paid",
+      "transactionId": "pay_NXd5PqRsTuVw"
+    },
+    "customer": {
+      "name": "Rohan Mehra",
+      "phone": "+91 9876501234",
+      "email": "rohan@example.com",
+      "address": "Flat 802, Prestige Tower, MG Road, Mumbai"
+    },
+    "gift": {
+      "isGift": true,
+      "occasion": "Anniversary",
+      "giftMessage": "To many more fragrant years together.",
+      "giftWrap": true,
+      "recipient": {
+        "name": "Pooja Varma",
+        "phone": "+91 9123456789",
+        "address": "Villa 12, Palm Meadows, Bengaluru"
+      }
+    },
+    "items": [
+      {
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "price": 4499,
+        "quantity": 1,
+        "size": "50ml",
+        "image": "/images/perfumes/amber_oud_perfume.jpg"
+      }
+    ],
+    "charges": {
+      "subtotal": 4499,
+      "discountAmount": 450,
+      "couponCode": "ROVE10",
+      "giftWrapFee": 150,
+      "shippingFee": 0,
+      "totalAmount": 4199,
+      "currency": "INR"
+    },
+    "trackingPreview": {
+      "stage": "Processing",
+      "courierName": "BlueDart Luxury Express",
+      "trackingNumber": "BD-481920491",
+      "estimatedDelivery": "2026-10-31T14:50:00.000Z"
+    }
+  }
+}
+```
+
+---
+
+#### 23. Customer Order History (Strictly Protected)
+- **Method & Route**: `GET /orders/my`
+- **Headers**: `Authorization: Bearer <jwt_token>` *(Required)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "671e548f98a2b1f4c7810500",
+      "orderId": "#ORD-1003",
+      "invoiceNumber": "INV-ORD-1003",
+      "date": "Oct 27, 2026",
+      "createdAt": "2026-10-27T14:50:00.000Z",
+      "status": "Processing",
+      "paymentStatus": "Paid",
+      "paymentMethod": "Razorpay",
+      "totalAmount": 4199,
+      "itemsCount": 1,
+      "items": [
+        {
+          "name": "Amber Oud",
+          "size": "50ml",
+          "quantity": 1,
+          "price": 4499,
+          "image": "/images/perfumes/amber_oud_perfume.jpg"
+        }
+      ],
+      "tracking": {
+        "currentStage": "Processing",
+        "courierName": "BlueDart Luxury Express",
+        "trackingNumber": "BD-481920491",
+        "estimatedDelivery": "2026-10-31T14:50:00.000Z"
+      },
+      "invoiceUrl": "/api/orders/#ORD-1003/invoice"
+    }
+  ]
+}
+```
+
+---
+
+#### 24. Order Details by ID (Protected)
+- **Method & Route**: `GET /orders/:id`
+- **Headers**: `Authorization: Bearer <jwt_token>` *(User must own the order or be an Admin)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": { "..." : "Returns full order document with billing, delivery, and item details" }
+}
+```
+
+---
+
+### 4.2: Delivery Tracking
+
+#### 25. Live Order Delivery Progress & Tracking (Protected)
+- **Method & Route**: `GET /orders/:id/track`
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": "#ORD-1003",
+    "status": "Processing",
+    "progressPercent": 45,
+    "courier": {
+      "name": "BlueDart Luxury Express",
+      "trackingNumber": "BD-481920491",
+      "trackingUrl": "https://www.bluedart.com",
+      "dispatchedAt": null,
+      "deliveredAt": null,
+      "estimatedDelivery": "2026-10-31T14:50:00.000Z",
+      "currentLocation": "Maison Central Fulfillment Hub, Mumbai"
+    },
+    "recipient": {
+      "name": "Pooja Varma",
+      "address": "Villa 12, Palm Meadows, Bengaluru 560066"
+    },
+    "history": [
+      {
+        "stage": "Order Placed",
+        "title": "Order Placed Successfully",
+        "description": "Your luxury perfume order has been received and confirmed in our system.",
+        "location": "Online Store, Mumbai",
+        "timestamp": "2026-10-27T14:50:00.000Z"
+      },
+      {
+        "stage": "Processing",
+        "title": "Payment Confirmed & Artisan Packaging",
+        "description": "Payment verified. Our perfumers are packaging your flacons in protective presentation boxes.",
+        "location": "Maison Fulfillment Hub, Mumbai",
+        "timestamp": "2026-10-27T14:52:10.000Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### 26. Track Guest Order (Secure Contact Verification)
+- **Method & Route**: `POST /orders/track-guest`
+- **Request Payload**:
+```json
+{
+  "orderId": "#ORD-1003",
+  "email": "rohan@example.com"
+}
+```
+*(Also accepts `phone` instead of `email`)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Guest order verified successfully.",
+  "data": {
+    "orderId": "#ORD-1003",
+    "status": "Processing",
+    "courier": {
+      "name": "BlueDart Luxury Express",
+      "trackingNumber": "BD-481920491",
+      "trackingUrl": "https://www.bluedart.com",
+      "estimatedDelivery": "2026-10-31T14:50:00.000Z",
+      "currentLocation": "Maison Fulfillment Hub, Mumbai"
+    },
+    "history": [
+      {
+        "stage": "Order Placed",
+        "title": "Order Placed Successfully",
+        "description": "Your luxury perfume order has been received and confirmed in our system.",
+        "location": "Online Store, Mumbai",
+        "timestamp": "2026-10-27T14:50:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### 27. Update Courier Details & Synchronize Delivery Updates (Admin Only)
+- **Method & Route**: `PUT /orders/:id/tracking`
+- **Headers**: `Authorization: Bearer <admin_token>` *(Admin role required)*
+- **Request Payload**:
+```json
+{
+  "courierName": "BlueDart Luxury Express",
+  "trackingNumber": "BD-481920491",
+  "trackingUrl": "https://www.bluedart.com/tracking?awb=BD-481920491",
+  "currentLocation": "Airport Logistics Hub, Bengaluru",
+  "stage": "Shipped",
+  "title": "Parcel in Transit to Recipient",
+  "description": "Package has arrived at the destination distribution facility and is scheduled for morning delivery."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Delivery tracking updated and synchronized with order management.",
+  "data": {
+    "orderId": "#ORD-1003",
+    "status": "Shipped",
+    "tracking": {
+      "courierName": "BlueDart Luxury Express",
+      "trackingNumber": "BD-481920491",
+      "currentLocation": "Airport Logistics Hub, Bengaluru",
+      "history": [
+        "..."
+      ]
+    }
+  }
+}
+```
+
+---
+
+### 4.3: Invoice Generation & Downloads
+
+#### 28. Retrieve Structured Invoice Data (JSON View)
+- **Method & Route**: `GET /orders/:id/invoice`
+- **Headers**: `Authorization: Bearer <jwt_token>` *(Owner or Admin)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "invoiceNumber": "INV-ORD-1003",
+    "orderId": "#ORD-1003",
+    "date": "October 27, 2026",
+    "company": {
+      "name": "ROVE & AMBER",
+      "tagline": "Maison de Haute Parfumerie",
+      "address": "Luxury Fragrance Arcade, Galleria Boulevard",
+      "city": "Mumbai, Maharashtra 400050",
+      "email": "concierge@roveandamber.com",
+      "gstin": "27AABCR1234F1Z8"
+    },
+    "customer": {
+      "name": "Rohan Mehra",
+      "phone": "+91 9876501234",
+      "email": "rohan@example.com",
+      "billingAddress": "Flat 802, Prestige Tower, MG Road, Mumbai",
+      "shippingAddress": "Pooja Varma, Villa 12, Palm Meadows, Bengaluru - 560066"
+    },
+    "payment": {
+      "method": "Razorpay",
+      "status": "Paid",
+      "transactionId": "pay_NXd5PqRsTuVw",
+      "paidAt": "10/27/2026"
+    },
+    "items": [
+      {
+        "serialNo": 1,
+        "name": "Amber Oud",
+        "size": "50ml",
+        "quantity": 1,
+        "unitPrice": 4499,
+        "total": 4499
+      }
+    ],
+    "charges": {
+      "subtotal": 4499,
+      "taxableAmount": 3812.71,
+      "gstAmount": 686.29,
+      "discountAmount": 450,
+      "couponCode": "ROVE10",
+      "giftWrapFee": 150,
+      "shippingFee": 0,
+      "grandTotal": 4199,
+      "currency": "INR"
+    },
+    "giftDetails": {
+      "isGift": true,
+      "occasion": "Anniversary",
+      "giftMessage": "To many more fragrant years together.",
+      "giftWrap": true,
+      "recipientName": "Pooja Varma"
+    }
+  }
+}
+```
+
+---
+
+#### 29. Download Official PDF Invoice
+- **Method & Route**: `GET /orders/:id/invoice/download`
+- **Headers**: `Authorization: Bearer <jwt_token>` *(or pass `?token=<jwt_token>` for direct browser downloads)*
+- **Response Headers**:
+  - `Content-Type: application/pdf`
+  - `Content-Disposition: attachment; filename="Invoice-ORD-1003.pdf"`
+- **Response Payload**: Binary PDF Stream rendered with PDFKit (Gold & Obsidian luxury theme, company header, meta table, itemized lines, GST calculation, charges breakdown, and thank you footer).
+
+---
+
+#### 30. Admin Invoice Administration Records
+- **Method & Route**: `GET /orders/admin/invoices/all`
+- **Headers**: `Authorization: Bearer <admin_token>` *(Admin Only)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "totalInvoices": 1,
+    "invoices": [
+      {
+        "orderId": "#ORD-1003",
+        "invoiceNumber": "INV-ORD-1003",
+        "invoiceDate": "2026-10-27T14:50:00.000Z",
+        "customerName": "Rohan Mehra",
+        "customerEmail": "rohan@example.com",
+        "totalAmount": 4199,
+        "paymentStatus": "Paid",
+        "paymentMethod": "Razorpay",
+        "downloadUrl": "/api/orders/#ORD-1003/invoice/download"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 7. Automated Email Notifications
+
+The system automatically delivers beautifully styled gold & obsidian luxury emails for key customer events, while also providing secure REST endpoints for manual re-dispatches or admin transactional updates.
+
+**Automatic Triggers Active in Backend**:
+1. **Order Placed**: Automatically sends Order Confirmation with reserved item details and tracking links upon checkout.
+2. **Payment Verified**: Automatically sends Payment Confirmation with Razorpay transaction ID, artisan packaging notification, and PDF tax invoice.
+3. **Shipped with Courier**: Automatically sends Shipping Notification with BlueDart courier name, AWB tracking number, and live tracking link when order status changes to `Shipped`.
+4. **Delivered**: Automatically sends Delivery Completed notification with fragrance application guide and concierge contact when status changes to `Delivered`.
+
+---
+
+#### 31. Email Service Telemetry & Configuration Status
+- **Method & Route**: `GET /orders/email/status`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "service": "Nodemailer Luxury Email Suite",
+    "isConfigured": false,
+    "mode": "Simulated Development Environment",
+    "senderAddress": "concierge@roveandamber.com",
+    "supportedEvents": [
+      "Order Confirmation",
+      "Payment Verification & Receipt",
+      "Courier Dispatch & In-Transit Shipping",
+      "Delivery Completed",
+      "PDF Tax Invoice Delivery",
+      "Transactional Status Updates"
+    ],
+    "host": "Unset (Running in console simulation mode)"
+  }
+}
+```
+
+---
+
+#### 32. Resend Order Confirmation Email
+- **Method & Route**: `POST /orders/:id/email/confirmation`
+- **Headers**: `Authorization: Bearer <token>` *(Protected: Owner or Admin)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Order confirmation email dispatched to rohan@example.com.",
+  "data": {
+    "success": true,
+    "recipient": "rohan@example.com",
+    "subject": "Order Confirmed: #ORD-1003 | ROVE & AMBER",
+    "isSimulated": true
+  }
+}
+```
+- **Error Response `404 Not Found`**:
+```json
+{
+  "success": false,
+  "message": "Order \"#ORD-9999\" not found."
+}
+```
+- **Error Response `403 Forbidden`**:
+```json
+{
+  "success": false,
+  "message": "Unauthorized: You do not have permission to trigger notifications for this order."
+}
+```
+
+---
+
+#### 33. Resend Payment Confirmation Email
+- **Method & Route**: `POST /orders/:id/email/payment`
+- **Headers**: `Authorization: Bearer <token>` *(Protected: Owner or Admin)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Payment confirmation email dispatched to rohan@example.com.",
+  "data": {
+    "success": true,
+    "recipient": "rohan@example.com",
+    "subject": "Payment Receipt: #ORD-1003 | ROVE & AMBER",
+    "isSimulated": true
+  }
+}
+```
+- **Error Response `400 Bad Request`** *(If order is not yet paid)*:
+```json
+{
+  "success": false,
+  "message": "Cannot send payment confirmation: Order payment status is \"Pending\". Only verified paid orders are eligible."
+}
+```
+
+---
+
+#### 34. Send Tax Invoice Email with PDF Attachment
+- **Method & Route**: `POST /orders/:id/email/invoice`
+- **Headers**: `Authorization: Bearer <token>` *(Protected: Owner or Admin)*
+- **Request Payload** *(Optional custom recipient)*:
+```json
+{
+  "recipientEmail": "accounts@clientfirm.com"
+}
+```
+*(If omitted, defaults to the billing customer email on the order)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Official PDF invoice dispatched to accounts@clientfirm.com.",
+  "data": {
+    "success": true,
+    "recipient": "accounts@clientfirm.com",
+    "subject": "Tax Invoice: INV-ORD-1003 (#ORD-1003) | ROVE & AMBER",
+    "isSimulated": true
+  }
+}
+```
+- **Error Response `400 Bad Request`**:
+```json
+{
+  "success": false,
+  "message": "Please provide a valid recipient email address."
+}
+```
+
+---
+
+#### 35. Send Shipping & Delivery Tracking Email
+- **Method & Route**: `POST /orders/:id/email/tracking`
+- **Headers**: `Authorization: Bearer <token>` *(Protected: Owner or Admin)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Tracking update notification dispatched to rohan@example.com.",
+  "data": {
+    "success": true,
+    "recipient": "rohan@example.com",
+    "subject": "Your Fragrance Has Shipped: #ORD-1003 | ROVE & AMBER",
+    "isSimulated": true
+  }
+}
+```
+
+---
+
+#### 36. Send Custom Transactional Notification (Admin Only)
+- **Method & Route**: `POST /orders/:id/email/transactional`
+- **Headers**: `Authorization: Bearer <admin_token>` *(Admin Only)*
+- **Request Payload**:
+```json
+{
+  "subject": "Delivery Rescheduled",
+  "stage": "Transit Delay",
+  "message": "Due to luxury white-glove security transit protocols, your flacon delivery has been prioritized for tomorrow morning by 10:00 AM."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Transactional update dispatched to rohan@example.com.",
+  "data": {
+    "success": true,
+    "recipient": "rohan@example.com",
+    "subject": "Delivery Rescheduled: #ORD-1003 | ROVE & AMBER",
+    "isSimulated": true
+  }
+}
+```
+- **Error Response `400 Bad Request`**:
+```json
+{
+  "success": false,
+  "message": "Subject and message are required fields."
+}
+```
+
+
+

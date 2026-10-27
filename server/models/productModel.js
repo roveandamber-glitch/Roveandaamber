@@ -604,6 +604,31 @@ export const ProductModel = {
     product.sizes = JSON.stringify(sizesMap);
     await product.save();
     return product;
+  },
+
+  incrementStock: async (id, size, quantity) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const product = await Product.findById(id);
+    if (!product) return null;
+
+    let sizesMap = {};
+    if (product.sizes) {
+      try {
+        sizesMap = JSON.parse(product.sizes);
+      } catch (e) {}
+    }
+
+    const normalizedSize = size || '50ml';
+    if (sizesMap[normalizedSize] !== undefined) {
+      sizesMap[normalizedSize] = sizesMap[normalizedSize] + quantity;
+    } else {
+      sizesMap[normalizedSize] = quantity;
+    }
+
+    product.stock = (product.stock || 0) + quantity;
+    product.sizes = JSON.stringify(sizesMap);
+    await product.save();
+    return product;
   }
 };
 
