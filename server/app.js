@@ -5,19 +5,9 @@ import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Route Handlers
-import authRoutes from './routes/authRoutes.js';
-import categoryRoutes from './routes/categoryRoutes.js';
-import productRoutes from './routes/productRoutes.js';
-import orderRoutes from './routes/orderRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
-import wishlistRoutes from './routes/wishlistRoutes.js';
-import cartRoutes from './routes/cartRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
-import userRoutes from './routes/userRoutes.js';
-import bannerRoutes from './routes/bannerRoutes.js';
-import inventoryRoutes from './routes/inventoryRoutes.js';
-import reportRoutes from './routes/reportRoutes.js';
+// Organized Route Modules (Admin & User)
+import adminRouter, { inventoryRoutes, reportRoutes } from './routes/admin/index.js';
+import userRouter from './routes/user/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -167,20 +157,18 @@ app.use('/Images', express.static(path.resolve(__dirname, '../client/public/Imag
 app.use('/images', express.static(path.resolve(__dirname, '../client/public/images'), staticOptions));
 
 // ==========================================
-// 8. Application API Routes
+// 8. Application API Routes (User & Admin Suites)
 // ==========================================
-app.use('/api/auth', authRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/wishlist', wishlistRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/payment', paymentRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/banners', bannerRoutes);
+// User & Customer Facing Routes (/api/auth, /api/products, /api/orders, /api/cart, /api/user, etc.)
+app.use('/api', userRouter);
+
+// Admin Operations Suite (/api/admin, /api/admin/inventory, /api/admin/reports)
+app.use('/api/admin', adminRouter);
+
+// Convenient Root Aliases for Admin Submodules
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/reports', reportRoutes);
-app.use('/api/admin', adminRoutes);
+
 
 // ==========================================
 // 9. Health & Diagnostics Telemetry
