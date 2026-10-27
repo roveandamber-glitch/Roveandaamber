@@ -2412,6 +2412,450 @@ All admin endpoints are strictly protected by `protect` and `adminOnly` middlewa
 }
 ```
 
+---
+
+## 10. Inventory and Stock Management
+
+The inventory module maintains accurate product availability, multi-size stock counts, automated stock deduction upon order confirmation, low-stock threshold alerting, and historical audit logs of stock movements.
+All endpoints are secured with `protect` and `adminOnly` authentication middlewares. Requests can be accessed via `/api/admin/inventory` or `/api/inventory` using:
+`Authorization: Bearer <admin_jwt_token>` or `x-admin-key: <token>`.
+
+---
+
+### 10.1: Inventory Management
+• Maintain stock quantities for perfume products.
+• Update stock after relevant order and restocking events.
+• View available product quantities.
+• Maintain inventory records for effective stock control.
+
+#### 73. Inventory Overview & Stock Health Summary
+- **Method & Route**: `GET /admin/inventory` *(or `GET /inventory`)*
+- **Query Parameters**:
+  - `search`: Filter by perfume name, SKU, or fragrance family
+  - `category`: Filter by category name
+  - `status`: Filter by `in-stock`, `low-stock`, `out-of-stock`
+  - `sortBy`: `stock_asc`, `stock_desc`, `name`
+  - `page`: Page index (default: 1)
+  - `limit`: Items per page (default: 25)
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalProducts": 14,
+      "totalInventoryUnits": 248,
+      "totalValuation": 1115752,
+      "inStockCount": 11,
+      "lowStockCount": 2,
+      "outOfStockCount": 1,
+      "averageStockPerProduct": 18
+    },
+    "products": [
+      {
+        "id": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "slug": "amber-oud",
+        "image": "/images/perfumes/amber_oud_perfume.jpg",
+        "categoryName": "Haute Parfumerie",
+        "price": 4499,
+        "sku": "RA-AMB-01A1",
+        "stock": 18,
+        "sizes": {
+          "50ml": 10,
+          "100ml": 8
+        },
+        "lowStockThreshold": 5,
+        "reorderQuantity": 15,
+        "stockStatus": "In Stock",
+        "isLowStock": false,
+        "lastRestockedAt": "2026-10-27T14:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "total": 14,
+      "page": 1,
+      "totalPages": 1,
+      "limit": 25
+    }
+  }
+}
+```
+
+#### 74. View Single Product Inventory & Recent Movements
+- **Method & Route**: `GET /admin/inventory/product/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "product": {
+      "id": "671e548f98a2b1f4c78101a1",
+      "name": "Amber Oud",
+      "slug": "amber-oud",
+      "sku": "RA-AMB-01A1",
+      "price": 4499,
+      "stock": 18,
+      "sizes": {
+        "50ml": 10,
+        "100ml": 8
+      },
+      "lowStockThreshold": 5,
+      "reorderQuantity": 15,
+      "status": "In Stock",
+      "lastRestockedAt": "2026-10-27T14:00:00.000Z"
+    },
+    "recentMovements": [
+      {
+        "id": "671e548f98a2b1f4c7810801",
+        "changeType": "Order Placed",
+        "quantityChange": -1,
+        "previousStock": 19,
+        "newStock": 18,
+        "size": "50ml",
+        "referenceId": "#ORD-1003",
+        "reason": "Customer purchase: #ORD-1003",
+        "performedBy": "Rohan Mehra",
+        "createdAt": "2026-10-27T14:50:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+#### 75. Update Stock Quantities (Restock / Damage / Adjustment)
+- **Method & Route**: `POST /admin/inventory/adjust`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "productId": "671e548f98a2b1f4c78101a1",
+  "quantityChange": 20,
+  "changeType": "Restock",
+  "size": "50ml",
+  "referenceId": "RESTOCK-BATCH-890",
+  "reason": "Atelier autumn laboratory batch intake.",
+  "batchNumber": "LOT-2026-B890",
+  "costPerUnit": 2025
+}
+```
+*(Use negative `quantityChange` e.g. `-2` and `changeType: "Damage / Expiry"` for broken or expired flacons)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Stock successfully updated. New inventory level: 38 units.",
+  "data": {
+    "product": {
+      "id": "671e548f98a2b1f4c78101a1",
+      "name": "Amber Oud",
+      "stock": 38,
+      "sizes": {
+        "50ml": 30,
+        "100ml": 8
+      },
+      "status": "In Stock"
+    },
+    "movementRecord": {
+      "id": "671e548f98a2b1f4c7810850",
+      "changeType": "Restock",
+      "quantityChange": 20,
+      "previousStock": 18,
+      "newStock": 38
+    }
+  }
+}
+```
+
+#### 76. Batch Restock Multi-Product Shipment Intake
+- **Method & Route**: `POST /admin/inventory/batch-restock`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "batchNumber": "SHIPMENT-OCT-2026",
+  "supplierName": "Maison Fragrance Atelier Grasse",
+  "reason": "Seasonal replenishment consignment intake",
+  "items": [
+    {
+      "productId": "671e548f98a2b1f4c78101a1",
+      "quantity": 25,
+      "size": "50ml",
+      "costPerUnit": 2000
+    },
+    {
+      "productId": "671e548f98a2b1f4c78101b2",
+      "quantity": 15,
+      "size": "100ml",
+      "costPerUnit": 2800
+    }
+  ]
+}
+```
+- **Response `201 Created`**:
+```json
+{
+  "success": true,
+  "message": "Batch restock complete for 2 perfume products.",
+  "data": {
+    "batchNumber": "SHIPMENT-OCT-2026",
+    "restockedCount": 2,
+    "products": [
+      {
+        "id": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "newStock": 63
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 10.2: Low-Stock Alerts
+• Configure minimum stock thresholds.
+• Identify products approaching low-stock levels.
+• Display low-stock notifications in the admin dashboard.
+• Help administrators identify products requiring replenishment.
+
+#### 77. Identify Low-Stock Perfumes & Replenishment Deficit
+- **Method & Route**: `GET /admin/inventory/alerts`
+- **Query Parameters**: `?threshold=5` *(optional override)*
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "totalAlerts": 3,
+    "criticalOutOfStock": 1,
+    "approachingLowStock": 2,
+    "alerts": [
+      {
+        "id": "671e548f98a2b1f4c78101c3",
+        "name": "Golden Saffron Extrait",
+        "slug": "golden-saffron",
+        "sku": "RA-SAF-01C3",
+        "currentStock": 0,
+        "lowStockThreshold": 5,
+        "suggestedReorderQuantity": 20,
+        "deficitUnits": 5,
+        "urgency": "Critical Out of Stock",
+        "estimatedRestockCost": 45000,
+        "lastRestockedAt": "2026-10-15T09:00:00.000Z"
+      },
+      {
+        "id": "671e548f98a2b1f4c78101d4",
+        "name": "Velvet Santal",
+        "slug": "velvet-santal",
+        "sku": "RA-SAN-01D4",
+        "currentStock": 3,
+        "lowStockThreshold": 6,
+        "suggestedReorderQuantity": 15,
+        "deficitUnits": 3,
+        "urgency": "Low Stock Warning",
+        "estimatedRestockCost": 28350,
+        "lastRestockedAt": "2026-10-20T11:30:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+#### 78. Configure Minimum Stock Thresholds & Replenishment Targets
+- **Method & Route**: `PUT /admin/inventory/thresholds/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "lowStockThreshold": 8,
+  "reorderQuantity": 25,
+  "sku": "RA-AMB-50-EXCLUSIVE"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Inventory thresholds updated for Amber Oud.",
+  "data": {
+    "productId": "671e548f98a2b1f4c78101a1",
+    "name": "Amber Oud",
+    "sku": "RA-AMB-50-EXCLUSIVE",
+    "lowStockThreshold": 8,
+    "reorderQuantity": 25,
+    "currentStock": 18,
+    "isCurrentlyLowStock": false
+  }
+}
+```
+
+#### 79. Real-time Low-Stock Telemetry for Dashboard Notification Bell
+- **Method & Route**: `GET /admin/inventory/notifications`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "count": 3,
+    "hasCritical": true,
+    "notifications": [
+      {
+        "productId": "671e548f98a2b1f4c78101c3",
+        "productName": "Golden Saffron Extrait",
+        "currentStock": 0,
+        "threshold": 5,
+        "urgency": "critical",
+        "message": "Golden Saffron Extrait is completely OUT OF STOCK (0 units left). Replenish immediately."
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 10.3: Inventory History & Reconciliation
+• Maintain records of stock additions and reductions.
+• Track stock changes associated with orders and restocking.
+• Review historical inventory movements.
+• Support stock reconciliation and inventory monitoring.
+
+#### 80. Review Historical Inventory Movement Records
+- **Method & Route**: `GET /admin/inventory/history`
+- **Query Parameters**:
+  - `productId`: Filter by MongoDB Product ObjectId
+  - `changeType`: `Restock`, `Order Placed`, `Order Cancelled`, `Return Received`, `Manual Adjustment`, `Damage / Expiry`, `Stock Reconciliation`
+  - `search`: Search across product name, SKU, reference ID, or reason
+  - `startDate`, `endDate`: ISO format (`YYYY-MM-DD`)
+  - `page`: Page index (default: 1)
+  - `limit`: Items per page (default: 20)
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "logs": [
+      {
+        "id": "671e548f98a2b1f4c7810801",
+        "productId": {
+          "_id": "671e548f98a2b1f4c78101a1",
+          "name": "Amber Oud",
+          "slug": "amber-oud",
+          "categoryName": "Haute Parfumerie"
+        },
+        "productName": "Amber Oud",
+        "sku": "RA-AMB-01A1",
+        "changeType": "Order Placed",
+        "quantityChange": -1,
+        "previousStock": 19,
+        "newStock": 18,
+        "size": "50ml",
+        "referenceId": "#ORD-1003",
+        "reason": "Customer purchase: #ORD-1003",
+        "performedBy": "Rohan Mehra",
+        "createdAt": "2026-10-27T14:50:00.000Z"
+      },
+      {
+        "id": "671e548f98a2b1f4c7810802",
+        "productId": {
+          "_id": "671e548f98a2b1f4c78101a1",
+          "name": "Amber Oud"
+        },
+        "productName": "Amber Oud",
+        "sku": "RA-AMB-01A1",
+        "changeType": "Restock",
+        "quantityChange": 20,
+        "previousStock": 0,
+        "newStock": 20,
+        "size": "All",
+        "referenceId": "BATCH-2026-AUTUMN-01",
+        "reason": "Initial atelier master batch bottling intake",
+        "performedBy": "Master Perfumer Atelier",
+        "batchNumber": "LOT-2026-A1",
+        "costPerUnit": 2025,
+        "createdAt": "2026-10-27T10:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "total": 34,
+      "page": 1,
+      "totalPages": 2,
+      "limit": 20
+    }
+  }
+}
+```
+
+#### 81. Perform Physical Stock Reconciliation Audit
+- **Method & Route**: `POST /admin/inventory/reconcile/:id`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Request Payload**:
+```json
+{
+  "physicalCount": 20,
+  "reason": "Quarterly physical warehouse stock count audit verified by atelier inventory team.",
+  "sizes": "{\"50ml\": 12, \"100ml\": 8}"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Stock reconciled successfully. Inventory adjusted by +2 units.",
+  "data": {
+    "product": {
+      "id": "671e548f98a2b1f4c78101a1",
+      "name": "Amber Oud",
+      "previousStock": 18,
+      "newStock": 20,
+      "variance": 2
+    },
+    "auditRecord": {
+      "id": "671e548f98a2b1f4c7810899",
+      "changeType": "Stock Reconciliation",
+      "quantityChange": 2,
+      "referenceId": "AUDIT-899120",
+      "reason": "Quarterly physical warehouse stock count audit verified by atelier inventory team."
+    }
+  }
+}
+```
+
+#### 82. Export Inventory Audit & Reconciliation Sheet
+- **Method & Route**: `GET /admin/inventory/export`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "generatedAt": "2026-10-27T15:35:00.000Z",
+  "totalItems": 14,
+  "data": [
+    {
+      "itemNumber": 1,
+      "productId": "671e548f98a2b1f4c78101a1",
+      "sku": "RA-AMB-01A1",
+      "name": "Amber Oud",
+      "category": "Haute Parfumerie",
+      "unitPrice": 4499,
+      "currentStock": 20,
+      "threshold": 5,
+      "reorderQuantity": 15,
+      "stockStatus": "In Stock",
+      "valuation": 89980,
+      "lastRestockedAt": "2026-10-27T14:00:00.000Z"
+    }
+  ]
+}
+```
+
+
 
 
 
