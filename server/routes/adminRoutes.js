@@ -89,4 +89,10 @@ router.delete('/reviews/:id', deleteAdminReview);
 import inventoryRoutes from './inventoryRoutes.js';
 router.use('/inventory', inventoryRoutes);
 
+/* --------------------------------------------------------------------------
+   11. MONTHLY SALES REPORTS AND ANALYTICS
+   -------------------------------------------------------------------------- */
+import reportRoutes from './reportRoutes.js';
+router.use('/reports', reportRoutes);
+
 export default router;

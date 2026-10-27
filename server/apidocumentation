@@ -2855,6 +2855,373 @@ All endpoints are secured with `protect` and `adminOnly` authentication middlewa
 }
 ```
 
+---
+
+## 11. Monthly Sales Reports and Analytics
+
+The reporting and analytics module delivers executive visibility into business performance, financial reconciliation, order status breakdowns, product revenue metrics, and customer purchasing patterns.
+All report endpoints are secured with `protect` and `adminOnly` authentication middlewares. Requests can be accessed via `/api/admin/reports` or `/api/reports` using:
+`Authorization: Bearer <admin_jwt_token>` or `x-admin-key: <token>`.
+
+### Financial Calculation & Ledger Rules
+- **Gross Sales**: Total catalog sales volume before any deductions: `Sum(items.price * quantity)` or `Sum(order.subtotal)`.
+- **Discounts**: Total value of promotional codes and coupon reductions: `Sum(order.discountAmount)`.
+- **Refunds**: Total value reimbursed for cancelled orders or completed return items: `Sum(refundAmount)`.
+- **Shipping & Gift Fees**: Total ancillary fulfillment revenue: `Sum(shippingFee + giftWrapFee)`.
+- **Net Sales (Realized Revenue)**: `Gross Sales - Discounts - Refunds + Shipping Fees + Gift Wrap Fees`.
+- **Average Order Value (AOV)**: `Net Sales / (Total Orders - Cancelled Orders)`.
+- **Repeat Customer Rate**: `(Repeat Buyers with >= 2 orders / Total Unique Buyers) * 100`.
+
+---
+
+### 11.1: Sales Reports
+• Generate monthly sales reports.
+• Select a specific month and year.
+• View total sales and order counts.
+• Review completed, cancelled, and refunded orders.
+• Analyse product-wise sales and best-selling perfumes.
+• Review discounts and payment summaries.
+• Download reports in PDF and CSV/Excel formats.
+
+#### 83. Monthly Sales Report
+- **Method & Route**: `GET /admin/reports/monthly` *(or `GET /reports/monthly`)*
+- **Query Parameters**:
+  - `month`: 1 to 12 (default: current month)
+  - `year`: 4-digit year e.g. 2026 (default: current year)
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "periodName": "October 2026",
+    "period": {
+      "month": 10,
+      "year": 2026,
+      "monthName": "October",
+      "daysInMonth": 31
+    },
+    "financials": {
+      "grossSales": 168450,
+      "discounts": 14200,
+      "refunds": 4199,
+      "shippingFees": 1200,
+      "giftWrapFees": 1800,
+      "netSales": 153051,
+      "averageOrderValue": 4251
+    },
+    "orderStats": {
+      "totalOrders": 38,
+      "completedOrders": 24,
+      "inProgressOrders": 12,
+      "cancelledOrders": 1,
+      "refundedOrders": 1,
+      "fulfillmentRate": 63
+    },
+    "topProducts": [
+      {
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "categoryName": "Haute Parfumerie",
+        "unitsSold": 28,
+        "revenue": 125972
+      },
+      {
+        "productId": "671e548f98a2b1f4c78101b2",
+        "name": "Golden Saffron Extrait",
+        "categoryName": "Signature Collection",
+        "unitsSold": 8,
+        "revenue": 42478
+      }
+    ],
+    "paymentSummary": {
+      "Razorpay": {
+        "count": 32,
+        "revenue": 138550
+      },
+      "Cash on Delivery": {
+        "count": 6,
+        "revenue": 14501
+      }
+    },
+    "timeline": [
+      {
+        "date": "2026-10-27",
+        "day": 27,
+        "ordersCount": 4,
+        "grossSales": 18996,
+        "discounts": 1450,
+        "refunds": 0,
+        "netSales": 17546
+      }
+    ]
+  }
+}
+```
+
+#### 84. Download Executive Sales Report (PDF Format)
+- **Method & Route**: `GET /admin/reports/export/pdf`
+- **Query Parameters**:
+  - `type`: `monthly` (default), `daily`, or `custom`
+  - `month`: 1 to 12
+  - `year`: 4-digit year (e.g. 2026)
+  - `date`: `YYYY-MM-DD` *(for daily report)*
+  - `startDate`, `endDate`: `YYYY-MM-DD` *(for custom date range)*
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+  - Binary stream with headers:
+    - `Content-Type: application/pdf`
+    - `Content-Disposition: attachment; filename="RoveAmber_Sales_Report_October_2026.pdf"`
+  - Layout includes:
+    - Gold-accented Haute Parfumerie master header
+    - Financial Ledger Summary Box (Gross, Discounts, Refunds, Net Sales, AOV)
+    - Order Fulfillment Status Matrix (Completed, In-Progress, Cancelled, Refunded)
+    - Ranked Best-Selling Perfumes Table with revenue share
+    - Payment Channel Distribution (Razorpay Online vs COD)
+    - Executive audit sign-off disclaimer
+
+#### 85. Download Audited Sales Ledger (CSV Format)
+- **Method & Route**: `GET /admin/reports/export/csv`
+- **Query Parameters**:
+  - `type`: `monthly` (default), `daily`, or `custom`
+  - `month`, `year`, `date`, `startDate`, `endDate`
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+  - Text CSV stream with headers:
+    - `Content-Type: text/csv`
+    - `Content-Disposition: attachment; filename="RoveAmber_Sales_Report_October_2026.csv"`
+  - Formatted for direct spreadsheet / ERP accounting import (Excel, Google Sheets).
+
+---
+
+### 11.2: Additional Reporting Options
+• Daily sales reports.
+• Monthly sales reports.
+• Custom date-range reports.
+
+#### 86. Daily Sales Report with Hourly Intervals
+- **Method & Route**: `GET /admin/reports/daily`
+- **Query Parameters**:
+  - `date`: `YYYY-MM-DD` (default: current date)
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "periodName": "Tuesday, October 27, 2026",
+    "financials": {
+      "grossSales": 18996,
+      "discounts": 1450,
+      "refunds": 0,
+      "shippingFees": 0,
+      "giftWrapFees": 300,
+      "netSales": 17846,
+      "averageOrderValue": 4461
+    },
+    "orderStats": {
+      "totalOrders": 4,
+      "completedOrders": 0,
+      "inProgressOrders": 4,
+      "cancelledOrders": 0,
+      "refundedOrders": 0
+    },
+    "timeline": [
+      {
+        "timeSlot": "09:00 - 12:00",
+        "ordersCount": 1,
+        "grossSales": 4499,
+        "netSales": 4499
+      },
+      {
+        "timeSlot": "12:00 - 15:00",
+        "ordersCount": 2,
+        "grossSales": 9998,
+        "netSales": 8848
+      },
+      {
+        "timeSlot": "15:00 - 18:00",
+        "ordersCount": 1,
+        "grossSales": 4499,
+        "netSales": 4499
+      }
+    ],
+    "ordersList": [
+      {
+        "id": "671e548f98a2b1f4c7810500",
+        "orderId": "#ORD-1003",
+        "customerName": "Rohan Mehra",
+        "totalAmount": 4199,
+        "status": "Processing",
+        "paymentMethod": "Razorpay",
+        "time": "02:50 PM"
+      }
+    ]
+  }
+}
+```
+
+#### 87. Custom Date-Range Sales Report
+- **Method & Route**: `GET /admin/reports/custom`
+- **Query Parameters**:
+  - `startDate`: `YYYY-MM-DD` (Required)
+  - `endDate`: `YYYY-MM-DD` (Required)
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "periodName": "Oct 1, 2026 to Oct 27, 2026",
+    "financials": {
+      "grossSales": 149454,
+      "discounts": 12750,
+      "refunds": 4199,
+      "netSales": 134505,
+      "averageOrderValue": 4338
+    },
+    "orderStats": {
+      "totalOrders": 32,
+      "completedOrders": 20,
+      "inProgressOrders": 11,
+      "cancelledOrders": 1,
+      "refundedOrders": 1
+    },
+    "topProducts": [
+      {
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "unitsSold": 24,
+        "revenue": 107976
+      }
+    ],
+    "timeline": [
+      {
+        "date": "2026-10-05",
+        "ordersCount": 3,
+        "grossSales": 13497,
+        "netSales": 12147
+      },
+      {
+        "date": "2026-10-12",
+        "ordersCount": 5,
+        "grossSales": 22495,
+        "netSales": 20245
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 11.3: Customer Purchase Analytics
+• Identify best-selling products.
+• Monitor repeat customer purchases.
+• Analyse average order value.
+• Review product and category performance.
+• Monitor monthly sales trends.
+• Use historical sales information to support business decisions.
+
+#### 88. Customer Purchase Analytics & Business Intelligence
+- **Method & Route**: `GET /admin/reports/analytics` *(or `GET /reports/analytics`)*
+- **Headers**: `Authorization: Bearer <admin_token>`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalLifetimeRevenue": 154800,
+      "totalLifetimeOrders": 37,
+      "overallAverageOrderValue": 4183,
+      "uniqueCustomersCount": 26,
+      "repeatCustomerRate": "31%"
+    },
+    "repeatCustomerAnalytics": {
+      "uniqueBuyers": 26,
+      "singlePurchaseBuyers": 18,
+      "repeatBuyers": 8,
+      "repeatRatePercentage": 31,
+      "topRepeatPatrons": [
+        {
+          "name": "Rohan Mehra",
+          "email": "rohan@example.com",
+          "orderCount": 4,
+          "totalSpent": 17996,
+          "lastOrderDate": "2026-10-27T14:50:00.000Z"
+        },
+        {
+          "name": "Pooja Varma",
+          "email": "pooja@example.com",
+          "orderCount": 3,
+          "totalSpent": 13497,
+          "lastOrderDate": "2026-10-25T11:20:00.000Z"
+        }
+      ]
+    },
+    "bestSellingProducts": [
+      {
+        "productId": "671e548f98a2b1f4c78101a1",
+        "name": "Amber Oud",
+        "slug": "amber-oud",
+        "category": "Haute Parfumerie",
+        "unitPrice": 4499,
+        "unitsSold": 28,
+        "revenue": 125972
+      },
+      {
+        "productId": "671e548f98a2b1f4c78101b2",
+        "name": "Golden Saffron Extrait",
+        "slug": "golden-saffron",
+        "category": "Signature Collection",
+        "unitPrice": 5299,
+        "unitsSold": 8,
+        "revenue": 42392
+      }
+    ],
+    "categoryPerformance": [
+      {
+        "category": "Haute Parfumerie",
+        "unitsSold": 28,
+        "revenue": 125972
+      },
+      {
+        "category": "Signature Collection",
+        "unitsSold": 8,
+        "revenue": 42392
+      }
+    ],
+    "monthlySalesTrends": [
+      {
+        "monthKey": "2026-05",
+        "monthName": "May",
+        "year": 2026,
+        "ordersCount": 12,
+        "grossSales": 53988,
+        "discounts": 4500,
+        "netSales": 49488
+      },
+      {
+        "monthKey": "2026-10",
+        "monthName": "Oct",
+        "year": 2026,
+        "ordersCount": 38,
+        "grossSales": 168450,
+        "discounts": 14200,
+        "netSales": 154800
+      }
+    ],
+    "decisionSupport": {
+      "primaryRevenueDriver": "Amber Oud",
+      "repeatLoyaltyHealth": "High (Strong Patronage)",
+      "recommendedAction": "Launch exclusive VIP preview collection for repeat connoisseurs."
+    }
+  }
+}
+```
+
+
 
 
 
