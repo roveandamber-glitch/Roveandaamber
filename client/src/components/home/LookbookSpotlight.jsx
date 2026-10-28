@@ -5,16 +5,16 @@ import { ArrowRight } from 'lucide-react';
 
 const LookbookSpotlight = () => {
   return (
-    <section className="py-6 sm:py-10 px-4 sm:px-6 max-w-7xl mx-auto">
-      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-[#1A120B] border border-[#3A281A] shadow-xl min-h-[220px] sm:min-h-[280px] flex items-center">
+    <section className="py-4 sm:py-8 px-3 sm:px-6 max-w-7xl mx-auto">
+      <div className="relative rounded-xl sm:rounded-3xl overflow-hidden bg-[#1A120B] border border-[#3A281A] shadow-xl min-h-[170px] xs:min-h-[190px] sm:min-h-[260px] flex items-center">
         {/* Background Raw Agarwood Image */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/images/perfumes/mockup_banner_oud.png"
+            src="/images/perfumes/gemini_cat_oud.jpg"
             alt="Rare Oud Collection"
             className="w-full h-full object-cover object-right"
             onError={(e) => {
-              e.target.src = '/images/perfumes/perfume_craft.jpg';
+              e.target.src = '/images/perfumes/mockup_banner_oud.png';
             }}
           />
           {/* Dark gradient to ensure text readability on the left */}
@@ -23,22 +23,22 @@ const LookbookSpotlight = () => {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 p-6 sm:p-12 max-w-lg">
+        <div className="relative z-10 p-4 sm:p-10 max-w-lg">
           {/* Eyebrow */}
-          <div className="flex items-center gap-2 mb-2 sm:mb-3">
-            <span className="w-5 h-[1.5px] bg-[#E5B869]" />
-            <p className="text-[9.5px] sm:text-xs tracking-[0.25em] font-medium uppercase text-[#E5B869]">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2.5">
+            <span className="w-4 sm:w-5 h-[1.5px] bg-[#E5B869]" />
+            <p className="text-[8.5px] xs:text-[9.5px] sm:text-xs tracking-[0.25em] font-medium uppercase text-[#E5B869]">
               The Essence of Luxury
             </p>
           </div>
 
           {/* Heading */}
-          <h2 className="text-2xl sm:text-4xl font-serif text-white font-normal leading-tight mb-2 sm:mb-3">
+          <h2 className="text-lg xs:text-xl sm:text-4xl font-serif text-white font-normal leading-tight mb-1.5 sm:mb-2.5">
             Rare Oud Collection
           </h2>
 
           {/* Description */}
-          <p className="text-xs sm:text-sm text-gray-300 font-light leading-relaxed mb-5 max-w-sm">
+          <p className="text-[9.5px] xs:text-[10.5px] sm:text-sm text-gray-300 font-light leading-relaxed mb-3 sm:mb-5 max-w-sm">
             Deep. Distinct. Unforgettable. <br className="hidden xs:inline" />
             Experience the richness of authentic oud.
           </p>
@@ -46,10 +46,10 @@ const LookbookSpotlight = () => {
           {/* Action Button */}
           <Link
             href="/shop?category=Oud"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#ECC880] to-[#C99042] text-[#281608] text-xs font-semibold tracking-wider shadow-md hover:brightness-105 active:scale-95 transition-all group"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-full bg-gradient-to-r from-[#ECC880] to-[#C99042] text-[#281608] text-[9.5px] xs:text-[10.5px] sm:text-xs font-semibold tracking-wider shadow-md hover:brightness-105 active:scale-95 transition-all group"
           >
             <span>Explore Collection</span>
-            <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+            <ArrowRight size={11} className="sm:w-3 sm:h-3 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
       </div>

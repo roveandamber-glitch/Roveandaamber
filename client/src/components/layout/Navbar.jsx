@@ -259,7 +259,9 @@ const Navbar = () => {
               aria-label="Wishlist"
             >
               <Heart size={19} strokeWidth={1.8} />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#E5B869] ring-2 ring-[#18110D]" />
+              <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-[#E5B869] text-[#18110D] text-[8px] font-bold flex items-center justify-center leading-none shadow-xs">
+                {wishlistCount || 0}
+              </span>
             </Link>
           </div>
         </div>

@@ -27,20 +27,20 @@ const BrandValues = () => {
   ];
 
   return (
-    <section className="border-y border-[#ECE5D8] bg-[#F7F3EC]/80 py-6 sm:py-8 px-4 sm:px-8">
-      <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+    <section className="border-y border-[#ECE5D8] bg-[#F7F3EC]/90 py-4 sm:py-6 px-3 sm:px-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-4 gap-1.5 sm:gap-4 items-center">
         {values.map((item, idx) => {
           const Icon = item.icon;
           return (
-            <div key={idx} className="flex items-center gap-3 sm:gap-3.5 justify-start sm:justify-center p-2">
+            <div key={idx} className="flex flex-col sm:flex-row items-center sm:items-center justify-center text-center sm:text-left gap-1 sm:gap-2.5 p-1">
               <div className="text-[#C49444] flex-shrink-0">
-                <Icon size={22} strokeWidth={1.5} />
+                <Icon size={18} strokeWidth={1.5} className="sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <h4 className="text-[11px] sm:text-xs font-serif font-semibold text-[#1A1A1A] leading-tight">
+              <div className="min-w-0">
+                <h4 className="text-[9px] xs:text-[10px] sm:text-xs font-serif font-semibold text-[#1A1A1A] leading-tight truncate sm:whitespace-normal">
                   {item.title}
                 </h4>
-                <p className="text-[9.5px] sm:text-[11px] text-[#6E6359] font-light leading-tight mt-0.5">
+                <p className="text-[7.5px] xs:text-[8.5px] sm:text-[10.5px] text-[#7A6B5D] font-light leading-tight mt-0.5 truncate sm:whitespace-normal">
                   {item.subtitle}
                 </p>
               </div>
