@@ -8,9 +8,21 @@ const categorySchema = new mongoose.Schema(
       unique: true,
       trim: true
     },
+    slug: {
+      type: String,
+      trim: true
+    },
+    description: {
+      type: String,
+      default: ''
+    },
     image: {
       type: String,
       default: ''
+    },
+    itemCount: {
+      type: Number,
+      default: 0
     }
   },
   {
@@ -31,6 +43,12 @@ const categorySchema = new mongoose.Schema(
     }
   }
 );
+
+categorySchema.pre('save', function () {
+  if (this.name && !this.slug) {
+    this.slug = this.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  }
+});
 
 // Virtual id getter
 categorySchema.virtual('id').get(function () {
@@ -60,6 +78,24 @@ export const CategoryModel = {
     };
   },
 
+  findBySlugOrName: async (term) => {
+    if (!term) return null;
+    const clean = term.trim();
+    let cat = await Category.findOne({ slug: clean.toLowerCase() });
+    if (!cat) {
+      cat = await Category.findOne({ name: new RegExp(`^${clean}$`, 'i') });
+    }
+    if (!cat && mongoose.Types.ObjectId.isValid(clean)) {
+      cat = await Category.findById(clean);
+    }
+    if (!cat) return null;
+    return {
+      ...cat.toObject(),
+      id: cat._id.toString(),
+      _id: cat._id.toString()
+    };
+  },
+
   findByName: async (name) => {
     const cat = await Category.findOne({ name: new RegExp(`^${name.trim()}$`, 'i') });
     if (!cat) return null;
@@ -70,8 +106,9 @@ export const CategoryModel = {
     };
   },
 
-  create: async ({ name, image = '' }) => {
-    const cat = await Category.create({ name: name.trim(), image });
+  create: async ({ name, slug, description = '', image = '' }) => {
+    const calculatedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    const cat = await Category.create({ name: name.trim(), slug: calculatedSlug, description, image });
     return {
       ...cat.toObject(),
       id: cat._id.toString(),
@@ -79,12 +116,14 @@ export const CategoryModel = {
     };
   },
 
-  update: async (id, { name, image }) => {
+  update: async (id, { name, slug, description, image }) => {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const updateData = { name: name.trim() };
-    if (image !== undefined) {
-      updateData.image = image;
-    }
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (slug) updateData.slug = slug.trim().toLowerCase();
+    if (description !== undefined) updateData.description = description;
+    if (image !== undefined) updateData.image = image;
+
     const cat = await Category.findByIdAndUpdate(id, updateData, { new: true });
     if (!cat) return null;
     return {

@@ -1,35 +1,71 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { seedDatabase } from './seeder.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
-// Explicitly load server/.env so it works regardless of working directory
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/roveandamber';
+const LOCAL_MONGODB_URI = process.env.LOCAL_MONGODB_URI || 'mongodb://127.0.0.1:27017/roveandamber';
 
-const MONGODB_URI = process.env.MONGODB_URI;
+// Set mongoose connection options
+const mongooseOptions = {
+  serverSelectionTimeoutMS: 5000,
+  maxPoolSize: 20,
+  autoIndex: true
+};
 
-if (!MONGODB_URI) {
-  console.error('❌ [MongoDB Error]: MONGODB_URI is not defined in environment variables.');
-  console.error('👉 Please define MONGODB_URI in your server/.env file.');
-}
-
+/**
+ * Connect to MongoDB Atlas with fallback to Local MongoDB
+ */
 export const connectDB = async () => {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    throw new Error('MONGODB_URI is missing from environment variables (.env)');
+  try {
+    if (MONGODB_URI.includes('<username>') || MONGODB_URI.includes('<password>')) {
+      console.warn('⚠️ [MongoDB]: Placeholder credentials detected in MONGODB_URI. Using local instance.');
+    } else {
+      console.log('🔄 Connecting to MongoDB Atlas...');
+      const conn = await mongoose.connect(MONGODB_URI, mongooseOptions);
+      console.log(`✅ MongoDB Atlas Connected: ${conn.connection.host}`);
+      return conn;
+    }
+  } catch (error) {
+    console.warn(`⚠️ MongoDB Atlas Connection Warning: ${error.message}`);
+    console.log('🔄 Attempting local MongoDB connection (127.0.0.1:27017)...');
   }
 
+  // Fallback to local MongoDB instance
   try {
-    const conn = await mongoose.connect(uri);
-    console.log('✅ MongoDB Connected successfully');
-    return conn;
-  } catch (error) {
-    console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    throw error;
+    const localConn = await mongoose.connect(LOCAL_MONGODB_URI, {
+      ...mongooseOptions,
+      serverSelectionTimeoutMS: 3000
+    });
+    console.log(`✅ Connected to Local MongoDB Fallback: ${localConn.connection.host}`);
+    return localConn;
+  } catch (localErr) {
+    console.error('❌ Could not connect to MongoDB Atlas or Local MongoDB.');
+    console.error('👉 Tip: Check your network connection or add your IP address to MongoDB Atlas Network Access.');
+    throw localErr;
   }
 };
 
-export default { connectDB };
+/**
+ * Initialize database connection and run data seeders
+ */
+export const initDB = async () => {
+  try {
+    await connectDB();
+    await seedDatabase();
+  } catch (error) {
+    console.error('❌ Database initialization error:', error.message);
+  }
+};
+
+// Lifecycle Event Listeners
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️ MongoDB connection lost. Reconnecting...');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB connection error:', err.message);
+});
+
+export default { connectDB, initDB };

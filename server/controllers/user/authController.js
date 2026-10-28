@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { UserModel } from '../models/userModel.js';
-import { JWT_SECRET } from '../middlewares/authMiddleware.js';
+import { UserModel } from '../../models/userModel.js';
+import { JWT_SECRET } from '../../middlewares/authMiddleware.js';
 
 // Helper to generate JWT token
 const generateToken = (id, role) => {
