@@ -406,38 +406,44 @@ export default function CartPage() {
                   return (
                     <div
                       key={itemKey}
-                      className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E8DFC9] shadow-2xs flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between transition-all hover:border-[#D4AF37]/50 hover:shadow-xs"
+                      className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E8DFC9] shadow-xs flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between transition-all hover:border-[#D4AF37]/60 hover:shadow-md"
                     >
-                      {/* Thumbnail & Title */}
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                      {/* Fixed Size Thumbnail & Title */}
+                      <div className="flex items-center gap-4 flex-1 min-w-0 w-full sm:w-auto">
                         <Link 
                           href={`/product/${item.productId || item.id}`}
-                          className="w-18 h-22 sm:w-22 sm:h-26 rounded-xl bg-[#FAF9F7] overflow-hidden flex-shrink-0 flex items-center justify-center p-2 border border-gray-100 hover:border-black transition-colors"
+                          className="relative w-20 h-24 sm:w-24 sm:h-28 rounded-xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-2 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group"
                         >
                           <img
                             src={getImageUrl(item.image)}
                             alt={item.name}
-                            className="w-full h-full object-contain"
-                            onError={(e) => { e.target.src = '/images/perfumes/amber_oud_perfume.jpg'; }}
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => { e.target.src = '/images/perfumes/gemini_amber_royal.jpg'; }}
                           />
                         </Link>
 
                         <div className="space-y-1.5 min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9.5px] tracking-[0.2em] uppercase font-semibold text-[#B86526]">
+                              Fine Fragrance
+                            </span>
+                            <span className="w-1 h-1 rounded-full bg-[#D5C9B8]" />
+                            <span className="text-[10px] text-gray-500 font-medium">
+                              {item.size || '50ML'}
+                            </span>
+                          </div>
+
                           <Link 
                             href={`/product/${item.productId || item.id}`}
-                            className="text-base font-serif font-bold text-black hover:underline block truncate"
+                            className="text-base sm:text-lg font-serif font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors block truncate"
                           >
                             {item.name}
                           </Link>
                           
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] text-[11px] font-bold px-2 py-0.5 rounded-md">
-                              Size: {item.size}
-                            </span>
-                            <span className="text-xs text-gray-500 font-sans">
-                              ₹{price.toLocaleString('en-IN')} each
-                            </span>
-                          </div>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1A1A1A] font-sans">
+                            ₹{price.toLocaleString('en-IN')}
+                            <span className="text-[11px] font-normal text-gray-400 ml-1">/ unit</span>
+                          </p>
 
                           {isMaxReached && (
                             <span className="text-[10px] text-amber-700 font-medium block">
@@ -448,36 +454,36 @@ export default function CartPage() {
                       </div>
 
                       {/* Quantity Controls & Line Total */}
-                      <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-[#F0EBE0]">
                         
                         {/* Quantity Counter */}
-                        <div className="inline-flex items-center bg-[#FAF9F7] border border-[#E0D8CA] rounded-full p-0.5">
+                        <div className="inline-flex items-center bg-[#FAF7F2] border border-[#E0D8CA] rounded-full p-1 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, -1, maxStock)}
                             disabled={item.quantity <= 1}
-                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
                             aria-label="Decrease quantity"
                           >
-                            <Minus size={12} />
+                            <Minus size={12} strokeWidth={2} />
                           </button>
-                          <span className="w-8 text-center text-xs font-bold text-black font-sans">
+                          <span className="w-8 text-center text-xs font-bold text-[#1A1A1A] font-sans">
                             {item.quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, 1, maxStock)}
                             disabled={isMaxReached}
-                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
                             aria-label="Increase quantity"
                           >
-                            <Plus size={12} />
+                            <Plus size={12} strokeWidth={2} />
                           </button>
                         </div>
 
                         {/* Line Total */}
-                        <div className="text-right min-w-[80px]">
-                          <span className="text-sm sm:text-base font-bold text-black font-sans block">
+                        <div className="text-right min-w-[85px]">
+                          <span className="text-base sm:text-lg font-bold text-[#1A1A1A] font-sans block">
                             ₹{itemTotal.toLocaleString('en-IN')}
                           </span>
                         </div>
@@ -486,11 +492,11 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.productId || item.id, item.size, item.name)}
-                          className="w-8 h-8 rounded-full bg-[#FAF9F7] hover:bg-red-50 text-gray-400 hover:text-red-600 border border-[#E8DFC9] hover:border-red-200 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+                          className="w-9 h-9 rounded-full bg-[#FAF7F2] hover:bg-red-50 text-gray-400 hover:text-red-600 border border-[#E8DFC9] hover:border-red-200 transition-colors flex items-center justify-center cursor-pointer shrink-0"
                           title="Remove fragrance"
                           aria-label={`Remove ${item.name} from bag`}
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -671,11 +677,11 @@ export default function CartPage() {
                 <button
                   type="button"
                   onClick={handleStartCheckout}
-                  className="w-full bg-black hover:bg-[#262626] active:bg-black text-white py-3.5 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer group"
+                  className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3.5 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-amber-950/15 transition-all cursor-pointer group"
                 >
-                  <Lock size={13} />
+                  <Lock size={13} strokeWidth={2.2} />
                   <span>Proceed to Checkout</span>
-                  <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={13} strokeWidth={2.2} className="group-hover:translate-x-1 transition-transform" />
                 </button>
 
                 {/* Trust and Payment Security Badges */}

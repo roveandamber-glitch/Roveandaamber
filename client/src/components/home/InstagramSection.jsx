@@ -32,28 +32,33 @@ const INSTA_POSTS = [
 
 const InstagramSection = () => {
   return (
-    <section className="py-8 sm:py-14 px-3 sm:px-6 max-w-7xl mx-auto">
+    <section className="py-8 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 sm:mb-8">
-        <h2 className="text-xl sm:text-3xl font-serif text-[#1A1A1A] font-normal tracking-tight">
-          Follow Our Fragrance Journey
-        </h2>
+      <div className="flex items-center justify-between mb-4 sm:mb-10 lg:mb-12">
+        <div>
+          <p className="hidden sm:block text-xs uppercase tracking-[0.25em] text-[#B86526] font-semibold mb-1">
+            Visual Archive
+          </p>
+          <h2 className="text-xl sm:text-3xl lg:text-4xl font-serif text-[#1A1A1A] font-normal tracking-tight">
+            Follow Our Fragrance Journey
+          </h2>
+        </div>
         <a
           href="https://instagram.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[11px] sm:text-sm text-[#7A6B5D] hover:text-[#1A1A1A] transition-colors font-medium"
+          className="text-[11px] sm:text-sm lg:text-base text-[#7A6B5D] hover:text-[#1A1A1A] transition-colors font-medium tracking-wide"
         >
           @roveandamber
         </a>
       </div>
 
       {/* 4 Image Grid in one row across */}
-      <div className="grid grid-cols-4 gap-1.5 sm:gap-4">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-6 lg:gap-8">
         {INSTA_POSTS.map((post) => (
           <div
             key={post.id}
-            className="relative rounded-lg sm:rounded-2xl overflow-hidden aspect-square bg-[#1E140E] group shadow-xs hover:shadow-md transition-shadow"
+            className="relative rounded-lg sm:rounded-2xl lg:rounded-3xl overflow-hidden aspect-square bg-[#1E140E] group shadow-sm hover:shadow-xl transition-all"
           >
             <img
               src={post.image}
@@ -67,8 +72,8 @@ const InstagramSection = () => {
             {/* Video Play Overlay */}
             {post.isVideo && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-                <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-full bg-white/30 backdrop-blur-sm border border-white/40 flex items-center justify-center text-white pl-0.5 shadow-md">
-                  <Play size={10} className="sm:w-4 sm:h-4" fill="white" />
+                <div className="w-6 h-6 sm:w-12 sm:h-12 rounded-full bg-white/30 backdrop-blur-sm border border-white/40 flex items-center justify-center text-white pl-0.5 shadow-md">
+                  <Play size={10} className="sm:w-5 sm:h-5" fill="white" />
                 </div>
               </div>
             )}

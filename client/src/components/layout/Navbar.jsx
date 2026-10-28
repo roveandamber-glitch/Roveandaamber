@@ -53,6 +53,8 @@ const Navbar = () => {
   const router = useRouter();
 
   const isActive = (path) => pathname === path;
+  const isHome = pathname === '/';
+  const isDarkHero = isHome && !isScrolled;
 
   const updateCartCount = () => {
     setCartCount(cartService.getCartCount());
@@ -219,13 +221,21 @@ const Navbar = () => {
 
   return (
     <>
-      {/* MOBILE FLOATING HEADER (Pixel-perfect match to luxury mobile reference) */}
+      {/* MOBILE FLOATING HEADER (Adaptive Luxury Styling) */}
       <div className="md:hidden fixed top-3 left-3 right-3 z-50">
-        <div className="bg-[#18110D]/75 backdrop-blur-md border border-white/20 rounded-full px-3.5 py-2 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.36)] transition-all">
-          {/* Left: Hamburger Menu in rounded glass circle */}
+        <div className={`backdrop-blur-md border rounded-full px-3.5 py-2 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.25)] transition-all ${
+          isDarkHero 
+            ? 'bg-[#18110D]/75 border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.36)]' 
+            : 'bg-white/95 border-[#E6DEC7] shadow-md'
+        }`}>
+          {/* Left: Hamburger Menu */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="w-9 h-9 rounded-full flex items-center justify-center border border-white/25 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95 cursor-pointer ${
+              isDarkHero
+                ? 'border border-white/25 bg-white/10 text-white hover:bg-white/20'
+                : 'border border-[#E0D8CA] bg-[#FAF8F5] text-[#1A1A1A] hover:bg-[#ECE5D8]'
+            }`}
             aria-label="Open menu"
           >
             <Menu size={18} strokeWidth={1.8} />
@@ -233,10 +243,14 @@ const Navbar = () => {
 
           {/* Center: ROVE & AMBER FINE FRAGRANCE */}
           <Link href="/" className="flex flex-col items-center justify-center text-center">
-            <span className="font-serif text-[15px] sm:text-base font-normal tracking-[0.22em] text-[#E5B869] uppercase leading-tight">
+            <span className={`font-serif text-[15px] sm:text-base font-normal tracking-[0.22em] uppercase leading-tight ${
+              isDarkHero ? 'text-[#E5B869]' : 'text-[#1A1A1A]'
+            }`}>
               ROVE & AMBER
             </span>
-            <span className="text-[7.5px] tracking-[0.32em] text-[#F3ECE1]/80 font-sans uppercase font-medium mt-0.5">
+            <span className={`text-[7.5px] tracking-[0.32em] uppercase font-sans font-medium mt-0.5 ${
+              isDarkHero ? 'text-[#F3ECE1]/80' : 'text-gray-500'
+            }`}>
               FINE FRAGRANCE
             </span>
           </Link>
@@ -246,7 +260,9 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setIsMobileSearchOpen(prev => !prev)}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white hover:text-[#E5B869] transition-colors cursor-pointer"
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                isDarkHero ? 'text-white hover:text-[#E5B869]' : 'text-[#1A1A1A] hover:text-[#B8860B]'
+              }`}
               aria-label="Search"
             >
               <Search size={19} strokeWidth={1.8} />
@@ -255,11 +271,15 @@ const Navbar = () => {
             <Link
               href="/wishlist"
               prefetch={true}
-              className="relative w-8 h-8 rounded-full flex items-center justify-center text-white hover:text-[#E5B869] transition-colors cursor-pointer"
+              className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                isDarkHero ? 'text-white hover:text-[#E5B869]' : 'text-[#1A1A1A] hover:text-[#B8860B]'
+              }`}
               aria-label="Wishlist"
             >
               <Heart size={19} strokeWidth={1.8} />
-              <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-[#E5B869] text-[#18110D] text-[8px] font-bold flex items-center justify-center leading-none shadow-xs">
+              <span className={`absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full text-[8px] font-bold flex items-center justify-center leading-none shadow-xs ${
+                isDarkHero ? 'bg-[#E5B869] text-[#18110D]' : 'bg-[#B8860B] text-white'
+              }`}>
                 {wishlistCount || 0}
               </span>
             </Link>
@@ -317,26 +337,38 @@ const Navbar = () => {
       {/* DESKTOP VIEW HEADER */}
       <nav 
         className={`hidden md:block fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-          isScrolled 
-            ? 'bg-white/95 backdrop-blur-md py-2.5 sm:py-3.5 shadow-sm border-b border-[#ECE7DE]' 
-            : 'bg-white/90 backdrop-blur-sm py-3 sm:py-4 border-b border-[#ECE7DE]'
+          !isDarkHero 
+            ? 'bg-white/95 backdrop-blur-md py-3 shadow-md border-b border-[#ECE7DE] text-[#1A1A1A]' 
+            : 'bg-[#120B06]/85 backdrop-blur-md py-3.5 border-b border-white/10 text-white shadow-xl'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
-          <div className="flex items-center justify-between gap-4">
-            {/* Desktop Brand Logo (Same as footer) */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex items-center justify-between gap-6">
+            {/* Desktop Brand Logo */}
             <Link 
               href="/" 
-              className="flex items-center group py-0.5 flex-shrink-0"
+              className="flex items-center gap-3 group py-0.5 flex-shrink-0 cursor-pointer"
             >
-              <img 
-                src="/images/perfumes/rove_amber_text_only.png" 
-                alt="ROVE & AMBER FINE FRAGRANCE" 
-                className="h-8 lg:h-9 w-auto object-contain group-hover:scale-[1.02] transition-transform duration-300" 
-              />
+              <span className={`font-serif text-2xl lg:text-3xl font-normal tracking-wider transition-colors ${
+                (!isDarkHero) ? 'text-[#B8860B]' : 'text-[#E5B869]'
+              }`}>
+                RA
+              </span>
+              <div className="flex flex-col">
+                <span className={`font-serif text-xs lg:text-sm tracking-[0.22em] uppercase font-medium leading-tight transition-colors ${
+                  (!isDarkHero) ? 'text-[#1A1A1A]' : 'text-[#E5B869]'
+                }`}>
+                  ROVE & AMBER
+                </span>
+                <span className={`text-[7px] lg:text-[7.5px] tracking-[0.3em] uppercase font-sans transition-colors ${
+                  (!isDarkHero) ? 'text-gray-500' : 'text-white/70'
+                }`}>
+                  FINE FRAGRANCE
+                </span>
+              </div>
             </Link>
           
-            {/* Desktop Navigation Links with Modern Icons & Simple Decent Look */}
+            {/* Desktop Navigation Links with Adaptive Luxury Styling */}
             <div className="flex items-center gap-1 xl:gap-2">
               {navLinks.map((link) => {
                 const active = isActive(link.path);
@@ -346,20 +378,32 @@ const Navbar = () => {
                     key={link.path}
                     href={link.path} 
                     prefetch={true}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs tracking-wider transition-all duration-200 ${
-                      active 
-                        ? 'bg-neutral-900 text-white font-medium shadow-xs' 
-                        : 'text-neutral-700 hover:text-black hover:bg-[#FAF8F5] font-normal'
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs tracking-wider font-medium transition-all duration-200 ${
+                      (!isDarkHero)
+                        ? (active 
+                            ? 'bg-[#1A1A1A] text-white shadow-xs' 
+                            : 'text-[#4A4036] hover:text-black hover:bg-[#FAF8F5]')
+                        : (active 
+                            ? 'bg-gradient-to-r from-[#ECC880] to-[#C99042] text-[#241306] shadow-sm font-semibold' 
+                            : 'text-white/80 hover:text-white hover:bg-white/10')
                     }`}
                   >
-                    <IconComponent size={14} strokeWidth={active ? 2 : 1.7} className={active ? 'text-[#D4AF37]' : 'text-neutral-400'} />
+                    <IconComponent 
+                      size={14} 
+                      strokeWidth={active ? 2 : 1.7} 
+                      className={
+                        (!isDarkHero)
+                          ? (active ? 'text-[#D4AF37]' : 'text-neutral-400')
+                          : (active ? 'text-[#241306]' : 'text-[#E5B869]/80')
+                      } 
+                    />
                     <span>{link.name}</span>
                   </Link>
                 );
               })}
             </div>
 
-            {/* Right Section: Modern Action Icons (Search, Orders, Wishlist, Cart, Account) */}
+            {/* Right Section: Action Icons & Search */}
             <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 flex-shrink-0">
               
               {/* Desktop Search Bar */}
@@ -367,7 +411,9 @@ const Navbar = () => {
                 <div className="relative flex items-center">
                   <Search 
                     size={14} 
-                    className="absolute left-3 text-gray-400 pointer-events-none" 
+                    className={`absolute left-3 pointer-events-none transition-colors ${
+                      (!isDarkHero) ? 'text-gray-400' : 'text-white/60'
+                    }`} 
                   />
                   <input 
                     type="text" 
@@ -379,7 +425,11 @@ const Navbar = () => {
                     }}
                     onFocus={() => setShowDropdown(true)}
                     onKeyDown={handleSearch}
-                    className="w-32 lg:w-44 focus:w-44 lg:focus:w-56 rounded-full py-1.5 pl-8 pr-7 text-xs bg-[#FAF9F7] border border-[#E0D8CA] focus:border-black focus:bg-white text-black placeholder-gray-400 focus:outline-none transition-all duration-300"
+                    className={`w-32 lg:w-44 focus:w-44 lg:focus:w-56 rounded-full py-1.5 pl-8 pr-7 text-xs focus:outline-none transition-all duration-300 ${
+                      (!isDarkHero)
+                        ? 'bg-[#FAF9F7] border border-[#E0D8CA] focus:border-black focus:bg-white text-black placeholder-gray-400'
+                        : 'bg-white/10 border border-white/20 focus:border-[#E5B869] focus:bg-white/20 text-white placeholder-white/50'
+                    }`}
                   />
                   {searchQuery && (
                     <button
@@ -403,7 +453,7 @@ const Navbar = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 6, scale: 0.98 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute top-full right-0 mt-3 w-88 lg:w-96 bg-white rounded-2xl shadow-xl border border-[#E8E2D6] overflow-hidden z-50 p-2"
+                      className="absolute top-full right-0 mt-3 w-88 lg:w-96 bg-white rounded-2xl shadow-xl border border-[#E8E2D6] overflow-hidden z-50 p-2 text-[#1A1A1A]"
                     >
                       {isSearching ? (
                         <div className="p-8 flex flex-col items-center justify-center text-gray-400 gap-2">
@@ -488,7 +538,11 @@ const Navbar = () => {
               <Link
                 href="/orders"
                 prefetch={true}
-                className="p-2 rounded-full hover:bg-[#FAF8F5] text-neutral-700 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
+                className={`p-2 rounded-full transition-colors flex items-center justify-center cursor-pointer ${
+                  (!isDarkHero) 
+                    ? 'text-neutral-700 hover:text-black hover:bg-[#FAF8F5]' 
+                    : 'text-white/85 hover:text-white hover:bg-white/10'
+                }`}
                 title="My Orders"
                 aria-label="My Orders"
               >
@@ -499,17 +553,23 @@ const Navbar = () => {
               <Link
                 href="/wishlist"
                 prefetch={true}
-                className="relative p-2 rounded-full hover:bg-[#FAF8F5] text-neutral-700 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
+                className={`relative p-2 rounded-full transition-colors flex items-center justify-center cursor-pointer ${
+                  (!isDarkHero) 
+                    ? 'text-neutral-700 hover:text-black hover:bg-[#FAF8F5]' 
+                    : 'text-white/85 hover:text-white hover:bg-white/10'
+                }`}
                 title="Saved Wishlist"
                 aria-label="Saved Wishlist"
               >
                 <Heart 
                   size={18} 
                   strokeWidth={1.8}
-                  className={wishlistCount > 0 ? 'fill-[#B8860B] text-[#B8860B]' : ''} 
+                  className={wishlistCount > 0 ? ((!isDarkHero) ? 'fill-[#B8860B] text-[#B8860B]' : 'fill-[#E5B869] text-[#E5B869]') : ''} 
                 />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-[#B8860B] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                  <span className={`absolute -top-0.5 -right-0.5 text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs ${
+                    (!isDarkHero) ? 'bg-[#B8860B] text-white' : 'bg-[#E5B869] text-[#18110D]'
+                  }`}>
                     {wishlistCount}
                   </span>
                 )}
@@ -519,12 +579,18 @@ const Navbar = () => {
               <Link
                 href="/cart"
                 prefetch={true}
-                className="relative p-2 rounded-full hover:bg-[#FAF8F5] text-neutral-700 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
+                className={`relative p-2 rounded-full transition-colors flex items-center justify-center cursor-pointer ${
+                  (!isDarkHero) 
+                    ? 'text-neutral-700 hover:text-black hover:bg-[#FAF8F5]' 
+                    : 'text-white/85 hover:text-white hover:bg-white/10'
+                }`}
                 title="Shopping Bag"
                 aria-label="Shopping Cart"
               >
                 <ShoppingBag size={18} strokeWidth={1.8} />
-                <span className="absolute -top-0.5 -right-0.5 bg-[#B8860B] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                <span className={`absolute -top-0.5 -right-0.5 text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs ${
+                  (!isDarkHero) ? 'bg-[#B8860B] text-white' : 'bg-[#E5B869] text-[#18110D]'
+                }`}>
                   {cartCount}
                 </span>
               </Link>
@@ -532,8 +598,12 @@ const Navbar = () => {
               {/* Desktop User Account Button */}
               {currentUser ? (
                 <Link href="/profile" prefetch={true}>
-                  <button className="flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-medium transition-all cursor-pointer">
-                    <div className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold">
+                  <button className={`flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                    (!isDarkHero) 
+                      ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-900' 
+                      : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
+                  }`}>
+                    <div className="w-5 h-5 rounded-full bg-[#E5B869] text-[#18110D] flex items-center justify-center text-[10px] font-bold">
                       {currentUser.name?.[0]?.toUpperCase() || 'U'}
                     </div>
                     <span className="max-w-[70px] truncate">
@@ -543,7 +613,11 @@ const Navbar = () => {
                 </Link>
               ) : (
                 <Link href="/login" prefetch={true}>
-                  <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black hover:bg-[#262626] text-white text-xs font-medium transition-all shadow-xs cursor-pointer">
+                  <button className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all shadow-xs cursor-pointer ${
+                    (!isDarkHero)
+                      ? 'bg-black hover:bg-[#262626] text-white'
+                      : 'bg-gradient-to-r from-[#ECC880] to-[#C99042] text-[#281608] hover:brightness-105 font-semibold'
+                  }`}>
                     <User size={13} strokeWidth={1.8} />
                     <span>Login</span>
                   </button>

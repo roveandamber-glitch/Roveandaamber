@@ -105,34 +105,39 @@ const FeaturedProducts = () => {
   };
 
   return (
-    <section className="py-8 sm:py-14 px-3 sm:px-6 max-w-7xl mx-auto">
+    <section className="py-8 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-4 sm:mb-8">
-        <h2 className="text-xl sm:text-3xl font-serif text-[#1A1A1A] font-normal tracking-tight">
-          New Arrivals
-        </h2>
+      <div className="flex items-center justify-between mb-4 sm:mb-10 lg:mb-12">
+        <div>
+          <p className="hidden sm:block text-xs uppercase tracking-[0.25em] text-[#B86526] font-semibold mb-1">
+            Artisanal Selection
+          </p>
+          <h2 className="text-xl sm:text-3xl lg:text-4xl font-serif text-[#1A1A1A] font-normal tracking-tight">
+            New Arrivals
+          </h2>
+        </div>
         <Link 
           href="/shop" 
-          className="inline-flex items-center gap-1 text-[11px] sm:text-sm font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] sm:text-sm font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors group"
         >
           <span>View All</span>
-          <ArrowRight size={13} />
+          <ArrowRight size={13} className="sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
 
-      {/* Product Cards Grid: Exactly 4 across matching reference mockup */}
-      <div className="grid grid-cols-4 gap-2 sm:gap-6">
+      {/* Product Cards Grid: 4 columns across on all screens */}
+      <div className="grid grid-cols-4 gap-2 sm:gap-6 lg:gap-8">
         {NEW_ARRIVALS.map((product) => {
           const isFavorited = wishlist.includes(product.id);
           return (
             <div 
               key={product.id}
-              className="bg-white rounded-xl sm:rounded-2xl border border-[#ECE5D8] p-1.5 xs:p-2 sm:p-4 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-300 group"
+              className="bg-white rounded-xl sm:rounded-2xl border border-[#ECE5D8] p-1.5 xs:p-2 sm:p-5 lg:p-6 flex flex-col justify-between shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
             >
               {/* Card Image Area with Badges */}
-              <div className="relative aspect-square sm:aspect-[4/5] rounded-lg sm:rounded-xl overflow-hidden bg-[#FAF7F2] flex items-center justify-center p-1 sm:p-3 mb-1.5 sm:mb-3">
+              <div className="relative aspect-square sm:aspect-[4/5] rounded-lg sm:rounded-xl overflow-hidden bg-[#FAF7F2] flex items-center justify-center p-1 sm:p-4 mb-1.5 sm:mb-4">
                 {product.isBestSeller && (
-                  <span className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-[#2A180E] text-white text-[6.5px] xs:text-[7.5px] sm:text-[9.5px] font-medium px-1.5 py-0.5 rounded-full tracking-wide shadow-xs">
+                  <span className="absolute top-1 left-1 sm:top-2.5 sm:left-2.5 z-10 bg-[#2A180E] text-white text-[6.5px] xs:text-[7.5px] sm:text-[10px] font-medium px-1.5 sm:px-2.5 py-0.5 rounded-full tracking-wide shadow-xs">
                     Best Seller
                   </span>
                 )}
@@ -141,12 +146,12 @@ const FeaturedProducts = () => {
                 <button
                   type="button"
                   onClick={(e) => toggleWishlist(e, product.id)}
-                  className={`absolute top-1 right-1 sm:top-2 sm:right-2 z-10 w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center bg-white/95 backdrop-blur-xs shadow-xs border border-gray-100 transition-transform active:scale-90 ${
+                  className={`absolute top-1 right-1 sm:top-2.5 sm:right-2.5 z-10 w-5 h-5 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-white/95 backdrop-blur-xs shadow-xs border border-gray-100 transition-all hover:scale-110 active:scale-90 ${
                     isFavorited ? 'text-rose-600' : 'text-gray-400 hover:text-black'
                   }`}
                   aria-label="Wishlist"
                 >
-                  <Heart size={11} className="sm:w-3.5 sm:h-3.5" fill={isFavorited ? 'currentColor' : 'none'} />
+                  <Heart size={11} className="sm:w-4 sm:h-4" fill={isFavorited ? 'currentColor' : 'none'} />
                 </button>
 
                 <Link href={`/product/${product.slug}`} className="w-full h-full flex items-center justify-center">
@@ -162,13 +167,13 @@ const FeaturedProducts = () => {
               </div>
 
               {/* Title & Price */}
-              <div className="text-center mb-1.5 sm:mb-3">
+              <div className="text-center mb-1.5 sm:mb-4">
                 <Link href={`/product/${product.slug}`}>
-                  <h3 className="text-[10px] xs:text-[11px] sm:text-sm font-serif font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors truncate">
+                  <h3 className="text-[10px] xs:text-[11px] sm:text-base lg:text-lg font-serif font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors truncate">
                     {product.name}
                   </h3>
                 </Link>
-                <p className="text-[10px] xs:text-[11px] sm:text-sm font-semibold text-[#1A1A1A] font-sans mt-0.5">
+                <p className="text-[10px] xs:text-[11px] sm:text-sm lg:text-base font-semibold text-[#1A1A1A] font-sans mt-0.5 sm:mt-1">
                   ₹{product.price.toLocaleString('en-IN')}
                 </p>
               </div>
@@ -178,7 +183,7 @@ const FeaturedProducts = () => {
                 type="button"
                 onClick={(e) => handleAddToCart(e, product)}
                 disabled={addingId === product.id}
-                className="w-full py-1 sm:py-2 px-1 sm:px-3 rounded-md sm:rounded-lg border border-[#D5C9B8] bg-[#FAF8F5] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] text-[#1A1A1A] text-[8px] xs:text-[9.5px] sm:text-xs font-medium tracking-wide flex items-center justify-center gap-1 sm:gap-1.5 transition-all duration-200 cursor-pointer"
+                className="w-full py-1 sm:py-2.5 lg:py-3 px-1 sm:px-3 rounded-md sm:rounded-xl border border-[#D5C9B8] bg-[#FAF8F5] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] text-[#1A1A1A] text-[8px] xs:text-[9.5px] sm:text-xs font-semibold tracking-wide flex items-center justify-center gap-1 sm:gap-2 transition-all duration-200 cursor-pointer shadow-xs"
               >
                 <ShoppingBag size={11} strokeWidth={1.8} className="sm:w-3.5 sm:h-3.5 hidden xs:inline" />
                 <span className="truncate">{addingId === product.id ? 'Adding...' : 'Add to Cart'}</span>
