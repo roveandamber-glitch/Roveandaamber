@@ -156,15 +156,11 @@ const LoginContent = () => {
               
               {/* Clean ROVE & AMBER Watermark with Logo */}
               <div className="absolute bottom-6 left-6 right-6 text-white z-10">
-                <div className="w-9 h-9 rounded-full overflow-hidden border border-[#D4AF37]/60 mb-2 shadow-sm bg-[#3B1D11]">
-                  <img src="/images/perfumes/rove_amber_logo.jpg" alt="R&A" className="w-full h-full object-cover" />
-                </div>
-                <span className="text-xl font-serif font-bold tracking-[0.2em] block">
-                  ROVE & AMBER
-                </span>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-[#D4AF37] block font-light mt-0.5">
-                  Fine Fragrance & Artisanal Perfumery
-                </span>
+                <img 
+                  src="/images/perfumes/rove_amber_stacked.png" 
+                  alt="ROVE & AMBER" 
+                  className="h-14 w-auto object-contain mb-1" 
+                />
               </div>
             </div>
 

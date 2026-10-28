@@ -1,4 +1,4 @@
-﻿/** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
@@ -20,6 +20,7 @@ export default {
       },
       fontFamily: {
         serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        cinzel: ['"Cinzel"', '"Playfair Display"', 'Georgia', 'serif'],
         playfair: ['"Playfair Display"', 'Georgia', 'serif'],
         sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         inter: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],

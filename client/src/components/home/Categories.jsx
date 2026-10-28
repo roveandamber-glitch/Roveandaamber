@@ -1,117 +1,66 @@
 "use client";
+import React from 'react';
 import Link from 'next/link';
-import React, { useState, useEffect } from 'react';
-import categoryService from '../../services/categoryService';
-import { getImageUrl } from '../../utils/imageHelper';
-import { DUMMY_CATEGORIES } from '../../data/dummyProducts';
 
-// Frontend presentation mapping for legacy backend category records
-const mapCategoryToPerfume = (cat) => {
-  if (!cat) return cat;
-  const name = (cat.name || '').toLowerCase();
-  
-  if (name.includes('ethnic')) {
-    return {
-      ...cat,
-      displayName: "Signature Scents",
-      displayImage: "/images/perfumes/cat_signature.jpg",
-      displayCount: cat.itemCount || 8
-    };
+const CATEGORIES_DATA = [
+  {
+    id: 'perfumes',
+    name: 'Perfumes',
+    slug: 'perfumes',
+    image: '/images/perfumes/cat_perfume_round.png',
+    fallback: '/images/perfumes/amber_oud_perfume.jpg'
+  },
+  {
+    id: 'oud',
+    name: 'Oud',
+    slug: 'oud',
+    image: '/images/perfumes/cat_oud_round.png',
+    fallback: '/images/perfumes/mockup_banner_oud.png'
+  },
+  {
+    id: 'gifts',
+    name: 'Gifts',
+    slug: 'gifts',
+    image: '/images/perfumes/cat_gifts_round.png',
+    fallback: '/images/perfumes/signature_collection.jpg'
+  },
+  {
+    id: 'bakhoor',
+    name: 'Bakhoor',
+    slug: 'bakhoor',
+    image: '/images/perfumes/cat_bakhoor_round.png',
+    fallback: '/images/perfumes/perfume_craft.jpg'
   }
-  if (name.includes('western')) {
-    return {
-      ...cat,
-      displayName: "Eau de Parfum",
-      displayImage: "/images/perfumes/amber_oud_perfume.jpg",
-      displayCount: cat.itemCount || 10
-    };
-  }
-  if (name.includes('casual')) {
-    return {
-      ...cat,
-      displayName: "Men's Fragrances",
-      displayImage: "/images/perfumes/cat_men.jpg",
-      displayCount: cat.itemCount || 6
-    };
-  }
-  if (name.includes('party')) {
-    return {
-      ...cat,
-      displayName: "Women's Fragrances",
-      displayImage: "/images/perfumes/cat_women.jpg",
-      displayCount: cat.itemCount || 6
-    };
-  }
-
-  return {
-    ...cat,
-    displayName: cat.name,
-    displayImage: cat.image || "/images/perfumes/cat_signature.jpg",
-    displayCount: cat.itemCount || 6
-  };
-};
+];
 
 const Categories = () => {
-  const [categories, setCategories] = useState(
-    DUMMY_CATEGORIES.slice(0, 4).map(c => ({
-      ...c,
-      displayName: c.name,
-      displayImage: c.image,
-      displayCount: c.itemCount
-    }))
-  );
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await categoryService.getAllCategories();
-        if (response.success && response.data?.length > 0) {
-          setCategories(response.data.slice(0, 4).map(mapCategoryToPerfume));
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-    fetchCategories();
-  }, []);
-
   return (
-    <section className="py-20 px-6 max-w-7xl mx-auto">
-      <div className="text-center mb-14">
-        <p className="text-xs tracking-[0.25em] text-[#B86526] uppercase mb-3 font-semibold">
-          Curated Olfactory Notes
-        </p>
-        <h2 className="text-4xl md:text-5xl font-serif text-[#1A1A1A] font-normal">
-          Browse Fragrance Collections
-        </h2>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {categories.map((category) => (
+    <section className="py-8 sm:py-12 px-4 sm:px-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-4 gap-3 sm:gap-8">
+        {CATEGORIES_DATA.map((item) => (
           <Link
-            href={`/shop?category=${encodeURIComponent(category.name || category.displayName)}`}
-            key={category._id || category.id}
-            className="group flex flex-col cursor-pointer"
+            key={item.id}
+            href={item.slug === 'gifts' ? '/gifts' : `/shop?category=${encodeURIComponent(item.name)}`}
+            className="group flex flex-col items-center cursor-pointer transition-transform duration-300 hover:-translate-y-1"
           >
-            <div className="relative overflow-hidden mb-3.5 bg-[#EFE8DC] aspect-[3/4] rounded-2xl flex items-center justify-center p-3 sm:p-5 transition-all duration-500 ease-out group-hover:bg-[#E7DFC0] group-hover:shadow-md border border-[#E8E2D6]/60">
-              <img
-                src={getImageUrl(category.displayImage || category.image)}
-                alt={category.displayName || category.name}
-                className="w-full h-full object-cover object-center rounded-xl transition-transform duration-700 ease-out group-hover:scale-105"
-                onError={(e) => {
-                  e.target.src = '/images/perfumes/cat_signature.jpg';
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+            {/* Circular Thumbnail with Gold Border */}
+            <div className="relative w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full overflow-hidden p-0.5 bg-gradient-to-b from-[#E5B869] to-[#C49444] shadow-md group-hover:shadow-xl group-hover:shadow-amber-900/20 transition-all duration-300">
+              <div className="w-full h-full rounded-full overflow-hidden bg-[#241710]">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                  onError={(e) => {
+                    e.target.src = item.fallback;
+                  }}
+                />
+              </div>
             </div>
-            <div className="text-center">
-              <h3 className="text-base font-serif font-medium text-black group-hover:text-[#B86526] transition-colors">
-                {category.displayName || category.name}
-              </h3>
-              <p className="text-xs text-gray-500 font-light mt-0.5">
-                {category.displayCount || 8} Fragrances
-              </p>
-            </div>
+
+            {/* Label */}
+            <span className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-serif font-medium text-[#1A1A1A] group-hover:text-[#B86526] transition-colors tracking-wide">
+              {item.name}
+            </span>
           </Link>
         ))}
       </div>

@@ -1,8 +1,8 @@
 "use client";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import Link from 'next/link';
+import { message } from 'antd';
 import { 
   ShoppingBag, 
   Plus, 
@@ -10,694 +10,859 @@ import {
   ShieldCheck, 
   Truck, 
   RotateCcw, 
-  ArrowRight,
-  CheckCircle2,
-  Mail,
-  Lock,
-  Home,
-  PackageCheck
+  Heart, 
+  Star, 
+  ChevronRight, 
+  Sparkles, 
+  Check, 
+  ArrowLeft,
+  PackageOpen
 } from 'lucide-react';
-import { Modal, message } from 'antd';
-import { motion, AnimatePresence } from 'framer-motion';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import ProductCard from '@/components/product/ProductCard';
 import productService from '@/services/productService';
-import orderService from '@/services/orderService';
 import cartService from '@/services/cartService';
-import CartDrawer from '@/components/cart/CartDrawer';
 import { getImageUrl } from '@/utils/imageHelper';
 import { DUMMY_PRODUCTS } from '@/data/dummyProducts';
-import Link from 'next/link';
 
 const ProductDetails = () => {
   const params = useParams();
   const router = useRouter();
   const id = params?.id;
-  
-  const initialProduct = DUMMY_PRODUCTS.find(p => String(p._id) === String(id) || String(p.id) === String(id) || p.slug === id) || DUMMY_PRODUCTS[0];
-  const [product, setProduct] = useState(initialProduct);
+
+  // Primary Product State
+  const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSize, setSelectedSize] = useState('M');
-  const [quantity, setQuantity] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
+  const [error, setError] = useState(null);
+  const [isUsingShowcase, setIsUsingShowcase] = useState(false);
+
+  // Gallery State
   const [selectedImage, setSelectedImage] = useState(null);
-  
-  const [orderStage, setOrderStage] = useState('confirm'); // 'confirm' | 'placing' | 'success'
-  const [placedOrderData, setPlacedOrderData] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
 
-  const handleAddToCart = () => {
-    if (currentSizeStock <= 0 || quantity <= 0) return;
-    
-    cartService.addToCart({
-      productId: product._id || product.id,
-      name: product.name,
-      price: product.price,
-      image: mainImage,
-      size: selectedSize,
-      quantity: quantity,
-      maxStock: currentSizeStock
-    });
+  // Variant & Purchase State
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
-    message.success(`Added ${product.name} (Size ${selectedSize}) to cart`);
-    router.push('/cart');
-  };
+  // Related Products State
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const fetchProduct = async () => {
-      setLoading(true);
-      try {
-        const response = await productService.getProductById(id);
-        if (response?.success && response.data) {
-          const prod = response.data;
-          setProduct(prod);
+  // Active Tab
+  const [activeTab, setActiveTab] = useState('notes'); // 'notes' | 'details' | 'shipping' | 'reviews'
 
-          const sizeMap = prod.sizes_stock || {};
-          const firstInStockSize = Object.keys(sizeMap).find(s => sizeMap[s] > 0) || prod.sizes?.[0] || 'M';
-          setSelectedSize(firstInStockSize);
+  // Fetch product by ID
+  const fetchProductData = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
 
-          const initialStock = sizeMap[firstInStockSize] ?? prod.stock ?? 1;
-          setQuantity(initialStock > 0 ? 1 : 0);
-        }
-      } catch (error) {
-        console.error('Error fetching product:', error);
-      } finally {
-        setLoading(false);
+    try {
+      const response = await productService.getProductById(id).catch(err => {
+        throw err;
+      });
+
+      let foundProduct = null;
+      if (response?.success && response.data) {
+        foundProduct = response.data;
+      } else if (response && !response.success && response.data) {
+        foundProduct = response.data;
       }
-    };
-    if (id) {
-      fetchProduct();
+
+      if (foundProduct) {
+        setProduct(foundProduct);
+        setIsUsingShowcase(false);
+        initializeProductVariants(foundProduct);
+        fetchRelated(foundProduct);
+      } else {
+        // Fallback matching by ID or slug in showcase catalog
+        const showcaseMatch = DUMMY_PRODUCTS.find(p => 
+          String(p._id) === String(id) || String(p.id) === String(id) || p.slug === id
+        );
+        if (showcaseMatch) {
+          setProduct(showcaseMatch);
+          setIsUsingShowcase(true);
+          initializeProductVariants(showcaseMatch);
+          fetchRelated(showcaseMatch);
+        } else {
+          setProduct(null);
+        }
+      }
+    } catch (err) {
+      console.warn('API error fetching product by ID, checking showcase catalog:', err);
+      // Attempt strictly matching showcase catalog
+      const showcaseMatch = DUMMY_PRODUCTS.find(p => 
+        String(p._id) === String(id) || String(p.id) === String(id) || p.slug === id
+      );
+
+      if (showcaseMatch) {
+        setProduct(showcaseMatch);
+        setIsUsingShowcase(true);
+        initializeProductVariants(showcaseMatch);
+        fetchRelated(showcaseMatch);
+      } else {
+        setProduct(null);
+        setError('Fragrance not found in atelier archives.');
+      }
+    } finally {
+      setLoading(false);
     }
   }, [id]);
 
-  const availableSizesMap = product?.sizes_stock || { 'S': 5, 'M': 10, 'L': 8, 'XL': 4, 'XXL': 2 };
-  const availableSizes = Object.keys(availableSizesMap);
-  const currentSizeStock = availableSizesMap[selectedSize] ?? product?.stock ?? 0;
-
-  // Handles size switching and dynamically clamps quantity to the newly selected size's stock
-  const handleSizeSelect = (newSize) => {
-    const stockForNewSize = availableSizesMap[newSize] ?? 0;
-    if (stockForNewSize <= 0) {
-      message.warning(`Size ${newSize} is currently out of stock`);
-      return;
+  const initializeProductVariants = (prod) => {
+    // Determine sizes if product supports variants
+    let sizes = [];
+    if (Array.isArray(prod.sizes) && prod.sizes.length > 0) {
+      sizes = prod.sizes;
+    } else if (prod.sizes_stock && typeof prod.sizes_stock === 'object') {
+      sizes = Object.keys(prod.sizes_stock);
     }
 
-    setSelectedSize(newSize);
-
-    // Auto-clamp quantity if current quantity exceeds new size's available stock
-    if (quantity > stockForNewSize) {
-      setQuantity(stockForNewSize);
-      message.info(`Quantity adjusted to ${stockForNewSize} (maximum stock available for Size ${newSize})`);
-    } else if (quantity < 1 && stockForNewSize > 0) {
-      setQuantity(1);
-    }
-  };
-
-  const handleOpenOrderModal = () => {
-    const token = typeof window !== 'undefined' 
-      ? (localStorage.getItem('userToken') || localStorage.getItem('adminToken') || localStorage.getItem('token') || localStorage.getItem('adminKey')) 
-      : null;
-    
-    // If not logged in, trigger the elegant Auth Prompt Popup
-    if (!token) {
-      setIsAuthPromptOpen(true);
-      return;
-    }
-
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (e) {
-        setCurrentUser({ email: 'Customer Account' });
-      }
+    if (sizes.length > 0) {
+      // Pick first in-stock size or first size
+      const sizeMap = prod.sizes_stock || {};
+      const firstAvailable = sizes.find(s => (sizeMap[s] ?? 1) > 0) || sizes[0];
+      setSelectedSize(firstAvailable);
     } else {
-      setCurrentUser({ email: 'Authenticated Customer' });
+      setSelectedSize(null);
     }
 
-    setOrderStage('confirm');
-    setIsModalOpen(true);
+    setSelectedImage(null);
+    setQuantity(1);
   };
 
-  const handleConfirmOrder = async () => {
-    if (currentSizeStock < quantity) {
-      message.error(`Only ${currentSizeStock} available in size ${selectedSize}`);
-      return;
-    }
+  // Fetch related products
+  const fetchRelated = async (currentProd) => {
+    try {
+      const response = await productService.getAllProducts().catch(() => null);
+      let all = [];
+      if (response?.success && Array.isArray(response.data?.products)) {
+        all = response.data.products;
+      } else if (response?.success && Array.isArray(response.data)) {
+        all = response.data;
+      } else {
+        all = DUMMY_PRODUCTS;
+      }
 
-    if (quantity <= 0) {
-      message.error(`Please select a valid quantity`);
-      return;
-    }
+      const currentCategory = currentProd.category_name || currentProd.category || '';
+      const currentId = currentProd._id || currentProd.id;
 
-    // Trigger smooth placing animation
-    setOrderStage('placing');
+      // Filter out current product
+      const others = all.filter(p => String(p._id || p.id) !== String(currentId));
+
+      // Prefer products from same category
+      const sameCategory = others.filter(p => 
+        (p.category_name || p.category || '').toLowerCase() === currentCategory.toLowerCase()
+      );
+
+      if (sameCategory.length >= 2) {
+        setRelatedProducts(sameCategory.slice(0, 4));
+      } else {
+        setRelatedProducts(others.slice(0, 4));
+      }
+    } catch (e) {
+      const others = DUMMY_PRODUCTS.filter(p => String(p._id || p.id) !== String(currentProd._id || currentProd.id));
+      setRelatedProducts(others.slice(0, 4));
+    }
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    fetchProductData();
+  }, [fetchProductData]);
+
+  // Wishlist state synchronization
+  useEffect(() => {
+    if (!product) return;
+    const prodId = product._id || product.id;
+
+    const checkWishlist = () => {
+      try {
+        const stored = localStorage.getItem('rove_amber_wishlist');
+        if (stored) {
+          const list = JSON.parse(stored);
+          setIsWishlisted(list.includes(prodId));
+        } else {
+          setIsWishlisted(false);
+        }
+      } catch (e) {
+        setIsWishlisted(false);
+      }
+    };
+
+    checkWishlist();
+    window.addEventListener('wishlistChange', checkWishlist);
+    return () => window.removeEventListener('wishlistChange', checkWishlist);
+  }, [product]);
+
+  const toggleWishlist = () => {
+    if (!product) return;
+    const prodId = product._id || product.id;
+    const displayName = product.name || 'Fragrance';
 
     try {
-      // Simulate micro-delay for smooth luxury animation experience
-      const [response] = await Promise.all([
-        orderService.createOrder({
-          productId: product.id || product._id,
-          size: selectedSize,
-          quantity,
-          customerName: currentUser?.name || 'Valued Customer',
-          phone: currentUser?.email || ''
-        }),
-        new Promise(resolve => setTimeout(resolve, 1200))
-      ]);
+      const stored = localStorage.getItem('rove_amber_wishlist');
+      let list = stored ? JSON.parse(stored) : [];
 
-      if (response?.success) {
-        setPlacedOrderData(response.data);
-        setOrderStage('success');
-        
-        // Atomically decrement size stock and total stock in local UI
-        setProduct(prev => {
-          const updatedSizesStock = { ...prev.sizes_stock };
-          if (updatedSizesStock[selectedSize] !== undefined) {
-            updatedSizesStock[selectedSize] = Math.max(0, updatedSizesStock[selectedSize] - quantity);
-          }
-          return {
-            ...prev,
-            stock: Math.max(0, (prev.stock || 0) - quantity),
-            sizes_stock: updatedSizesStock
-          };
-        });
+      if (list.includes(prodId)) {
+        list = list.filter(item => item !== prodId);
+        setIsWishlisted(false);
+        message.info(`Removed ${displayName} from wishlist`);
       } else {
-        setOrderStage('confirm');
-        message.error(response?.message || 'Failed to place order.');
+        list.push(prodId);
+        setIsWishlisted(true);
+        message.success(`Saved ${displayName} to wishlist`);
+      }
+      localStorage.setItem('rove_amber_wishlist', JSON.stringify(list));
+      window.dispatchEvent(new Event('wishlistChange'));
+    } catch (e) {
+      console.error('Error toggling wishlist:', e);
+    }
+  };
+
+  // Image Gallery Processing
+  const images = useMemo(() => {
+    if (!product) return [];
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      return product.images.map(img => getImageUrl(img.url || img));
+    }
+    if (product.image) {
+      return [getImageUrl(product.image)];
+    }
+    return ['/images/perfumes/amber_oud_perfume.jpg'];
+  }, [product]);
+
+  const currentMainImage = selectedImage || images[0] || '/images/perfumes/amber_oud_perfume.jpg';
+
+  // Stock and Availability Logic
+  const availableSizesMap = useMemo(() => {
+    if (!product) return {};
+    if (product.sizes_stock && typeof product.sizes_stock === 'object') {
+      return product.sizes_stock;
+    }
+    return {};
+  }, [product]);
+
+  const supportedSizes = useMemo(() => {
+    if (!product) return [];
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      return product.sizes;
+    }
+    if (Object.keys(availableSizesMap).length > 0) {
+      return Object.keys(availableSizesMap);
+    }
+    return [];
+  }, [product, availableSizesMap]);
+
+  // Max available stock for currently selected size
+  const maxStockForSize = useMemo(() => {
+    if (!product) return 0;
+    if (selectedSize && availableSizesMap[selectedSize] !== undefined) {
+      return Number(availableSizesMap[selectedSize]) || 0;
+    }
+    if (product.stock !== undefined) {
+      return Number(product.stock) || 0;
+    }
+    if (product.countInStock !== undefined) {
+      return Number(product.countInStock) || 0;
+    }
+    return 99;
+  }, [product, selectedSize, availableSizesMap]);
+
+  const isOutOfStock = maxStockForSize === 0 || product?.inStock === false || product?.status === 'Out of Stock';
+
+  // Pricing calculations
+  const price = Number(product?.price) || 0;
+  const originalPrice = product?.originalPrice && Number(product.originalPrice) > price ? Number(product.originalPrice) : null;
+  const discountPercent = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : null;
+  const totalPrice = price * quantity;
+
+  // Size switch handler
+  const handleSizeSelect = (sz) => {
+    const stockForSz = availableSizesMap[sz] !== undefined ? availableSizesMap[sz] : 99;
+    if (stockForSz <= 0) {
+      message.warning(`Size ${sz} is currently out of stock`);
+      return;
+    }
+    setSelectedSize(sz);
+    if (quantity > stockForSz) {
+      setQuantity(Math.max(1, stockForSz));
+    }
+  };
+
+  // Add to cart handler
+  const handleAddToCart = async (redirectToCart = false) => {
+    if (!product || isOutOfStock || isAddingToCart) return;
+
+    setIsAddingToCart(true);
+    try {
+      cartService.addToCart({
+        id: product._id || product.id,
+        productId: product._id || product.id,
+        name: product.name,
+        price: price,
+        image: currentMainImage,
+        size: selectedSize || '50ml',
+        quantity: quantity,
+        maxStock: maxStockForSize
+      });
+
+      message.success(`Added ${product.name}${selectedSize ? ` (${selectedSize})` : ''} to cart`);
+
+      if (redirectToCart) {
+        router.push('/cart');
       }
     } catch (err) {
-      setOrderStage('confirm');
-      message.error(err.response?.data?.message || 'Error placing order. Please try again.');
+      console.error('Error adding to cart:', err);
+      message.error('Could not add product to cart');
+    } finally {
+      setTimeout(() => setIsAddingToCart(false), 400);
     }
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    if (orderStage === 'success') {
-      setQuantity(1);
-      setOrderStage('confirm');
-    }
-  };
-
-  if (!product) {
+  // Loading State
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8F7F4] flex flex-col items-center justify-center pt-24">
+      <div className="min-h-screen bg-[#FAF9F7] font-sans pt-24 sm:pt-28 pb-20">
         <Navbar />
-        <div className="text-center p-8 bg-white rounded-3xl shadow-sm max-w-md">
-          <h2 className="text-2xl font-serif mb-4">Product Not Found</h2>
-          <p className="text-xs text-gray-500 mb-6">The requested product is temporarily unavailable.</p>
-          <Link href="/shop" className="px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-wider">
-            Explore All Collections
-          </Link>
-        </div>
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
+          <div className="h-4 w-48 bg-gray-200 rounded mb-8" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            <div className="lg:col-span-6 space-y-4">
+              <div className="w-full aspect-square bg-gray-200 rounded-3xl" />
+              <div className="flex gap-3">
+                {[1, 2, 3].map(n => (
+                  <div key={n} className="w-20 h-20 bg-gray-200 rounded-xl" />
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-6 space-y-6">
+              <div className="h-4 w-28 bg-gray-200 rounded" />
+              <div className="h-8 w-3/4 bg-gray-200 rounded" />
+              <div className="h-6 w-36 bg-gray-200 rounded" />
+              <div className="h-20 w-full bg-gray-200 rounded" />
+              <div className="h-12 w-full bg-gray-200 rounded-full" />
+            </div>
+          </div>
+        </main>
         <Footer />
       </div>
     );
   }
 
-  const images = product.images && product.images.length > 0
-    ? product.images.map(img => getImageUrl(img.url || img))
-    : [getImageUrl(product.image)];
-
-  const mainImage = selectedImage || images[0];
-  const totalPrice = (product.price || 0) * quantity;
+  // Not Found State (never silent fallbacks)
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F7] flex flex-col justify-between pt-24 sm:pt-28">
+        <Navbar />
+        <main className="max-w-md mx-auto px-4 py-16 text-center flex-1 flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-[#FAF3E0] text-[#B8860B] border border-[#E0D0A5] flex items-center justify-center mb-5">
+            <PackageOpen size={28} />
+          </div>
+          <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#8C827A] mb-2 block">
+            Atelier Archives
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-black mb-2">
+            Fragrance Not Found
+          </h1>
+          <p className="text-xs text-gray-500 mb-8 leading-relaxed max-w-sm">
+            The requested creation does not exist in our catalog or may have been archived. Please explore our signature flacons.
+          </p>
+          <Link 
+            href="/shop"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-black hover:bg-gray-800 text-white rounded-full text-xs font-bold uppercase tracking-widest transition-colors shadow-xs"
+          >
+            <ArrowLeft size={14} />
+            <span>Return to Collections</span>
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4] font-sans text-enva-text pt-24 sm:pt-28 flex flex-col justify-between">
+    <div className="min-h-screen bg-[#FAF9F7] font-sans text-[#1A1A1A] pt-20 sm:pt-24 pb-20 md:pb-12 flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
-        {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-[11px] uppercase tracking-widest text-gray-500 mb-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full flex-1">
+        
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-[11px] uppercase tracking-widest text-gray-500 mb-6">
           <Link href="/" className="hover:text-black transition-colors">Home</Link>
-          <span>/</span>
+          <ChevronRight size={10} className="text-gray-400" />
           <Link href="/shop" className="hover:text-black transition-colors">Collections</Link>
-          <span>/</span>
-          <span className="text-black font-semibold truncate max-w-xs">{product.name}</span>
+          <ChevronRight size={10} className="text-gray-400" />
+          <span className="text-black font-semibold truncate max-w-[200px] sm:max-w-xs">{product.name}</span>
         </nav>
 
-        {/* Product Grid: Equal Height Stretch */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
+        {/* Offline Showcase Notice Banner */}
+        {isUsingShowcase && (
+          <div className="mb-6 p-3.5 rounded-xl bg-[#FFFDF5] border border-[#E8DCC0] text-xs text-[#8C6D1F] flex items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-[#B8860B] shrink-0" />
+              <span>{error ? `${error} Viewing` : 'Viewing'} ROVE & AMBER Signature Showroom Showcase archive.</span>
+            </div>
+            <Link href="/shop" className="text-[11px] font-bold uppercase tracking-wider text-black underline shrink-0">
+              Browse All
+            </Link>
+          </div>
+        )}
+
+        {/* Hero Product Showcase Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
-          {/* Left Column: Product Media Showcase */}
-          <div className="lg:col-span-6 flex flex-col h-full space-y-4">
-            <div className="relative rounded-3xl bg-gradient-to-b from-[#F3EEE6] to-[#E9E2D5] border border-[#E0D8CA] p-8 flex-1 min-h-[480px] lg:min-h-[580px] flex items-center justify-center overflow-hidden shadow-sm group">
+          {/* LEFT: Image Gallery Showcase */}
+          <div className="lg:col-span-6 space-y-3 sm:space-y-4">
+            
+            {/* Primary Main Image Container */}
+            <div className="relative rounded-2xl sm:rounded-3xl bg-white border border-[#ECE7DE] p-6 sm:p-10 aspect-square flex items-center justify-center overflow-hidden shadow-2xs group">
               <img
-                src={mainImage}
+                src={currentMainImage}
                 alt={product.name}
-                className="w-full h-full max-h-[520px] object-contain transition-transform duration-700 ease-out group-hover:scale-105"
+                className="w-full h-full object-contain drop-shadow-md transition-transform duration-700 ease-out group-hover:scale-105"
                 onError={(e) => {
                   e.target.src = '/images/perfumes/amber_oud_perfume.jpg';
                 }}
               />
 
-              {/* Badges */}
-              <div className="absolute top-6 left-6 flex flex-col gap-2">
-                <span className="bg-white/90 backdrop-blur-md text-[#3B1D11] border border-[#D4AF37]/40 text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full shadow-xs">
+              {/* Category / Concentration Badge */}
+              <div className="absolute top-4 left-4 z-10">
+                <span className="bg-[#FAF9F7]/95 backdrop-blur-md text-[#B8860B] border border-[#E0D8CA] text-[9px] sm:text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full shadow-2xs">
                   {product.category || product.category_name || 'Eau de Parfum'}
                 </span>
               </div>
 
-              {currentSizeStock > 0 && currentSizeStock <= 5 && (
-                <div className="absolute top-6 right-6 bg-[#3B1D11] text-[#D4AF37] text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full">
-                  Only {currentSizeStock} Left in {selectedSize}
+              {/* Wishlist Button on Main Image */}
+              <button
+                type="button"
+                onClick={toggleWishlist}
+                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                className={`absolute top-4 right-4 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-2xs cursor-pointer ${
+                  isWishlisted 
+                    ? 'bg-red-50 text-red-600 border border-red-200' 
+                    : 'bg-white/90 text-gray-500 hover:text-black hover:bg-white border border-[#EFECE6]'
+                }`}
+              >
+                <Heart size={16} className={isWishlisted ? 'fill-red-600 text-red-600' : 'text-gray-500'} />
+              </button>
+
+              {/* Low Stock Badge */}
+              {!isOutOfStock && maxStockForSize <= 5 && maxStockForSize > 0 && (
+                <div className="absolute bottom-4 left-4 bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5] text-[9px] uppercase font-bold tracking-wider px-3 py-1 rounded-full">
+                  Only {maxStockForSize} flacons remaining
                 </div>
               )}
             </div>
 
-            {/* Multiple image gallery thumbnails */}
+            {/* Thumbnail Navigation Row (if multiple images exist) */}
             {images.length > 1 && (
-              <div className="flex items-center gap-3 overflow-x-auto py-1 scrollbar-none">
+              <div className="flex items-center gap-2.5 overflow-x-auto py-1 scrollbar-none">
                 {images.map((img, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setSelectedImage(img)}
-                    className={`relative w-20 h-24 rounded-2xl overflow-hidden bg-[#EFE8DC] p-2 transition-all duration-300 border-2 flex-shrink-0 cursor-pointer ${
-                      mainImage === img ? 'border-black shadow-sm' : 'border-transparent opacity-70 hover:opacity-100'
+                    className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-white p-1.5 transition-all duration-200 border-2 shrink-0 cursor-pointer ${
+                      currentMainImage === img ? 'border-black shadow-xs' : 'border-[#ECE7DE] opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-contain" />
+                    <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Right Column: Information & Purchase Panel */}
-          <div className="lg:col-span-6 flex flex-col h-full">
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex-1 flex flex-col justify-between space-y-6">
-              
-              <div className="space-y-6">
-                {/* Category & Title */}
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#B86526] block mb-2">
-                    {product.category || product.category_name || 'ROVE & AMBER'}
-                  </span>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif text-black font-normal leading-tight">
-                    {product.name}
-                  </h1>
-                </div>
+          {/* RIGHT: Product Purchasing Information */}
+          <div className="lg:col-span-6 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-[#ECE7DE] shadow-2xs space-y-6">
+            
+            {/* Header: Brand, Title, Rating */}
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#B8860B] block mb-1">
+                ROVE & AMBER • Fine Fragrance
+              </span>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif text-black font-normal leading-tight">
+                {product.name}
+              </h1>
 
-                {/* Pricing & Stock Status */}
-                <div className="flex flex-wrap items-baseline justify-between gap-3 pt-2 pb-4 border-b border-gray-100">
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-3xl font-bold font-sans text-black">
-                      ₹{(product.price || 0).toLocaleString('en-IN')}
-                    </span>
-                    <span className="text-xs text-gray-400 font-light">
-                      (Incl. of all taxes)
-                    </span>
+              {/* Rating and Reviews (only if actual rating data exists) */}
+              {product.rating !== undefined && product.rating > 0 && (
+                <div className="flex items-center gap-2 mt-2 text-xs">
+                  <div className="flex items-center text-amber-500">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star 
+                        key={star} 
+                        size={13} 
+                        className={star <= Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'} 
+                      />
+                    ))}
                   </div>
+                  <span className="font-bold text-gray-800">{product.rating}</span>
+                  {product.reviewsCount !== undefined && (
+                    <span className="text-gray-400">({product.reviewsCount} customer reviews)</span>
+                  )}
+                </div>
+              )}
+            </div>
 
-                  {currentSizeStock > 0 ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      {currentSizeStock} available in size {selectedSize}
+            {/* Price & Stock Badge */}
+            <div className="flex flex-wrap items-baseline justify-between gap-3 pb-4 border-b border-gray-100">
+              <div className="flex items-baseline gap-3">
+                <span className="text-2xl sm:text-3xl font-bold font-sans text-black">
+                  ₹{price.toLocaleString('en-IN')}
+                </span>
+                {originalPrice && (
+                  <>
+                    <span className="text-sm font-sans text-gray-400 line-through">
+                      ₹{originalPrice.toLocaleString('en-IN')}
                     </span>
-                  ) : (
-                    <span className="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">
-                      Sold Out in size {selectedSize}
+                    <span className="text-xs font-bold text-[#B8860B] bg-[#FFF8EB] border border-[#E8DCC0] px-2 py-0.5 rounded-full">
+                      Save {discountPercent}%
+                    </span>
+                  </>
+                )}
+                <span className="text-[11px] text-gray-400 font-light block">
+                  (Incl. of all taxes)
+                </span>
+              </div>
+
+              {/* Live Stock Pill */}
+              {isOutOfStock ? (
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">
+                  Out of Stock
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>In Stock</span>
+                </span>
+              )}
+            </div>
+
+            {/* Description Lead */}
+            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-light">
+              {product.description || 'An artisanal fine fragrance slow-macerated with rare golden amber, precious oud accords, and noble botanicals, crafted for lasting presence and distinguished sillage.'}
+            </p>
+
+            {/* Variant Size Selector (Only if supported by product data) */}
+            {supportedSizes.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-700">
+                    Select Flacon Size
+                  </label>
+                  {selectedSize && availableSizesMap[selectedSize] !== undefined && (
+                    <span className="text-[10px] text-gray-400">
+                      {availableSizesMap[selectedSize] > 0 ? `${availableSizesMap[selectedSize]} flacons available` : 'Sold out'}
                     </span>
                   )}
                 </div>
-
-                {/* Description */}
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-light">
-                  {product.description || 'Crafted with aged amber resins, precious wild oud, and rare botanical essences, designed for lasting sillage and signature presence.'}
-                </p>
-
-                {/* Olfactory Notes if present */}
-                {product.details && product.details.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D6] space-y-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#B86526] block">
-                      Olfactory Composition & Notes
-                    </span>
-                    <ul className="space-y-1.5">
-                      {product.details.map((note, idx) => (
-                        <li key={idx} className="text-xs text-gray-700 font-light flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#B86526]" />
-                          <span>{note}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Size Selector with Live Stock Availability */}
-                <div>
-                  <div className="flex justify-between items-center mb-2.5">
-                    <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-700">Select Flacon Size</label>
-                    <span className="text-[10px] font-semibold text-gray-500">
-                      {currentSizeStock > 0 ? `${currentSizeStock} In Stock` : 'Out of Stock'}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    {availableSizes.map((size) => {
-                      const stockForSize = availableSizesMap[size] ?? 0;
-                      const isOutOfStock = stockForSize <= 0;
-                      return (
-                        <button
-                          key={size}
-                          type="button"
-                          onClick={() => handleSizeSelect(size)}
-                          disabled={isOutOfStock}
-                          className={`h-11 min-w-[52px] px-4 rounded-xl text-xs font-bold transition-all duration-200 border flex flex-col items-center justify-center ${
-                            selectedSize === size
-                              ? 'bg-black text-white border-black shadow-sm scale-102'
-                              : isOutOfStock
-                              ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed line-through'
-                              : 'bg-gray-50 text-gray-800 border-gray-200 hover:border-black cursor-pointer'
-                          }`}
-                        >
-                          <span>{size}</span>
-                          <span className={`text-[8px] font-normal mt-0.5 ${selectedSize === size ? 'text-white/80' : 'text-gray-400'}`}>
-                            {isOutOfStock ? '0 qty' : `${stockForSize} qty`}
+                <div className="flex flex-wrap gap-2.5">
+                  {supportedSizes.map(size => {
+                    const stockForSize = availableSizesMap[size] !== undefined ? availableSizesMap[size] : 99;
+                    const isSoldOut = stockForSize <= 0;
+                    const isSelected = selectedSize === size;
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => handleSizeSelect(size)}
+                        disabled={isSoldOut}
+                        className={`h-11 min-w-[64px] px-4 rounded-xl text-xs font-bold uppercase transition-all duration-200 border flex flex-col items-center justify-center cursor-pointer ${
+                          isSelected
+                            ? 'bg-black text-white border-black shadow-xs scale-[1.02]'
+                            : isSoldOut
+                            ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed line-through'
+                            : 'bg-[#FAF9F7] text-gray-800 border-[#E8E2D6] hover:border-black'
+                        }`}
+                      >
+                        <span>{size}</span>
+                        {availableSizesMap[size] !== undefined && (
+                          <span className={`text-[8px] font-normal leading-none mt-0.5 ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
+                            {isSoldOut ? '0 left' : `${stockForSize} qty`}
                           </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Quantity Selector & Summary */}
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-700 block mb-2.5">Quantity</label>
-                  <div className="flex items-center justify-between">
-                    <div className="inline-flex items-center bg-gray-50 border border-gray-200 rounded-full p-1">
-                      <button
-                        type="button"
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white text-gray-700 transition-colors cursor-pointer"
-                        disabled={quantity <= 1 || currentSizeStock <= 0}
-                      >
-                        <Minus size={13} />
+                        )}
                       </button>
-                      <span className="w-10 text-center text-xs font-bold text-black">{currentSizeStock <= 0 ? 0 : quantity}</span>
-                      <button
-                        type="button"
-                        onClick={() => setQuantity(Math.min(currentSizeStock, quantity + 1))}
-                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white text-gray-700 transition-colors cursor-pointer"
-                        disabled={quantity >= currentSizeStock || currentSizeStock <= 0}
-                      >
-                        <Plus size={13} />
-                      </button>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Total Amount</span>
-                      <span className="text-sm font-bold text-black font-sans">
-                        ₹{(currentSizeStock <= 0 ? 0 : totalPrice).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
+              </div>
+            )}
 
-                {/* Action Buttons: Add to Cart & Buy Now */}
-                <div className="pt-2 flex flex-col sm:flex-row gap-3">
+            {/* Quantity Selector */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-700 block mb-2">
+                Quantity
+              </label>
+              <div className="flex items-center justify-between">
+                <div className="inline-flex items-center bg-[#FAF9F7] border border-[#E0D8C8] rounded-full p-1">
                   <button
                     type="button"
-                    onClick={handleAddToCart}
-                    disabled={currentSizeStock <= 0 || quantity <= 0}
-                    className="flex-1 bg-black hover:bg-[#262626] active:bg-black disabled:bg-gray-200 disabled:text-gray-400 text-white py-4 px-5 rounded-full flex items-center justify-center gap-2.5 shadow-md transition-all duration-300 transform active:scale-98 cursor-pointer font-bold text-xs uppercase tracking-[0.16em]"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1 || isOutOfStock}
+                    aria-label="Decrease quantity"
+                    className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white text-gray-700 transition-colors disabled:opacity-40 cursor-pointer"
                   >
-                    <ShoppingBag size={15} />
-                    <span>Add to Cart</span>
+                    <Minus size={13} />
                   </button>
-
+                  <span className="w-10 text-center text-xs font-bold text-black">
+                    {isOutOfStock ? 0 : quantity}
+                  </span>
                   <button
                     type="button"
-                    onClick={handleOpenOrderModal}
-                    disabled={currentSizeStock <= 0 || quantity <= 0}
-                    className="flex-1 bg-[#FAF8F5] hover:bg-black hover:text-white active:bg-gray-100 disabled:bg-gray-100 disabled:text-gray-400 text-black border-2 border-black disabled:border-gray-200 py-3.5 px-5 rounded-full flex items-center justify-center gap-2 transition-all duration-300 transform active:scale-98 cursor-pointer font-bold text-xs uppercase tracking-[0.16em] group"
+                    onClick={() => setQuantity(Math.min(maxStockForSize, quantity + 1))}
+                    disabled={quantity >= maxStockForSize || isOutOfStock}
+                    aria-label="Increase quantity"
+                    className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white text-gray-700 transition-colors disabled:opacity-40 cursor-pointer"
                   >
-                    <span>Buy Now</span>
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    <Plus size={13} />
                   </button>
                 </div>
-              </div>
 
-              {/* Boutique Trust Pillars */}
-              <div className="grid grid-cols-3 gap-3 pt-6 border-t border-gray-100 text-center mt-auto">
-                <div className="flex flex-col items-center space-y-1.5 p-2.5 rounded-xl bg-gray-50/70">
-                  <Truck size={16} className="text-[#B86526]" />
-                  <span className="text-[10px] font-semibold text-gray-700 leading-tight">Pan-India Express</span>
-                  <span className="text-[9px] text-gray-400">2-4 Business Days</span>
-                </div>
-                <div className="flex flex-col items-center space-y-1.5 p-2.5 rounded-xl bg-gray-50/70">
-                  <ShieldCheck size={16} className="text-[#B86526]" />
-                  <span className="text-[10px] font-semibold text-gray-700 leading-tight">Pure Perfume Oils</span>
-                  <span className="text-[9px] text-gray-400">20-26% Concentration</span>
-                </div>
-                <div className="flex flex-col items-center space-y-1.5 p-2.5 rounded-xl bg-gray-50/70">
-                  <RotateCcw size={16} className="text-[#B86526]" />
-                  <span className="text-[10px] font-semibold text-gray-700 leading-tight">Artisanal Packaging</span>
-                  <span className="text-[9px] text-gray-400">Signature Box</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <Footer />
-
-      {/* POPUP 1: Auth Required Prompt Modal (Please Login or Continue to Home) */}
-      <Modal
-        open={isAuthPromptOpen}
-        onCancel={() => setIsAuthPromptOpen(false)}
-        footer={null}
-        centered
-        className="font-sans"
-        width={420}
-      >
-        <div className="p-2 text-center">
-          {/* Badge Icon */}
-          <div className="w-16 h-16 bg-[#F5F1E9] text-black rounded-full flex items-center justify-center mx-auto mb-4 border border-[#E8E2D6]">
-            <Lock size={26} strokeWidth={1.75} />
-          </div>
-
-          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#8C827A] block mb-1">
-            Authentication Required
-          </span>
-          <h3 className="text-2xl font-serif font-bold text-black mb-2">Please Sign In</h3>
-          <p className="text-xs text-gray-500 mb-5 leading-relaxed">
-            Please login to place your order and access personalized delivery tracking from ROVE & AMBER.
-          </p>
-
-          {/* Selected Item Mini Recap */}
-          <div className="p-3.5 bg-[#FAF8F5] rounded-2xl border border-[#E8E2D6] flex items-center gap-3 mb-6 text-left">
-            <div className="w-12 h-14 bg-white rounded-xl p-1 flex items-center justify-center flex-shrink-0 border border-gray-100">
-              <img src={mainImage} alt={product.name} className="w-full h-full object-contain" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h5 className="text-xs font-serif font-bold text-black truncate">{product.name}</h5>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] font-mono font-bold text-black bg-white px-1.5 py-0.5 rounded border border-gray-200">
-                  Size: {selectedSize}
-                </span>
-                <span className="text-xs font-bold text-black">
-                  ₹{totalPrice.toLocaleString('en-IN')}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                setIsAuthPromptOpen(false);
-                router.push(`/login?redirect=/product/${id}`);
-              }}
-              className="w-full bg-black hover:bg-[#262626] active:bg-black text-white h-12 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
-            >
-              <Lock size={13} />
-              <span>Login to Place Order</span>
-              <ArrowRight size={13} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsAuthPromptOpen(false);
-                router.push('/');
-              }}
-              className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 h-11 rounded-full font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer border border-gray-200 flex items-center justify-center gap-2"
-            >
-              <Home size={13} />
-              <span>Continue to Home Page</span>
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* POPUP 2: Authenticated Order Confirmation Modal with Smooth Animation */}
-      <Modal
-        open={isModalOpen}
-        onCancel={handleCloseModal}
-        footer={null}
-        centered
-        closable={orderStage !== 'placing'}
-        className="font-sans"
-        width={460}
-      >
-        <AnimatePresence mode="wait">
-          {orderStage === 'confirm' && (
-            <motion.div
-              key="confirm-stage"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.25 }}
-              className="pt-2 pb-1"
-            >
-              {/* Modal Header */}
-              <div className="text-center mb-5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#8C827A] block mb-1">
-                  Atelier Checkout
-                </span>
-                <h3 className="text-2xl font-serif font-bold text-black">Confirm Order</h3>
-              </div>
-
-              {/* Logged in user email banner */}
-              <div className="mb-4 p-3.5 bg-[#FAF8F5] rounded-2xl border border-[#E8E2D6] flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center flex-shrink-0">
-                  <Mail size={15} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Account Email</span>
-                  <span className="text-xs font-bold text-black truncate block font-mono">
-                    {currentUser?.email || 'Authenticated User'}
+                <div className="text-right">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Total Amount</span>
+                  <span className="text-base font-bold text-black font-sans">
+                    ₹{(isOutOfStock ? 0 : totalPrice).toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
+            </div>
 
-              {/* Product and Quantity Summary Card */}
-              <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] mb-6 flex items-center gap-4">
-                <div className="w-16 h-20 bg-[#EFE8DC] rounded-xl p-1 flex items-center justify-center flex-shrink-0 border border-gray-100">
-                  <img src={mainImage} alt={product.name} className="w-full h-full object-contain" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-serif font-bold text-black truncate mb-1">{product.name}</h4>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px] font-bold bg-black text-white px-2 py-0.5 rounded-md font-mono">
-                      Size: {selectedSize}
-                    </span>
-                    <span className="text-xs text-gray-600 font-medium">
-                      Qty: {quantity}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Total Amount: <span className="font-bold text-black text-sm font-sans">₹{totalPrice.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Confirm Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleConfirmOrder}
-                className="w-full bg-black hover:bg-[#262626] active:bg-black text-white h-12 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+            {/* Action Buttons: Add to Cart and Buy Now */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => handleAddToCart(false)}
+                disabled={isOutOfStock || isAddingToCart}
+                className="flex-1 bg-black hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white py-3.5 px-5 rounded-full flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer font-serif uppercase tracking-widest text-xs"
               >
-                <span>Confirm & Place Order</span>
-                <ArrowRight size={14} />
-              </motion.button>
-            </motion.div>
-          )}
+                <ShoppingBag size={14} />
+                <span>{isAddingToCart ? 'Adding to Cart...' : 'Add to Cart'}</span>
+              </button>
 
-          {orderStage === 'placing' && (
-            <motion.div
-              key="placing-stage"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.3 }}
-              className="py-12 flex flex-col items-center justify-center text-center"
-            >
-              {/* Elegant pulsating rings animation */}
-              <div className="relative w-20 h-20 mb-6 flex items-center justify-center">
-                <motion.div
-                  animate={{ scale: [1, 1.8, 1], opacity: [0.3, 0, 0.3] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-0 rounded-full bg-black/10"
-                />
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                  className="w-16 h-16 rounded-full border-2 border-black/20 border-t-black flex items-center justify-center"
-                />
-                <ShoppingBag size={22} className="text-black absolute" />
-              </div>
-
-              <h4 className="text-lg font-serif font-bold text-black mb-1">Securing Your Order</h4>
-              <p className="text-xs text-gray-400 font-light max-w-xs">
-                Reserving size {selectedSize} inventory from the atelier...
-              </p>
-            </motion.div>
-          )}
-
-          {orderStage === 'success' && (
-            <motion.div
-              key="success-stage"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className="py-6 flex flex-col items-center text-center"
-            >
-              {/* Animated Pop-in Success Badge */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.15, type: 'spring', damping: 15, stiffness: 200 }}
-                className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mb-4 shadow-sm"
+              <button
+                type="button"
+                onClick={() => handleAddToCart(true)}
+                disabled={isOutOfStock || isAddingToCart}
+                className="flex-1 bg-[#FAF8F5] hover:bg-black hover:text-white disabled:bg-gray-100 disabled:text-gray-400 text-black border border-black py-3.5 px-5 rounded-full flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer font-serif uppercase tracking-widest text-xs"
               >
-                <CheckCircle2 size={34} strokeWidth={2.2} />
-              </motion.div>
+                <span>Instant Checkout</span>
+              </button>
+            </div>
 
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-600 block mb-1">
-                Order Confirmed
-              </span>
-              <h3 className="text-2xl font-serif font-bold text-black mb-1">Thank You!</h3>
-              <p className="text-xs text-gray-500 mb-4 max-w-xs">
-                Your order has been recorded and will be prepared by our atelier.
-              </p>
+            {/* Trust Badges */}
+            <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100 text-center">
+              <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7]">
+                <Truck size={15} className="text-[#B8860B] mb-1" />
+                <span className="text-[10px] font-semibold text-gray-700">Pan-India Express</span>
+                <span className="text-[8px] text-gray-400">2-4 Days</span>
+              </div>
+              <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7]">
+                <ShieldCheck size={15} className="text-[#B8860B] mb-1" />
+                <span className="text-[10px] font-semibold text-gray-700">Artisanal Extract</span>
+                <span className="text-[8px] text-gray-400">Extrait de Parfum</span>
+              </div>
+              <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7]">
+                <RotateCcw size={15} className="text-[#B8860B] mb-1" />
+                <span className="text-[10px] font-semibold text-gray-700">Embossed Flacon</span>
+                <span className="text-[8px] text-gray-400">Luxury Coffret</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-              {/* Order Reference Pill */}
-              <div className="bg-[#FAF8F5] border border-[#E8E2D6] px-4 py-2 rounded-xl mb-6">
-                <span className="text-[10px] text-gray-400 uppercase tracking-widest block font-bold">Order Reference</span>
-                <span className="font-mono font-bold text-sm text-black">
-                  {placedOrderData?.orderId || `#ORD-${placedOrderData?.id}`}
+        {/* SECTION 2: Detailed Accordion / Tabs (Notes, Details, Specifications, Reviews) */}
+        <section className="mt-12 sm:mt-16 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-10 border border-[#ECE7DE] shadow-2xs">
+          
+          {/* Tab Navigation */}
+          <div className="flex items-center space-x-6 sm:space-x-8 border-b border-gray-100 pb-3 overflow-x-auto scrollbar-none text-xs uppercase tracking-widest font-serif">
+            <button
+              type="button"
+              onClick={() => setActiveTab('notes')}
+              className={`pb-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'notes' ? 'border-black text-black font-bold' : 'border-transparent text-gray-400 hover:text-black'
+              }`}
+            >
+              Olfactory Notes
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('details')}
+              className={`pb-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'details' ? 'border-black text-black font-bold' : 'border-transparent text-gray-400 hover:text-black'
+              }`}
+            >
+              Artisanal Craft
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('shipping')}
+              className={`pb-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'shipping' ? 'border-black text-black font-bold' : 'border-transparent text-gray-400 hover:text-black'
+              }`}
+            >
+              Shipping & Flacon
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('reviews')}
+              className={`pb-2 border-b-2 transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'reviews' ? 'border-black text-black font-bold' : 'border-transparent text-gray-400 hover:text-black'
+              }`}
+            >
+              Reviews {product.reviewsCount ? `(${product.reviewsCount})` : ''}
+            </button>
+          </div>
+
+          {/* Tab Contents */}
+          <div className="pt-6">
+            
+            {/* 1. Olfactory Notes */}
+            {activeTab === 'notes' && (
+              <div className="space-y-4 max-w-2xl">
+                <h3 className="text-lg font-serif font-normal text-black">
+                  Olfactory Pyramid & Composition
+                </h3>
+                {product.details && product.details.length > 0 ? (
+                  <ul className="space-y-2.5">
+                    {product.details.map((note, idx) => (
+                      <li key={idx} className="text-xs text-gray-700 flex items-center gap-2.5 font-light">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#B8860B] shrink-0" />
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-gray-600 leading-relaxed font-light">
+                    Formulated with aged natural amber, smoky agarwood resins, luminous Damask rose, and velvet musk accords for an intimate and radiant olfactory aura.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 2. Artisanal Craft & Description */}
+            {activeTab === 'details' && (
+              <div className="space-y-3 max-w-2xl text-xs text-gray-600 leading-relaxed font-light">
+                <h3 className="text-lg font-serif font-normal text-black">
+                  Slow-Macerated In Glass Demijohns
+                </h3>
+                <p>
+                  Every flacon by ROVE & AMBER is matured over weeks in dark glass demijohns, allowing the organic botanicals and aged resins to marry seamlessly into a silky, complex fragrance.
+                </p>
+                <p>
+                  Free from parabens, phthalates, and unnecessary additives. Crafted using organic grain spirit and ethically harvested wild botanicals.
+                </p>
+              </div>
+            )}
+
+            {/* 3. Shipping & Specifications */}
+            {activeTab === 'shipping' && (
+              <div className="space-y-3 max-w-2xl text-xs text-gray-600 leading-relaxed font-light">
+                <h3 className="text-lg font-serif font-normal text-black">
+                  Packaging & Pan-India Dispatch
+                </h3>
+                <p>
+                  Your flacon is cushioned inside our signature golden embossed presentation box, accompanied by a certificate of authenticity.
+                </p>
+                <ul className="space-y-1.5 pt-2">
+                  <li className="flex items-center gap-2">
+                    <Check size={12} className="text-[#B8860B]" />
+                    <span>Complimentary express delivery across India.</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={12} className="text-[#B8860B]" />
+                    <span>Dispatched in tamper-evident, temperature-controlled packaging.</span>
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            {/* 4. Customer Reviews */}
+            {activeTab === 'reviews' && (
+              <div className="space-y-6 max-w-2xl">
+                {product.rating !== undefined && product.rating > 0 ? (
+                  <div>
+                    <div className="flex items-center gap-3 p-4 bg-[#FAF9F7] rounded-xl border border-[#ECE7DE] mb-6">
+                      <div className="text-center pr-4 border-r border-gray-200">
+                        <span className="text-3xl font-serif font-bold text-black">{product.rating}</span>
+                        <span className="text-[10px] text-gray-400 block">out of 5.0</span>
+                      </div>
+                      <div>
+                        <div className="flex items-center text-amber-500 mb-0.5">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <Star key={s} size={14} className="fill-amber-400 text-amber-400" />
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-600">
+                          Based on {product.reviewsCount || 1} verified client reviews
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-white border border-[#ECE7DE] space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-black">Verified Fragrance Collector</span>
+                          <span className="text-[10px] text-gray-400">Verified Purchase</span>
+                        </div>
+                        <div className="flex text-amber-400">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <Star key={s} size={11} className="fill-amber-400" />
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-600 font-light leading-relaxed">
+                          "Exceptional longevity and sillage. The amber dry-down is warm, sophisticated, and lingers gracefully throughout the day."
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-gray-500">
+                    <p className="text-xs font-serif text-black mb-1">
+                      No reviews yet for this signature creation
+                    </p>
+                    <p className="text-[11px] text-gray-400">
+                      Be among the first to experience and review this flacon upon delivery.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* SECTION 3: Related Creations */}
+        {relatedProducts.length > 0 && (
+          <section className="mt-14 sm:mt-20 border-t border-[#ECE7DE] pt-10 sm:pt-14">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#B8860B] block mb-1">
+                  Atelier Curation
                 </span>
+                <h2 className="text-2xl sm:text-3xl font-serif text-black font-normal">
+                  You May Also Admire
+                </h2>
               </div>
+              <Link
+                href="/shop"
+                className="text-xs font-serif uppercase tracking-widest text-black border-b border-black pb-0.5 hover:text-[#B8860B] hover:border-[#B8860B] transition-colors mt-3 sm:mt-0 inline-block self-start sm:self-auto"
+              >
+                View Full Catalog
+              </Link>
+            </div>
 
-              {/* Navigation Options */}
-              <div className="w-full space-y-2.5">
-                <Link href="/orders" className="block w-full">
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className="w-full bg-black hover:bg-[#262626] text-white h-11 rounded-full font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                  >
-                    <PackageCheck size={14} />
-                    <span>View in My Orders</span>
-                  </button>
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="w-full bg-transparent hover:bg-gray-50 text-gray-600 h-10 rounded-full font-semibold text-xs cursor-pointer"
-                >
-                  Continue Shopping
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Modal>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
+              {relatedProducts.map(rel => (
+                <ProductCard key={rel._id || rel.id} product={rel} />
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+
+      <Footer />
     </div>
   );
 };

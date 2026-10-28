@@ -100,18 +100,8 @@ const AdminLayout = ({ children }) => {
     <div className="flex flex-col h-full bg-white border-r border-[#E8E2D6] font-sans">
       {/* Brand Header */}
       <div className="shrink-0 p-5 border-b border-[#EAE4D8] flex items-center justify-between">
-        <Link href="/admin" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full overflow-hidden border border-[#D4AF37]/60 shadow-sm bg-[#3B1D11] flex-shrink-0">
-            <img src="/images/perfumes/rove_amber_logo.jpg" alt="R&A" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <span className="font-serif text-base font-bold tracking-[0.2em] text-black block leading-none">
-              ROVE & AMBER
-            </span>
-            <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#B86526] block mt-1">
-              Fine Fragrance Admin
-            </span>
-          </div>
+        <Link href="/admin" className="flex items-center gap-2">
+          <img src="/images/perfumes/rove_amber_text_only.png" alt="ROVE & AMBER FINE FRAGRANCE" className="h-8 w-auto object-contain" />
         </Link>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FAF8F5] border border-[#E0D8CA] text-emerald-800 text-[10px] font-bold">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

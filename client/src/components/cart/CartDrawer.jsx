@@ -7,14 +7,10 @@ import {
   Minus, 
   Trash2, 
   ArrowRight, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Truck,
-  Sparkles,
-  Lock
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 import { Modal, message, Form, Input } from 'antd';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
@@ -80,7 +76,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
             phone: user.phone || '',
             address: user.address || ''
           });
-        } catch (e) {}
+        } catch (e) {
+          console.warn('Could not parse user in CartDrawer', e);
+        }
       }
     }
     setIsCheckoutModalOpen(true);

@@ -8,21 +8,22 @@ import {
   X, 
   Menu, 
   User, 
-  LogOut, 
-  Package, 
+  LogOut,
+  Package,
   ChevronRight,
   TrendingUp,
+  ShoppingBag,
+  Heart,
+  Home,
   Sparkles,
-  ArrowRight,
-  CornerDownLeft,
-  ShieldCheck,
-  ShoppingBag
+  Gift,
+  Compass,
+  MessageSquare
 } from 'lucide-react';
-import { Dropdown, message } from 'antd';
+import { message } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import productService from '../../services/productService';
 import cartService from '../../services/cartService';
-import CartDrawer from '../cart/CartDrawer';
 import { getImageUrl } from '../../utils/imageHelper';
 
 const TRENDING_SEARCHES = [
@@ -37,14 +38,16 @@ const TRENDING_SEARCHES = [
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const searchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -55,10 +58,30 @@ const Navbar = () => {
     setCartCount(cartService.getCartCount());
   };
 
+  const updateWishlistCount = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem('rove_amber_wishlist');
+      if (stored) {
+        const list = JSON.parse(stored);
+        setWishlistCount(Array.isArray(list) ? list.length : 0);
+      } else {
+        setWishlistCount(0);
+      }
+    } catch (e) {
+      setWishlistCount(0);
+    }
+  };
+
   useEffect(() => {
     updateCartCount();
+    updateWishlistCount();
     window.addEventListener('cartChange', updateCartCount);
-    return () => window.removeEventListener('cartChange', updateCartCount);
+    window.addEventListener('wishlistChange', updateWishlistCount);
+    return () => {
+      window.removeEventListener('cartChange', updateCartCount);
+      window.removeEventListener('wishlistChange', updateWishlistCount);
+    };
   }, []);
 
   // Prevent background scrolling when mobile menu is open
@@ -118,6 +141,9 @@ const Navbar = () => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
+      if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target)) {
+        // keep mobile search unless clicked outside
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -125,7 +151,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 15);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -150,461 +176,451 @@ const Navbar = () => {
       }
     };
 
-    const debounceTimeout = setTimeout(fetchResults, 200);
-    return () => clearTimeout(debounceTimeout);
+    const timer = setTimeout(fetchResults, 280);
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
   const handleSearch = (e) => {
     if (e.key === 'Enter' || e.type === 'click') {
-      if (searchQuery.trim() !== '') {
-        router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
-        setSearchQuery('');
-        setIsMenuOpen(false);
+      if (searchQuery.trim()) {
         setShowDropdown(false);
+        setIsMobileSearchOpen(false);
+        setIsMenuOpen(false);
+        router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
       }
     }
   };
 
   const handleTrendingClick = (term) => {
     setSearchQuery(term);
-    router.push(`/shop?search=${encodeURIComponent(term)}`);
     setShowDropdown(false);
+    setIsMobileSearchOpen(false);
     setIsMenuOpen(false);
+    router.push(`/shop?search=${encodeURIComponent(term)}`);
   };
 
   const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Collections', path: '/shop' },
-    { name: 'My Orders', path: '/orders' },
-    { name: 'About Atelier', path: '/about' },
-    { name: 'Contact Concierge', path: '/contact' },
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'Collections', path: '/shop', icon: Sparkles },
+    { name: 'Gifts', path: '/gifts', icon: Gift },
+    { name: 'About', path: '/about', icon: Compass },
+    { name: 'Contact', path: '/contact', icon: MessageSquare },
   ];
 
-  const userMenuItems = {
-    items: [
-      {
-        key: 'profile_info',
-        label: (
-          <div className="px-2 py-1">
-            <p className="text-[10px] uppercase font-bold text-gray-400">
-              {currentUser?.role === 'admin' ? 'Administrator' : 'Signed In As'}
-            </p>
-            <p className="text-xs font-semibold text-black truncate max-w-[140px]">{currentUser?.email || currentUser?.name || 'Customer'}</p>
-          </div>
-        ),
-        disabled: true,
-      },
-      ...(currentUser?.role === 'admin' ? [
-        {
-          key: 'admin_dashboard',
-          icon: <ShieldCheck size={14} className="text-purple-600" />,
-          label: <Link href="/admin" className="font-bold text-xs text-purple-700">Admin Dashboard</Link>,
-        }
-      ] : []),
-      {
-        key: 'profile',
-        icon: <User size={14} />,
-        label: <Link href="/profile" className="font-medium text-xs">My Profile</Link>,
-      },
-      {
-        key: 'orders',
-        icon: <Package size={14} />,
-        label: <Link href="/orders" className="font-medium text-xs">My Orders</Link>,
-      },
-      {
-        type: 'divider',
-      },
-      {
-        key: 'logout',
-        icon: <LogOut size={14} className="text-red-500" />,
-        label: <span onClick={handleLogout} className="text-xs text-red-500 font-medium cursor-pointer">Sign Out</span>,
-      },
-    ]
-  };
+  const drawerLinks = [
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'Collections', path: '/shop', icon: Sparkles },
+    { name: 'Gifts', path: '/gifts', icon: Gift },
+    { name: 'Wishlist', path: '/wishlist', icon: Heart },
+    { name: 'My Orders', path: '/orders', icon: Package },
+    { name: 'About', path: '/about', icon: Compass },
+    { name: 'Contact', path: '/contact', icon: MessageSquare },
+  ];
 
   return (
     <>
-      <nav 
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-          isScrolled 
-            ? 'bg-[#F9F6F0]/95 backdrop-blur-md py-3.5 sm:py-4 shadow-sm border-b border-[#E8E2D6]' 
-            : 'bg-[#F9F6F0]/80 backdrop-blur-sm py-4 sm:py-5 border-b border-black/5'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 flex items-center justify-between">
-          {/* Logo */}
-          <Link 
-            href="/" 
-            className="flex items-center gap-2.5 sm:gap-3 group"
+      {/* MOBILE FLOATING HEADER (Pixel-perfect match to luxury mobile reference) */}
+      <div className="md:hidden fixed top-3 left-3 right-3 z-50">
+        <div className="bg-[#18110D]/75 backdrop-blur-md border border-white/20 rounded-full px-3.5 py-2 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.36)] transition-all">
+          {/* Left: Hamburger Menu in rounded glass circle */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="w-9 h-9 rounded-full flex items-center justify-center border border-white/25 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
+            aria-label="Open menu"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden shadow-sm border border-[#D4AF37]/60 flex-shrink-0 bg-[#3B1D11]">
-              <img 
-                src="/images/perfumes/rove_amber_logo.jpg" 
-                alt="ROVE & AMBER" 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base sm:text-lg font-serif tracking-[0.2em] font-bold text-black leading-tight">
-                ROVE & AMBER
-              </span>
-              <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-[#8C827A] font-medium leading-none hidden sm:block">
-                Fine Fragrance
-              </span>
-            </div>
+            <Menu size={18} strokeWidth={1.8} />
+          </button>
+
+          {/* Center: ROVE & AMBER FINE FRAGRANCE */}
+          <Link href="/" className="flex flex-col items-center justify-center text-center">
+            <span className="font-serif text-[15px] sm:text-base font-normal tracking-[0.22em] text-[#E5B869] uppercase leading-tight">
+              ROVE & AMBER
+            </span>
+            <span className="text-[7.5px] tracking-[0.32em] text-[#F3ECE1]/80 font-sans uppercase font-medium mt-0.5">
+              FINE FRAGRANCE
+            </span>
           </Link>
-        
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-8 lg:space-x-10 text-xs uppercase tracking-[0.2em] font-medium">
-            <Link 
-              href="/" 
-              prefetch={true}
-              className={`transition-colors ${
-                isActive('/') 
-                  ? 'border-b border-black pb-1 text-black font-bold' 
-                  : 'text-gray-600 hover:text-black'
-              }`}
+
+          {/* Right: Search & Wishlist */}
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            <button
+              type="button"
+              onClick={() => setIsMobileSearchOpen(prev => !prev)}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white hover:text-[#E5B869] transition-colors cursor-pointer"
+              aria-label="Search"
             >
-              Home
-            </Link>
-            <Link 
-              href="/shop" 
+              <Search size={19} strokeWidth={1.8} />
+            </button>
+
+            <Link
+              href="/wishlist"
               prefetch={true}
-              className={`transition-colors ${
-                isActive('/shop') 
-                  ? 'border-b border-black pb-1 text-black font-bold' 
-                  : 'text-gray-600 hover:text-black'
-              }`}
+              className="relative w-8 h-8 rounded-full flex items-center justify-center text-white hover:text-[#E5B869] transition-colors cursor-pointer"
+              aria-label="Wishlist"
             >
-              Collections
-            </Link>
-            <Link 
-              href="/orders" 
-              prefetch={true}
-              className={`transition-colors ${
-                isActive('/orders') 
-                  ? 'border-b border-black pb-1 text-black font-bold' 
-                  : 'text-gray-600 hover:text-black'
-              }`}
-            >
-              My Orders
-            </Link>
-            <Link 
-              href="/about" 
-              prefetch={true}
-              className={`transition-colors ${
-                isActive('/about') 
-                  ? 'border-b border-black pb-1 text-black font-bold' 
-                  : 'text-gray-600 hover:text-black'
-              }`}
-            >
-              About
-            </Link>
-            <Link 
-              href="/contact" 
-              prefetch={true}
-              className={`transition-colors ${
-                isActive('/contact') 
-                  ? 'border-b border-black pb-1 text-black font-bold' 
-                  : 'text-gray-600 hover:text-black'
-              }`}
-            >
-              Contact
+              <Heart size={19} strokeWidth={1.8} />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#E5B869] ring-2 ring-[#18110D]" />
             </Link>
           </div>
+        </div>
 
-          {/* Right Section: Interactive Search & Auth Button */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            
-            {/* Redesigned Luxury Desktop Search Bar */}
-            <div className="relative hidden md:block" ref={searchRef}>
+        {/* Mobile Slide-down Search Bar */}
+        <AnimatePresence>
+          {isMobileSearchOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 8, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden border border-white/20 bg-[#18110D]/95 backdrop-blur-xl rounded-2xl p-3 shadow-2xl mt-1"
+            >
               <div className="relative flex items-center">
-                <Search 
-                  size={14} 
-                  className="absolute left-3.5 text-gray-500 pointer-events-none" 
-                />
-                <input 
-                  type="text" 
-                  placeholder="Search collections..." 
+                <Search size={16} className="absolute left-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search fragrances, notes, collections..."
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowDropdown(true);
-                  }}
-                  onFocus={() => setShowDropdown(true)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearch}
-                  className="w-48 lg:w-64 focus:w-60 lg:focus:w-80 rounded-full py-2 pl-9 pr-8 text-xs bg-white border border-[#E0D8CA] focus:border-black focus:ring-2 focus:ring-black/5 text-black placeholder-gray-400 focus:outline-none transition-all duration-300 shadow-2xs"
+                  autoFocus
+                  className="w-full bg-white/10 border border-white/20 focus:border-[#E5B869] rounded-full py-2 pl-9 pr-14 text-xs text-white placeholder-gray-400 focus:outline-none transition-all"
                 />
-                {searchQuery ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSearchResults([]);
-                    }}
-                    className="absolute right-3 text-gray-400 hover:text-black cursor-pointer"
-                  >
-                    <X size={13} />
-                  </button>
-                ) : (
-                  <div className="absolute right-3 text-[10px] text-gray-400 font-mono pointer-events-none hidden lg:block">
-                    ↵
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="absolute right-1.5 bg-[#E5B869] hover:bg-[#D4A352] text-[#241306] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full cursor-pointer transition-colors"
+                >
+                  Go
+                </button>
               </div>
 
-              {/* Rich Live Search Flyout Dropdown */}
-              <AnimatePresence>
-                {showDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-full right-0 mt-3 w-88 lg:w-96 bg-white rounded-3xl shadow-xl border border-[#E8E2D6] overflow-hidden z-50 p-2"
+              {/* Quick trending suggestions on mobile search */}
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                {TRENDING_SEARCHES.slice(0, 4).map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => handleTrendingClick(term)}
+                    className="text-[10px] px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[#E5B869] border border-white/15 cursor-pointer transition-colors"
                   >
-                    {isSearching ? (
-                      <div className="p-8 flex flex-col items-center justify-center text-gray-400 gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin text-black" />
-                        <span className="text-xs font-light">Searching atelier archives...</span>
-                      </div>
-                    ) : searchQuery.trim().length >= 2 && searchResults.length > 0 ? (
-                      <div>
-                        <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                          <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C827A]">
-                            Matching Pieces ({searchResults.length})
-                          </span>
-                          <span className="text-[10px] text-gray-400">Press ↵ to view all</span>
-                        </div>
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-                        <div className="max-h-80 overflow-y-auto py-1">
-                          {searchResults.map((product) => (
-                            <Link 
-                              key={product._id || product.id} 
-                              href={`/product/${product._id || product.id}`}
-                              onClick={() => {
-                                setShowDropdown(false);
-                                setSearchQuery('');
-                              }}
-                              className="flex items-center px-3 py-2.5 rounded-2xl hover:bg-[#FAF8F5] transition-colors group"
-                            >
-                              <div className="w-12 h-14 bg-[#EFE8DC] rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center p-1 border border-gray-100">
-                                <img 
-                                  src={getImageUrl(product.images?.[0]?.url || product.image)} 
-                                  alt={product.name}
-                                  className="w-full h-full object-contain group-hover:scale-105 transition-transform"
-                                  onError={(e) => { e.target.src = '/Images/brown.png'; }}
-                                />
-                              </div>
-                              <div className="ml-3 flex-1 min-w-0">
-                                <h4 className="text-xs font-serif font-bold text-black truncate group-hover:text-gray-700">
-                                  {product.name}
-                                </h4>
-                                <span className="text-[10px] text-gray-400 capitalize block">
-                                  {product.category || product.category_name || 'Atelier'}
-                                </span>
-                                <span className="text-xs font-bold text-black font-sans mt-0.5 block">
-                                  ₹{(product.price || 0).toLocaleString('en-IN')}
-                                </span>
-                              </div>
-                              <ChevronRight size={14} className="text-gray-300 group-hover:text-black group-hover:translate-x-0.5 transition-all" />
-                            </Link>
-                          ))}
-                        </div>
-
-                        <div className="p-2 border-t border-gray-100 mt-1">
-                          <button
-                            type="button"
-                            onClick={handleSearch}
-                            className="w-full bg-black hover:bg-[#262626] text-white py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs"
-                          >
-                            <span>View All Results for "{searchQuery}"</span>
-                            <ArrowRight size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ) : searchQuery.trim().length >= 2 && searchResults.length === 0 ? (
-                      <div className="p-8 text-center">
-                        <p className="text-xs font-serif text-black mb-1">No fragrances found for "{searchQuery}"</p>
-                        <p className="text-[11px] text-gray-400">Try searching for Amber Oud, Golden Saffron, or Discovery Sets.</p>
-                      </div>
-                    ) : (
-                      /* Trending Searches Default Screen */
-                      <div className="p-4">
-                        <div className="flex items-center gap-1.5 mb-3 text-[10px] uppercase font-bold tracking-widest text-[#8C827A]">
-                          <TrendingUp size={13} />
-                          <span>Popular Searches</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {TRENDING_SEARCHES.map((term) => (
-                            <button
-                              key={term}
-                              type="button"
-                              onClick={() => handleTrendingClick(term)}
-                              className="px-3 py-1.5 rounded-full bg-[#FAF8F5] hover:bg-black hover:text-white text-gray-700 text-xs font-medium border border-[#E8E2D6] transition-colors cursor-pointer"
-                            >
-                              {term}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+      {/* DESKTOP VIEW HEADER */}
+      <nav 
+        className={`hidden md:block fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+          isScrolled 
+            ? 'bg-white/95 backdrop-blur-md py-2.5 sm:py-3.5 shadow-sm border-b border-[#ECE7DE]' 
+            : 'bg-white/90 backdrop-blur-sm py-3 sm:py-4 border-b border-[#ECE7DE]'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+          <div className="flex items-center justify-between gap-4">
+            {/* Desktop Brand Logo (Same as footer) */}
+            <Link 
+              href="/" 
+              className="flex items-center group py-0.5 flex-shrink-0"
+            >
+              <img 
+                src="/images/perfumes/rove_amber_text_only.png" 
+                alt="ROVE & AMBER FINE FRAGRANCE" 
+                className="h-8 lg:h-9 w-auto object-contain group-hover:scale-[1.02] transition-transform duration-300" 
+              />
+            </Link>
+          
+            {/* Desktop Navigation Links with Modern Icons & Simple Decent Look */}
+            <div className="flex items-center gap-1 xl:gap-2">
+              {navLinks.map((link) => {
+                const active = isActive(link.path);
+                const IconComponent = link.icon;
+                return (
+                  <Link 
+                    key={link.path}
+                    href={link.path} 
+                    prefetch={true}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs tracking-wider transition-all duration-200 ${
+                      active 
+                        ? 'bg-neutral-900 text-white font-medium shadow-xs' 
+                        : 'text-neutral-700 hover:text-black hover:bg-[#FAF8F5] font-normal'
+                    }`}
+                  >
+                    <IconComponent size={14} strokeWidth={active ? 2 : 1.7} className={active ? 'text-[#D4AF37]' : 'text-neutral-400'} />
+                    <span>{link.name}</span>
+                  </Link>
+                );
+              })}
             </div>
 
-            {/* Desktop User Account / Profile Button */}
-            <div className="hidden md:block">
+            {/* Right Section: Modern Action Icons (Search, Orders, Wishlist, Cart, Account) */}
+            <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 flex-shrink-0">
+              
+              {/* Desktop Search Bar */}
+              <div className="relative" ref={searchRef}>
+                <div className="relative flex items-center">
+                  <Search 
+                    size={14} 
+                    className="absolute left-3 text-gray-400 pointer-events-none" 
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Search fragrances..." 
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowDropdown(true);
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                    onKeyDown={handleSearch}
+                    className="w-32 lg:w-44 focus:w-44 lg:focus:w-56 rounded-full py-1.5 pl-8 pr-7 text-xs bg-[#FAF9F7] border border-[#E0D8CA] focus:border-black focus:bg-white text-black placeholder-gray-400 focus:outline-none transition-all duration-300"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSearchResults([]);
+                      }}
+                      className="absolute right-2.5 text-gray-400 hover:text-black cursor-pointer"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Live Search Flyout Dropdown */}
+                <AnimatePresence>
+                  {showDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full right-0 mt-3 w-88 lg:w-96 bg-white rounded-2xl shadow-xl border border-[#E8E2D6] overflow-hidden z-50 p-2"
+                    >
+                      {isSearching ? (
+                        <div className="p-8 flex flex-col items-center justify-center text-gray-400 gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin text-black" />
+                          <span className="text-xs font-light">Searching atelier archives...</span>
+                        </div>
+                      ) : searchQuery.trim().length >= 2 && searchResults.length > 0 ? (
+                        <div>
+                          <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
+                            <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C827A]">
+                              Matching Fragrances ({searchResults.length})
+                            </span>
+                            <span className="text-[10px] text-gray-400">Press ↵ to view all</span>
+                          </div>
+
+                          <div className="max-h-72 overflow-y-auto py-1">
+                            {searchResults.map((product) => (
+                              <Link 
+                                key={product._id || product.id} 
+                                href={`/product/${product._id || product.id}`}
+                                onClick={() => {
+                                  setShowDropdown(false);
+                                  setSearchQuery('');
+                                }}
+                                className="flex items-center px-3 py-2 rounded-xl hover:bg-[#FAF8F5] transition-colors group"
+                              >
+                                <div className="w-10 h-12 bg-[#FAF9F7] rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center p-1 border border-gray-100">
+                                  <img 
+                                    src={getImageUrl(product.images?.[0]?.url || product.image)} 
+                                    alt={product.name}
+                                    className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                                    onError={(e) => { e.target.src = '/images/perfumes/amber_oud_perfume.jpg'; }}
+                                  />
+                                </div>
+                                <div className="ml-3 flex-1 min-w-0">
+                                  <h4 className="text-xs font-serif font-bold text-black truncate group-hover:text-[#B86526]">
+                                    {product.name}
+                                  </h4>
+                                  <span className="text-[10px] text-[#B38738] uppercase block">
+                                    {product.category || 'Perfumes'}
+                                  </span>
+                                  <span className="text-xs font-bold text-black font-sans mt-0.5 block">
+                                    ₹{(product.price || 0).toLocaleString('en-IN')}
+                                  </span>
+                                </div>
+                                <ChevronRight size={14} className="text-gray-300 group-hover:text-black group-hover:translate-x-0.5 transition-all" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ) : searchQuery.trim().length >= 2 && searchResults.length === 0 ? (
+                        <div className="p-6 text-center">
+                          <p className="text-xs font-serif text-black mb-1">No fragrances found for "{searchQuery}"</p>
+                          <p className="text-[11px] text-gray-400">Try searching for Amber Oud, Golden Saffron, or Velvet Musk.</p>
+                        </div>
+                      ) : (
+                        <div className="p-4">
+                          <div className="flex items-center gap-1.5 mb-2.5 text-[10px] uppercase font-bold tracking-widest text-[#8C827A]">
+                            <TrendingUp size={13} />
+                            <span>Popular Searches</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {TRENDING_SEARCHES.map((term) => (
+                              <button
+                                key={term}
+                                type="button"
+                                onClick={() => handleTrendingClick(term)}
+                                className="px-3 py-1 rounded-full bg-[#FAF8F5] hover:bg-black hover:text-white text-gray-700 text-xs font-medium border border-[#E8E2D6] transition-colors cursor-pointer"
+                              >
+                                {term}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Desktop My Orders Icon */}
+              <Link
+                href="/orders"
+                prefetch={true}
+                className="p-2 rounded-full hover:bg-[#FAF8F5] text-neutral-700 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
+                title="My Orders"
+                aria-label="My Orders"
+              >
+                <Package size={18} strokeWidth={1.8} />
+              </Link>
+
+              {/* Desktop Wishlist Button */}
+              <Link
+                href="/wishlist"
+                prefetch={true}
+                className="relative p-2 rounded-full hover:bg-[#FAF8F5] text-neutral-700 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
+                title="Saved Wishlist"
+                aria-label="Saved Wishlist"
+              >
+                <Heart 
+                  size={18} 
+                  strokeWidth={1.8}
+                  className={wishlistCount > 0 ? 'fill-[#B8860B] text-[#B8860B]' : ''} 
+                />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-[#B8860B] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* Desktop Cart Button */}
+              <Link
+                href="/cart"
+                prefetch={true}
+                className="relative p-2 rounded-full hover:bg-[#FAF8F5] text-neutral-700 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
+                title="Shopping Bag"
+                aria-label="Shopping Cart"
+              >
+                <ShoppingBag size={18} strokeWidth={1.8} />
+                <span className="absolute -top-0.5 -right-0.5 bg-[#B8860B] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                  {cartCount}
+                </span>
+              </Link>
+
+              {/* Desktop User Account Button */}
               {currentUser ? (
                 <Link href="/profile" prefetch={true}>
-                  <button className="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-[#262626] hover:shadow-md transition-all cursor-pointer shadow-xs active:scale-95">
-                    <User size={13} />
-                    <span className="max-w-[110px] truncate">
+                  <button className="flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-medium transition-all cursor-pointer">
+                    <div className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold">
+                      {currentUser.name?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <span className="max-w-[70px] truncate">
                       {currentUser.name ? (currentUser.name.split(' ')[0] || 'Profile') : 'Profile'}
                     </span>
                   </button>
                 </Link>
               ) : (
                 <Link href="/login" prefetch={true}>
-                  <button className="bg-black hover:bg-[#262626] text-white px-5 py-2 rounded-full text-xs uppercase font-bold tracking-widest transition-all shadow-xs cursor-pointer active:scale-95">
-                    Login
+                  <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black hover:bg-[#262626] text-white text-xs font-medium transition-all shadow-xs cursor-pointer">
+                    <User size={13} strokeWidth={1.8} />
+                    <span>Login</span>
                   </button>
                 </Link>
               )}
             </div>
-
-            {/* Direct Cart Page Link */}
-            <Link
-              href="/cart"
-              prefetch={true}
-              className="relative p-2.5 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#E0D8CA] transition-all shadow-2xs flex items-center justify-center group active:scale-95 cursor-pointer"
-              aria-label="Shopping Cart"
-              title="Shopping Cart"
-            >
-              <ShoppingBag size={15} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-black text-white group-hover:bg-white group-hover:text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#F9F6F0] transition-colors">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-
-            {/* Mobile Menu Trigger Button */}
-            <button
-              onClick={() => setIsMenuOpen(true)}
-              className="md:hidden w-10 h-10 rounded-full bg-[#EAE4D6] hover:bg-black hover:text-white transition-colors flex items-center justify-center text-black cursor-pointer shadow-2xs"
-              aria-label="Open mobile navigation"
-            >
-              <Menu size={18} />
-            </button>
           </div>
         </div>
       </nav>
 
-      {/* Professional Mobile Full-Screen Navigation Drawer */}
+      {/* Mobile Full-Screen Navigation Drawer */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 md:hidden bg-[#FAF7F2] flex flex-col justify-between overflow-y-auto"
+            initial={{ opacity: 0, x: '-100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '-100%' }}
+            transition={{ type: 'tween', duration: 0.25 }}
+            className="fixed inset-0 z-50 md:hidden bg-white flex flex-col justify-between overflow-y-auto"
           >
             {/* Top Bar inside Mobile Drawer */}
-            <div className="p-5 sm:p-6 border-b border-[#E8E2D6] flex items-center justify-between bg-[#FAF7F2]">
+            <div className="p-4 sm:p-5 border-b border-[#ECE7DE] flex items-center justify-between bg-white">
               <Link 
                 href="/" 
                 prefetch={true}
                 onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-2.5 group"
+                className="flex items-center"
               >
-                <div className="w-8 h-8 rounded-full overflow-hidden shadow-sm border border-[#D4AF37]/60 flex-shrink-0 bg-[#3B1D11]">
-                  <img 
-                    src="/images/perfumes/rove_amber_logo.jpg" 
-                    alt="ROVE & AMBER" 
-                    className="w-full h-full object-cover" 
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-base font-serif tracking-[0.2em] font-bold text-black leading-tight">
-                    ROVE & AMBER
-                  </span>
-                  <span className="text-[8px] uppercase tracking-[0.2em] text-[#8C827A] font-medium">
-                    Fine Fragrance
-                  </span>
-                </div>
+                <img 
+                  src="/images/perfumes/rove_amber_text_only.png" 
+                  alt="ROVE & AMBER FINE FRAGRANCE" 
+                  className="h-8 w-auto object-contain" 
+                />
               </Link>
               
               <button
                 onClick={() => setIsMenuOpen(false)}
-                className="w-10 h-10 rounded-full bg-[#EFE8DC] hover:bg-black hover:text-white text-black flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-black hover:text-white text-black flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close navigation"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Middle Content: Search + Navigation Links */}
-            <div className="p-5 sm:p-6 flex-1 space-y-6">
-              
-              {/* Mobile Search Bar */}
-              <div className="space-y-3">
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder="Search perfumes, signature notes, eau de parfum..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearch}
-                    className="w-full rounded-2xl py-3 pl-4 pr-11 text-xs bg-white border border-[#E0D8C8] focus:border-black text-black placeholder-gray-400 focus:outline-none shadow-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSearch}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center cursor-pointer"
-                  >
-                    <Search size={13} />
-                  </button>
-                </div>
-
-                {/* Mobile Trending Chips */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {TRENDING_SEARCHES.slice(0, 4).map((term) => (
-                    <button
-                      key={term}
-                      type="button"
-                      onClick={() => handleTrendingClick(term)}
-                      className="px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-[#E0D8C8] cursor-pointer"
-                    >
-                      {term}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Navigation List */}
+            {/* Middle Content: Navigation Links */}
+            <div className="p-5 flex-1 space-y-4">
               <div className="space-y-1">
                 <p className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#8C827A] px-2 mb-2">
-                  Atelier Navigation
+                  Navigation
                 </p>
-                {navLinks.map((link) => {
+                {drawerLinks.map((link) => {
                   const active = isActive(link.path);
+                  const IconComponent = link.icon;
                   return (
                     <Link
                       key={link.path}
                       href={link.path}
                       prefetch={true}
                       onClick={() => setIsMenuOpen(false)}
-                      className={`flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all ${
+                      className={`flex items-center justify-between px-3.5 py-3 rounded-xl transition-all ${
                         active 
-                          ? 'bg-black text-white font-bold shadow-xs' 
-                          : 'text-gray-800 hover:bg-[#EFE8DC] font-medium'
+                          ? 'bg-black text-white font-bold' 
+                          : 'text-gray-800 hover:bg-[#FAF8F5] font-medium'
                       }`}
                     >
-                      <span className="text-sm font-serif tracking-wide">{link.name}</span>
-                      <ChevronRight size={15} className={active ? 'text-white' : 'text-gray-400'} />
+                      <div className="flex items-center gap-3">
+                        <IconComponent size={16} strokeWidth={active ? 2 : 1.7} className={active ? 'text-[#D4AF37]' : 'text-neutral-500'} />
+                        <span className="text-sm font-serif tracking-wide">{link.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {link.name === 'Wishlist' && wishlistCount > 0 && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            active ? 'bg-white text-black' : 'bg-[#B8860B] text-white'
+                          }`}>
+                            {wishlistCount}
+                          </span>
+                        )}
+                        <ChevronRight size={15} className={active ? 'text-white' : 'text-gray-400'} />
+                      </div>
                     </Link>
                   );
                 })}
@@ -612,31 +628,24 @@ const Navbar = () => {
             </div>
 
             {/* Bottom Account & Footer Section */}
-            <div className="p-5 sm:p-6 bg-white border-t border-[#E8E2D6] space-y-4">
+            <div className="p-5 bg-[#FAF9F7] border-t border-[#ECE7DE] space-y-3">
               {currentUser ? (
-                <div className="space-y-3">
-                  <Link 
-                    href="/profile" 
-                    prefetch={true} 
-                    onClick={() => setIsMenuOpen(false)} 
-                    className="block"
-                  >
-                    <div className="flex items-center gap-3 p-3 bg-[#FAF8F5] hover:bg-gray-100 rounded-2xl border border-[#E8E2D6] transition-colors cursor-pointer">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs bg-black text-white">
-                        {currentUser.name?.[0]?.toUpperCase() || 'U'}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-black truncate">{currentUser.name || 'User Profile'}</p>
-                        <p className="text-[11px] text-gray-500 truncate">{currentUser.email || ''}</p>
-                      </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-[#ECE7DE]">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-black text-white">
+                      {currentUser.name?.[0]?.toUpperCase() || 'U'}
                     </div>
-                  </Link>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-black truncate">{currentUser.name || 'User Profile'}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{currentUser.email || ''}</p>
+                    </div>
+                  </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <Link href="/profile" prefetch={true} onClick={() => setIsMenuOpen(false)} className="block">
                       <button
                         type="button"
-                        className="w-full bg-black hover:bg-[#262626] text-white py-2.5 rounded-xl font-bold uppercase text-[10px] tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1"
+                        className="w-full bg-black text-white py-2 rounded-lg font-bold uppercase text-[10px] tracking-wider flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <User size={12} />
                         <span>Profile</span>
@@ -645,7 +654,7 @@ const Navbar = () => {
                     <Link href="/orders" prefetch={true} onClick={() => setIsMenuOpen(false)} className="block">
                       <button
                         type="button"
-                        className="w-full bg-black hover:bg-[#262626] text-white py-2.5 rounded-xl font-bold uppercase text-[10px] tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1"
+                        className="w-full bg-black text-white py-2 rounded-lg font-bold uppercase text-[10px] tracking-wider flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <Package size={12} />
                         <span>Orders</span>
@@ -659,24 +668,24 @@ const Navbar = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="w-full bg-gray-50 hover:bg-red-50 text-red-600 border border-gray-200 py-2.5 rounded-xl font-bold uppercase text-[10px] tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    className="w-full bg-white text-red-600 border border-red-200 py-2 rounded-lg font-bold uppercase text-[10px] tracking-wider flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <LogOut size={12} />
                     <span>Sign Out</span>
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <Link href="/login" prefetch={true} onClick={() => setIsMenuOpen(false)} className="block">
                     <button
                       type="button"
-                      className="w-full bg-black hover:bg-[#262626] text-white py-3.5 rounded-full font-bold uppercase text-xs tracking-widest transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full bg-black text-white py-3 rounded-full font-bold uppercase text-xs tracking-widest cursor-pointer flex items-center justify-center gap-2"
                     >
                       <User size={14} />
                       <span>Sign In / Login</span>
                     </button>
                   </Link>
-                  <p className="text-center text-[11px] text-gray-500">
+                  <p className="text-center text-[10px] text-gray-500">
                     New to ROVE & AMBER?{' '}
                     <Link 
                       href="/login?tab=register" 
@@ -690,9 +699,8 @@ const Navbar = () => {
                 </div>
               )}
 
-              {/* Minimal Brand Tagline */}
-              <div className="text-center pt-2 text-[10px] uppercase tracking-widest text-gray-400 font-light">
-                ROVE & AMBER • Fine Fragrance & Artisanal Perfumery
+              <div className="text-center pt-1 text-[9px] uppercase tracking-widest text-gray-400">
+                ROVE & AMBER • Fine Fragrance
               </div>
             </div>
           </motion.div>

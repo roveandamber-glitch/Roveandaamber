@@ -1,4 +1,5 @@
-﻿import '../index.css';
+import '../index.css';
+import BottomNav from '@/components/layout/BottomNav';
 
 export const metadata = {
   title: 'ROVE & AMBER | Fine Fragrance & Artisanal Perfumery',
@@ -16,16 +17,19 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&display=swap"
           rel="stylesheet"
         />
         <link rel="icon" href="/favicon.png" />
       </head>
       <body
-        className="bg-[#F9F6F0] text-[#1A1A1A] font-sans antialiased selection:bg-[#B86526] selection:text-white"
+        className="bg-[#FAF9F7] text-[#1A1A1A] font-sans antialiased selection:bg-[#B8860B] selection:text-white"
         suppressHydrationWarning
       >
-        {children}
+        <div className="min-h-screen pb-16 md:pb-0">
+          {children}
+        </div>
+        <BottomNav />
       </body>
     </html>
   );

@@ -39,3 +39,6 @@ server/*.sqlite
 # Uploads
 server/uploads/*
 !server/uploads/.gitkeep
+
+# Archives
+*.zip

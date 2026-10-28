@@ -1,111 +1,175 @@
 "use client";
 import Link from 'next/link';
 import React from 'react';
+import { Instagram, Facebook, Mail, Compass } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-[#F9F6F0] border-t border-[#E8E2D6]">
-      {/* Newsletter Section */}
-      <div className="py-20 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <p className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#B86526] mb-3">
-            Private Reserve Access
-          </p>
-          <h2 className="text-3xl md:text-4xl font-serif mb-4 text-[#1A1A1A] font-normal">
-            Join the ROVE & AMBER Circle
-          </h2>
-          <p className="text-gray-600 mb-8 text-xs md:text-sm font-light">
-            Subscribe to receive exclusive access to private reserve launches, olfactory notes, and bespoke Eau de Parfum editions.
-          </p>
-          <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-3">
-            <input 
-              type="email" 
-              placeholder="Your email address" 
-              className="flex-1 px-5 py-3.5 border border-[#E0D8C8] rounded-xl focus:outline-none focus:border-black bg-[#EFE8DC]/60 text-xs text-black placeholder-gray-500"
-              required
-            />
-            <button 
-              type="submit" 
-              className="bg-[#1A1A1A] text-white px-7 py-3.5 text-xs font-bold tracking-widest uppercase rounded-xl hover:bg-black transition-colors shadow-sm cursor-pointer"
-            >
-              Subscribe
-            </button>
-          </form>
-          <p className="text-[10px] text-gray-400 tracking-wider uppercase">
-            By subscribing you agree to our privacy policy
-          </p>
-        </div>
-      </div>
-
-      {/* Footer Links Section */}
-      <div className="bg-[#F2ECE4] py-14 px-6 border-t border-[#E8E2D6]">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-3 mb-4 group">
-              <div className="w-10 h-10 rounded-full overflow-hidden shadow-sm border border-[#D4AF37]/60 flex-shrink-0 bg-[#3B1D11]">
-                <img 
-                  src="/images/perfumes/rove_amber_logo.jpg" 
-                  alt="ROVE & AMBER" 
-                  className="w-full h-full object-cover" 
-                />
-              </div>
+    <footer className="bg-[#0E0A07] text-white border-t border-white/10 pt-12 pb-24 md:pb-12 px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 pb-12 border-b border-white/10">
+          {/* Brand Monogram & Logo Column */}
+          <div className="col-span-2 flex flex-col justify-start">
+            <Link href="/" className="inline-flex items-center gap-3 mb-4 group">
+              <span className="font-serif text-3xl sm:text-4xl font-normal text-[#E5B869] tracking-wider">
+                RA
+              </span>
               <div className="flex flex-col">
-                <span className="text-xl font-serif tracking-[0.2em] font-bold text-black leading-tight">
+                <span className="font-serif text-sm tracking-[0.22em] text-[#E5B869] uppercase font-medium">
                   ROVE & AMBER
                 </span>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-[#8C827A] font-medium">
-                  Fine Fragrance
+                <span className="text-[7.5px] tracking-[0.3em] text-white/60 uppercase font-sans">
+                  FINE FRAGRANCE
                 </span>
               </div>
             </Link>
-            <p className="text-xs text-gray-600 leading-relaxed font-light mb-3">
-              Fine Fragrance & Artisanal Perfumery. Crafting signature Eau de Parfum with precious aged amber, rare oud, and noble botanicals.
-            </p>
-            <p className="text-[11px] text-[#B86526] font-medium">
-              Shipping Pan-India • DM or WhatsApp to Order
+            <p className="text-xs text-white/60 font-light leading-relaxed max-w-sm">
+              Artisanal perfumery crafted with aged amber, noble Cambodian oud, and rare botanical essences.
             </p>
           </div>
 
-          <div>
-            <h4 className="text-[11px] font-bold tracking-widest uppercase mb-4 text-black">Fragrances</h4>
-            <ul className="space-y-3 text-xs text-gray-600 font-light">
-              <li><Link href="/shop?category=Eau%20de%20Parfum" className="hover:text-black transition-colors">Eau de Parfum</Link></li>
-              <li><Link href="/shop?category=Men%27s%20Fragrances" className="hover:text-black transition-colors">Men's Fragrances</Link></li>
-              <li><Link href="/shop?category=Women%27s%20Fragrances" className="hover:text-black transition-colors">Women's Fragrances</Link></li>
-              <li><Link href="/shop?category=Unisex%20Fragrances" className="hover:text-black transition-colors">Unisex Fragrances</Link></li>
-              <li><Link href="/shop?category=Signature%20Scents" className="hover:text-black transition-colors">Signature Scents</Link></li>
-              <li><Link href="/shop?category=Fragrance%20Gift%20Sets" className="hover:text-black transition-colors">Fragrance Gift Sets</Link></li>
+          {/* Shop Column */}
+          <div className="col-span-1">
+            <h4 className="text-xs font-serif font-medium text-white tracking-wider mb-4">
+              Shop
+            </h4>
+            <ul className="space-y-2.5 text-xs text-white/65 font-light">
+              <li>
+                <Link href="/shop?category=Perfumes" className="hover:text-[#E5B869] transition-colors">
+                  Perfumes
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop?category=Oud" className="hover:text-[#E5B869] transition-colors">
+                  Oud
+                </Link>
+              </li>
+              <li>
+                <Link href="/gifts" className="hover:text-[#E5B869] transition-colors">
+                  Gifts
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop?category=Bakhoor" className="hover:text-[#E5B869] transition-colors">
+                  Bakhoor
+                </Link>
+              </li>
             </ul>
           </div>
 
-          <div>
-            <h4 className="text-[11px] font-bold tracking-widest uppercase mb-4 text-black">Support</h4>
-            <ul className="space-y-3 text-xs text-gray-600 font-light">
-              <li><Link href="/contact" className="hover:text-black transition-colors">Contact Concierge</Link></li>
-              <li><Link href="/about" className="hover:text-black transition-colors">Fragrance Care & Storage</Link></li>
-              <li><Link href="/contact" className="hover:text-black transition-colors">Pan-India Shipping</Link></li>
-              <li><Link href="/about" className="hover:text-black transition-colors">Olfactory Notes Guide</Link></li>
+          {/* Support Column */}
+          <div className="col-span-1">
+            <h4 className="text-xs font-serif font-medium text-white tracking-wider mb-4">
+              Support
+            </h4>
+            <ul className="space-y-2.5 text-xs text-white/65 font-light">
+              <li>
+                <Link href="/orders" className="hover:text-[#E5B869] transition-colors">
+                  Track Order
+                </Link>
+              </li>
+              <li>
+                <Link href="/about#shipping" className="hover:text-[#E5B869] transition-colors">
+                  Shipping & Delivery
+                </Link>
+              </li>
+              <li>
+                <Link href="/about#returns" className="hover:text-[#E5B869] transition-colors">
+                  Returns & Refunds
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-[#E5B869] transition-colors">
+                  FAQs
+                </Link>
+              </li>
             </ul>
           </div>
 
-          <div>
-            <h4 className="text-[11px] font-bold tracking-widest uppercase mb-4 text-black">Artisanal House</h4>
-            <ul className="space-y-3 text-xs text-gray-600 font-light">
-              <li><Link href="/about" className="hover:text-black transition-colors">Our Brand Story</Link></li>
-              <li><Link href="/about" className="hover:text-black transition-colors">Artisanal Maceration</Link></li>
-              <li><Link href="/contact" className="hover:text-black transition-colors">DM or WhatsApp to Order</Link></li>
-              <li><a href="https://www.roveandamber.com" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">www.roveandamber.com</a></li>
+          {/* About Column */}
+          <div className="col-span-1">
+            <h4 className="text-xs font-serif font-medium text-white tracking-wider mb-4">
+              About
+            </h4>
+            <ul className="space-y-2.5 text-xs text-white/65 font-light">
+              <li>
+                <Link href="/about" className="hover:text-[#E5B869] transition-colors">
+                  Our Story
+                </Link>
+              </li>
+              <li>
+                <Link href="/about#ingredients" className="hover:text-[#E5B869] transition-colors">
+                  Ingredients
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-[#E5B869] transition-colors">
+                  Journal
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-[#E5B869] transition-colors">
+                  Contact
+                </Link>
+              </li>
             </ul>
+          </div>
+
+          {/* Follow Us Column */}
+          <div className="col-span-1">
+            <h4 className="text-xs font-serif font-medium text-white tracking-wider mb-4">
+              Follow Us:
+            </h4>
+            <div className="flex items-center gap-2">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/75 hover:text-[#E5B869] hover:bg-white/20 transition-all"
+                aria-label="Instagram"
+              >
+                <Instagram size={14} />
+              </a>
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/75 hover:text-[#E5B869] hover:bg-white/20 transition-all"
+                aria-label="Facebook"
+              >
+                <Facebook size={14} />
+              </a>
+              <a
+                href="mailto:contact@roveandamber.com"
+                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/75 hover:text-[#E5B869] hover:bg-white/20 transition-all"
+                aria-label="Email"
+              >
+                <Mail size={14} />
+              </a>
+              <a
+                href="https://pinterest.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/75 hover:text-[#E5B869] hover:bg-white/20 transition-all"
+                aria-label="Pinterest"
+              >
+                <Compass size={14} />
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-[#E8E2D6] flex flex-col md:flex-row justify-between items-center text-[10px] tracking-widest text-gray-400 uppercase gap-2">
-          <p>© 2026 ROVE & AMBER. ALL RIGHTS RESERVED.</p>
-          <div className="flex space-x-6">
-            <span>NEW DELHI</span>
-            <span>DUBAI</span>
-            <span>PARIS</span>
-            <span>GRASSE</span>
+        {/* Bottom Bar: Copyright & Legal */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-white/50 font-light gap-3">
+          <p>© 2026 ROVE & AMBER. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <Link href="/about" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
+            <span>|</span>
+            <Link href="/about" className="hover:text-white transition-colors">
+              Terms & Conditions
+            </Link>
           </div>
         </div>
       </div>
