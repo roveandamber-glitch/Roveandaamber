@@ -8,23 +8,15 @@ const Footer = () => {
     <footer className="bg-[#0E0A07] text-white border-t border-white/10 pt-12 pb-24 md:pb-12 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 pb-12 border-b border-white/10">
-          {/* Brand Monogram & Logo Column with Iconic Insignia */}
+          {/* Brand Logo Column (Pure Centered Typography) */}
           <div className="col-span-2 flex flex-col justify-start">
-            <Link href="/" className="inline-flex items-center gap-3 mb-4 group">
-              <img 
-                src="/images/ra_monogram.png" 
-                alt="ROVE & AMBER Emblem" 
-                className="h-9 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-                onError={(e) => { e.target.src = '/favicon.png'; }}
-              />
-              <div className="flex flex-col">
-                <span className="font-serif text-sm sm:text-base tracking-[0.22em] text-[#E5B869] uppercase font-medium">
-                  ROVE & AMBER
-                </span>
-                <span className="text-[7.5px] sm:text-[8px] tracking-[0.3em] text-white/60 uppercase font-sans">
-                  FINE FRAGRANCE
-                </span>
-              </div>
+            <Link href="/" className="inline-flex flex-col items-start mb-4 group cursor-pointer">
+              <span className="font-serif text-base sm:text-lg tracking-[0.24em] text-[#E5B869] uppercase font-normal leading-tight">
+                ROVE & AMBER
+              </span>
+              <span className="text-[8px] tracking-[0.35em] text-[#F3ECE1]/80 uppercase font-sans font-medium mt-1 text-center w-full">
+                FINE FRAGRANCE
+              </span>
             </Link>
             <p className="text-xs text-white/60 font-light leading-relaxed max-w-sm">
               Artisanal perfumery crafted with aged amber, noble Cambodian oud, and rare botanical essences.
