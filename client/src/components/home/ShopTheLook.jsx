@@ -25,14 +25,14 @@ const ShopTheLook = () => {
         {/* WOMEN Collection Card */}
         <div className="relative rounded-2xl overflow-hidden aspect-[16/9] sm:aspect-[16/8] bg-[#1E140F] border border-[#3A281E] shadow-md group cursor-pointer">
           <img
-            src="/images/perfumes/col_women.png"
+            src="/images/perfumes/gemini_col_women.jpg"
             alt="Women's Fragrance Collection"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             onError={(e) => {
               e.target.src = '/images/perfumes/cat_women.jpg';
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent flex flex-col justify-center p-6 sm:p-8">
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent flex flex-col justify-center p-6 sm:p-8">
             <h3 className="text-xl sm:text-2xl font-serif text-white tracking-widest uppercase mb-3">
               WOMEN
             </h3>
@@ -51,14 +51,14 @@ const ShopTheLook = () => {
         {/* MEN Collection Card */}
         <div className="relative rounded-2xl overflow-hidden aspect-[16/9] sm:aspect-[16/8] bg-[#141210] border border-[#2D2A26] shadow-md group cursor-pointer">
           <img
-            src="/images/perfumes/col_men.png"
+            src="/images/perfumes/gemini_col_men.jpg"
             alt="Men's Fragrance Collection"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             onError={(e) => {
               e.target.src = '/images/perfumes/cat_men.jpg';
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent flex flex-col justify-center p-6 sm:p-8">
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent flex flex-col justify-center p-6 sm:p-8">
             <h3 className="text-xl sm:text-2xl font-serif text-white tracking-widest uppercase mb-3">
               MEN
             </h3>

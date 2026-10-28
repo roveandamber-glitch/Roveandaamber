@@ -6,19 +6,19 @@ import { ArrowRight } from 'lucide-react';
 const Hero = () => {
   return (
     <section className="relative min-h-[92vh] sm:min-h-screen w-full flex flex-col justify-between bg-[#120B06] overflow-hidden">
-      {/* Background Fragrance Photography */}
+      {/* Background High-Definition Fragrance Photography */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="/images/perfumes/mobile_hero_desert.jpg" 
+          src="/images/perfumes/gemini_hero_desert.jpg" 
           alt="ROVE & AMBER Signature Eau de Parfum" 
-          className="w-full h-full object-cover object-[75%_center] sm:object-center"
+          className="w-full h-full object-cover object-[70%_center] sm:object-center"
           onError={(e) => {
             e.target.src = '/images/perfumes/hero_desert_fragrance.jpg';
           }}
         />
         {/* Soft atmospheric gradient for crisp typography readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/75 sm:hidden" />
-        <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent w-full md:w-3/5" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/75 sm:hidden" />
+        <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent w-full md:w-3/5" />
       </div>
 
       {/* Hero Text Content */}

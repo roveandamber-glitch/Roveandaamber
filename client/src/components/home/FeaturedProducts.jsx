@@ -12,7 +12,7 @@ const NEW_ARRIVALS = [
     name: 'Amber Royal',
     slug: 'amber-royal',
     price: 4250,
-    image: '/images/perfumes/prod_amber_royal.png',
+    image: '/images/perfumes/gemini_amber_royal.jpg',
     fallback: '/images/perfumes/amber_oud_perfume.jpg',
     category: 'Eau de Parfum',
     isBestSeller: false
@@ -23,7 +23,7 @@ const NEW_ARRIVALS = [
     name: 'Oud Noir',
     slug: 'oud-noir',
     price: 3850,
-    image: '/images/perfumes/prod_oud_noir.png',
+    image: '/images/perfumes/gemini_oud_noir.jpg',
     fallback: '/images/perfumes/noir_intense.jpg',
     category: 'Eau de Parfum',
     isBestSeller: true
@@ -34,7 +34,7 @@ const NEW_ARRIVALS = [
     name: 'Velvet Musk',
     slug: 'velvet-musk',
     price: 3200,
-    image: '/images/perfumes/prod_velvet_musk.png',
+    image: '/images/perfumes/gemini_velvet_musk.jpg',
     fallback: '/images/perfumes/liquid_gold_perfume.jpg',
     category: 'Eau de Parfum',
     isBestSeller: false
@@ -45,7 +45,7 @@ const NEW_ARRIVALS = [
     name: 'Rose Elixir',
     slug: 'rose-elixir',
     price: 3600,
-    image: '/images/perfumes/prod_rose_elixir.png',
+    image: '/images/perfumes/gemini_rose_elixir.jpg',
     fallback: '/images/perfumes/rose_eternelle.jpg',
     category: 'Eau de Parfum',
     isBestSeller: false
@@ -130,9 +130,9 @@ const FeaturedProducts = () => {
               className="bg-white rounded-2xl border border-[#ECE5D8] p-3 sm:p-4 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-300 group"
             >
               {/* Card Image Area with Badges */}
-              <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-[#FBF9F5] flex items-center justify-center p-3 sm:p-4 mb-3">
+              <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-[#FAF7F2] flex items-center justify-center p-2 sm:p-3 mb-3">
                 {product.isBestSeller && (
-                  <span className="absolute top-2 left-2 z-10 bg-[#2A180E] text-white text-[8.5px] sm:text-[9.5px] font-medium px-2 py-0.5 rounded-full tracking-wide">
+                  <span className="absolute top-2 left-2 z-10 bg-[#2A180E] text-white text-[8.5px] sm:text-[9.5px] font-medium px-2 py-0.5 rounded-full tracking-wide shadow-xs">
                     Best Seller
                   </span>
                 )}
@@ -141,7 +141,7 @@ const FeaturedProducts = () => {
                 <button
                   type="button"
                   onClick={(e) => toggleWishlist(e, product.id)}
-                  className={`absolute top-2 right-2 z-10 w-7 h-7 rounded-full flex items-center justify-center bg-white/90 backdrop-blur-xs shadow-xs border border-gray-100 transition-transform active:scale-90 ${
+                  className={`absolute top-2 right-2 z-10 w-7 h-7 rounded-full flex items-center justify-center bg-white/95 backdrop-blur-xs shadow-xs border border-gray-100 transition-transform active:scale-90 ${
                     isFavorited ? 'text-rose-600' : 'text-gray-400 hover:text-black'
                   }`}
                   aria-label="Wishlist"

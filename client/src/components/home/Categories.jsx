@@ -7,29 +7,29 @@ const CATEGORIES_DATA = [
     id: 'perfumes',
     name: 'Perfumes',
     slug: 'perfumes',
-    image: '/images/perfumes/cat_perfume_round.png',
-    fallback: '/images/perfumes/amber_oud_perfume.jpg'
+    image: '/images/perfumes/gemini_cat_perfumes.jpg',
+    fallback: '/images/perfumes/cat_perfume_round.png'
   },
   {
     id: 'oud',
     name: 'Oud',
     slug: 'oud',
-    image: '/images/perfumes/cat_oud_round.png',
-    fallback: '/images/perfumes/mockup_banner_oud.png'
+    image: '/images/perfumes/gemini_cat_oud.jpg',
+    fallback: '/images/perfumes/cat_oud_round.png'
   },
   {
     id: 'gifts',
     name: 'Gifts',
     slug: 'gifts',
-    image: '/images/perfumes/cat_gifts_round.png',
-    fallback: '/images/perfumes/signature_collection.jpg'
+    image: '/images/perfumes/gemini_cat_gifts.jpg',
+    fallback: '/images/perfumes/cat_gifts_round.png'
   },
   {
     id: 'bakhoor',
     name: 'Bakhoor',
     slug: 'bakhoor',
-    image: '/images/perfumes/cat_bakhoor_round.png',
-    fallback: '/images/perfumes/perfume_craft.jpg'
+    image: '/images/perfumes/gemini_cat_bakhoor.jpg',
+    fallback: '/images/perfumes/cat_bakhoor_round.png'
   }
 ];
 

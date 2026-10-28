@@ -22,7 +22,7 @@ const NewsletterVIP = () => {
       {/* Background Desert Warmth */}
       <div className="absolute inset-0 z-0 opacity-40">
         <img
-          src="/images/perfumes/mobile_hero_desert.jpg"
+          src="/images/perfumes/gemini_hero_desert.jpg"
           alt="Desert background"
           className="w-full h-full object-cover object-bottom"
           onError={(e) => {

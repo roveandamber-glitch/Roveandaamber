@@ -57,6 +57,122 @@ export const DUMMY_CATEGORIES = [
 
 export const DUMMY_PRODUCTS = [
   {
+    _id: "prod-amber-royal",
+    id: "prod-amber-royal",
+    name: "Amber Royal",
+    slug: "amber-royal",
+    category: "Eau de Parfum",
+    subcategory: "Signature Scents",
+    price: 4250,
+    originalPrice: 5200,
+    rating: 4.9,
+    reviewsCount: 42,
+    isFeatured: true,
+    isBestSeller: false,
+    isNewArrival: true,
+    description: "An opulent Eau de Parfum opening with aged golden amber, rare woods, and royal botanical resins for an unforgettable presence.",
+    details: [
+      "Top Notes: Italian Bergamot, Golden Saffron",
+      "Heart Notes: Aged Royal Amber, Bulgarian Rose",
+      "Base Notes: Cambodian Oud, Vanilla Orchid, Sandalwood",
+      "Concentration: 24% Extrait de Parfum"
+    ],
+    sizes: ["50ml", "100ml"],
+    sizes_stock: { "50ml": 15, "100ml": 9 },
+    images: [
+      { url: "/images/perfumes/gemini_amber_royal.jpg" },
+      { url: "/images/perfumes/amber_oud_perfume.jpg" }
+    ],
+    inStock: true
+  },
+  {
+    _id: "prod-oud-noir",
+    id: "prod-oud-noir",
+    name: "Oud Noir",
+    slug: "oud-noir",
+    category: "Eau de Parfum",
+    subcategory: "Men's Fragrances",
+    price: 3850,
+    originalPrice: 4800,
+    rating: 5.0,
+    reviewsCount: 68,
+    isFeatured: true,
+    isBestSeller: true,
+    isNewArrival: true,
+    description: "A mysterious and seductive blend of dark wild agarwood, black pepper, smoked birch, and rich ambergris.",
+    details: [
+      "Top Notes: Black Pepper, Cardamom, Bergamot",
+      "Heart Notes: Wild Smoked Agarwood, Cedarwood",
+      "Base Notes: Dark Amber, Leather, Tonka Bean",
+      "Concentration: 25% Eau de Parfum"
+    ],
+    sizes: ["50ml", "100ml"],
+    sizes_stock: { "50ml": 20, "100ml": 12 },
+    images: [
+      { url: "/images/perfumes/gemini_oud_noir.jpg" },
+      { url: "/images/perfumes/noir_intense.jpg" }
+    ],
+    inStock: true
+  },
+  {
+    _id: "prod-velvet-musk",
+    id: "prod-velvet-musk",
+    name: "Velvet Musk",
+    slug: "velvet-musk",
+    category: "Eau de Parfum",
+    subcategory: "Unisex Fragrances",
+    price: 3200,
+    originalPrice: 3900,
+    rating: 4.8,
+    reviewsCount: 31,
+    isFeatured: true,
+    isBestSeller: false,
+    isNewArrival: true,
+    description: "A silky, enveloping veil of crystalline white musk, soft golden cashmere, and subtle powdery solar florals.",
+    details: [
+      "Top Notes: White Peach, Neroli Petals",
+      "Heart Notes: Solar Cashmere, Egyptian Jasmine",
+      "Base Notes: Velvet White Musk, Golden Amber, Ambergris",
+      "Concentration: 22% Eau de Parfum"
+    ],
+    sizes: ["50ml", "100ml"],
+    sizes_stock: { "50ml": 14, "100ml": 7 },
+    images: [
+      { url: "/images/perfumes/gemini_velvet_musk.jpg" },
+      { url: "/images/perfumes/liquid_gold_perfume.jpg" }
+    ],
+    inStock: true
+  },
+  {
+    _id: "prod-rose-elixir",
+    id: "prod-rose-elixir",
+    name: "Rose Elixir",
+    slug: "rose-elixir",
+    category: "Eau de Parfum",
+    subcategory: "Women's Fragrances",
+    price: 3600,
+    originalPrice: 4500,
+    rating: 4.9,
+    reviewsCount: 54,
+    isFeatured: true,
+    isBestSeller: false,
+    isNewArrival: true,
+    description: "An intoxicating nectar of hand-picked Damask roses, sparkling pink peppercorn, and warm luminous amber drops.",
+    details: [
+      "Top Notes: Sparkling Pink Pepper, Mandarin",
+      "Heart Notes: Turkish Damask Rose, Rose Centifolia",
+      "Base Notes: Ambergris, White Patchouli, Madagascar Vanilla",
+      "Concentration: 24% Eau de Parfum"
+    ],
+    sizes: ["50ml", "100ml"],
+    sizes_stock: { "50ml": 18, "100ml": 10 },
+    images: [
+      { url: "/images/perfumes/gemini_rose_elixir.jpg" },
+      { url: "/images/perfumes/rose_eternelle.jpg" }
+    ],
+    inStock: true
+  },
+  {
     _id: "prod-1",
     id: "prod-1",
     name: "Amber Oud",

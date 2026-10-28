@@ -28,7 +28,7 @@ const WhyChoose = () => {
         {/* Left: Visual Photography */}
         <div className="lg:col-span-5 rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-[16/10] bg-[#1E140E] shadow-sm">
           <img
-            src="/images/perfumes/why_choose_hands.png"
+            src="/images/perfumes/gemini_why_hands.jpg"
             alt="ROVE & AMBER Perfumery Craft"
             className="w-full h-full object-cover"
             onError={(e) => {
