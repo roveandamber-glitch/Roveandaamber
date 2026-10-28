@@ -344,16 +344,17 @@ const Navbar = () => {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex items-center justify-between gap-6">
-            {/* Desktop Brand Logo */}
+            {/* Desktop Brand Logo with Iconic Insignia */}
             <Link 
               href="/" 
               className="flex items-center gap-3 group py-0.5 flex-shrink-0 cursor-pointer"
             >
-              <span className={`font-serif text-2xl lg:text-3xl font-normal tracking-wider transition-colors ${
-                (!isDarkHero) ? 'text-[#B8860B]' : 'text-[#E5B869]'
-              }`}>
-                RA
-              </span>
+              <img 
+                src="/images/ra_monogram.png" 
+                alt="ROVE & AMBER Emblem" 
+                className="h-8 lg:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => { e.target.src = '/favicon.png'; }}
+              />
               <div className="flex flex-col">
                 <span className={`font-serif text-xs lg:text-sm tracking-[0.22em] uppercase font-medium leading-tight transition-colors ${
                   (!isDarkHero) ? 'text-[#1A1A1A]' : 'text-[#E5B869]'
@@ -644,13 +645,22 @@ const Navbar = () => {
                 href="/" 
                 prefetch={true}
                 onClick={() => setIsMenuOpen(false)}
-                className="flex items-center"
+                className="flex items-center gap-2.5"
               >
                 <img 
-                  src="/images/perfumes/rove_amber_text_only.png" 
-                  alt="ROVE & AMBER FINE FRAGRANCE" 
-                  className="h-8 w-auto object-contain" 
+                  src="/images/ra_monogram.png" 
+                  alt="ROVE & AMBER" 
+                  className="h-8 w-auto object-contain"
+                  onError={(e) => { e.target.src = '/favicon.png'; }}
                 />
+                <div className="flex flex-col">
+                  <span className="font-serif text-xs tracking-[0.22em] uppercase font-medium text-black">
+                    ROVE & AMBER
+                  </span>
+                  <span className="text-[7px] tracking-[0.3em] uppercase font-sans text-gray-500">
+                    FINE FRAGRANCE
+                  </span>
+                </div>
               </Link>
               
               <button
