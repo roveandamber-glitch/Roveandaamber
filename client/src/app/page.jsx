@@ -15,7 +15,7 @@ import Footer from '@/components/layout/Footer';
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-enva-bg font-sans text-enva-text">
+    <div className="min-h-screen bg-enva-bg font-sans text-enva-text overflow-x-hidden w-full">
       <Navbar />
       <Hero />
       <Categories />

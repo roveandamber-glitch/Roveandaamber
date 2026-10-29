@@ -16,7 +16,7 @@ const Hero = () => {
           <img 
             src="/images/perfumes/gemini_hero_desert.jpg" 
             alt="ROVE & AMBER Signature Eau de Parfum" 
-            className="w-full h-full object-cover object-[70%_center] md:object-center"
+            className="w-full h-full object-cover object-[70%_center] md:object-[75%_center] lg:object-right"
             onError={(e) => {
               e.target.src = '/images/perfumes/mobile_hero_desert.jpg';
             }}
@@ -24,28 +24,28 @@ const Hero = () => {
         </picture>
         {/* Soft atmospheric gradient for crisp typography readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/75 md:hidden" />
-        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent w-full lg:w-3/5" />
+        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 via-40% to-transparent w-full" />
       </div>
 
       {/* Hero Text Content */}
-      <div className="relative z-20 max-w-7xl mx-auto px-5 sm:px-10 lg:px-14 w-full pt-28 sm:pt-36 lg:pt-40 pb-12 flex-1 flex flex-col justify-center">
-        <div className="max-w-xl lg:max-w-2xl text-left">
+      <div className="relative z-20 max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 w-full pt-28 sm:pt-36 lg:pt-40 pb-12 flex-1 flex flex-col justify-center">
+        <div className="max-w-md sm:max-w-lg lg:max-w-xl text-left">
           {/* Eyebrow / Brand Descriptor */}
-          <div className="flex items-center gap-2.5 mb-3 sm:mb-5">
-            <span className="w-7 sm:w-10 h-[1.5px] bg-[#E5B869]" />
+          <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
+            <span className="w-6 sm:w-8 h-[1.5px] bg-[#E5B869]" />
             <p className="text-[10px] sm:text-xs md:text-sm tracking-[0.25em] font-medium uppercase text-[#E5B869]">
               Fine Fragrance & Artisanal Perfumery
             </p>
           </div>
 
           {/* Main Title */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[76px] font-serif leading-[1.08] mb-4 sm:mb-6 font-normal tracking-tight text-white">
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-serif leading-[1.1] mb-3 sm:mb-5 font-normal tracking-tight text-white">
             Discover Your <br />
             <span className="italic font-serif text-[#E5B869] font-normal">Signature Scent</span>
           </h1>
 
           {/* Subtitle / Description */}
-          <p className="text-xs sm:text-base md:text-lg text-gray-200 font-light leading-relaxed mb-6 sm:mb-8 max-w-[300px] xs:max-w-sm sm:max-w-xl">
+          <p className="text-xs sm:text-sm md:text-base text-gray-200 font-light leading-relaxed mb-6 sm:mb-8 max-w-xs sm:max-w-md">
             Explore fine fragrances crafted to leave a lasting impression. Sculpted with aged amber, wild oud, and rare botanical essences.
           </p>
 
