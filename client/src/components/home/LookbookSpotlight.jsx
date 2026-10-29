@@ -10,11 +10,11 @@ const LookbookSpotlight = () => {
         {/* Background Raw Agarwood Image */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/images/perfumes/gemini_cat_oud.jpg"
+            src="/images/perfumes/gemini_banner_rare_oud.jpg"
             alt="Rare Oud Collection"
             className="w-full h-full object-cover object-right"
             onError={(e) => {
-              e.target.src = '/images/perfumes/mockup_banner_oud.png';
+              e.target.src = '/images/perfumes/gemini_cat_oud.jpg';
             }}
           />
           {/* Dark gradient to ensure text readability on the left */}
