@@ -596,20 +596,20 @@ export default function GiftsPage() {
               <Link
                 key={occ.id}
                 href={occ.href}
-                className="relative rounded-xl overflow-hidden aspect-[3/4] w-full sm:w-32 lg:w-36 bg-[#251A14] border border-[#3E2B20] hover:border-[#DEB368] transition-all duration-300 group flex flex-col justify-end p-2.5 shadow-md"
+                className="relative rounded-xl overflow-hidden aspect-[3/4] w-full sm:w-32 md:w-36 lg:w-40 bg-[#251A14] border border-[#3E2B20] hover:border-[#DEB368] transition-all duration-300 group flex flex-col justify-end p-3 shadow-md hover:shadow-xl hover:shadow-black/40"
               >
                 <img
                   src={occ.image}
                   alt={occ.title}
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 via-45% to-transparent pointer-events-none" />
                 <div className="relative z-10 flex items-center justify-between text-white">
-                  <span className="text-[11px] sm:text-xs font-serif font-medium leading-tight">
+                  <span className="text-xs sm:text-sm font-serif font-medium leading-tight group-hover:text-[#ECC880] transition-colors">
                     {occ.title}
                   </span>
-                  <span className="w-5 h-5 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center text-white group-hover:bg-[#DEB368] group-hover:text-[#160E09] transition-colors">
-                    <ArrowRight size={10} strokeWidth={2.5} />
+                  <span className="w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center text-white group-hover:bg-[#DEB368] group-hover:text-[#160E09] transition-all shrink-0">
+                    <ArrowRight size={11} strokeWidth={2.5} />
                   </span>
                 </div>
               </Link>
