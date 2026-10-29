@@ -98,7 +98,7 @@ const ProductCard = ({ product, onQuickView }) => {
         quantity: 1,
         maxStock: stock !== null ? stock : 99
       });
-      message.success(`${displayName} added to cart`);
+      message.success(`${displayName} added to your shopping bag`);
     } catch (err) {
       console.error('Add to cart error:', err);
       message.error('Could not add to cart');

@@ -52,64 +52,72 @@
 }
 
 /* ==========================================================================
-   LUXURY TOAST & POP-UP NOTIFICATION OVERRIDES
+   LUXURY TOAST & POP-UP NOTIFICATION OVERRIDES (ROVE & AMBER THEME)
    ========================================================================== */
 .ant-message {
-  top: 32px !important;
+  top: 72px !important;
+  z-index: 9999 !important;
+}
+
+@media (min-width: 640px) {
+  .ant-message {
+    top: 82px !important;
+  }
 }
 
 .ant-message .ant-message-notice {
   padding: 4px !important;
+  text-align: center;
 }
 
 .ant-message .ant-message-notice-content {
-  background-color: #141416 !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: rgba(24, 16, 10, 0.94) !important;
+  color: #FAF5EE !important;
+  border: 1px solid rgba(229, 184, 105, 0.5) !important;
   border-radius: 9999px !important;
   padding: 10px 24px !important;
-  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
-  font-family: "Inter", sans-serif !important;
-  font-size: 13px !important;
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(229, 184, 105, 0.22) !important;
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-size: 13.5px !important;
   font-weight: 500 !important;
-  letter-spacing: -0.01em !important;
+  letter-spacing: 0.02em !important;
   display: inline-flex !important;
   align-items: center !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .ant-message .ant-message-custom-content {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 10px !important;
 }
 
-/* Success Toast Icon */
+/* Success Toast Icon (Warm Lustrous Gold Checkmark instead of generic green) */
 .ant-message .anticon-check-circle {
-  color: #10B981 !important;
+  color: #E5B869 !important;
   font-size: 16px !important;
-  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4));
+  filter: drop-shadow(0 0 6px rgba(229, 184, 105, 0.75));
 }
 
 /* Error Toast Icon */
 .ant-message .anticon-close-circle {
-  color: #EF4444 !important;
+  color: #E07A5F !important;
   font-size: 16px !important;
-  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4));
+  filter: drop-shadow(0 0 6px rgba(224, 122, 95, 0.5));
 }
 
 /* Info & Warning Toast Icon */
 .ant-message .anticon-info-circle,
 .ant-message .anticon-exclamation-circle {
-  color: #F59E0B !important;
+  color: #ECC880 !important;
   font-size: 16px !important;
-  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4));
+  filter: drop-shadow(0 0 6px rgba(236, 200, 128, 0.6));
 }
 
 .ant-message .anticon-loading {
-  color: #FFFFFF !important;
+  color: #ECC880 !important;
   font-size: 15px !important;
 }
 

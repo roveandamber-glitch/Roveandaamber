@@ -2,11 +2,23 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Sparkles, Gift, User } from 'lucide-react';
+import { Home, Sparkles, Gift, User, ShoppingBag } from 'lucide-react';
+import cartService from '@/services/cartService';
 
 const BottomNav = () => {
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState(null);
+  const [cartCount, setCartCount] = useState(0);
+
+  const updateCartCount = () => {
+    setCartCount(cartService.getCartCount());
+  };
+
+  useEffect(() => {
+    updateCartCount();
+    window.addEventListener('cartChange', updateCartCount);
+    return () => window.removeEventListener('cartChange', updateCartCount);
+  }, []);
 
   const checkAuth = () => {
     if (typeof window !== 'undefined') {
@@ -54,6 +66,13 @@ const BottomNav = () => {
       isActive: (path) => path.startsWith('/shop') || path.startsWith('/product')
     },
     {
+      label: 'Cart',
+      href: '/cart',
+      icon: ShoppingBag,
+      badge: cartCount,
+      isActive: (path) => path === '/cart'
+    },
+    {
       label: 'Gifts',
       href: '/gifts',
       icon: Gift,
@@ -81,10 +100,10 @@ const BottomNav = () => {
               key={item.label}
               href={item.href}
               prefetch={true}
-              className={`flex items-center justify-center transition-all duration-200 cursor-pointer ${
+              className={`relative flex items-center justify-center transition-all duration-200 cursor-pointer ${
                 active 
-                  ? 'bg-[#E5D7C2] text-[#2C1810] px-4 py-2 rounded-full shadow-inner' 
-                  : 'text-[#6E6359] hover:text-[#2C1810] px-3 py-2'
+                  ? 'bg-[#E5D7C2] text-[#2C1810] px-3.5 py-2 rounded-full shadow-inner' 
+                  : 'text-[#6E6359] hover:text-[#2C1810] px-2.5 py-2'
               }`}
               aria-label={item.label}
             >
@@ -95,6 +114,11 @@ const BottomNav = () => {
                   active ? 'scale-105' : 'hover:scale-110'
                 }`}
               />
+              {item.badge > 0 && (
+                <span className="absolute -top-0.5 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-[#B86526] text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           );
         })}

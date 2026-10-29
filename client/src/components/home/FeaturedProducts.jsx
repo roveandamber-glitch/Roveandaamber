@@ -96,7 +96,7 @@ const FeaturedProducts = () => {
         ...product,
         size: '50ml'
       }, 1, '50ml');
-      message.success(`Added ${product.name} to cart`);
+      message.success(`${product.name} added to your shopping bag`);
     } catch (err) {
       console.error(err);
     } finally {

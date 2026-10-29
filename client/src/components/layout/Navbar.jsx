@@ -212,8 +212,9 @@ const Navbar = () => {
   const drawerLinks = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Collections', path: '/shop', icon: Sparkles },
+    { name: 'Shopping Bag', path: '/cart', icon: ShoppingBag, badge: cartCount },
     { name: 'Gifts', path: '/gifts', icon: Gift },
-    { name: 'Wishlist', path: '/wishlist', icon: Heart },
+    { name: 'Wishlist', path: '/wishlist', icon: Heart, badge: wishlistCount },
     { name: 'My Orders', path: '/orders', icon: Package },
     { name: 'About', path: '/about', icon: Compass },
     { name: 'Contact', path: '/contact', icon: MessageSquare },
