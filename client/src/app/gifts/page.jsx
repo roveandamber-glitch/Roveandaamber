@@ -563,57 +563,73 @@ export default function GiftsPage() {
         </div>
       </section>
 
-      {/* 7. GIFTS FOR EVERY OCCASION (Occasions Cards) */}
-      <section className="py-8 sm:py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="rounded-2xl sm:rounded-3xl bg-[#160E09] border border-[#2E1E14] p-6 sm:p-10 lg:p-12 flex flex-col lg:flex-row items-center gap-8 justify-between shadow-xl">
-          {/* Left Title & Button */}
-          <div className="max-w-md text-left">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-5 h-[1.5px] bg-[#E5B869]" />
-              <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-[#E5B869] font-semibold">
-                Celebrations
+      {/* 7. GIFTS FOR EVERY OCCASION (Spacious Luxury Occasions Cards) */}
+      <section className="py-10 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="rounded-3xl bg-[#140C08] border border-[#2E1D13] p-6 sm:p-9 lg:p-12 shadow-[0_24px_64px_rgba(0,0,0,0.55)] relative overflow-hidden">
+          {/* Subtle Ambient Gold Glow in Background */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-bl from-[#DEB368]/15 via-[#B8860B]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-10 xl:gap-14 relative z-10">
+            {/* Left Title & Call to Action */}
+            <div className="w-full lg:w-[280px] xl:w-[320px] lg:shrink-0 text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-[1.5px] bg-[#E5B869]" />
+                <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-[#E5B869] font-semibold">
+                  Celebrations
+                </p>
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif text-white tracking-tight font-normal mb-2.5 sm:mb-3.5 leading-[1.15]">
+                Gifts for <br />
+                <span className="italic font-serif text-[#ECC880]">Every Occasion</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-300 font-light leading-relaxed mb-6 sm:mb-8">
+                From birthdays to anniversaries, celebrate life's special moments with the perfect fragrance.
               </p>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-serif text-white tracking-tight font-normal mb-2 sm:mb-3">
-              Gifts for <br />
-              <span className="italic font-serif text-[#ECC880]">Every Occasion</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-300 font-light leading-relaxed mb-6">
-              From birthdays to anniversaries, celebrate life's special moments with the perfect fragrance.
-            </p>
-            <Link
-              href="/shop?category=Gifts"
-              className="inline-flex items-center gap-2 px-6 sm:px-7 py-3 rounded-full bg-gradient-to-r from-[#ECC880] to-[#C99042] text-[#281608] text-xs sm:text-sm font-semibold tracking-wider shadow-md hover:brightness-105 active:scale-95 transition-all"
-            >
-              <span>Shop by Occasion</span>
-              <ArrowRight size={12} strokeWidth={2.5} />
-            </Link>
-          </div>
-
-          {/* Right: 4 Occasion Thumbnails */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full lg:w-auto">
-            {OCCASIONS_DATA.map((occ) => (
               <Link
-                key={occ.id}
-                href={occ.href}
-                className="relative rounded-xl sm:rounded-2xl overflow-hidden aspect-[158/232] w-full sm:w-32 md:w-36 lg:w-44 bg-[#251A14] border border-[#3E2B20]/80 hover:border-[#ECC880]/60 transition-all duration-300 group flex flex-col justify-end p-2.5 sm:p-3.5 shadow-lg hover:shadow-2xl hover:shadow-black/50"
+                href="/shop?category=Gifts"
+                className="inline-flex items-center gap-2.5 px-6 sm:px-7 py-3 rounded-full bg-gradient-to-r from-[#ECC880] to-[#C99042] text-[#281608] text-xs sm:text-sm font-semibold tracking-wider shadow-lg hover:brightness-105 active:scale-95 transition-all"
               >
-                <img
-                  src={occ.image}
-                  alt={occ.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 via-45% to-transparent pointer-events-none" />
-                <div className="relative z-10 flex items-center justify-between text-white">
-                  <span className="text-xs sm:text-sm font-serif font-medium leading-tight text-white group-hover:text-[#ECC880] transition-colors">
-                    {occ.title}
-                  </span>
-                  <span className="w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-[#ECC880] text-[#241306] flex items-center justify-center group-hover:scale-105 group-hover:brightness-110 transition-all shrink-0 shadow-sm">
-                    <ArrowRight size={11} strokeWidth={2.5} />
-                  </span>
-                </div>
+                <span>Shop by Occasion</span>
+                <ArrowRight size={13} strokeWidth={2.5} />
               </Link>
-            ))}
+            </div>
+
+            {/* Right: 4 Generously Spaced Occasion Cards (Horizontal Reel on Mobile, 4-Col Grid on Desktop) */}
+            <div className="w-full lg:flex-1">
+              <div className="flex sm:grid sm:grid-cols-4 gap-4 sm:gap-3.5 md:gap-4 lg:gap-5 w-full overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 snap-x snap-mandatory no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+                {OCCASIONS_DATA.map((occ) => (
+                  <Link
+                    key={occ.id}
+                    href={occ.href}
+                    className="relative rounded-2xl overflow-hidden aspect-[3/4.2] w-[68vw] max-w-[220px] shrink-0 snap-center sm:w-auto sm:shrink sm:max-w-none bg-[#241710] border border-[#3E291C] hover:border-[#DEB368] transition-all duration-300 group flex flex-col justify-end shadow-[0_12px_28px_rgba(0,0,0,0.65)] hover:shadow-[0_18px_36px_rgba(222,179,104,0.2)] hover:-translate-y-1.5"
+                  >
+                    <img
+                      src={occ.image}
+                      alt={occ.title}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 via-45% to-transparent pointer-events-none" />
+                    
+                    <div className="relative z-10 flex items-center justify-between gap-2 p-3 sm:p-3.5">
+                      <span className="text-xs sm:text-sm font-serif font-medium text-white group-hover:text-[#ECC880] transition-colors truncate">
+                        {occ.title}
+                      </span>
+                      <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#ECC880] text-[#1E120A] flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-white transition-all shadow-md">
+                        <ArrowRight size={11} strokeWidth={2.5} />
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Mobile Carousel Indicators */}
+              <div className="flex sm:hidden items-center justify-center gap-1.5 mt-2">
+                <span className="w-5 h-1 rounded-full bg-[#ECC880]" />
+                <span className="w-1.5 h-1 rounded-full bg-white/30" />
+                <span className="w-1.5 h-1 rounded-full bg-white/30" />
+                <span className="w-1.5 h-1 rounded-full bg-white/30" />
+              </div>
+            </div>
           </div>
         </div>
       </section>

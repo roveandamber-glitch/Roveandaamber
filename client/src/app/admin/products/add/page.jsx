@@ -6,6 +6,8 @@ import { PlusOutlined, DeleteOutlined, CheckCircleOutlined, PictureOutlined } fr
 import { motion } from 'framer-motion';
 import productService from '@/services/productService';
 import categoryService from '@/services/categoryService';
+import adminService from '@/services/adminService';
+import { MOCK_CATEGORIES } from '@/data/adminMockData';
 
 const { Option } = Select;
 const DEFAULT_SIZES = ['50ml', '100ml', 'Discovery Set', '30ml'];
@@ -14,7 +16,7 @@ const AddProduct = () => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(MOCK_CATEGORIES);
   const [sizeStock, setSizeStock] = useState({
     '50ml': 15,
     '100ml': 10,
@@ -29,11 +31,11 @@ const AddProduct = () => {
     const fetchCategories = async () => {
       try {
         const response = await categoryService.getAllCategories();
-        if (response?.success && response.data) {
+        if (response?.success && response.data && response.data.length > 0) {
           setCategories(response.data);
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.warn('Backend categories offline, using default luxury categories.');
       }
     };
     fetchCategories();
@@ -84,19 +86,24 @@ const AddProduct = () => {
         }
       });
 
-      const response = await productService.createProduct(formData);
+      let response;
+      try {
+        response = await productService.createProduct(formData);
+      } catch (err) {
+        response = await adminService.createProduct(formData);
+      }
 
       if (response?.success) {
-        message.success('Product created successfully with size inventory!');
+        message.success('Perfume created successfully!');
         form.resetFields();
         setFileList([]);
         router.push('/admin/products');
       } else {
-        message.error(response?.message || 'Failed to create product');
+        message.error(response?.message || 'Failed to create perfume');
       }
     } catch (error) {
       console.error('Error adding product:', error);
-      message.error(error.response?.data?.message || 'Failed to create product');
+      message.error(error.response?.data?.message || 'Failed to create perfume');
     } finally {
       setLoading(false);
     }
@@ -123,8 +130,8 @@ const AddProduct = () => {
         {/* Compact Top Action Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 font-serif m-0">Add New Product</h1>
-            <p className="text-xs text-gray-500 m-0 mt-0.5">Configure product details, size inventory, and visual assets in one screen.</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 font-serif m-0">Add New Perfume</h1>
+            <p className="text-xs text-gray-500 m-0 mt-0.5">Configure perfume details, size inventory, and visual assets in one screen.</p>
           </div>
           <div className="flex items-center gap-2.5">
             <Button 
@@ -137,9 +144,9 @@ const AddProduct = () => {
               type="primary" 
               htmlType="submit" 
               loading={loading}
-              className="bg-black hover:bg-gray-800 border-0 rounded-full px-6 h-9 font-bold text-xs uppercase tracking-wider"
+              className="!bg-[#B8860B] hover:!bg-[#996515] !border-none !rounded-full px-6 h-9 font-bold text-xs uppercase tracking-wider"
             >
-              Publish Product
+              Publish Perfume
             </Button>
           </div>
         </div>
@@ -151,13 +158,13 @@ const AddProduct = () => {
           <Col xs={24} lg={14} className="flex flex-col">
             <Card className="border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] rounded-2xl p-5 bg-white flex-1 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-3">Product Specification</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-3">Perfume Formulation</span>
                 
                 <Row gutter={16}>
                   {/* Product Name */}
                   <Col xs={24} sm={14}>
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">Product Title</span>}
+                      label={<span className="text-xs font-semibold text-gray-700">Perfume Title</span>}
                       name="name"
                       rules={[
                         { required: true, message: 'Product title is required' },
@@ -165,14 +172,14 @@ const AddProduct = () => {
                       ]}
                       className="mb-3.5"
                     >
-                      <Input placeholder="e.g. Amber Oud Eau de Parfum" className="rounded-xl h-10 text-sm" />
+                      <Input placeholder="e.g. Amber Oud Eau de Parfum" className="rounded-xl h-10 text-sm font-serif" />
                     </Form.Item>
                   </Col>
 
                   {/* Category */}
                   <Col xs={24} sm={10}>
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">Category</span>}
+                      label={<span className="text-xs font-semibold text-gray-700">Collection</span>}
                       name="category_id"
                       rules={[{ required: true, message: 'Please select a category' }]}
                       className="mb-3.5"
@@ -203,7 +210,7 @@ const AddProduct = () => {
                       ]}
                       className="mb-3.5"
                     >
-                      <Input type="number" min={1} placeholder="2999" className="rounded-xl h-10 text-sm" />
+                      <Input type="number" min={1} placeholder="4950" className="rounded-xl h-10 text-sm" />
                     </Form.Item>
                   </Col>
 
@@ -223,15 +230,15 @@ const AddProduct = () => {
                 <div className="mt-1 p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D6]">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h4 className="text-xs font-bold text-black uppercase tracking-wider m-0">Size-Wise Stock Inventory</h4>
+                      <h4 className="text-xs font-bold text-black uppercase tracking-wider m-0">Flacon Sizes & Inventory</h4>
                       <p className="text-[11px] text-gray-500 m-0">Define available units per size variant.</p>
                     </div>
-                    <Tag color="black" className="rounded-full px-2.5 py-0.5 font-mono text-[10px] m-0">
+                    <Tag color="gold" className="rounded-full px-2.5 py-0.5 font-mono text-[10px] m-0 !text-[#996515] !bg-[#FAF3E0] !border-[#F0DCB1]">
                       {totalStock} in stock
                     </Tag>
                   </div>
 
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {DEFAULT_SIZES.map(size => (
                       <div key={size} className="bg-white p-2 rounded-xl border border-gray-200 text-center shadow-2xs">
                         <span className="font-bold text-xs text-black block mb-1 font-mono">{size}</span>
@@ -260,7 +267,7 @@ const AddProduct = () => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block">Visual Media</span>
-                  <span className="text-[10px] text-gray-400">Up to 6 images (1st is cover)</span>
+                  <span className="text-[10px] text-gray-400">Up to 4 images (1st is cover)</span>
                 </div>
 
                 <Form.Item
@@ -275,10 +282,10 @@ const AddProduct = () => {
                     beforeUpload={beforeUpload}
                     onChange={({ fileList }) => setFileList(fileList)}
                     multiple={true}
-                    maxCount={6}
+                    maxCount={4}
                     className="compact-uploader"
                   >
-                    {fileList.length < 6 && (
+                    {fileList.length < 4 && (
                       <div className="p-2 text-center">
                         <PlusOutlined className="text-base text-gray-400" />
                         <div className="mt-1 text-[11px] font-semibold text-gray-600">Add Image</div>

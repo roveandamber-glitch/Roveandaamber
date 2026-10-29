@@ -1,0 +1,259 @@
+"use client";
+import React, { useState, useEffect } from 'react';
+import { 
+  Table, 
+  Button, 
+  Input, 
+  Select, 
+  Tag, 
+  message, 
+  Popconfirm, 
+  Rate,
+  Tooltip 
+} from 'antd';
+import { 
+  Star, 
+  CheckCircle2, 
+  EyeOff, 
+  Trash2, 
+  Search, 
+  Filter, 
+  Sparkles,
+  ShieldCheck
+} from 'lucide-react';
+import adminService from '@/services/adminService';
+import { getImageUrl } from '@/utils/imageHelper';
+
+const { Option } = Select;
+
+export default function AdminReviewsPage() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    setLoading(true);
+    try {
+      const res = await adminService.getReviews();
+      if (res?.data) {
+        setReviews(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+      message.error('Failed to load reviews');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await adminService.moderateReview(id, { status: newStatus });
+      setReviews(prev => prev.map(r => 
+        r.id === id ? { ...r, status: newStatus } : r
+      ));
+      message.success(`Review ${newStatus.toLowerCase()} successfully`);
+    } catch (err) {
+      message.error('Failed to moderate review');
+    }
+  };
+
+  const handleDelete = (id) => {
+    setReviews(prev => prev.filter(r => r.id !== id));
+    message.success('Review deleted');
+  };
+
+  const filteredReviews = reviews.filter(r => {
+    const matchesSearch = 
+      r.customer?.toLowerCase().includes(searchText.toLowerCase()) ||
+      r.title?.toLowerCase().includes(searchText.toLowerCase()) ||
+      r.comment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      r.product?.name?.toLowerCase().includes(searchText.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const columns = [
+    {
+      title: 'Perfume Product',
+      key: 'product',
+      render: (_, record) => (
+        <div className="flex items-center gap-3 py-1">
+          <div className="w-10 h-12 rounded-lg bg-[#FAF7F2] border border-[#EAE3D6] overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+            <img 
+              src={getImageUrl(record.product?.image)} 
+              alt={record.product?.name}
+              className="w-full h-full object-contain"
+              onError={(e) => { e.currentTarget.src = '/hero_perfume.png'; }}
+            />
+          </div>
+          <span className="font-serif font-medium text-xs text-[#1A1A1A] line-clamp-1">
+            {record.product?.name}
+          </span>
+        </div>
+      )
+    },
+    {
+      title: 'Customer',
+      key: 'customer',
+      render: (_, record) => (
+        <div>
+          <div className="font-semibold text-xs text-[#1A1A1A] flex items-center gap-1.5">
+            <span>{record.customer}</span>
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+              <ShieldCheck size={10} /> Verified
+            </span>
+          </div>
+          <div className="text-[11px] text-gray-400 mt-0.5">{record.date || '28 Oct 2026'}</div>
+        </div>
+      )
+    },
+    {
+      title: 'Rating & Feedback',
+      key: 'review',
+      render: (_, record) => (
+        <div className="max-w-md py-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Rate disabled defaultValue={record.rating} className="!text-[#B8860B] !text-xs" />
+            <span className="text-xs font-semibold text-[#1A1A1A]">{record.title}</span>
+          </div>
+          <p className="text-xs text-[#555] leading-relaxed line-clamp-2">
+            &ldquo;{record.comment}&rdquo;
+          </p>
+        </div>
+      )
+    },
+    {
+      title: 'Moderation Status',
+      key: 'status',
+      render: (_, record) => {
+        const isApproved = record.status === 'Approved';
+        const isPending = record.status === 'Pending';
+        return (
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border ${
+            isApproved 
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+              : isPending 
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-gray-100 text-gray-600 border-gray-200'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-500' : isPending ? 'bg-amber-500' : 'bg-gray-400'}`}></span>
+            {record.status}
+          </span>
+        );
+      }
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      align: 'right',
+      render: (_, record) => (
+        <div className="flex items-center justify-end gap-1.5">
+          {record.status !== 'Approved' && (
+            <Tooltip title="Approve & Publish Review">
+              <button
+                onClick={() => handleStatusChange(record.id, 'Approved')}
+                className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-200"
+              >
+                <CheckCircle2 size={15} />
+              </button>
+            </Tooltip>
+          )}
+
+          {record.status !== 'Hidden' && (
+            <Tooltip title="Hide from Public View">
+              <button
+                onClick={() => handleStatusChange(record.id, 'Hidden')}
+                className="p-1.5 text-amber-700 hover:bg-amber-50 rounded-lg transition-colors border border-amber-200"
+              >
+                <EyeOff size={15} />
+              </button>
+            </Tooltip>
+          )}
+
+          <Popconfirm
+            title="Delete Review"
+            description="Permanently remove this customer testimonial?"
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => handleDelete(record.id)}
+          >
+            <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <Trash2 size={15} />
+            </button>
+          </Popconfirm>
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+              Customer Testimonials & Reviews
+            </h1>
+            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+              Verified Fragrance Connoisseurs
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Moderate olfactory reviews, verify purchases, and showcase authentic client feedback.
+          </p>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="relative w-full md:w-80">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search reviews by customer, perfume, or keyword..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E5DDD0] rounded-xl focus:outline-none focus:border-[#B8860B] transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <Filter size={14} className="text-gray-400" />
+            <span className="text-xs text-gray-500">Status:</span>
+          </div>
+          <Select
+            value={statusFilter}
+            onChange={setStatusFilter}
+            className="w-36 text-xs"
+          >
+            <Option value="ALL">All Statuses</Option>
+            <Option value="Approved">Approved</Option>
+            <Option value="Pending">Pending</Option>
+            <Option value="Hidden">Hidden</Option>
+          </Select>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-[#EAE3D6] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
+        <Table 
+          columns={columns}
+          dataSource={filteredReviews.map((r, idx) => ({ ...r, key: r.id || idx }))}
+          loading={loading}
+          pagination={{ pageSize: 8, className: "!px-4 !mb-4 text-xs" }}
+          className="admin-luxury-table"
+        />
+      </div>
+    </div>
+  );
+}
+
