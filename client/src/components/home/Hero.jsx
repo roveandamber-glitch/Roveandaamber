@@ -11,20 +11,21 @@ const Hero = () => {
         <picture>
           <source 
             media="(min-width: 768px)" 
-            srcSet="/images/perfumes/hero_desert_fragrance.jpg" 
+            srcSet="/images/perfumes/gemini_hero_desert_impressive.jpg" 
           />
           <img 
             src="/images/perfumes/gemini_hero_desert.jpg" 
             alt="ROVE & AMBER Signature Eau de Parfum" 
-            className="w-full h-full object-cover object-[70%_center] md:object-[75%_center] lg:object-right"
+            className="w-full h-full object-cover object-[70%_center] md:object-[82%_center] lg:object-right"
             onError={(e) => {
-              e.target.src = '/images/perfumes/mobile_hero_desert.jpg';
+              e.target.src = '/images/perfumes/hero_desert_fragrance.jpg';
             }}
           />
         </picture>
         {/* Soft atmospheric gradient for crisp typography readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/75 md:hidden" />
-        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 via-40% to-transparent w-full" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/75 md:hidden pointer-events-none" />
+        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-[#120B06]/85 via-[#120B06]/40 via-45% to-transparent w-full pointer-events-none" />
+        <div className="hidden md:block absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-black/45 via-black/15 to-transparent pointer-events-none" />
       </div>
 
       {/* Hero Text Content */}
@@ -33,19 +34,19 @@ const Hero = () => {
           {/* Eyebrow / Brand Descriptor */}
           <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
             <span className="w-6 sm:w-8 h-[1.5px] bg-[#E5B869]" />
-            <p className="text-[10px] sm:text-xs md:text-sm tracking-[0.25em] font-medium uppercase text-[#E5B869]">
+            <p className="text-[10px] sm:text-xs md:text-sm tracking-[0.28em] font-medium uppercase text-[#E5B869]">
               Fine Fragrance & Artisanal Perfumery
             </p>
           </div>
 
           {/* Main Title */}
-          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-serif leading-[1.1] mb-3 sm:mb-5 font-normal tracking-tight text-white">
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl lg:text-[64px] font-serif leading-[1.08] mb-3 sm:mb-5 font-normal tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]">
             Discover Your <br />
             <span className="italic font-serif text-[#E5B869] font-normal">Signature Scent</span>
           </h1>
 
           {/* Subtitle / Description */}
-          <p className="text-xs sm:text-sm md:text-base text-gray-200 font-light leading-relaxed mb-6 sm:mb-8 max-w-xs sm:max-w-md">
+          <p className="text-xs sm:text-sm md:text-base lg:text-lg text-[#E3D7C8] font-light leading-relaxed mb-6 sm:mb-8 max-w-xs sm:max-w-md drop-shadow-sm">
             Explore fine fragrances crafted to leave a lasting impression. Sculpted with aged amber, wild oud, and rare botanical essences.
           </p>
 
@@ -53,7 +54,7 @@ const Hero = () => {
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Link
               href="/shop"
-              className="inline-flex items-center gap-2.5 px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] text-xs sm:text-sm font-semibold tracking-wider shadow-lg shadow-amber-950/30 hover:brightness-105 active:scale-95 transition-all group"
+              className="inline-flex items-center gap-2.5 px-7 sm:px-8 py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] text-xs sm:text-sm font-semibold tracking-wider shadow-lg shadow-amber-950/40 hover:brightness-105 active:scale-95 transition-all group"
             >
               <span>Shop Now</span>
               <span className="w-5 h-5 rounded-full bg-[#281608]/15 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
@@ -63,7 +64,7 @@ const Hero = () => {
 
             <Link
               href="/shop?category=Oud"
-              className="hidden sm:inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium tracking-wider shadow-sm transition-all"
+              className="hidden sm:inline-flex items-center gap-2 px-7 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/25 text-white text-xs sm:text-sm font-medium tracking-wider shadow-sm hover:border-white/40 transition-all"
             >
               <span>Explore Collection</span>
             </Link>
