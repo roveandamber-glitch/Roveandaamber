@@ -54,7 +54,9 @@ const Navbar = () => {
 
   const isActive = (path) => pathname === path;
   const isHome = pathname === '/';
-  const isDarkHero = isHome && !isScrolled;
+  const isGifts = pathname === '/gifts';
+  const hasDarkHero = isHome || isGifts;
+  const isDarkHero = hasDarkHero && !isScrolled;
 
   const updateCartCount = () => {
     setCartCount(cartService.getCartCount());
@@ -155,9 +157,10 @@ const Navbar = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
     };
-    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     const fetchResults = async () => {
