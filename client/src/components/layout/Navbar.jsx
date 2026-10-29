@@ -244,13 +244,11 @@ const Navbar = () => {
 
           {/* Center: ROVE & AMBER FINE FRAGRANCE */}
           <Link href="/" className="flex flex-col items-center justify-center text-center">
-            <span className={`font-serif text-[15px] sm:text-base font-normal tracking-[0.22em] uppercase leading-tight ${
-              isDarkHero ? 'text-[#E5B869]' : 'text-[#1A1A1A]'
-            }`}>
+            <span className="font-serif text-[15px] sm:text-base font-semibold tracking-[0.22em] text-[#E5B869] uppercase leading-tight">
               ROVE & AMBER
             </span>
             <span className={`text-[7.5px] tracking-[0.32em] uppercase font-sans font-medium mt-0.5 ${
-              isDarkHero ? 'text-[#F3ECE1]/80' : 'text-gray-500'
+              isDarkHero ? 'text-[#F3ECE1]/80' : 'text-[#8C7A6B]'
             }`}>
               FINE FRAGRANCE
             </span>
@@ -345,18 +343,16 @@ const Navbar = () => {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex items-center justify-between gap-6">
-            {/* Desktop Brand Logo (Pure Centered Typography) */}
+            {/* Desktop Brand Logo */}
             <Link 
               href="/" 
               className="flex flex-col items-center justify-center text-center group py-0.5 flex-shrink-0 cursor-pointer"
             >
-              <span className={`font-serif text-sm lg:text-base tracking-[0.24em] uppercase font-normal leading-tight transition-colors ${
-                (!isDarkHero) ? 'text-[#1A1A1A]' : 'text-[#E5B869]'
-              }`}>
+              <span className="font-serif text-[15px] lg:text-base font-semibold tracking-[0.22em] text-[#E5B869] uppercase leading-tight group-hover:brightness-110 transition-all">
                 ROVE & AMBER
               </span>
-              <span className={`text-[7.5px] lg:text-[8px] tracking-[0.35em] uppercase font-sans font-medium mt-0.5 transition-colors ${
-                (!isDarkHero) ? 'text-gray-500' : 'text-[#F3ECE1]/80'
+              <span className={`text-[7.5px] lg:text-[8px] tracking-[0.32em] uppercase font-sans font-medium mt-0.5 transition-colors ${
+                (!isDarkHero) ? 'text-[#8C7A6B]' : 'text-[#F3ECE1]/80'
               }`}>
                 FINE FRAGRANCE
               </span>
@@ -638,12 +634,12 @@ const Navbar = () => {
                 href="/" 
                 prefetch={true}
                 onClick={() => setIsMenuOpen(false)}
-                className="flex flex-col items-start cursor-pointer"
+                className="flex flex-col items-center justify-center text-center cursor-pointer"
               >
-                <span className="font-serif text-sm tracking-[0.24em] uppercase font-medium text-black">
+                <span className="font-serif text-[15px] sm:text-base font-semibold tracking-[0.22em] text-[#E5B869] uppercase leading-tight">
                   ROVE & AMBER
                 </span>
-                <span className="text-[7.5px] tracking-[0.35em] uppercase font-sans text-gray-500 text-center w-full mt-0.5">
+                <span className="text-[7.5px] tracking-[0.32em] uppercase font-sans font-medium text-[#8C7A6B] mt-0.5">
                   FINE FRAGRANCE
                 </span>
               </Link>
