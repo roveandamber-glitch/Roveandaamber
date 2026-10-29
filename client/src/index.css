@@ -186,3 +186,64 @@
   font-style: italic;
   line-height: 1.6;
 }
+
+
+/* ==========================================================================
+   ROVE & AMBER — LUXURY ADMIN PANEL CUSTOM STYLING
+   ========================================================================== */
+.admin-luxury-table .ant-table {
+  background: transparent !important;
+  font-family: inherit !important;
+}
+
+.admin-luxury-table .ant-table-thead > tr > th {
+  background: #FAF7F2 !important;
+  color: #7A6C5D !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  border-bottom: 1px solid #E8DFC8 !important;
+  padding: 12px 16px !important;
+}
+
+.admin-luxury-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #F4EFE6 !important;
+  font-size: 12px !important;
+  padding: 12px 16px !important;
+  color: #1B100A !important;
+  transition: background 0.15s ease !important;
+}
+
+.admin-luxury-table .ant-table-tbody > tr:hover > td {
+  background: #FAF7F2 !important;
+}
+
+.admin-luxury-table .ant-pagination .ant-pagination-item-active {
+  border-color: #D4A64A !important;
+  background: #D4A64A !important;
+}
+
+.admin-luxury-table .ant-pagination .ant-pagination-item-active a {
+  color: #1B100A !important;
+  font-weight: 700 !important;
+}
+
+.admin-luxury-table .ant-table-content {
+  overflow-x: auto !important;
+  scrollbar-width: thin;
+  scrollbar-color: #D4A64A #FAF7F2;
+}
+
+.admin-luxury-table .ant-table-content::-webkit-scrollbar {
+  height: 6px;
+}
+
+.admin-luxury-table .ant-table-content::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+
+.admin-luxury-table .ant-table-content::-webkit-scrollbar-thumb {
+  background-color: #D4A64A;
+  border-radius: 9999px;
+}

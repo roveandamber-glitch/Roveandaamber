@@ -121,15 +121,15 @@ export default function AdminGiftsPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#1B100A]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Curated Gift Sets & Coffrets
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               {gifts.length} Gift Editions
             </span>
           </div>
@@ -140,7 +140,7 @@ export default function AdminGiftsPage() {
 
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#996515] text-white text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
         >
           <Plus size={16} />
           <span>Add Gift Set</span>
@@ -148,7 +148,7 @@ export default function AdminGiftsPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
+      <div className="bg-white rounded-2xl p-4 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
         <div className="relative w-full max-w-sm">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -156,21 +156,21 @@ export default function AdminGiftsPage() {
             placeholder="Search gift sets..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E5DDD0] rounded-xl focus:outline-none focus:border-[#B8860B] transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E8DFC8] rounded-xl focus:outline-none focus:border-[#D4A64A] transition-colors"
           />
         </div>
       </div>
 
       {/* Gifts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {filteredGifts.map((gift) => (
           <div 
             key={gift.id}
-            className="bg-white rounded-2xl border border-[#EAE3D6] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition-all flex flex-col justify-between"
+            className="bg-white rounded-2xl border border-[#E8DFC8] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition-all flex flex-col justify-between"
           >
             <div>
               {/* Image Banner */}
-              <div className="relative h-48 w-full bg-[#FAF7F2] p-2 flex items-center justify-center overflow-hidden border-b border-[#EAE3D6]">
+              <div className="relative h-48 w-full bg-[#FAF7F2] p-2 flex items-center justify-center overflow-hidden border-b border-[#E8DFC8]">
                 <img 
                   src={getImageUrl(gift.image)} 
                   alt={gift.name}
@@ -191,21 +191,21 @@ export default function AdminGiftsPage() {
               {/* Body */}
               <div className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wider text-[#B8860B] font-bold">
+                  <span className="text-[10px] uppercase tracking-wider text-[#D4A64A] font-bold">
                     Curated Coffret
                   </span>
                   <span className="text-xs text-gray-400 font-mono">
                     {gift.ordersCount || 0} orders
                   </span>
                 </div>
-                <h3 className="font-serif font-bold text-sm text-[#1A1A1A] line-clamp-1">
+                <h3 className="font-serif font-medium text-sm text-[#1B100A] line-clamp-1">
                   {gift.name}
                 </h3>
                 <p className="text-xs text-[#555] line-clamp-2 leading-relaxed">
                   {gift.description}
                 </p>
                 <div className="pt-2 flex items-baseline gap-2">
-                  <span className="font-bold text-sm text-[#1A1A1A]">
+                  <span className="font-bold text-sm text-[#1B100A]">
                     ₹{(gift.price || 4950).toLocaleString('en-IN')}
                   </span>
                   {gift.originalPrice && (
@@ -218,21 +218,21 @@ export default function AdminGiftsPage() {
             </div>
 
             {/* Bottom Actions */}
-            <div className="p-4 pt-0 flex items-center justify-between border-t border-[#F2ECE3] mt-2">
+            <div className="p-4 pt-0 flex items-center justify-between border-t border-[#E8DFC8]/60 mt-2">
               <div className="flex items-center gap-1.5 pt-2">
                 <span className="text-[11px] text-gray-500">Status:</span>
                 <Switch 
                   size="small" 
                   checked={gift.status === 'Active'}
                   onChange={(checked) => handleToggleStatus(gift.id, checked)}
-                  className={gift.status === 'Active' ? '!bg-[#B8860B]' : ''}
+                  className={gift.status === 'Active' ? '!bg-[#D4A64A]' : ''}
                 />
               </div>
 
               <div className="flex items-center gap-1 pt-2">
                 <button
                   onClick={() => handleOpenEdit(gift)}
-                  className="p-1.5 text-gray-500 hover:text-[#B8860B] hover:bg-[#FAF6F0] rounded-lg border border-transparent hover:border-[#EAE3D6] transition-colors"
+                  className="p-1.5 text-gray-500 hover:text-[#D4A64A] hover:bg-[#FAF7F2] rounded-lg border border-transparent hover:border-[#E8DFC8] transition-colors cursor-pointer"
                 >
                   <Edit3 size={14} />
                 </button>
@@ -244,7 +244,7 @@ export default function AdminGiftsPage() {
                   okButtonProps={{ danger: true }}
                   onConfirm={() => handleDelete(gift.id)}
                 >
-                  <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
                     <Trash2 size={14} />
                   </button>
                 </Popconfirm>
@@ -257,8 +257,8 @@ export default function AdminGiftsPage() {
       {/* Modal */}
       <Modal
         title={
-          <div className="flex items-center gap-2 font-serif text-base text-[#1A1A1A] pb-2 border-b border-[#EAE3D6]">
-            <Gift size={18} className="text-[#B8860B]" />
+          <div className="flex items-center gap-2 font-serif text-base text-[#1B100A] pb-2 border-b border-[#E8DFC8]">
+            <Gift size={18} className="text-[#D4A64A]" />
             <span>{editingGift ? 'Edit Gift Coffret' : 'Create New Gift Set'}</span>
           </div>
         }
@@ -266,7 +266,7 @@ export default function AdminGiftsPage() {
         onOk={handleSave}
         onCancel={() => setModalOpen(false)}
         okText={editingGift ? 'Update Gift' : 'Create Gift'}
-        okButtonProps={{ className: "!bg-[#B8860B] hover:!bg-[#996515] !text-white !border-none" }}
+        okButtonProps={{ className: "!bg-[#D4A64A] hover:!bg-[#B38728] !text-[#1B100A] !font-semibold !border-none" }}
         centered
       >
         <Form form={form} layout="vertical" className="pt-4" initialValues={{ status: true, stock: 15 }}>

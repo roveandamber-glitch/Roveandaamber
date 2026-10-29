@@ -117,15 +117,15 @@ export default function AdminCategoriesPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#1B100A]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Fragrance Categories
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               {categories.length} Collections
             </span>
           </div>
@@ -136,7 +136,7 @@ export default function AdminCategoriesPage() {
 
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#996515] text-white text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
         >
           <Plus size={16} />
           <span>Create Category</span>
@@ -144,7 +144,7 @@ export default function AdminCategoriesPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
+      <div className="bg-white rounded-2xl p-4 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
         <div className="relative w-full max-w-sm">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -152,7 +152,7 @@ export default function AdminCategoriesPage() {
             placeholder="Search categories..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E5DDD0] rounded-xl focus:outline-none focus:border-[#B8860B] transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E8DFC8] rounded-xl focus:outline-none focus:border-[#D4A64A] transition-colors"
           />
         </div>
       </div>
@@ -162,11 +162,11 @@ export default function AdminCategoriesPage() {
         {filteredCategories.map((cat) => (
           <div 
             key={cat.id}
-            className="bg-white rounded-2xl border border-[#EAE3D6] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition-all flex flex-col justify-between"
+            className="bg-white rounded-2xl border border-[#E8DFC8] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition-all flex flex-col justify-between"
           >
             <div>
               {/* Image banner */}
-              <div className="relative h-44 w-full bg-[#1A120B] overflow-hidden">
+              <div className="relative h-44 w-full bg-[#1B100A] overflow-hidden">
                 <img 
                   src={getImageUrl(cat.image)} 
                   alt={cat.name}
@@ -176,10 +176,10 @@ export default function AdminCategoriesPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
                   <div>
-                    <span className="text-[10px] uppercase tracking-wider text-[#DEB368] font-bold">
+                    <span className="text-[10px] uppercase tracking-wider text-[#D4A64A] font-bold">
                       Fragrance Family
                     </span>
-                    <h3 className="text-white font-serif font-bold text-lg leading-tight">
+                    <h3 className="text-white font-serif font-medium text-lg leading-tight">
                       {cat.name}
                     </h3>
                   </div>
@@ -194,7 +194,7 @@ export default function AdminCategoriesPage() {
                 <p className="text-xs text-[#555] line-clamp-2 leading-relaxed">
                   {cat.description || 'Artisanal perfume formulation crafted with noble natural essences.'}
                 </p>
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-[#F2ECE3]">
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-[#E8DFC8]/60">
                   <span className="text-gray-400 font-mono text-[11px]">/{cat.slug || 'category'}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-gray-500">Status:</span>
@@ -202,7 +202,7 @@ export default function AdminCategoriesPage() {
                       size="small" 
                       checked={cat.status === 'Active'}
                       onChange={(checked) => handleToggleStatus(cat.id, checked)}
-                      className={cat.status === 'Active' ? '!bg-[#B8860B]' : ''}
+                      className={cat.status === 'Active' ? '!bg-[#D4A64A]' : ''}
                     />
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export default function AdminCategoriesPage() {
             <div className="p-4 pt-0 flex items-center justify-between gap-2">
               <Link
                 href={`/admin/products?category=${encodeURIComponent(cat.name)}`}
-                className="text-xs text-[#4A4238] hover:text-[#B8860B] font-medium flex items-center gap-1.5 transition-colors"
+                className="text-xs text-[#1B100A] hover:text-[#D4A64A] font-medium flex items-center gap-1.5 transition-colors"
               >
                 <Package size={14} />
                 <span>View Products</span>
@@ -221,7 +221,7 @@ export default function AdminCategoriesPage() {
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleOpenEdit(cat)}
-                  className="p-1.5 text-gray-500 hover:text-[#B8860B] hover:bg-[#FAF6F0] rounded-lg border border-transparent hover:border-[#EAE3D6] transition-colors"
+                  className="p-1.5 text-gray-500 hover:text-[#D4A64A] hover:bg-[#FAF7F2] rounded-lg border border-transparent hover:border-[#E8DFC8] transition-colors cursor-pointer"
                 >
                   <Edit3 size={15} />
                 </button>
@@ -233,7 +233,7 @@ export default function AdminCategoriesPage() {
                   okButtonProps={{ danger: true }}
                   onConfirm={() => handleDelete(cat.id)}
                 >
-                  <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
                     <Trash2 size={15} />
                   </button>
                 </Popconfirm>
@@ -246,8 +246,8 @@ export default function AdminCategoriesPage() {
       {/* Add / Edit Category Modal */}
       <Modal
         title={
-          <div className="flex items-center gap-2 font-serif text-base text-[#1A1A1A] pb-2 border-b border-[#EAE3D6]">
-            <FolderTree size={18} className="text-[#B8860B]" />
+          <div className="flex items-center gap-2 font-serif text-base text-[#1B100A] pb-2 border-b border-[#E8DFC8]">
+            <FolderTree size={18} className="text-[#D4A64A]" />
             <span>{editingCategory ? 'Edit Category' : 'Create New Category'}</span>
           </div>
         }
@@ -255,7 +255,7 @@ export default function AdminCategoriesPage() {
         onOk={handleSave}
         onCancel={() => setModalVisible(false)}
         okText={editingCategory ? 'Update Category' : 'Create Category'}
-        okButtonProps={{ className: "!bg-[#B8860B] hover:!bg-[#996515] !text-white !border-none" }}
+        okButtonProps={{ className: "!bg-[#D4A64A] hover:!bg-[#B38728] !text-[#1B100A] !font-semibold !border-none" }}
         centered
       >
         <Form form={form} layout="vertical" className="pt-4" initialValues={{ status: true }}>

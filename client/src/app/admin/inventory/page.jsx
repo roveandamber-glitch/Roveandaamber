@@ -108,9 +108,10 @@ export default function AdminInventoryPage() {
     {
       title: 'Perfume Flacon',
       key: 'product',
+      width: 260,
       render: (_, record) => (
         <div className="flex items-center gap-3 py-1">
-          <div className="w-12 h-14 rounded-xl bg-[#FAF7F2] border border-[#EAE3D6] overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+          <div className="w-12 h-14 rounded-xl bg-[#FAF7F2] border border-[#E8DFC8] overflow-hidden shrink-0 flex items-center justify-center p-1">
             <img 
               src={getImageUrl(record.image)} 
               alt={record.name}
@@ -118,11 +119,11 @@ export default function AdminInventoryPage() {
               onError={(e) => { e.currentTarget.src = '/hero_perfume.png'; }}
             />
           </div>
-          <div>
-            <div className="font-serif font-medium text-sm text-[#1A1A1A]">
+          <div className="min-w-0">
+            <div className="font-serif font-medium text-sm text-[#1B100A] truncate max-w-[170px]">
               {record.name}
             </div>
-            <div className="text-[11px] text-gray-400 font-mono mt-0.5">
+            <div className="text-[11px] text-gray-400 font-mono mt-0.5 truncate">
               SKU: {record.sku || 'RM-001'}
             </div>
           </div>
@@ -133,13 +134,15 @@ export default function AdminInventoryPage() {
       title: 'Category',
       dataIndex: 'category',
       key: 'category',
-      render: (cat) => <span className="text-xs text-gray-600">{cat || 'Fine Fragrance'}</span>
+      width: 150,
+      render: (cat) => <span className="text-xs text-gray-600 truncate inline-block max-w-[130px]">{cat || 'Fine Fragrance'}</span>
     },
     {
       title: 'Flacon Price',
       key: 'price',
+      width: 130,
       render: (_, record) => (
-        <span className="text-xs font-semibold text-[#1A1A1A]">
+        <span className="text-xs font-semibold text-[#1B100A]">
           ₹{(record.price || 4950).toLocaleString('en-IN')}
         </span>
       )
@@ -147,11 +150,12 @@ export default function AdminInventoryPage() {
     {
       title: 'Available Stock',
       key: 'stock',
+      width: 130,
       render: (_, record) => {
         const stock = record.stock ?? 12;
         return (
           <div className="flex items-center gap-2">
-            <span className="font-mono font-bold text-sm text-[#1A1A1A]">{stock}</span>
+            <span className="font-mono font-bold text-sm text-[#1B100A]">{stock}</span>
             <span className="text-[11px] text-gray-400">units</span>
           </div>
         );
@@ -160,25 +164,26 @@ export default function AdminInventoryPage() {
     {
       title: 'Inventory Health',
       key: 'status',
+      width: 180,
       render: (_, record) => {
         const stock = record.stock ?? 12;
         if (stock === 0) {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200">
-              <XCircle size={12} className="text-red-500" /> Out of Stock
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
+              <XCircle size={12} className="text-red-500 shrink-0" /> Out of Stock
             </span>
           );
         }
         if (stock <= 5) {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-              <AlertTriangle size={12} className="text-amber-500" /> Restock Urgently ({stock})
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
+              <AlertTriangle size={12} className="text-amber-500 shrink-0" /> Restock Urgently ({stock})
             </span>
           );
         }
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-            <CheckCircle2 size={12} className="text-emerald-500" /> Optimal Level
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+            <CheckCircle2 size={12} className="text-emerald-500 shrink-0" /> Optimal Level
           </span>
         );
       }
@@ -186,11 +191,12 @@ export default function AdminInventoryPage() {
     {
       title: 'Action',
       key: 'action',
+      width: 130,
       align: 'right',
       render: (_, record) => (
         <button
           onClick={() => handleOpenAdjust(record)}
-          className="inline-flex items-center gap-1 text-xs text-[#4A4238] hover:text-[#B8860B] bg-[#FAF7F2] hover:bg-[#FAF6F0] px-3 py-1.5 rounded-lg border border-[#EAE3D6] font-medium transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-[#1B100A] hover:text-[#D4A64A] bg-[#FAF7F2] hover:bg-[#F5EEDF] px-3 py-1.5 rounded-lg border border-[#E8DFC8] font-medium transition-colors cursor-pointer"
         >
           <RotateCcw size={13} />
           <span>Adjust Stock</span>
@@ -286,11 +292,12 @@ export default function AdminInventoryPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-[#EAE3D6] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
         <Table 
           columns={columns}
           dataSource={filteredItems.map((item, idx) => ({ ...item, key: item.id || idx }))}
           loading={loading}
+          scroll={{ x: 800 }}
           pagination={{ 
             pageSize: 8, 
             showSizeChanger: false,
@@ -303,8 +310,8 @@ export default function AdminInventoryPage() {
       {/* Stock Adjustment Modal */}
       <Modal
         title={
-          <div className="flex items-center gap-2 font-serif text-base text-[#1A1A1A] pb-2 border-b border-[#EAE3D6]">
-            <RotateCcw size={18} className="text-[#B8860B]" />
+          <div className="flex items-center gap-2 font-serif text-base text-[#1B100A] pb-2 border-b border-[#E8DFC8]">
+            <RotateCcw size={18} className="text-[#D4A64A]" />
             <span>Stock Adjustment Protocol</span>
           </div>
         }
@@ -312,7 +319,7 @@ export default function AdminInventoryPage() {
         onOk={handleSaveAdjustment}
         onCancel={() => setAdjustModalVisible(false)}
         okText="Confirm Adjustment"
-        okButtonProps={{ className: "!bg-[#B8860B] hover:!bg-[#996515] !text-white !border-none" }}
+        okButtonProps={{ className: "!bg-[#D4A64A] hover:!bg-[#B38728] !text-[#1B100A] !font-semibold !border-none" }}
         centered
       >
         {selectedItem && (

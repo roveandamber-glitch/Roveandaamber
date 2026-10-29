@@ -111,18 +111,20 @@ export default function AdminRewardsPage() {
       title: 'Customer',
       dataIndex: 'customer',
       key: 'customer',
+      width: 170,
       render: (text) => (
-        <span className="font-serif font-semibold text-xs text-[#1A1A1A]">{text}</span>
+        <span className="font-serif font-semibold text-xs text-[#1B100A] truncate block max-w-[150px]">{text}</span>
       )
     },
     {
       title: 'Transaction Type',
       dataIndex: 'type',
       key: 'type',
+      width: 160,
       render: (type) => {
         const isRedeemed = type.toLowerCase().includes('redeem');
         return (
-          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
+          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border whitespace-nowrap ${
             isRedeemed 
               ? 'bg-rose-50 text-rose-700 border-rose-200' 
               : 'bg-amber-50 text-amber-800 border-amber-200'
@@ -137,6 +139,7 @@ export default function AdminRewardsPage() {
       title: 'Points',
       dataIndex: 'points',
       key: 'points',
+      width: 120,
       render: (points) => {
         const isPos = String(points).startsWith('+');
         return (
@@ -150,20 +153,23 @@ export default function AdminRewardsPage() {
       title: 'Related Order / Reference',
       dataIndex: 'orderId',
       key: 'orderId',
+      width: 160,
       render: (id) => <span className="font-mono text-xs text-gray-500">{id}</span>
     },
     {
       title: 'Timestamp',
       dataIndex: 'date',
       key: 'date',
-      render: (d) => <span className="text-[11px] text-gray-400">{d}</span>
+      width: 120,
+      render: (d) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{d}</span>
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      width: 120,
       render: (status) => (
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap">
           <CheckCircle2 size={11} className="text-emerald-600" />
           {status}
         </span>
@@ -172,15 +178,15 @@ export default function AdminRewardsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#1B100A]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Rewards & Loyalty Program
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               Circle of Connoisseurs
             </span>
           </div>
@@ -192,15 +198,15 @@ export default function AdminRewardsPage() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setBonusModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-[#4A4238] border border-[#EAE3D6] text-xs font-semibold hover:bg-[#FAF7F2] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-[#1B100A] border border-[#E8DFC8] text-xs font-semibold hover:bg-[#FAF7F2] transition-colors cursor-pointer"
           >
-            <Plus size={14} className="text-[#B8860B]" />
+            <Plus size={14} className="text-[#D4A64A]" />
             <span>Award Bonus Points</span>
           </button>
 
           <button
             onClick={handleOpenRules}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#996515] text-white text-xs font-semibold shadow-sm hover:brightness-105 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all cursor-pointer"
           >
             <Settings size={14} />
             <span>Program Settings</span>
@@ -312,11 +318,11 @@ export default function AdminRewardsPage() {
       </div>
 
       {/* Recent Rewards Transactions Table */}
-      <div className="bg-white rounded-2xl border border-[#EAE3D6] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
-        <div className="p-4 border-b border-[#EAE3D6] flex items-center justify-between">
+      <div className="bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
+        <div className="p-4 border-b border-[#E8DFC8] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Trophy size={16} className="text-[#B8860B]" />
-            <h3 className="font-serif font-bold text-sm text-[#1A1A1A]">
+            <Trophy size={16} className="text-[#D4A64A]" />
+            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
               Recent Points Activity & Ledger
             </h3>
           </div>
@@ -327,6 +333,7 @@ export default function AdminRewardsPage() {
           columns={transactionColumns}
           dataSource={(data?.transactions || []).map((t, idx) => ({ ...t, key: t.id || idx }))}
           loading={loading}
+          scroll={{ x: 750 }}
           pagination={{ pageSize: 6, className: "!px-4 !mb-4 text-xs" }}
           className="admin-luxury-table"
         />

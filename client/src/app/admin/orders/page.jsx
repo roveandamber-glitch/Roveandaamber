@@ -108,10 +108,11 @@ export default function AdminOrdersPage() {
       title: 'Order ID',
       dataIndex: 'orderNumber',
       key: 'orderNumber',
+      width: 100,
       render: (text, record) => (
         <span 
           onClick={() => handleOpenOrder(record)}
-          className="font-mono text-xs font-bold text-[#1A1A1A] hover:text-[#B8860B] cursor-pointer"
+          className="font-mono text-xs font-bold text-[#1B100A] hover:text-[#D4A64A] cursor-pointer"
         >
           {text}
         </span>
@@ -120,20 +121,21 @@ export default function AdminOrdersPage() {
     {
       title: 'Customer',
       key: 'customer',
+      width: 200,
       render: (_, record) => (
         <div className="flex items-center gap-2.5 py-1">
           <Avatar 
             src={record.customer?.avatar} 
-            className="border border-[#EAE3D6] bg-[#FAF7F2] text-[#B8860B] font-bold"
+            className="border border-[#E8DFC8] bg-[#FAF7F2] text-[#D4A64A] font-bold"
             size={34}
           >
             {record.customer?.name?.[0]}
           </Avatar>
-          <div>
-            <div className="text-xs font-semibold text-[#1A1A1A]">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-[#1B100A] truncate max-w-[130px]">
               {record.customer?.name}
             </div>
-            <div className="text-[11px] text-gray-400">
+            <div className="text-[11px] text-gray-400 truncate max-w-[130px]">
               {record.customer?.email}
             </div>
           </div>
@@ -143,14 +145,15 @@ export default function AdminOrdersPage() {
     {
       title: 'Perfumes Ordered',
       key: 'items',
+      width: 220,
       render: (_, record) => {
         const first = record.items?.[0];
         const count = record.items?.length || 1;
         return (
-          <div className="text-xs text-gray-700">
+          <div className="text-xs text-gray-700 truncate max-w-[200px]">
             <span className="font-serif font-medium">{first?.name || 'Perfume Flacon'}</span>
             {count > 1 && (
-              <span className="text-[11px] text-[#B8860B] ml-1.5 font-medium">
+              <span className="text-[11px] text-[#D4A64A] ml-1.5 font-medium whitespace-nowrap">
                 +{count - 1} more
               </span>
             )}
@@ -161,8 +164,9 @@ export default function AdminOrdersPage() {
     {
       title: 'Total Amount',
       key: 'total',
+      width: 130,
       render: (_, record) => (
-        <span className="text-xs font-bold text-[#1A1A1A]">
+        <span className="text-xs font-bold text-[#1B100A]">
           ₹{(record.total || 4950).toLocaleString('en-IN')}
         </span>
       )
@@ -170,6 +174,7 @@ export default function AdminOrdersPage() {
     {
       title: 'Payment',
       key: 'payment',
+      width: 120,
       render: (_, record) => {
         const pStatus = record.payment?.status || 'Paid';
         const isPaid = pStatus === 'Paid';
@@ -188,11 +193,12 @@ export default function AdminOrdersPage() {
     {
       title: 'Fulfillment Status',
       key: 'status',
+      width: 140,
       render: (_, record) => {
         const cfg = STATUS_CONFIG[record.status] || STATUS_CONFIG.Processing;
         const IconComponent = cfg.icon;
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border ${cfg.bg} ${cfg.text} ${cfg.border} whitespace-nowrap`}>
             <IconComponent size={12} />
             {record.status}
           </span>
@@ -203,16 +209,18 @@ export default function AdminOrdersPage() {
       title: 'Date',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (val) => <span className="text-[11px] text-gray-400">{val || '29 Oct 2026'}</span>
+      width: 110,
+      render: (val) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{val || '29 Oct 2026'}</span>
     },
     {
       title: 'Action',
       key: 'action',
+      width: 120,
       align: 'right',
       render: (_, record) => (
         <button 
           onClick={() => handleOpenOrder(record)}
-          className="inline-flex items-center gap-1 text-xs text-[#4A4238] hover:text-[#B8860B] bg-[#FAF7F2] hover:bg-[#FAF6F0] px-3 py-1.5 rounded-lg border border-[#EAE3D6] font-medium transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-[#1B100A] hover:text-[#D4A64A] bg-[#FAF7F2] hover:bg-[#F5EEDF] px-3 py-1.5 rounded-lg border border-[#E8DFC8] font-medium transition-colors cursor-pointer"
         >
           <Eye size={13} />
           <span>View Details</span>
@@ -222,15 +230,15 @@ export default function AdminOrdersPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#1B100A]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Order Fulfillment
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               {filteredOrders.length} Orders
             </span>
           </div>
@@ -241,7 +249,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl p-4 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative w-full md:w-80">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -249,7 +257,7 @@ export default function AdminOrdersPage() {
             placeholder="Search by order #, customer, email..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E5DDD0] rounded-xl focus:outline-none focus:border-[#B8860B] transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E8DFC8] rounded-xl focus:outline-none focus:border-[#D4A64A] transition-colors"
           />
         </div>
 
@@ -285,11 +293,12 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-[#EAE3D6] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
         <Table 
           columns={columns}
           dataSource={filteredOrders.map((o, idx) => ({ ...o, key: o.id || idx }))}
           loading={loading}
+          scroll={{ x: 880 }}
           pagination={{ 
             pageSize: 8, 
             showSizeChanger: false,
@@ -304,17 +313,17 @@ export default function AdminOrdersPage() {
         title={
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
-              <span className="font-serif font-bold text-base text-[#1A1A1A]">
+              <span className="font-serif font-medium text-base text-[#1B100A]">
                 Order {selectedOrder?.orderNumber}
               </span>
-              <span className="text-xs bg-[#FAF7F2] text-[#B8860B] font-mono px-2 py-0.5 rounded border border-[#EAE3D6]">
+              <span className="text-xs bg-[#FAF7F2] text-[#D4A64A] font-mono px-2 py-0.5 rounded border border-[#E8DFC8]">
                 {selectedOrder?.createdAt}
               </span>
             </div>
           </div>
         }
         placement="right"
-        width={520}
+        width={Math.min(520, typeof window !== 'undefined' ? window.innerWidth - 20 : 520)}
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
         className="luxury-admin-drawer"

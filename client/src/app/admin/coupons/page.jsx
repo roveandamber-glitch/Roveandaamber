@@ -106,15 +106,16 @@ export default function AdminCouponsPage() {
       title: 'Privilege Code',
       dataIndex: 'code',
       key: 'code',
+      width: 170,
       render: (code) => (
         <div className="flex items-center gap-2">
-          <span className="font-mono font-bold text-xs bg-[#FAF7F2] text-[#B8860B] px-2.5 py-1 rounded-lg border border-[#EAE3D6] tracking-wider">
+          <span className="font-mono font-bold text-xs bg-[#FAF7F2] text-[#D4A64A] px-2.5 py-1 rounded-lg border border-[#E8DFC8] tracking-wider whitespace-nowrap">
             {code}
           </span>
           <Tooltip title="Copy code">
             <button 
               onClick={() => handleCopyCode(code)} 
-              className="text-gray-400 hover:text-[#B8860B] transition-colors"
+              className="text-gray-400 hover:text-[#D4A64A] transition-colors cursor-pointer"
             >
               <Copy size={13} />
             </button>
@@ -125,12 +126,13 @@ export default function AdminCouponsPage() {
     {
       title: 'Privilege Offer',
       key: 'discount',
+      width: 200,
       render: (_, record) => (
         <div>
-          <span className="text-xs font-semibold text-[#1A1A1A]">
+          <span className="text-xs font-semibold text-[#1B100A]">
             {record.discountType === 'percentage' ? `${record.discountValue}% OFF` : `₹${record.discountValue} FLAT OFF`}
           </span>
-          <div className="text-[11px] text-gray-500 line-clamp-1 mt-0.5">
+          <div className="text-[11px] text-gray-500 truncate max-w-[180px] mt-0.5">
             {record.description}
           </div>
         </div>
@@ -140,14 +142,16 @@ export default function AdminCouponsPage() {
       title: 'Min. Order Spend',
       dataIndex: 'minOrderAmount',
       key: 'minOrderAmount',
+      width: 140,
       render: (val) => <span className="text-xs text-gray-700">₹{(val || 0).toLocaleString('en-IN')}</span>
     },
     {
       title: 'Usage Ratio',
       key: 'usage',
+      width: 130,
       render: (_, record) => (
         <div className="text-xs">
-          <span className="font-bold text-[#1A1A1A]">{record.usedCount || 0}</span>
+          <span className="font-bold text-[#1B100A]">{record.usedCount || 0}</span>
           <span className="text-gray-400"> / {record.usageLimit || '∞'} used</span>
         </div>
       )
@@ -156,20 +160,22 @@ export default function AdminCouponsPage() {
       title: 'Expiry Date',
       dataIndex: 'expiryDate',
       key: 'expiryDate',
-      render: (val) => <span className="text-[11px] text-gray-500 font-mono">{val || '31 Dec 2026'}</span>
+      width: 120,
+      render: (val) => <span className="text-[11px] text-gray-500 font-mono whitespace-nowrap">{val || '31 Dec 2026'}</span>
     },
     {
       title: 'Status',
       key: 'status',
+      width: 120,
       render: (_, record) => (
         <div className="flex items-center gap-2">
           <Switch 
             size="small" 
             checked={record.isActive}
             onChange={(checked) => handleToggleStatus(record.id, checked)}
-            className={record.isActive ? '!bg-[#B8860B]' : ''}
+            className={record.isActive ? '!bg-[#D4A64A]' : ''}
           />
-          <span className={`text-[11px] font-medium ${record.isActive ? 'text-emerald-700' : 'text-gray-400'}`}>
+          <span className={`text-[11px] font-medium whitespace-nowrap ${record.isActive ? 'text-emerald-700' : 'text-gray-400'}`}>
             {record.isActive ? 'Active' : 'Inactive'}
           </span>
         </div>
@@ -178,6 +184,7 @@ export default function AdminCouponsPage() {
     {
       title: 'Action',
       key: 'action',
+      width: 80,
       align: 'right',
       render: (_, record) => (
         <Popconfirm
@@ -188,7 +195,7 @@ export default function AdminCouponsPage() {
           okButtonProps={{ danger: true }}
           onConfirm={() => handleDelete(record.id)}
         >
-          <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+          <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
             <Trash2 size={15} />
           </button>
         </Popconfirm>
@@ -197,15 +204,15 @@ export default function AdminCouponsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#1B100A]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Discounts & Promotional Codes
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               {coupons.length} Active Vouchers
             </span>
           </div>
@@ -216,7 +223,7 @@ export default function AdminCouponsPage() {
 
         <button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#996515] text-white text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
         >
           <Plus size={16} />
           <span>Create Coupon</span>
@@ -224,7 +231,7 @@ export default function AdminCouponsPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
+      <div className="bg-white rounded-2xl p-4 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
         <div className="relative w-full max-w-sm">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -232,17 +239,18 @@ export default function AdminCouponsPage() {
             placeholder="Search coupon code or description..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E5DDD0] rounded-xl focus:outline-none focus:border-[#B8860B] transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E8DFC8] rounded-xl focus:outline-none focus:border-[#D4A64A] transition-colors"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-[#EAE3D6] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
         <Table 
           columns={columns}
           dataSource={filteredCoupons.map((c, idx) => ({ ...c, key: c.id || idx }))}
           loading={loading}
+          scroll={{ x: 750 }}
           pagination={{ pageSize: 8, className: "!px-4 !mb-4 text-xs" }}
           className="admin-luxury-table"
         />

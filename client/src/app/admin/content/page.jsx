@@ -51,14 +51,14 @@ export default function AdminContentPage() {
       key: 'hero',
       label: (
         <span className="flex items-center gap-2 text-xs font-semibold py-1">
-          <Layout size={14} className="text-[#B8860B]" />
+          <Layout size={14} className="text-[#D4A64A]" />
           <span>Homepage Hero Section</span>
         </span>
       ),
       children: (
-        <div className="bg-white rounded-2xl p-6 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-5">
-          <div className="border-b border-[#EAE3D6] pb-3">
-            <h3 className="font-serif font-bold text-base text-[#1A1A1A]">
+        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-5">
+          <div className="border-b border-[#E8DFC8] pb-3">
+            <h3 className="font-serif font-medium text-base text-[#1B100A]">
               Main Hero Showcase
             </h3>
             <p className="text-xs text-gray-500">
@@ -209,15 +209,15 @@ export default function AdminContentPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#1B100A]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Homepage & Content Studio
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               Storefront Customizer
             </span>
           </div>

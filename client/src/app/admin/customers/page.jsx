@@ -74,23 +74,24 @@ export default function AdminCustomersPage() {
     {
       title: 'Customer',
       key: 'customer',
+      width: 220,
       render: (_, record) => (
         <div className="flex items-center gap-3 py-1">
           <Avatar 
             src={record.avatar} 
             size={38}
-            className="border border-[#EAE3D6] bg-[#FAF7F2] text-[#B8860B] font-bold"
+            className="border border-[#E8DFC8] bg-[#FAF7F2] text-[#D4A64A] font-bold shrink-0"
           >
             {record.name?.[0]}
           </Avatar>
-          <div>
+          <div className="min-w-0">
             <div 
               onClick={() => handleOpenCustomer(record)}
-              className="text-xs font-semibold text-[#1A1A1A] hover:text-[#B8860B] cursor-pointer"
+              className="text-xs font-semibold text-[#1B100A] hover:text-[#D4A64A] cursor-pointer truncate max-w-[140px]"
             >
               {record.name}
             </div>
-            <div className="text-[11px] text-gray-400">
+            <div className="text-[11px] text-gray-400 truncate max-w-[140px]">
               {record.email}
             </div>
           </div>
@@ -101,17 +102,19 @@ export default function AdminCustomersPage() {
       title: 'City & Region',
       dataIndex: 'city',
       key: 'city',
-      render: (val) => <span className="text-xs text-gray-600">{val || 'Mumbai, Maharashtra'}</span>
+      width: 170,
+      render: (val) => <span className="text-xs text-gray-600 truncate max-w-[150px] inline-block">{val || 'Mumbai, Maharashtra'}</span>
     },
     {
       title: 'Loyalty Tier',
       key: 'tier',
+      width: 130,
       render: (_, record) => {
         const tier = record.tier || 'Silver';
         const cfg = TIER_CONFIG[tier] || TIER_CONFIG.Silver;
         const IconComponent = cfg.icon;
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border} whitespace-nowrap`}>
             <IconComponent size={12} />
             {tier}
           </span>
@@ -122,8 +125,9 @@ export default function AdminCustomersPage() {
       title: 'Orders Placed',
       dataIndex: 'ordersCount',
       key: 'ordersCount',
+      width: 120,
       render: (count) => (
-        <span className="text-xs font-semibold text-gray-800 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#EAE3D6]">
+        <span className="text-xs font-semibold text-gray-800 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] whitespace-nowrap">
           {count || 1} Orders
         </span>
       )
@@ -132,8 +136,9 @@ export default function AdminCustomersPage() {
       title: 'Lifetime Spending',
       dataIndex: 'totalSpent',
       key: 'totalSpent',
+      width: 140,
       render: (val) => (
-        <span className="text-xs font-bold text-[#1A1A1A]">
+        <span className="text-xs font-bold text-[#1B100A]">
           ₹{(val || 4950).toLocaleString('en-IN')}
         </span>
       )
@@ -142,9 +147,10 @@ export default function AdminCustomersPage() {
       title: 'Reward Points',
       dataIndex: 'rewardPoints',
       key: 'rewardPoints',
+      width: 130,
       render: (val) => (
-        <span className="text-xs font-semibold text-[#996515] flex items-center gap-1">
-          <Coins size={13} className="text-[#B8860B]" />
+        <span className="text-xs font-semibold text-[#B38728] flex items-center gap-1 whitespace-nowrap">
+          <Coins size={13} className="text-[#D4A64A]" />
           {(val || 450).toLocaleString('en-IN')} pts
         </span>
       )
@@ -153,16 +159,18 @@ export default function AdminCustomersPage() {
       title: 'Joined Date',
       dataIndex: 'joinedDate',
       key: 'joinedDate',
-      render: (val) => <span className="text-[11px] text-gray-400">{val || '29 Oct 2026'}</span>
+      width: 110,
+      render: (val) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{val || '29 Oct 2026'}</span>
     },
     {
       title: 'Action',
       key: 'action',
+      width: 100,
       align: 'right',
       render: (_, record) => (
         <button 
           onClick={() => handleOpenCustomer(record)}
-          className="inline-flex items-center gap-1 text-xs text-[#4A4238] hover:text-[#B8860B] bg-[#FAF7F2] hover:bg-[#FAF6F0] px-3 py-1.5 rounded-lg border border-[#EAE3D6] font-medium transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-[#1B100A] hover:text-[#D4A64A] bg-[#FAF7F2] hover:bg-[#F5EEDF] px-3 py-1.5 rounded-lg border border-[#E8DFC8] font-medium transition-colors cursor-pointer"
         >
           <Eye size={13} />
           <span>Profile</span>
@@ -172,15 +180,15 @@ export default function AdminCustomersPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#1B100A]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Customer Directory
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               {filteredCustomers.length} Fragrance Enthusiasts
             </span>
           </div>
@@ -191,7 +199,7 @@ export default function AdminCustomersPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
+      <div className="bg-white rounded-2xl p-4 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
         <div className="relative w-full max-w-sm">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -199,17 +207,18 @@ export default function AdminCustomersPage() {
             placeholder="Search by customer name, email, or city..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E5DDD0] rounded-xl focus:outline-none focus:border-[#B8860B] transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E8DFC8] rounded-xl focus:outline-none focus:border-[#D4A64A] transition-colors"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-[#EAE3D6] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
         <Table 
           columns={columns}
           dataSource={filteredCustomers.map((c, idx) => ({ ...c, key: c.id || idx }))}
           loading={loading}
+          scroll={{ x: 820 }}
           pagination={{ 
             pageSize: 8, 
             showSizeChanger: false,
@@ -222,12 +231,12 @@ export default function AdminCustomersPage() {
       {/* Customer Profile Drawer */}
       <Drawer
         title={
-          <span className="font-serif font-bold text-base text-[#1A1A1A]">
+          <span className="font-serif font-medium text-base text-[#1B100A]">
             Customer Profile
           </span>
         }
         placement="right"
-        width={460}
+        width={Math.min(460, typeof window !== 'undefined' ? window.innerWidth - 20 : 460)}
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
         className="luxury-admin-drawer"

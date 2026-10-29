@@ -103,9 +103,10 @@ export default function AdminProductsPage() {
     {
       title: 'Perfume Product',
       key: 'product',
+      width: 280,
       render: (_, record) => (
         <div className="flex items-center gap-3 py-1">
-          <div className="w-12 h-14 rounded-xl bg-[#FAF6F0] border border-[#EAE3D6] overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+          <div className="w-12 h-14 rounded-xl bg-[#FAF7F2] border border-[#E8DFC8] overflow-hidden shrink-0 flex items-center justify-center p-1">
             <img 
               src={getImageUrl(record.image || record.images?.[0])} 
               alt={record.name}
@@ -113,14 +114,14 @@ export default function AdminProductsPage() {
               onError={(e) => { e.currentTarget.src = '/hero_perfume.png'; }}
             />
           </div>
-          <div>
-            <div className="font-serif font-medium text-sm text-[#1A1A1A] hover:text-[#B8860B] transition-colors">
+          <div className="min-w-0">
+            <div className="font-serif font-medium text-sm text-[#1B100A] hover:text-[#D4A64A] transition-colors truncate max-w-[200px]">
               {record.name}
             </div>
             <div className="text-[11px] text-gray-400 font-mono flex items-center gap-2 mt-0.5">
               <span>SKU: {record.sku || `RM-${String(record.id).padStart(3, '0')}`}</span>
-              <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-              <span className="text-[#888]">{record.category || 'Eau de Parfum'}</span>
+              <span className="w-1 h-1 rounded-full bg-gray-300 shrink-0"></span>
+              <span className="text-gray-500 truncate">{record.category || 'Eau de Parfum'}</span>
             </div>
           </div>
         </div>
@@ -130,8 +131,9 @@ export default function AdminProductsPage() {
       title: 'Category',
       dataIndex: 'category',
       key: 'category',
+      width: 160,
       render: (cat) => (
-        <span className="text-xs text-gray-700 bg-[#F4EFEA] px-2.5 py-1 rounded-lg border border-[#E5DDD0]">
+        <span className="text-xs text-gray-700 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] whitespace-nowrap">
           {cat || 'Fragrance'}
         </span>
       )
@@ -139,9 +141,10 @@ export default function AdminProductsPage() {
     {
       title: 'Price',
       key: 'price',
+      width: 140,
       render: (_, record) => (
         <div>
-          <span className="text-sm font-semibold text-[#1A1A1A]">₹{(record.price || 4950).toLocaleString('en-IN')}</span>
+          <span className="text-sm font-semibold text-[#1B100A]">₹{(record.price || 4950).toLocaleString('en-IN')}</span>
           {record.discountPrice && (
             <span className="text-xs text-gray-400 line-through ml-2">₹{record.discountPrice.toLocaleString('en-IN')}</span>
           )}
@@ -151,24 +154,25 @@ export default function AdminProductsPage() {
     {
       title: 'Stock Status',
       key: 'stock',
+      width: 150,
       render: (_, record) => {
         const stock = record.stock ?? 18;
         if (stock === 0) {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-50 text-red-700 border border-red-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Out of Stock
             </span>
           );
         }
         if (stock <= 5) {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Low Stock ({stock})
             </span>
           );
         }
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> In Stock ({stock})
           </span>
         );
@@ -177,13 +181,14 @@ export default function AdminProductsPage() {
     {
       title: 'Actions',
       key: 'actions',
+      width: 120,
       align: 'right',
       render: (_, record) => (
         <div className="flex items-center justify-end gap-1.5">
           <Tooltip title="Quick Adjust Stock">
             <button 
               onClick={() => handleOpenStockModal(record)}
-              className="p-1.5 text-gray-500 hover:text-[#B8860B] hover:bg-[#FAF6F0] rounded-lg transition-colors border border-transparent hover:border-[#EAE3D6]"
+              className="p-1.5 text-gray-500 hover:text-[#D4A64A] hover:bg-[#FAF7F2] rounded-lg transition-colors border border-transparent hover:border-[#E8DFC8]"
             >
               <Package size={15} />
             </button>
@@ -191,7 +196,7 @@ export default function AdminProductsPage() {
           <Tooltip title="Edit Perfume">
             <Link 
               href={`/admin/products/edit/${record.id || record._id || 1}`}
-              className="p-1.5 text-gray-500 hover:text-[#B8860B] hover:bg-[#FAF6F0] rounded-lg transition-colors border border-transparent hover:border-[#EAE3D6]"
+              className="p-1.5 text-gray-500 hover:text-[#D4A64A] hover:bg-[#FAF7F2] rounded-lg transition-colors border border-transparent hover:border-[#E8DFC8]"
             >
               <Edit3 size={15} />
             </Link>
@@ -214,15 +219,15 @@ export default function AdminProductsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#1B100A]">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Perfume Catalog
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               {filteredProducts.length} Items
             </span>
           </div>
@@ -233,7 +238,7 @@ export default function AdminProductsPage() {
 
         <Link
           href="/admin/products/add"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#996515] text-white text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit"
         >
           <Plus size={16} />
           <span>Add New Perfume</span>
@@ -241,7 +246,7 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl p-4 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative w-full md:w-80">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -249,7 +254,7 @@ export default function AdminProductsPage() {
             placeholder="Search perfumes by name or SKU..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E5DDD0] rounded-xl focus:outline-none focus:border-[#B8860B] transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E8DFC8] rounded-xl focus:outline-none focus:border-[#D4A64A] transition-colors"
           />
         </div>
 
@@ -275,11 +280,12 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Products Table Card */}
-      <div className="bg-white rounded-2xl border border-[#EAE3D6] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
         <Table 
           columns={columns}
           dataSource={filteredProducts.map((p, idx) => ({ ...p, key: p.id || p._id || idx }))}
           loading={loading}
+          scroll={{ x: 780 }}
           pagination={{ 
             pageSize: 8, 
             showSizeChanger: false,
@@ -292,8 +298,8 @@ export default function AdminProductsPage() {
       {/* Quick Stock Modal */}
       <Modal
         title={
-          <div className="flex items-center gap-2 font-serif text-base text-[#1A1A1A] pb-2 border-b border-[#EAE3D6]">
-            <Package size={18} className="text-[#B8860B]" />
+          <div className="flex items-center gap-2 font-serif text-base text-[#1B100A] pb-2 border-b border-[#E8DFC8]">
+            <Package size={18} className="text-[#D4A64A]" />
             <span>Update Stock Inventory</span>
           </div>
         }
@@ -301,13 +307,13 @@ export default function AdminProductsPage() {
         onOk={handleSaveStock}
         onCancel={() => setStockModalVisible(false)}
         okText="Save Inventory"
-        okButtonProps={{ className: "!bg-[#B8860B] hover:!bg-[#996515] !text-white !border-none" }}
+        okButtonProps={{ className: "!bg-[#D4A64A] hover:!bg-[#B38728] !text-[#1B100A] !font-semibold !border-none" }}
         centered
       >
         {currentProduct && (
           <div className="py-4 space-y-4">
-            <div className="flex items-center gap-3 bg-[#FAF7F2] p-3 rounded-xl border border-[#EAE3D6]">
-              <div className="w-12 h-12 bg-white rounded-lg p-1 border border-[#E5DDD0] flex items-center justify-center">
+            <div className="flex items-center gap-3 bg-[#FAF7F2] p-3 rounded-xl border border-[#E8DFC8]">
+              <div className="w-12 h-12 bg-white rounded-lg p-1 border border-[#E8DFC8] flex items-center justify-center">
                 <img 
                   src={getImageUrl(currentProduct.image || currentProduct.images?.[0])} 
                   alt={currentProduct.name}
@@ -315,7 +321,7 @@ export default function AdminProductsPage() {
                 />
               </div>
               <div>
-                <h4 className="font-serif font-bold text-sm text-[#1A1A1A]">{currentProduct.name}</h4>
+                <h4 className="font-serif font-bold text-sm text-[#1B100A]">{currentProduct.name}</h4>
                 <p className="text-xs text-gray-500 font-mono">SKU: {currentProduct.sku || 'RM-001'}</p>
               </div>
             </div>

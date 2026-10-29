@@ -105,11 +105,11 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fadeIn text-[#1A1A1A]">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn text-[#1B100A]">
       {/* 1. TOP HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-serif text-[#160E09] font-normal tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-serif text-[#1B100A] font-normal tracking-tight">
             Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 font-light mt-1">
@@ -119,15 +119,15 @@ const AdminDashboard = () => {
 
         {/* Date Filter & + Add Product Button */}
         <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-          <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#E6DEC7] text-xs font-medium text-gray-700 shadow-2xs">
-            <Calendar size={14} className="text-[#DEB368]" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#E8DFC8] text-xs font-medium text-gray-700 shadow-2xs">
+            <Calendar size={14} className="text-[#D4A64A]" />
             <span>{timeRange}</span>
             <ChevronDown size={13} className="text-gray-400" />
           </div>
 
           <Link
             href="/admin/products/add"
-            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#C99E32] to-[#B38728] hover:brightness-110 text-[#1A1008] text-xs font-semibold tracking-wide shadow-md shadow-amber-900/10 active:scale-95 transition-all"
+            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#D4A64A] via-[#C6922C] to-[#B38728] hover:brightness-105 text-[#1B100A] text-xs font-semibold tracking-wide shadow-md shadow-amber-900/10 active:scale-95 transition-all"
           >
             <Plus size={15} strokeWidth={2.5} />
             <span>Add Product</span>
@@ -138,19 +138,19 @@ const AdminDashboard = () => {
       {/* 2. FOUR SUMMARY METRIC CARDS (Exact match to reference design) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Total Orders */}
-        <div className="bg-white rounded-2xl p-5 border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium">Total Orders</span>
-            <div className="w-9 h-9 rounded-xl bg-[#FBF7F0] border border-[#F2E8D5] flex items-center justify-center text-[#B8860B]">
+            <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8DFC8] flex items-center justify-center text-[#D4A64A]">
               <ShoppingBag size={17} />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <h3 className="text-2xl sm:text-3xl font-sans font-bold text-[#160E09] tracking-tight">
+            <h3 className="text-2xl sm:text-3xl font-sans font-bold text-[#1B100A] tracking-tight">
               {stats.totalOrders}
             </h3>
             {/* Sparkline mini wave */}
-            <svg className="w-20 h-8 text-[#DEB368]" viewBox="0 0 80 30" fill="none">
+            <svg className="w-20 h-8 text-[#D4A64A]" viewBox="0 0 80 30" fill="none">
               <path d="M0 25 C 20 28, 30 10, 50 18 C 65 24, 70 8, 80 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
@@ -161,18 +161,18 @@ const AdminDashboard = () => {
         </div>
 
         {/* Total Revenue */}
-        <div className="bg-white rounded-2xl p-5 border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium">Total Revenue</span>
-            <div className="w-9 h-9 rounded-xl bg-[#FBF7F0] border border-[#F2E8D5] flex items-center justify-center text-[#B8860B]">
+            <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8DFC8] flex items-center justify-center text-[#D4A64A]">
               <Coins size={17} />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <h3 className="text-2xl sm:text-3xl font-sans font-bold text-[#160E09] tracking-tight">
+            <h3 className="text-2xl sm:text-3xl font-sans font-bold text-[#1B100A] tracking-tight">
               ₹{(stats.totalRevenue || 0).toLocaleString('en-IN')}
             </h3>
-            <svg className="w-20 h-8 text-[#DEB368]" viewBox="0 0 80 30" fill="none">
+            <svg className="w-20 h-8 text-[#D4A64A]" viewBox="0 0 80 30" fill="none">
               <path d="M0 22 C 15 25, 25 15, 45 12 C 60 10, 70 5, 80 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
@@ -183,18 +183,18 @@ const AdminDashboard = () => {
         </div>
 
         {/* Total Customers */}
-        <div className="bg-white rounded-2xl p-5 border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium">Total Customers</span>
-            <div className="w-9 h-9 rounded-xl bg-[#FBF7F0] border border-[#F2E8D5] flex items-center justify-center text-[#B8860B]">
+            <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8DFC8] flex items-center justify-center text-[#D4A64A]">
               <Users size={17} />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <h3 className="text-2xl sm:text-3xl font-sans font-bold text-[#160E09] tracking-tight">
+            <h3 className="text-2xl sm:text-3xl font-sans font-bold text-[#1B100A] tracking-tight">
               {(stats.totalCustomers || 0).toLocaleString('en-IN')}
             </h3>
-            <svg className="w-20 h-8 text-[#DEB368]" viewBox="0 0 80 30" fill="none">
+            <svg className="w-20 h-8 text-[#D4A64A]" viewBox="0 0 80 30" fill="none">
               <path d="M0 26 C 20 20, 35 25, 55 14 C 65 8, 72 10, 80 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
@@ -205,18 +205,18 @@ const AdminDashboard = () => {
         </div>
 
         {/* Total Products */}
-        <div className="bg-white rounded-2xl p-5 border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium">Total Products</span>
-            <div className="w-9 h-9 rounded-xl bg-[#FBF7F0] border border-[#F2E8D5] flex items-center justify-center text-[#B8860B]">
+            <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8DFC8] flex items-center justify-center text-[#D4A64A]">
               <Package size={17} />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <h3 className="text-2xl sm:text-3xl font-sans font-bold text-[#160E09] tracking-tight">
+            <h3 className="text-2xl sm:text-3xl font-sans font-bold text-[#1B100A] tracking-tight">
               {stats.totalProducts}
             </h3>
-            <svg className="w-20 h-8 text-[#DEB368]" viewBox="0 0 80 30" fill="none">
+            <svg className="w-20 h-8 text-[#D4A64A]" viewBox="0 0 80 30" fill="none">
               <path d="M0 24 C 20 26, 40 18, 55 12 C 68 8, 74 6, 80 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
@@ -230,24 +230,24 @@ const AdminDashboard = () => {
       {/* 3. MIDDLE ROW: RECENT ORDERS & SALES OVERVIEW CHART */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
         {/* RECENT ORDERS TABLE (7 Cols on desktop) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base sm:text-lg font-serif text-[#160E09] font-medium">
+            <h2 className="text-base sm:text-lg font-serif text-[#1B100A] font-medium">
               Recent Orders
             </h2>
             <Link 
               href="/admin/orders" 
-              className="text-xs font-semibold text-[#B8860B] hover:text-[#916704] flex items-center gap-1 transition-colors"
+              className="text-xs font-semibold text-[#D4A64A] hover:text-[#B38728] flex items-center gap-1 transition-colors"
             >
               <span>View All</span>
               <ArrowRight size={13} />
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto -mx-1 px-1">
+            <table className="w-full text-left text-xs min-w-[520px]">
               <thead>
-                <tr className="border-b border-[#F2ECE1] text-gray-400 uppercase font-semibold text-[10px] tracking-wider">
+                <tr className="border-b border-[#E8DFC8] text-gray-400 uppercase font-semibold text-[10px] tracking-wider">
                   <th className="pb-3 font-semibold">#</th>
                   <th className="pb-3 font-semibold">Customer</th>
                   <th className="pb-3 font-semibold">Product(s)</th>
@@ -261,16 +261,16 @@ const AdminDashboard = () => {
                 {recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-[#FAF7F2] transition-colors group">
                     <td className="py-3 font-medium text-gray-700">
-                      <Link href={`/admin/orders?id=${order.id}`} className="hover:text-[#B8860B]">
+                      <Link href={`/admin/orders?id=${order.id}`} className="hover:text-[#D4A64A]">
                         {order.orderNumber}
                       </Link>
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
                         {order.customer?.avatar ? (
-                          <img src={order.customer.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
+                          <img src={order.customer.avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-[#F5EEDF] text-[#8C6514] font-bold text-[10px] flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-[#FAF7F2] text-[#B38728] font-bold text-[10px] flex items-center justify-center shrink-0">
                             {order.customer?.name?.[0] || 'C'}
                           </div>
                         )}
@@ -304,21 +304,21 @@ const AdminDashboard = () => {
         </div>
 
         {/* SALES OVERVIEW (5 Cols on desktop) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="text-base sm:text-lg font-serif text-[#160E09] font-medium">
+              <h2 className="text-base sm:text-lg font-serif text-[#1B100A] font-medium">
                 Sales Overview
               </h2>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF7F2] border border-[#EBE4D8] text-[11px] font-medium text-gray-700">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF7F2] border border-[#E8DFC8] text-[11px] font-medium text-gray-700">
               <span>{salesFilter}</span>
               <ChevronDown size={12} className="text-gray-400" />
             </div>
           </div>
 
           <div className="flex items-baseline gap-2 mb-4">
-            <span className="text-2xl font-bold font-sans text-[#160E09]">
+            <span className="text-2xl font-bold font-sans text-[#1B100A]">
               ₹{(stats.totalRevenue || 0).toLocaleString('en-IN')}
             </span>
             <span className="text-xs text-emerald-600 font-semibold flex items-center">
@@ -326,21 +326,21 @@ const AdminDashboard = () => {
             </span>
           </div>
 
-          {/* Interactive Responsive Bar Chart (Matching Reference) */}
-          <div className="pt-2 pb-1">
-            <div className="h-44 w-full flex items-end gap-1.5 sm:gap-2">
+          {/* Interactive Responsive Bar Chart */}
+          <div className="pt-2 pb-1 w-full min-w-0">
+            <div className="h-44 w-full flex items-end gap-1 sm:gap-1.5">
               {salesChart.map((point, idx) => {
                 const maxVal = 45000;
                 const heightPercent = Math.max(12, Math.round((point.sales / maxVal) * 100));
                 return (
-                  <div key={idx} className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div key={idx} className="flex-1 min-w-0 flex flex-col items-center group relative h-full justify-end">
                     {/* Tooltip on hover */}
-                    <div className="absolute -top-7 hidden group-hover:flex bg-[#160E09] text-white text-[9px] px-1.5 py-0.5 rounded shadow-md whitespace-nowrap z-20">
+                    <div className="absolute -top-7 hidden group-hover:flex bg-[#1B100A] text-white text-[9px] px-1.5 py-0.5 rounded shadow-md whitespace-nowrap z-20 pointer-events-none">
                       ₹{point.sales.toLocaleString('en-IN')}
                     </div>
                     {/* Bar */}
                     <div 
-                      className="w-full rounded-t-sm bg-[#D4AF37]/80 group-hover:bg-[#B8860B] transition-all"
+                      className="w-full rounded-t-xs bg-[#D4A64A]/80 group-hover:bg-[#B38728] transition-all"
                       style={{ height: `${heightPercent}%` }}
                     />
                   </div>
@@ -348,8 +348,8 @@ const AdminDashboard = () => {
               })}
             </div>
 
-            {/* X-Axis Dates matching reference: Oct 1, Oct 5, Oct 10, Oct 15, Oct 20, Oct 25, Oct 29 */}
-            <div className="flex justify-between text-[10px] text-gray-400 mt-2 border-t border-[#F2ECE1] pt-1.5">
+            {/* X-Axis Dates */}
+            <div className="flex justify-between text-[10px] text-gray-400 mt-2 border-t border-[#E8DFC8] pt-1.5">
               <span>Oct 1</span>
               <span>Oct 5</span>
               <span>Oct 10</span>
@@ -364,13 +364,13 @@ const AdminDashboard = () => {
 
       {/* 4. THIRD ROW: TOP PRODUCTS, ORDERS BY STATUS, LOW STOCK */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 sm:gap-6">
-        {/* TOP PRODUCTS (5 Cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between">
+        {/* TOP PRODUCTS (5 Cols on desktop, 2 Cols on tablet) */}
+        <div className="md:col-span-2 lg:col-span-5 bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base sm:text-lg font-serif text-[#160E09] font-medium">
+            <h2 className="text-base sm:text-lg font-serif text-[#1B100A] font-medium">
               Top Products
             </h2>
-            <Link href="/admin/products" className="text-xs font-semibold text-[#B8860B] hover:text-[#916704] flex items-center gap-1">
+            <Link href="/admin/products" className="text-xs font-semibold text-[#D4A64A] hover:text-[#B38728] flex items-center gap-1">
               <span>View All</span>
               <ArrowRight size={13} />
             </Link>
@@ -379,16 +379,16 @@ const AdminDashboard = () => {
           <div className="space-y-3.5">
             {topProducts.map((p) => (
               <div key={p.id} className="flex items-center gap-3">
-                <span className="text-xs text-gray-400 w-4 font-semibold">{p.rank}</span>
-                <img src={p.image} alt="" className="w-8 h-8 rounded-lg object-cover border border-[#EFE8DC]" />
+                <span className="text-xs text-gray-400 w-4 font-semibold shrink-0">{p.rank}</span>
+                <img src={p.image} alt="" className="w-8 h-8 rounded-lg object-cover border border-[#E8DFC8] shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-gray-900 truncate">{p.name}</p>
                   <p className="text-[11px] text-gray-400">{p.sales} sales • ₹{p.revenue.toLocaleString('en-IN')}</p>
                 </div>
                 {/* Gold progress bar */}
-                <div className="w-20 text-right">
+                <div className="w-20 text-right shrink-0">
                   <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-0.5">
-                    <div className="h-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] rounded-full" style={{ width: `${p.percentage}%` }} />
+                    <div className="h-full bg-gradient-to-r from-[#D4A64A] to-[#B38728] rounded-full" style={{ width: `${p.percentage}%` }} />
                   </div>
                   <span className="text-[10px] text-gray-400 font-semibold">{p.percentage}%</span>
                 </div>
@@ -397,20 +397,22 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* ORDERS BY STATUS (3.5 Cols) */}
-        <div className="lg:col-span-3.5 bg-white rounded-2xl border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between">
-          <h2 className="text-base sm:text-lg font-serif text-[#160E09] font-medium mb-3">
-            Orders by Status
-          </h2>
+        {/* ORDERS BY STATUS (4 Cols on desktop, 1 Col on tablet) */}
+        <div className="md:col-span-1 lg:col-span-4 bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-base sm:text-lg font-serif text-[#1B100A] font-medium">
+              Orders by Status
+            </h2>
+          </div>
 
           {/* Donut Chart representation matching reference design */}
           <div className="relative flex items-center justify-center my-2">
-            <svg className="w-36 h-36" viewBox="0 0 100 100">
-              {/* Delivered: 42% -> 132 deg (Green) */}
+            <svg className="w-32 h-32 sm:w-36 sm:h-36" viewBox="0 0 100 100">
+              {/* Delivered: 42% (Emerald) */}
               <circle cx="50" cy="50" r="38" stroke="#10B981" strokeWidth="12" fill="none" strokeDasharray="105 150" strokeDashoffset="0" />
-              {/* Processing: 28% -> 88 deg (Amber) */}
+              {/* Processing: 28% (Amber) */}
               <circle cx="50" cy="50" r="38" stroke="#F59E0B" strokeWidth="12" fill="none" strokeDasharray="70 170" strokeDashoffset="-105" />
-              {/* Shipped: 18% -> 56 deg (Blue) */}
+              {/* Shipped: 18% (Sky) */}
               <circle cx="50" cy="50" r="38" stroke="#0EA5E9" strokeWidth="12" fill="none" strokeDasharray="45 195" strokeDashoffset="-175" />
               {/* Pending: 8% (Rose) */}
               <circle cx="50" cy="50" r="38" stroke="#F43F5E" strokeWidth="12" fill="none" strokeDasharray="20 220" strokeDashoffset="-220" />
@@ -424,35 +426,35 @@ const AdminDashboard = () => {
           {/* Legend */}
           <div className="space-y-1.5 text-xs text-gray-600 mt-2">
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Delivered</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />Delivered</span>
               <span className="font-semibold text-gray-800">42%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" />Processing</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />Processing</span>
               <span className="font-semibold text-gray-800">28%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-500" />Shipped</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />Shipped</span>
               <span className="font-semibold text-gray-800">18%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" />Pending</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />Pending</span>
               <span className="font-semibold text-gray-800">8%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400" />Cancelled</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 shrink-0" />Cancelled</span>
               <span className="font-semibold text-gray-800">4%</span>
             </div>
           </div>
         </div>
 
-        {/* LOW STOCK PRODUCTS (3.5 Cols) */}
-        <div className="lg:col-span-3.5 bg-white rounded-2xl border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between">
+        {/* LOW STOCK PRODUCTS (3 Cols on desktop, 1 Col on tablet) */}
+        <div className="md:col-span-1 lg:col-span-3 bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base sm:text-lg font-serif text-[#160E09] font-medium">
+            <h2 className="text-base sm:text-lg font-serif text-[#1B100A] font-medium">
               Low Stock Products
             </h2>
-            <Link href="/admin/inventory" className="text-xs font-semibold text-[#B8860B] hover:text-[#916704] flex items-center gap-1">
+            <Link href="/admin/inventory" className="text-xs font-semibold text-[#D4A64A] hover:text-[#B38728] flex items-center gap-1">
               <span>View All</span>
               <ArrowRight size={13} />
             </Link>
@@ -460,15 +462,15 @@ const AdminDashboard = () => {
 
           <div className="space-y-3">
             {lowStock.map((prod) => (
-              <div key={prod.id} className="flex items-center justify-between p-2 rounded-xl bg-[#FAF7F2] border border-[#EFE8DC]">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <img src={prod.image} alt="" className="w-8 h-8 rounded-lg object-cover" />
+              <div key={prod.id} className="flex items-center justify-between p-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFC8]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <img src={prod.image} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-900 truncate">{prod.name}</p>
-                    <p className="text-[10px] text-gray-400 font-mono">{prod.sku}</p>
+                    <p className="text-[10px] text-gray-400 font-mono truncate">{prod.sku}</p>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
+                <div className="text-right shrink-0 ml-2">
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold text-red-600 bg-red-50 border border-red-200">
                     {prod.stock}
                   </span>
@@ -479,7 +481,7 @@ const AdminDashboard = () => {
 
           <Link
             href="/admin/inventory"
-            className="w-full mt-3 py-2 rounded-xl border border-dashed border-[#DEB368] text-[#B8860B] hover:bg-[#FBF7F0] text-xs font-semibold text-center block transition-colors"
+            className="w-full mt-3 py-2 rounded-xl border border-dashed border-[#D4A64A] text-[#B38728] hover:bg-[#FAF7F2] text-xs font-semibold text-center block transition-colors"
           >
             Adjust Stock & Restock
           </Link>
@@ -489,15 +491,15 @@ const AdminDashboard = () => {
       {/* 5. BOTTOM ROW: REWARDS & LOYALTY HIGHLIGHT BANNER + LATEST CUSTOMERS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
         {/* REWARDS & LOYALTY LUXURY HIGHLIGHT BANNER (8 Cols) */}
-        <div className="lg:col-span-8 bg-gradient-to-br from-[#FBF8F2] via-[#F8F3EA] to-[#EFE7D8] rounded-3xl border border-[#E6DAC7] p-6 sm:p-7 shadow-[0_6px_24px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-gradient-to-br from-[#FAF7F2] via-[#F8F4ED] to-[#EFE7D8] rounded-3xl border border-[#E8DFC8] p-6 sm:p-7 shadow-[0_6px_24px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
           {/* Header Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ECC880] to-[#B8860B] text-[#1E1108] flex items-center justify-center shadow-md shadow-amber-900/10 shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D4A64A] to-[#B38728] text-[#1B100A] flex items-center justify-center shadow-md shadow-amber-900/10 shrink-0">
                 <Crown size={20} strokeWidth={2.2} />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-serif text-[#160E09] font-medium tracking-tight">
+                <h2 className="text-lg sm:text-xl font-serif text-[#1B100A] font-medium tracking-tight">
                   Rewards & Loyalty
                 </h2>
                 <p className="text-xs text-[#5C4D3E] font-light mt-0.5">
@@ -508,7 +510,7 @@ const AdminDashboard = () => {
 
             <Link
               href="/admin/rewards"
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#B38728] text-[#1A1008] text-xs font-semibold tracking-wide shadow-md hover:brightness-105 active:scale-95 transition-all shrink-0 self-start sm:self-auto"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold tracking-wide shadow-md hover:brightness-105 active:scale-95 transition-all shrink-0 self-start sm:self-auto"
             >
               <span>Manage Rewards</span>
               <ArrowRight size={13} strokeWidth={2.5} />
@@ -517,7 +519,7 @@ const AdminDashboard = () => {
 
           {/* 4 Metrics Inside the Rewards Banner */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 relative z-10">
-            <div className="bg-white/90 backdrop-blur-xs rounded-2xl p-3.5 border border-[#E8DEC9] shadow-2xs">
+            <div className="bg-white/95 backdrop-blur-xs rounded-2xl p-3.5 border border-[#E8DFC8] shadow-2xs">
               <span className="text-[11px] text-gray-500 font-medium">Total Members</span>
               <p className="text-lg font-bold font-sans text-gray-900 mt-1">
                 {(rewards.totalMembers || 0).toLocaleString('en-IN')}
@@ -525,7 +527,7 @@ const AdminDashboard = () => {
               <span className="text-[10px] text-emerald-600 font-semibold">{rewards.membersDelta}</span>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-xs rounded-2xl p-3.5 border border-[#E8DEC9] shadow-2xs">
+            <div className="bg-white/95 backdrop-blur-xs rounded-2xl p-3.5 border border-[#E8DFC8] shadow-2xs">
               <span className="text-[11px] text-gray-500 font-medium">Points Issued</span>
               <p className="text-lg font-bold font-sans text-gray-900 mt-1">
                 {(rewards.pointsIssued || 0).toLocaleString('en-IN')}
@@ -533,7 +535,7 @@ const AdminDashboard = () => {
               <span className="text-[10px] text-emerald-600 font-semibold">{rewards.pointsDelta}</span>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-xs rounded-2xl p-3.5 border border-[#E8DEC9] shadow-2xs">
+            <div className="bg-white/95 backdrop-blur-xs rounded-2xl p-3.5 border border-[#E8DFC8] shadow-2xs">
               <span className="text-[11px] text-gray-500 font-medium">Rewards Redeemed</span>
               <p className="text-lg font-bold font-sans text-gray-900 mt-1">
                 {(rewards.rewardsRedeemed || 0).toLocaleString('en-IN')}
@@ -541,7 +543,7 @@ const AdminDashboard = () => {
               <span className="text-[10px] text-emerald-600 font-semibold">{rewards.redeemedDelta}</span>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-xs rounded-2xl p-3.5 border border-[#E8DEC9] shadow-2xs">
+            <div className="bg-white/95 backdrop-blur-xs rounded-2xl p-3.5 border border-[#E8DFC8] shadow-2xs">
               <span className="text-[11px] text-gray-500 font-medium">Tier Members</span>
               <p className="text-lg font-bold font-sans text-gray-900 mt-1">
                 {(rewards.tierMembers || 0).toLocaleString('en-IN')}
@@ -552,12 +554,12 @@ const AdminDashboard = () => {
         </div>
 
         {/* LATEST CUSTOMERS (4 Cols) */}
-        <div className="lg:col-span-4 bg-white rounded-3xl border border-[#EDE7DD] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white rounded-3xl border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base sm:text-lg font-serif text-[#160E09] font-medium">
+            <h2 className="text-base sm:text-lg font-serif text-[#1B100A] font-medium">
               Latest Customers
             </h2>
-            <Link href="/admin/customers" className="text-xs font-semibold text-[#B8860B] hover:text-[#916704] flex items-center gap-1">
+            <Link href="/admin/customers" className="text-xs font-semibold text-[#D4A64A] hover:text-[#B38728] flex items-center gap-1">
               <span>View All</span>
               <ArrowRight size={13} />
             </Link>

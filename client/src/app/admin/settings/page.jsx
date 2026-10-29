@@ -38,15 +38,15 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl text-[#1B100A]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAE3D6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8DFC8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl lg:text-3xl font-serif font-bold text-[#1A1A1A] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
               Store Profile & Atelier Settings
             </h1>
-            <span className="text-xs bg-[#EFE8DC] text-[#4A4238] px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
               Store Configuration
             </span>
           </div>
@@ -58,7 +58,7 @@ export default function AdminSettingsPage() {
         <button
           onClick={handleSaveSettings}
           disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#996515] text-white text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
         >
           <Save size={15} />
           <span>Save Settings</span>
@@ -82,10 +82,10 @@ export default function AdminSettingsPage() {
         }}
       >
         {/* Section 1: Store Information */}
-        <div className="bg-white rounded-2xl p-6 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#EAE3D6]">
-            <Store size={18} className="text-[#B8860B]" />
-            <h3 className="font-serif font-bold text-sm text-[#1A1A1A]">
+        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[#E8DFC8]">
+            <Store size={18} className="text-[#D4A64A]" />
+            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
               Brand & Concierge Identity
             </h3>
           </div>
@@ -117,10 +117,10 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Section 2: Shipping & Delivery Rules */}
-        <div className="bg-white rounded-2xl p-6 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#EAE3D6]">
-            <Truck size={18} className="text-[#B8860B]" />
-            <h3 className="font-serif font-bold text-sm text-[#1A1A1A]">
+        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
+          <div className="flex items-center gap-2 pb-2 border-b border-[#E8DFC8]">
+            <Truck size={18} className="text-[#D4A64A]" />
+            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
               Shipping & Delivery Thresholds
             </h3>
           </div>
@@ -144,10 +144,10 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Section 3: Taxes & Currency */}
-        <div className="bg-white rounded-2xl p-6 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#EAE3D6]">
-            <Coins size={18} className="text-[#B8860B]" />
-            <h3 className="font-serif font-bold text-sm text-[#1A1A1A]">
+        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
+          <div className="flex items-center gap-2 pb-2 border-b border-[#E8DFC8]">
+            <Coins size={18} className="text-[#D4A64A]" />
+            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
               Currency & Tax Preferences
             </h3>
           </div>
@@ -177,15 +177,15 @@ export default function AdminSettingsPage() {
             label={<span className="text-xs font-semibold text-gray-700">Display All Prices Inclusive of GST</span>}
             valuePropName="checked"
           >
-            <Switch className="!bg-[#B8860B]" />
+            <Switch className="!bg-[#D4A64A]" />
           </Form.Item>
         </div>
 
         {/* Section 4: Email Notifications */}
-        <div className="bg-white rounded-2xl p-6 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#EAE3D6]">
-            <Bell size={18} className="text-[#B8860B]" />
-            <h3 className="font-serif font-bold text-sm text-[#1A1A1A]">
+        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
+          <div className="flex items-center gap-2 pb-2 border-b border-[#E8DFC8]">
+            <Bell size={18} className="text-[#D4A64A]" />
+            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
               Administrator Notifications
             </h3>
           </div>
@@ -197,7 +197,7 @@ export default function AdminSettingsPage() {
                 <div className="text-[11px] text-gray-400">Receive email notification when an order is confirmed</div>
               </div>
               <Form.Item name="emailNewOrder" valuePropName="checked" noStyle>
-                <Switch className="!bg-[#B8860B]" />
+                <Switch className="!bg-[#D4A64A]" />
               </Form.Item>
             </div>
 
@@ -207,7 +207,7 @@ export default function AdminSettingsPage() {
                 <div className="text-[11px] text-gray-400">Alert administrators when perfume stock drops below 5 units</div>
               </div>
               <Form.Item name="emailLowStock" valuePropName="checked" noStyle>
-                <Switch className="!bg-[#B8860B]" />
+                <Switch className="!bg-[#D4A64A]" />
               </Form.Item>
             </div>
           </div>
