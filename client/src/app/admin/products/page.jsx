@@ -9,8 +9,7 @@ import {
   Select, 
   Modal, 
   InputNumber, 
-  Tooltip,
-  Spin
+  Tooltip
 } from 'antd';
 import { 
   Search, 
@@ -177,7 +176,7 @@ function ProductsContent() {
               src={getImageUrl(record.image || record.images?.[0])} 
               alt={record.name}
               className="w-full h-full object-contain"
-              onError={(e) => { e.currentTarget.src = '/hero_perfume.png'; }}
+              onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
             />
           </div>
           <div className="min-w-0">
@@ -382,6 +381,7 @@ function ProductsContent() {
                   src={getImageUrl(currentProduct.image || currentProduct.images?.[0])} 
                   alt={currentProduct.name}
                   className="w-full h-full object-contain"
+                  onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
                 />
               </div>
               <div>
@@ -433,7 +433,11 @@ function ProductsContent() {
 export default function AdminProductsPage() {
   return (
     <App>
-      <Suspense fallback={<div className="p-8 text-center"><Spin /></div>}>
+      <Suspense fallback={
+        <div className="min-h-[400px] flex items-center justify-center p-8">
+          <div className="w-8 h-8 border-2 border-[#D4A64A] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }>
         <ProductsContent />
       </Suspense>
     </App>

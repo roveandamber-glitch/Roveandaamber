@@ -116,7 +116,7 @@ export default function AdminInventoryPage() {
               src={getImageUrl(record.image)} 
               alt={record.name}
               className="w-full h-full object-contain"
-              onError={(e) => { e.currentTarget.src = '/hero_perfume.png'; }}
+              onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
             />
           </div>
           <div className="min-w-0">

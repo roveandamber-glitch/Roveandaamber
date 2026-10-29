@@ -90,7 +90,7 @@ export default function AdminReviewsPage() {
               src={getImageUrl(record.product?.image)} 
               alt={record.product?.name}
               className="w-full h-full object-contain"
-              onError={(e) => { e.currentTarget.src = '/hero_perfume.png'; }}
+              onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
             />
           </div>
           <span className="font-serif font-medium text-xs text-[#1B100A] truncate max-w-[140px]">

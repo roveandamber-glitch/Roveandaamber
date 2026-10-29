@@ -175,7 +175,7 @@ export default function AdminGiftsPage() {
                   src={getImageUrl(gift.image)} 
                   alt={gift.name}
                   className="w-full h-full object-contain hover:scale-105 transition-transform duration-500"
-                  onError={(e) => { e.currentTarget.src = '/hero_perfume.png'; }}
+                  onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
                 />
                 <div className="absolute top-3 right-3">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${

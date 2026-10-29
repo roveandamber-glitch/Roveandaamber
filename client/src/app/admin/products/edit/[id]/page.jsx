@@ -69,7 +69,7 @@ const EditProduct = () => {
           setSizeStock(product.sizes_stock);
         }
 
-        const existingImg = product.image || (product.images && product.images[0]) || '/hero_perfume.png';
+        const existingImg = product.image || (product.images && product.images[0]) || '/images/no-image.jpg';
         setFileList([{
           uid: '-1',
           name: 'perfume-flacon.jpg',

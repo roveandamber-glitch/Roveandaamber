@@ -414,7 +414,7 @@ export default function AdminOrdersPage() {
                           src={getImageUrl(item.image)} 
                           alt={item.name} 
                           className="w-full h-full object-contain"
-                          onError={(e) => { e.currentTarget.src = '/hero_perfume.png'; }}
+                          onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
                         />
                       </div>
                       <div>
