@@ -213,12 +213,16 @@ const AdminLayout = ({ children }) => {
     ]
   };
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ isMobile = false }) => (
     <div className="flex flex-col h-full bg-[#1B100A] text-white font-sans select-none overflow-hidden">
       {/* Brand Header */}
-      <div className={`p-5 flex items-center ${collapsed ? 'justify-center' : 'justify-between'} border-b border-[#2A1B12]`}>
-        {!collapsed ? (
-          <Link href="/admin" className="flex flex-col group">
+      <div className={`shrink-0 p-5 flex items-center ${collapsed && !isMobile ? 'justify-center' : 'justify-between'} border-b border-[#2A1B12]`}>
+        {!collapsed || isMobile ? (
+          <Link 
+            href="/admin" 
+            onClick={() => isMobile && setMobileMenuOpen(false)}
+            className="flex flex-col group"
+          >
             <span className="font-serif tracking-[0.22em] text-[#D4A64A] text-sm sm:text-base font-medium group-hover:text-white transition-colors">
               ROVE & AMBER
             </span>
@@ -231,10 +235,20 @@ const AdminLayout = ({ children }) => {
             RA
           </Link>
         )}
+
+        {isMobile && (
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       {/* Navigation Menu List */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-thin scrollbar-thumb-[#2C1A11] scrollbar-track-transparent">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1 admin-sidebar-scroll">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.path || (item.path !== '/admin' && pathname.startsWith(item.path));
@@ -247,7 +261,7 @@ const AdminLayout = ({ children }) => {
                 <button
                   type="button"
                   onClick={() => toggleSubmenu(item.submenuKey)}
-                  className={`w-full flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-3.5'} py-2.5 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer ${
+                  className={`w-full flex items-center ${collapsed && !isMobile ? 'justify-center px-2' : 'justify-between px-3.5'} py-2.5 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer ${
                     isActive
                       ? 'bg-[#D4A64A]/20 text-white font-semibold border-l-4 border-[#D4A64A] shadow-sm'
                       : 'text-gray-300 hover:text-white hover:bg-white/[0.04]'
@@ -255,9 +269,9 @@ const AdminLayout = ({ children }) => {
                 >
                   <div className="flex items-center gap-3">
                     <Icon size={17} className={isActive ? 'text-[#D4A64A]' : 'text-gray-400'} />
-                    {!collapsed && <span className="truncate">{item.name}</span>}
+                    {(!collapsed || isMobile) && <span className="truncate">{item.name}</span>}
                   </div>
-                  {!collapsed && (
+                  {(!collapsed || isMobile) && (
                     <span className="text-gray-400 transition-transform">
                       {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </span>
@@ -266,7 +280,8 @@ const AdminLayout = ({ children }) => {
               ) : (
                 <Link
                   href={item.path}
-                  className={`flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-3.5'} py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
+                  onClick={() => isMobile && setMobileMenuOpen(false)}
+                  className={`flex items-center ${collapsed && !isMobile ? 'justify-center px-2' : 'justify-between px-3.5'} py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
                     isActive
                       ? 'bg-[#D4A64A]/20 text-white font-semibold border-l-4 border-[#D4A64A] shadow-sm'
                       : 'text-gray-300 hover:text-white hover:bg-white/[0.04]'
@@ -274,9 +289,9 @@ const AdminLayout = ({ children }) => {
                 >
                   <div className="flex items-center gap-3">
                     <Icon size={17} className={isActive ? 'text-[#D4A64A]' : 'text-gray-400'} />
-                    {!collapsed && <span className="truncate">{item.name}</span>}
+                    {(!collapsed || isMobile) && <span className="truncate">{item.name}</span>}
                   </div>
-                  {!collapsed && item.badge && (
+                  {(!collapsed || isMobile) && item.badge && (
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] shadow-sm">
                       {item.badge}
                     </span>
@@ -285,7 +300,7 @@ const AdminLayout = ({ children }) => {
               )}
 
               {/* Submenu */}
-              {hasSubmenu && isExpanded && !collapsed && (
+              {hasSubmenu && isExpanded && (!collapsed || isMobile) && (
                 <div className="pl-9 pr-2 py-1 space-y-1">
                   {item.subItems.map((sub) => {
                     const isSubActive = pathname === sub.path;
@@ -293,6 +308,7 @@ const AdminLayout = ({ children }) => {
                       <Link
                         key={sub.name}
                         href={sub.path}
+                        onClick={() => isMobile && setMobileMenuOpen(false)}
                         className={`block py-1.5 px-3 rounded-lg text-[11px] transition-colors ${
                           isSubActive
                             ? 'text-[#D4A64A] font-semibold bg-white/[0.06]'
@@ -311,13 +327,13 @@ const AdminLayout = ({ children }) => {
       </div>
 
       {/* Admin User Chip & Collapse Button */}
-      <div className="p-3 border-t border-[#2A1B12] bg-[#140C08]">
-        <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} gap-2.5`}>
+      <div className="shrink-0 p-3 border-t border-[#2A1B12] bg-[#140C08]">
+        <div className={`flex items-center ${collapsed && !isMobile ? 'justify-center' : 'justify-between'} gap-2.5`}>
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A64A] to-[#B38728] text-[#1B100A] font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
               A
             </div>
-            {!collapsed && (
+            {(!collapsed || isMobile) && (
               <div className="min-w-0 text-left">
                 <p className="text-xs font-semibold text-white truncate">Admin</p>
                 <p className="text-[10px] text-gray-400 truncate">Super Admin</p>
@@ -325,33 +341,46 @@ const AdminLayout = ({ children }) => {
             )}
           </div>
 
-          {!collapsed ? (
-            <div className="flex items-center gap-1">
+          {!isMobile && (
+            !collapsed ? (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setCollapsed(true)}
+                  title="Collapse Sidebar"
+                  className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <ChevronRight size={13} className="rotate-180" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  title="Sign Out"
+                  className="w-7 h-7 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <LogOut size={13} />
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => setCollapsed(true)}
-                title="Collapse Sidebar"
+                onClick={() => setCollapsed(false)}
+                title="Expand Sidebar"
                 className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
               >
-                <ChevronRight size={13} className="rotate-180" />
+                <ChevronRight size={13} />
               </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                title="Sign Out"
-                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <LogOut size={13} />
-              </button>
-            </div>
-          ) : (
+            )
+          )}
+
+          {isMobile && (
             <button
               type="button"
-              onClick={() => setCollapsed(false)}
-              title="Expand Sidebar"
-              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              onClick={handleLogout}
+              title="Sign Out"
+              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
             >
-              <ChevronRight size={13} />
+              <LogOut size={13} />
             </button>
           )}
         </div>
@@ -360,9 +389,13 @@ const AdminLayout = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8F4ED] flex flex-row font-sans text-[#1B100A] antialiased overflow-x-hidden">
-      {/* DESKTOP SIDEBAR */}
-      <aside className={`hidden lg:flex flex-col shrink-0 transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'} h-screen sticky top-0 z-40 border-r border-[#2A1B12]`}>
+    <div className="min-h-screen bg-[#F8F4ED] font-sans text-[#1B100A] antialiased">
+      {/* DESKTOP SIDEBAR - FIXED TO VIEWPORT */}
+      <aside
+        className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 h-screen transition-all duration-300 ${
+          collapsed ? 'w-20' : 'w-64'
+        } bg-[#1B100A] border-r border-[#2A1B12] shadow-xl`}
+      >
         <SidebarContent />
       </aside>
 
@@ -373,16 +406,20 @@ const AdminLayout = ({ children }) => {
           onClick={() => setMobileMenuOpen(false)}
         >
           <div 
-            className="w-72 max-w-[85vw] h-full shadow-2xl"
+            className="w-72 max-w-[85vw] h-full shadow-2xl bg-[#1B100A]"
             onClick={(e) => e.stopPropagation()}
           >
-            <SidebarContent />
+            <SidebarContent isMobile />
           </div>
         </div>
       )}
 
-      {/* MAIN CONTENT WRAPPER */}
-      <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
+      {/* MAIN CONTENT WRAPPER - Offset by fixed sidebar width */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300 ${
+          collapsed ? 'lg:pl-20' : 'lg:pl-64'
+        }`}
+      >
         {/* TOP ADMINISTRATIVE HEADER */}
         <header className="sticky top-0 z-30 bg-[#F8F4ED]/95 backdrop-blur-md border-b border-[#E8DFC8] px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
           {/* Mobile Menu Toggle & Global Search */}
