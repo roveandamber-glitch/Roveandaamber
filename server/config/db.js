@@ -4,8 +4,8 @@ import { seedDatabase } from './seeder.js';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/roveandamber';
-const LOCAL_MONGODB_URI = process.env.LOCAL_MONGODB_URI || 'mongodb://127.0.0.1:27017/roveandamber';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Roveandamber';
+const LOCAL_MONGODB_URI = process.env.LOCAL_MONGODB_URI || 'mongodb://127.0.0.1:27017/Roveandamber';
 
 // Set mongoose connection options
 const mongooseOptions = {

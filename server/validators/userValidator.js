@@ -13,7 +13,7 @@ const PHONE_REGEX = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]{6,15}$/;
  */
 export const validateRegisterInput = (data = {}) => {
   const errors = [];
-  const { name, email, password, phone, role } = data;
+  const { name, email, password, phone, role, otp } = data;
 
   // Name validation
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -38,6 +38,11 @@ export const validateRegisterInput = (data = {}) => {
     errors.push({ field: 'password', message: 'Password must be at least 6 characters long.' });
   }
 
+  // OTP Verification code validation
+  if (!otp || typeof otp !== 'string' || !/^\d{6}$/.test(otp.trim())) {
+    errors.push({ field: 'otp', message: 'A valid 6-digit verification code is required.' });
+  }
+
   // Phone validation (Optional)
   if (phone && typeof phone === 'string' && phone.trim().length > 0) {
     if (!PHONE_REGEX.test(phone.trim())) {
@@ -48,6 +53,52 @@ export const validateRegisterInput = (data = {}) => {
   // Role validation (Optional)
   if (role && !['user', 'admin'].includes(role)) {
     errors.push({ field: 'role', message: 'Role must be either "user" or "admin".' });
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+/**
+ * Validates send-otp payload
+ */
+export const validateSendOtpInput = (data = {}) => {
+  const errors = [];
+  const { email, name } = data;
+
+  if (!email || typeof email !== 'string' || email.trim().length === 0) {
+    errors.push({ field: 'email', message: 'Email address is required.' });
+  } else if (!EMAIL_REGEX.test(email.trim().toLowerCase())) {
+    errors.push({ field: 'email', message: 'Please provide a valid email address.' });
+  }
+
+  if (name !== undefined && typeof name === 'string' && name.trim().length > 70) {
+    errors.push({ field: 'name', message: 'Name cannot exceed 70 characters.' });
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+/**
+ * Validates verify-otp payload
+ */
+export const validateVerifyOtpInput = (data = {}) => {
+  const errors = [];
+  const { email, otp } = data;
+
+  if (!email || typeof email !== 'string' || email.trim().length === 0) {
+    errors.push({ field: 'email', message: 'Email address is required.' });
+  } else if (!EMAIL_REGEX.test(email.trim().toLowerCase())) {
+    errors.push({ field: 'email', message: 'Please provide a valid email address.' });
+  }
+
+  if (!otp || typeof otp !== 'string' || !/^\d{6}$/.test(otp.trim())) {
+    errors.push({ field: 'otp', message: 'A valid 6-digit verification code is required.' });
   }
 
   return {
@@ -141,6 +192,34 @@ export const validatePasswordChangeInput = (data = {}) => {
 // Express Middleware Wrappers
 // ==========================================
 
+export const validateSendOtp = (req, res, next) => {
+  const { isValid, errors } = validateSendOtpInput(req.body);
+  if (!isValid) {
+    return res.status(400).json({
+      success: false,
+      message: errors[0].message,
+      errors
+    });
+  }
+  req.body.email = req.body.email.trim().toLowerCase();
+  if (req.body.name) req.body.name = req.body.name.trim();
+  next();
+};
+
+export const validateVerifyOtp = (req, res, next) => {
+  const { isValid, errors } = validateVerifyOtpInput(req.body);
+  if (!isValid) {
+    return res.status(400).json({
+      success: false,
+      message: errors[0].message,
+      errors
+    });
+  }
+  req.body.email = req.body.email.trim().toLowerCase();
+  req.body.otp = req.body.otp.trim();
+  next();
+};
+
 export const validateRegister = (req, res, next) => {
   const { isValid, errors } = validateRegisterInput(req.body);
   if (!isValid) {
@@ -153,6 +232,7 @@ export const validateRegister = (req, res, next) => {
   // Sanitize body
   req.body.name = req.body.name.trim();
   req.body.email = req.body.email.trim().toLowerCase();
+  if (req.body.otp) req.body.otp = req.body.otp.trim();
   next();
 };
 
@@ -265,12 +345,16 @@ export const validateOrderAction = (req, res, next) => {
 
 export default {
   validateRegisterInput,
+  validateSendOtpInput,
+  validateVerifyOtpInput,
   validateLoginInput,
   validateProfileUpdateInput,
   validatePasswordChangeInput,
   validateAddressInput,
   validateOrderActionInput,
   validateRegister,
+  validateSendOtp,
+  validateVerifyOtp,
   validateLogin,
   validateProfileUpdate,
   validatePasswordChange,

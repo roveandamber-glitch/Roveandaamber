@@ -1,5 +1,7 @@
 import express from 'express';
 import { 
+  sendRegistrationOtp,
+  verifyRegistrationOtp,
   register, 
   login, 
   getProfile, 
@@ -8,6 +10,8 @@ import {
 } from '../../controllers/user/authController.js';
 import { protect } from '../../middlewares/authMiddleware.js';
 import {
+  validateSendOtp,
+  validateVerifyOtp,
   validateRegister,
   validateLogin,
   validateProfileUpdate,
@@ -16,8 +20,13 @@ import {
 
 const router = express.Router();
 
-// Public auth endpoints with input validation middlewares
+// Public OTP & Registration endpoints
+router.post('/send-otp', validateSendOtp, sendRegistrationOtp);
+router.post('/resend-otp', validateSendOtp, sendRegistrationOtp);
+router.post('/verify-otp', validateVerifyOtp, verifyRegistrationOtp);
 router.post('/register', validateRegister, register);
+
+// Public login endpoint
 router.post('/login', validateLogin, login);
 
 // Protected profile endpoints with input validation middlewares

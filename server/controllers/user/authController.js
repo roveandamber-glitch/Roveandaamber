@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { UserModel } from '../../models/userModel.js';
+import { OtpModel } from '../../models/otpModel.js';
+import emailService from '../../services/emailService.js';
 import { JWT_SECRET } from '../../middlewares/authMiddleware.js';
 
 // Helper to generate JWT token
@@ -8,14 +11,19 @@ const generateToken = (id, role) => {
   return jwt.sign({ id, role }, JWT_SECRET, { expiresIn: '7d' });
 };
 
-export const register = async (req, res) => {
+/**
+ * 1. Send OTP for User Registration
+ * Validates email availability, generates a 6-digit OTP, and sends via email
+ */
+export const sendRegistrationOtp = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { email, name } = req.body;
 
-    if (!name || !email || !password) {
+    if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Name, email, and password are required.'
+        field: 'email',
+        message: 'Email address is required.'
       });
     }
 
@@ -24,6 +32,107 @@ export const register = async (req, res) => {
     if (existing) {
       return res.status(400).json({
         success: false,
+        field: 'email',
+        message: 'An account with this email address already exists. Please sign in instead.'
+      });
+    }
+
+    // Generate secure 6-digit cryptographic OTP (100000 - 999999)
+    const otp = String(crypto.randomInt(100000, 1000000));
+
+    // Save OTP with 10 minutes expiry in MongoDB
+    await OtpModel.createOrUpdateOtp(email, otp, 10);
+
+    // Dispatch luxury branded email
+    await emailService.sendRegistrationOtp(email, otp, name);
+
+    return res.json({
+      success: true,
+      message: `A 6-digit verification code has been dispatched to ${email}.`
+    });
+  } catch (error) {
+    console.error('Send Registration OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send verification code. Please check your email address and try again.'
+    });
+  }
+};
+
+/**
+ * 2. Standalone OTP verification endpoint
+ */
+export const verifyRegistrationOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and 6-digit verification code are required.'
+      });
+    }
+
+    const verification = await OtpModel.verifyOtp(email, otp);
+    if (!verification.isValid) {
+      return res.status(400).json({
+        success: false,
+        field: 'otp',
+        message: verification.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Verification code verified successfully.'
+    });
+  } catch (error) {
+    console.error('Verify Registration OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to verify OTP code.'
+    });
+  }
+};
+
+/**
+ * 3. User Registration with OTP Verification
+ */
+export const register = async (req, res) => {
+  try {
+    const { name, email, password, role, otp } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required.'
+      });
+    }
+
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        field: 'otp',
+        message: 'Verification code is required to complete registration.'
+      });
+    }
+
+    // Verify OTP code first
+    const verification = await OtpModel.verifyOtp(email, otp);
+    if (!verification.isValid) {
+      return res.status(400).json({
+        success: false,
+        field: 'otp',
+        message: verification.message
+      });
+    }
+
+    // Check if email already registered
+    const existing = await UserModel.findByEmail(email);
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
         message: 'A user with this email already exists.'
       });
     }
@@ -42,7 +151,7 @@ export const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Account created successfully.',
+      message: 'Account verified and created successfully.',
       token,
       user: {
         id: user.id,

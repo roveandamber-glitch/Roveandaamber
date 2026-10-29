@@ -5,12 +5,12 @@ import PDFDocument from 'pdfkit';
 
 dotenv.config();
 
-// Helper to check if SMTP credentials are configured
+// Helper to check if SMTP credentials or Gmail credentials are configured
 export const isEmailConfigured = () => {
+  const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER || process.env.SMTP_EMAIL;
+  const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
   const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER || process.env.SMTP_EMAIL;
-  const pass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
-  return Boolean(host && user && pass && host.trim() && user.trim() && pass.trim());
+  return Boolean((emailUser && emailPass) || (host && emailUser && emailPass));
 };
 
 // Create nodemailer transporter lazily
@@ -18,15 +18,30 @@ let transporter = null;
 const getTransporter = () => {
   if (!isEmailConfigured()) return null;
   if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST.trim(),
-      port: parseInt(process.env.SMTP_PORT, 10) || 587,
-      secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
-      auth: {
-        user: (process.env.SMTP_USER || process.env.SMTP_EMAIL).trim(),
-        pass: (process.env.SMTP_PASS || process.env.SMTP_PASSWORD).trim()
-      }
-    });
+    const emailUser = (process.env.EMAIL_USER || process.env.SMTP_USER || process.env.SMTP_EMAIL || '').trim();
+    const emailPass = (process.env.EMAIL_PASS || process.env.SMTP_PASS || process.env.SMTP_PASSWORD || '').trim();
+    const smtpHost = (process.env.SMTP_HOST || '').trim();
+
+    if (smtpHost) {
+      transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: parseInt(process.env.SMTP_PORT, 10) || 587,
+        secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+        auth: {
+          user: emailUser,
+          pass: emailPass
+        }
+      });
+    } else {
+      // Default to Gmail Service (app password support)
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: emailUser,
+          pass: emailPass
+        }
+      });
+    }
   }
   return transporter;
 };
@@ -220,7 +235,7 @@ const buildEmailHtml = ({ preheader, title, subtitle, contentHtml, orderId, acti
 
 // Generic Mail Sender
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
-  const fromAddress = process.env.EMAIL_FROM || '"ROVE & AMBER Concierge" <concierge@roveandamber.com>';
+  const fromAddress = process.env.EMAIL_FROM || (process.env.EMAIL_USER ? `"ROVE & AMBER" <${process.env.EMAIL_USER.trim()}>` : '"ROVE & AMBER Concierge" <concierge@roveandamber.com>');
 
   // Check if live SMTP is configured
   if (isEmailConfigured()) {
@@ -550,6 +565,43 @@ export const emailService = {
     return sendEmail({
       to: recipientEmail,
       subject: `${subject || 'Order Update'}: ${orderId} | ROVE & AMBER`,
+      html
+    });
+  },
+
+  // 7. Send 6-Digit OTP for Account Registration Verification
+  sendRegistrationOtp: async (email, otp, name) => {
+    const brandGold = '#C49A45';
+    const contentHtml = `
+      <p>Dear ${name || 'Valued Client'},</p>
+      <p>Thank you for initiating your client account with <strong>ROVE & AMBER Maison de Haute Parfumerie</strong>.</p>
+      <p>To verify your email address and activate your luxury customer account, please enter the following single-use verification code:</p>
+
+      <div style="background: linear-gradient(135deg, #1A1A1D 0%, #262422 100%); border: 1px solid ${brandGold}; border-radius: 8px; padding: 28px 20px; text-align: center; margin: 28px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+        <div style="font-size: 11px; letter-spacing: 3px; color: #9E9B95; text-transform: uppercase; margin-bottom: 10px;">Verification Code</div>
+        <div style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: bold; letter-spacing: 14px; color: ${brandGold}; text-shadow: 0 0 10px rgba(196, 154, 69, 0.3);">
+          ${otp}
+        </div>
+        <div style="font-size: 11px; color: #736E65; margin-top: 10px; letter-spacing: 1px;">Valid for 10 minutes</div>
+      </div>
+
+      <p style="font-size: 13px; color: #9E9B95; line-height: 1.6;">
+        If you did not request to create an account with ROVE & AMBER, you can safely ignore this correspondence. No account will be activated without this verification code.
+      </p>
+      <p style="font-size: 12px; color: #736E65; margin-top: 16px;">
+        🔒 <em>Security notice: Never share your verification code with anyone. Our concierge will never ask for your code.</em>
+      </p>
+    `;
+
+    const html = buildEmailHtml({
+      title: 'Verify Your Email Address',
+      subtitle: 'Your one-time account verification code',
+      contentHtml
+    });
+
+    return sendEmail({
+      to: email,
+      subject: `${otp} is your ROVE & AMBER verification code`,
       html
     });
   }

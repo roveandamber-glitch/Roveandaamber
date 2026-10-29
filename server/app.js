@@ -111,6 +111,9 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/send-otp', authLimiter);
+app.use('/api/auth/resend-otp', authLimiter);
+app.use('/api/auth/verify-otp', authLimiter);
 
 // ==========================================
 // 5. Body Parsing & Payload Quotas
