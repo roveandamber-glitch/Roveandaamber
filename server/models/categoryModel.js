@@ -23,6 +23,15 @@ const categorySchema = new mongoose.Schema(
     itemCount: {
       type: Number,
       default: 0
+    },
+    status: {
+      type: String,
+      enum: ['Active', 'Inactive'],
+      default: 'Active'
+    },
+    isActive: {
+      type: Boolean,
+      default: true
     }
   },
   {
@@ -48,6 +57,11 @@ categorySchema.pre('save', function () {
   if (this.name && !this.slug) {
     this.slug = this.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   }
+  if (this.status) {
+    this.isActive = this.status === 'Active';
+  } else if (this.isActive !== undefined) {
+    this.status = this.isActive ? 'Active' : 'Inactive';
+  }
 });
 
 // Virtual id getter
@@ -60,11 +74,34 @@ export const Category = mongoose.models.Category || mongoose.model('Category', c
 export const CategoryModel = {
   findAll: async () => {
     const categories = await Category.find().sort({ createdAt: 1 });
-    return categories.map(c => ({
-      ...c.toObject(),
-      id: c._id.toString(),
-      _id: c._id.toString()
-    }));
+    const Product = mongoose.models.Product;
+
+    return Promise.all(
+      categories.map(async (c) => {
+        let count = c.itemCount || 0;
+        if (Product) {
+          try {
+            const prodCount = await Product.countDocuments({
+              $or: [
+                { category_id: c._id },
+                { category: c.name },
+                { categoryName: c.name }
+              ]
+            });
+            if (prodCount > 0) count = prodCount;
+          } catch {
+            // Keep default count if Product query fails
+          }
+        }
+        return {
+          ...c.toObject(),
+          id: c._id.toString(),
+          _id: c._id.toString(),
+          itemCount: count,
+          status: c.status || (c.isActive === false ? 'Inactive' : 'Active')
+        };
+      })
+    );
   },
 
   findById: async (id) => {
@@ -74,7 +111,8 @@ export const CategoryModel = {
     return {
       ...cat.toObject(),
       id: cat._id.toString(),
-      _id: cat._id.toString()
+      _id: cat._id.toString(),
+      status: cat.status || (cat.isActive === false ? 'Inactive' : 'Active')
     };
   },
 
@@ -92,7 +130,8 @@ export const CategoryModel = {
     return {
       ...cat.toObject(),
       id: cat._id.toString(),
-      _id: cat._id.toString()
+      _id: cat._id.toString(),
+      status: cat.status || (cat.isActive === false ? 'Inactive' : 'Active')
     };
   },
 
@@ -102,34 +141,55 @@ export const CategoryModel = {
     return {
       ...cat.toObject(),
       id: cat._id.toString(),
-      _id: cat._id.toString()
+      _id: cat._id.toString(),
+      status: cat.status || (cat.isActive === false ? 'Inactive' : 'Active')
     };
   },
 
-  create: async ({ name, slug, description = '', image = '' }) => {
+  create: async ({ name, slug, description = '', image = '', status = 'Active', itemCount = 0 }) => {
     const calculatedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-    const cat = await Category.create({ name: name.trim(), slug: calculatedSlug, description, image });
+    const isAct = status === 'Active' || status === true;
+    const cat = await Category.create({ 
+      name: name.trim(), 
+      slug: calculatedSlug, 
+      description, 
+      image,
+      status: isAct ? 'Active' : 'Inactive',
+      isActive: isAct,
+      itemCount
+    });
     return {
       ...cat.toObject(),
       id: cat._id.toString(),
-      _id: cat._id.toString()
+      _id: cat._id.toString(),
+      status: cat.status
     };
   },
 
-  update: async (id, { name, slug, description, image }) => {
+  update: async (id, { name, slug, description, image, status, isActive, itemCount }) => {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
     const updateData = {};
     if (name) updateData.name = name.trim();
     if (slug) updateData.slug = slug.trim().toLowerCase();
     if (description !== undefined) updateData.description = description;
     if (image !== undefined) updateData.image = image;
+    if (status !== undefined) {
+      const isAct = status === 'Active' || status === true;
+      updateData.status = isAct ? 'Active' : 'Inactive';
+      updateData.isActive = isAct;
+    } else if (isActive !== undefined) {
+      updateData.status = isActive ? 'Active' : 'Inactive';
+      updateData.isActive = Boolean(isActive);
+    }
+    if (itemCount !== undefined) updateData.itemCount = itemCount;
 
     const cat = await Category.findByIdAndUpdate(id, updateData, { new: true });
     if (!cat) return null;
     return {
       ...cat.toObject(),
       id: cat._id.toString(),
-      _id: cat._id.toString()
+      _id: cat._id.toString(),
+      status: cat.status
     };
   },
 

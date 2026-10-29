@@ -1,7 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const BACKEND_URL = API_URL.replace('/api', '');
 
-const DEFAULT_PERFUME_FALLBACK = '/images/perfumes/amber_oud_perfume.jpg';
+export const DEFAULT_FALLBACK_IMAGE = '/images/no-image.jpg';
 
 // Map legacy clothing asset paths to corresponding luxury perfume imagery
 const CLOTHING_IMAGE_MAP = {
@@ -32,8 +32,10 @@ const CLOTHING_IMAGE_MAP = {
   'category-tops.jpg': '/images/perfumes/cat_signature.jpg',
 };
 
-export const getImageUrl = (imagePath, fallback = DEFAULT_PERFUME_FALLBACK) => {
-  if (!imagePath) return fallback;
+export const getImageUrl = (imagePath, fallback = DEFAULT_FALLBACK_IMAGE) => {
+  if (!imagePath || (typeof imagePath === 'string' && imagePath.trim() === '')) {
+    return fallback;
+  }
   if (typeof imagePath === 'object' && imagePath.url) {
     imagePath = imagePath.url;
   }
@@ -42,7 +44,7 @@ export const getImageUrl = (imagePath, fallback = DEFAULT_PERFUME_FALLBACK) => {
   // Intercept old Unsplash fashion model links
   if (imagePath.includes('photo-1515886657613-9f3515b0c78f') || 
       imagePath.includes('photo-1490481651871-ab68de25d43d')) {
-    return DEFAULT_PERFUME_FALLBACK;
+    return fallback;
   }
 
   // Intercept legacy clothing assets and map them to perfume assets

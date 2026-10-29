@@ -1,71 +1,120 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { 
+  App,
   Table, 
   Input, 
-  Button, 
   Select, 
-  Tag, 
-  message, 
   Modal, 
   InputNumber, 
-  Popconfirm,
-  Tooltip 
+  Tooltip,
+  Spin
 } from 'antd';
 import { 
   Search, 
   Plus, 
   Edit3, 
   Trash2, 
-  Sparkles, 
   Filter, 
-  AlertTriangle, 
-  Eye, 
-  CheckCircle2, 
-  Package, 
-  ExternalLink 
+  Package
 } from 'lucide-react';
 import adminService from '@/services/adminService';
 import { getImageUrl } from '@/utils/imageHelper';
+import { CommonDelete } from '@/components/common';
 
 const { Option } = Select;
 
-export default function AdminProductsPage() {
+function ProductsContent() {
+  const { message } = App.useApp();
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams?.get('category') || 'ALL';
+
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [stockModalVisible, setStockModalVisible] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
   const [adjustQty, setAdjustQty] = useState(0);
 
+  // Common Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    const catParam = searchParams?.get('category');
+    if (catParam) {
+      setSelectedCategory(catParam);
+    }
+  }, [searchParams]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const res = await adminService.getProducts();
-      if (res?.data) {
-        setProducts(res.data);
-      }
+      // Ensure products is always an Array regardless of backend shape
+      const raw = res?.data;
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.products)
+        ? raw.products
+        : Array.isArray(res?.products)
+        ? res.products
+        : [];
+      setProducts(list);
     } catch (err) {
       console.error('Failed to load products:', err);
       message.error('Failed to load products');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
+  const fetchCategories = async () => {
     try {
-      await adminService.deleteProduct(id);
-      message.success('Product deleted successfully');
-      setProducts(prev => prev.filter(p => p.id !== id && p._id !== id));
+      const res = await adminService.getCategories();
+      if (res?.data && Array.isArray(res.data)) {
+        setCategories(res.data);
+      }
+    } catch (err) {
+      // Non-blocking
+    }
+  };
+
+  const handleOpenDelete = (product) => {
+    setProductToDelete(product);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+    const targetId = productToDelete.id || productToDelete._id;
+    const targetName = productToDelete.name;
+    setDeleting(true);
+
+    try {
+      await adminService.deleteProduct(targetId);
+      message.success(`Perfume "${targetName}" deleted successfully`);
+      setProducts(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return arr.filter(p => p.id !== targetId && p._id !== targetId);
+      });
+      setDeleteModalOpen(false);
+      setProductToDelete(null);
     } catch (err) {
       message.error('Failed to delete product');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -79,12 +128,15 @@ export default function AdminProductsPage() {
     if (!currentProduct) return;
     try {
       await adminService.updateStock(currentProduct.id || currentProduct._id, { stock: adjustQty });
-      setProducts(prev => prev.map(p => {
-        if (p.id === currentProduct.id || p._id === currentProduct._id) {
-          return { ...p, stock: adjustQty };
-        }
-        return p;
-      }));
+      setProducts(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return arr.map(p => {
+          if (p.id === currentProduct.id || p._id === currentProduct._id) {
+            return { ...p, stock: adjustQty };
+          }
+          return p;
+        });
+      });
       message.success(`Stock updated for ${currentProduct.name}`);
       setStockModalVisible(false);
     } catch (err) {
@@ -92,12 +144,26 @@ export default function AdminProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter(item => {
-    const matchesSearch = item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-                          item.sku?.toLowerCase().includes(searchText.toLowerCase());
-    const matchesCat = selectedCategory === 'ALL' || item.category === selectedCategory;
+  const productList = Array.isArray(products) ? products : [];
+  const filteredProducts = productList.filter(item => {
+    if (!item) return false;
+    const nameMatch = (item.name || '').toLowerCase().includes(searchText.toLowerCase());
+    const skuMatch = (item.sku || '').toLowerCase().includes(searchText.toLowerCase());
+    const matchesSearch = nameMatch || skuMatch;
+
+    const catName = (item.category || item.categoryName || '').toLowerCase();
+    const matchesCat = selectedCategory === 'ALL' || catName === selectedCategory.toLowerCase();
+
     return matchesSearch && matchesCat;
   });
+
+  // Unique list of categories for filter dropdown
+  const categoryOptions = Array.from(
+    new Set([
+      ...categories.map(c => c.name),
+      ...productList.map(p => p.category || p.categoryName).filter(Boolean)
+    ])
+  );
 
   const columns = [
     {
@@ -119,9 +185,9 @@ export default function AdminProductsPage() {
               {record.name}
             </div>
             <div className="text-[11px] text-gray-400 font-mono flex items-center gap-2 mt-0.5">
-              <span>SKU: {record.sku || `RM-${String(record.id).padStart(3, '0')}`}</span>
+              <span>SKU: {record.sku || `RM-${String(record.id || '').slice(-3) || '001'}`}</span>
               <span className="w-1 h-1 rounded-full bg-gray-300 shrink-0"></span>
-              <span className="text-gray-500 truncate">{record.category || 'Eau de Parfum'}</span>
+              <span className="text-gray-500 truncate">{record.category || record.categoryName || 'Eau de Parfum'}</span>
             </div>
           </div>
         </div>
@@ -132,11 +198,14 @@ export default function AdminProductsPage() {
       dataIndex: 'category',
       key: 'category',
       width: 160,
-      render: (cat) => (
-        <span className="text-xs text-gray-700 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] whitespace-nowrap">
-          {cat || 'Fragrance'}
-        </span>
-      )
+      render: (_, record) => {
+        const cat = record.category || record.categoryName || 'Fragrance';
+        return (
+          <span className="text-xs text-gray-700 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] whitespace-nowrap">
+            {cat}
+          </span>
+        );
+      }
     },
     {
       title: 'Price',
@@ -187,8 +256,9 @@ export default function AdminProductsPage() {
         <div className="flex items-center justify-end gap-1.5">
           <Tooltip title="Quick Adjust Stock">
             <button 
+              type="button"
               onClick={() => handleOpenStockModal(record)}
-              className="p-1.5 text-gray-500 hover:text-[#D4A64A] hover:bg-[#FAF7F2] rounded-lg transition-colors border border-transparent hover:border-[#E8DFC8]"
+              className="p-1.5 text-gray-500 hover:text-[#D4A64A] hover:bg-[#FAF7F2] rounded-lg transition-colors border border-transparent hover:border-[#E8DFC8] cursor-pointer"
             >
               <Package size={15} />
             </button>
@@ -201,18 +271,14 @@ export default function AdminProductsPage() {
               <Edit3 size={15} />
             </Link>
           </Tooltip>
-          <Popconfirm
+          <button 
+            type="button"
+            onClick={() => handleOpenDelete(record)}
             title="Delete Perfume"
-            description="Are you sure you want to remove this perfume from catalog?"
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{ danger: true }}
-            onConfirm={() => handleDelete(record.id || record._id)}
+            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
           >
-            <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <Trash2 size={15} />
-            </button>
-          </Popconfirm>
+            <Trash2 size={15} />
+          </button>
         </div>
       )
     }
@@ -266,15 +332,13 @@ export default function AdminProductsPage() {
           <Select
             value={selectedCategory}
             onChange={setSelectedCategory}
-            className="w-48 text-xs"
-            popupClassName="text-xs"
+            className="w-56 text-xs"
+            classNames={{ popup: { root: 'text-xs' } }}
           >
             <Option value="ALL">All Fragrance Families</Option>
-            <Option value="Woody Oriental">Woody Oriental</Option>
-            <Option value="Warm Oriental">Warm Oriental</Option>
-            <Option value="Floral Amber">Floral Amber</Option>
-            <Option value="Gourmand Amber">Gourmand Amber</Option>
-            <Option value="Citrus Woody">Citrus Woody</Option>
+            {categoryOptions.map(cat => (
+              <Option key={cat} value={cat}>{cat}</Option>
+            ))}
           </Select>
         </div>
       </div>
@@ -344,6 +408,34 @@ export default function AdminProductsPage() {
           </div>
         )}
       </Modal>
+
+      {/* Common Delete Confirmation Modal */}
+      <CommonDelete
+        open={deleteModalOpen}
+        onCancel={() => {
+          if (!deleting) {
+            setDeleteModalOpen(false);
+            setProductToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Perfume Product"
+        itemName={productToDelete?.name}
+        itemType="perfume product"
+        description="Are you sure you want to remove this perfume from the catalog? This will remove its inventory and store visibility."
+        confirmText="Delete Perfume"
+        loading={deleting}
+      />
     </div>
+  );
+}
+
+export default function AdminProductsPage() {
+  return (
+    <App>
+      <Suspense fallback={<div className="p-8 text-center"><Spin /></div>}>
+        <ProductsContent />
+      </Suspense>
+    </App>
   );
 }

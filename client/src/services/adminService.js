@@ -101,7 +101,14 @@ const adminService = {
     try {
       const response = await api.get('/admin/products', { params });
       if (response?.data?.success) {
-        return { ...response.data, isMock: false };
+        const rawData = response.data.data;
+        const productsList = Array.isArray(rawData) ? rawData : (rawData?.products || []);
+        return {
+          ...response.data,
+          data: productsList,
+          pagination: rawData?.pagination,
+          isMock: false
+        };
       }
     } catch (err) {
       console.warn('Backend API /api/admin/products unreachable, using mock fallback.');
@@ -271,6 +278,64 @@ const adminService = {
       isMock: true,
       data: MOCK_CATEGORIES
     };
+  },
+
+  createCategory: async (data) => {
+    try {
+      const isForm = typeof FormData !== 'undefined' && data instanceof FormData;
+      const config = isForm ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+      const response = await api.post('/categories', data, config);
+      return { ...response.data, isMock: false };
+    } catch (err) {
+      console.error('Create category error:', err);
+      throw err;
+    }
+  },
+
+  updateCategory: async (id, data) => {
+    try {
+      const isForm = typeof FormData !== 'undefined' && data instanceof FormData;
+      const config = isForm ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+      const response = await api.put(`/categories/${id}`, data, config);
+      return { ...response.data, isMock: false };
+    } catch (err) {
+      console.error('Update category error:', err);
+      throw err;
+    }
+  },
+
+  deleteCategory: async (id) => {
+    try {
+      const response = await api.delete(`/categories/${id}`);
+      return { ...response.data, isMock: false };
+    } catch (err) {
+      console.error('Delete category error:', err);
+      throw err;
+    }
+  },
+
+  toggleCategoryStatus: async (id, status) => {
+    try {
+      const response = await api.patch(`/categories/${id}/status`, { status });
+      return { ...response.data, isMock: false };
+    } catch (err) {
+      console.error('Toggle category status error:', err);
+      throw err;
+    }
+  },
+
+  uploadCategoryImage: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await api.post('/categories/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return { ...response.data, isMock: false };
+    } catch (err) {
+      console.error('Upload category image error:', err);
+      throw err;
+    }
   },
 
   /* --------------------------------------------------------------------------

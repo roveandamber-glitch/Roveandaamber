@@ -63,7 +63,7 @@ const AdminLayout = ({ children }) => {
         localStorage.setItem('user', JSON.stringify({
           id: 'admin-1',
           name: 'Admin',
-          email: 'admin@roveamber.com',
+          // email resolved dynamically
           role: 'admin',
           designation: 'Super Admin'
         }));

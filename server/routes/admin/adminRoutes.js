@@ -32,6 +32,9 @@ import {
   validateGiftFulfillmentUpdate,
   validateReviewModeration
 } from '../../validators/adminValidator.js';
+import categoryRoutes from '../user/categoryRoutes.js';
+import inventoryRoutes from './inventoryRoutes.js';
+import reportRoutes from './reportRoutes.js';
 
 const router = express.Router();
 
@@ -84,15 +87,18 @@ router.put('/reviews/:id/moderate', validateReviewModeration, moderateReview);
 router.delete('/reviews/:id', deleteAdminReview);
 
 /* --------------------------------------------------------------------------
+   CATEGORIES SUB-MODULE
+   -------------------------------------------------------------------------- */
+router.use('/categories', categoryRoutes);
+
+/* --------------------------------------------------------------------------
    10. INVENTORY AND STOCK MANAGEMENT
    -------------------------------------------------------------------------- */
-import inventoryRoutes from './inventoryRoutes.js';
 router.use('/inventory', inventoryRoutes);
 
 /* --------------------------------------------------------------------------
    11. MONTHLY SALES REPORTS AND ANALYTICS
    -------------------------------------------------------------------------- */
-import reportRoutes from './reportRoutes.js';
 router.use('/reports', reportRoutes);
 
 export default router;

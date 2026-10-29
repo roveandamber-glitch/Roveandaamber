@@ -278,16 +278,7 @@ const LoginContent = () => {
     }
   };
 
-  // Autofill helper for quick verification
-  const handleAutofillAdmin = () => {
-    setActiveTab('login');
-    loginForm.setFieldsValue({
-      email: 'admin@roveandamber.com',
-      password: 'admin123'
-    });
-    setErrorMessage(null);
-  };
-
+  
   return (
     <div className="min-h-screen bg-[#F8F7F4] flex flex-col justify-between pt-24 sm:pt-28 font-sans">
       <Navbar />
@@ -436,20 +427,7 @@ const LoginContent = () => {
                   )}
                 </button>
 
-                {/* Quick autofill helper chip */}
-                <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-                  <span className="flex items-center gap-1.5 text-gray-400">
-                    <ShieldCheck size={13} />
-                    <span>Admin Demo</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleAutofillAdmin}
-                    className="font-medium text-black hover:underline cursor-pointer bg-[#F5F1E9] px-2.5 py-1 rounded-full border border-[#E8E2D6] hover:bg-[#EAE4D7] transition-colors"
-                  >
-                    Fill Admin Credentials
-                  </button>
-                </div>
+                
               </Form>
             ) : registerStep === 'form' ? (
               /* Register Step 1: Initial Account Info with 2-second debounced validation */

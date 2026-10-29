@@ -16,28 +16,54 @@ export const getCategories = async (req, res) => {
   }
 };
 
+export const getCategoryById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const category = await CategoryModel.findById(id);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found.' });
+    }
+    return res.json({
+      success: true,
+      data: {
+        ...category,
+        _id: String(category.id)
+      }
+    });
+  } catch (error) {
+    console.error('Get category by ID error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch category.' });
+  }
+};
+
 export const createCategory = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, slug, description, status, image } = req.body;
     if (!name || name.trim() === '') {
       return res.status(400).json({ success: false, message: 'Category name is required.' });
     }
 
     const existing = await CategoryModel.findByName(name.trim());
     if (existing) {
-      return res.status(400).json({ success: false, message: 'Category already exists.' });
+      return res.status(400).json({ success: false, message: 'A category with this name already exists.' });
     }
 
     let imagePath = '';
-    if (req.file) {
-      imagePath = `/uploads/${req.file.filename}`;
-    } else if (req.body.image) {
-      imagePath = req.body.image;
+    const uploadedFile = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
+    if (uploadedFile) {
+      imagePath = `/uploads/${uploadedFile.filename}`;
+    } else if (image) {
+      imagePath = image;
     }
+
+    const isAct = !(status === 'Inactive' || status === false || status === 'false');
 
     const category = await CategoryModel.create({
       name: name.trim(),
-      image: imagePath
+      slug: slug ? slug.trim().toLowerCase() : undefined,
+      description: description ? description.trim() : '',
+      image: imagePath,
+      status: isAct ? 'Active' : 'Inactive'
     });
 
     return res.status(201).json({
@@ -57,23 +83,37 @@ export const createCategory = async (req, res) => {
 export const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, slug, description, status, image } = req.body;
 
     if (!name || name.trim() === '') {
       return res.status(400).json({ success: false, message: 'Category name is required.' });
     }
 
     let imagePath;
-    if (req.file) {
-      imagePath = `/uploads/${req.file.filename}`;
-    } else if (req.body.image !== undefined) {
-      imagePath = req.body.image;
+    const uploadedFile = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
+    if (uploadedFile) {
+      imagePath = `/uploads/${uploadedFile.filename}`;
+    } else if (image !== undefined) {
+      imagePath = image;
     }
 
-    const updated = await CategoryModel.update(id, {
+    const updatePayload = {
       name: name.trim(),
-      image: imagePath
-    });
+      slug: slug ? slug.trim().toLowerCase() : undefined,
+      description: description !== undefined ? description : undefined,
+    };
+    if (status !== undefined) {
+      const isAct = !(status === 'Inactive' || status === false || status === 'false');
+      updatePayload.status = isAct ? 'Active' : 'Inactive';
+    }
+    if (imagePath !== undefined) {
+      updatePayload.image = imagePath;
+    }
+
+    const updated = await CategoryModel.update(id, updatePayload);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Category not found.' });
+    }
 
     return res.json({
       success: true,
@@ -86,6 +126,51 @@ export const updateCategory = async (req, res) => {
   } catch (error) {
     console.error('Update category error:', error);
     return res.status(500).json({ success: false, message: 'Failed to update category.' });
+  }
+};
+
+export const uploadCategoryImage = async (req, res) => {
+  try {
+    const uploadedFile = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
+    if (!uploadedFile) {
+      return res.status(400).json({ success: false, message: 'No image file uploaded.' });
+    }
+    const fileUrl = `/uploads/${uploadedFile.filename}`;
+    return res.json({
+      success: true,
+      message: 'Image uploaded successfully.',
+      imageUrl: fileUrl,
+      url: fileUrl
+    });
+  } catch (error) {
+    console.error('Upload category image error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to upload image.' });
+  }
+};
+
+export const toggleCategoryStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const isAct = !(status === 'Inactive' || status === false || status === 'false');
+    const updated = await CategoryModel.update(id, { status: isAct ? 'Active' : 'Inactive' });
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Category not found.' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Category status updated.',
+      data: {
+        ...updated,
+        _id: String(updated.id)
+      }
+    });
+  } catch (error) {
+    console.error('Toggle category status error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update category status.' });
   }
 };
 
