@@ -60,21 +60,38 @@
 
 /* ==========================================================================
    LUXURY TOAST & POP-UP NOTIFICATION OVERRIDES (ROVE & AMBER THEME)
+   Positioned at the Top-Right Corner of the Screen
    ========================================================================== */
-.ant-message {
-  top: 72px !important;
+.ant-message,
+.ant-message-top {
+  position: fixed !important;
+  top: 24px !important;
+  right: 24px !important;
+  left: auto !important;
+  transform: none !important;
+  width: auto !important;
+  max-width: calc(100vw - 32px) !important;
   z-index: 9999 !important;
+  pointer-events: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
 }
 
 @media (min-width: 640px) {
-  .ant-message {
-    top: 82px !important;
+  .ant-message,
+  .ant-message-top {
+    top: 28px !important;
+    right: 28px !important;
   }
 }
 
 .ant-message .ant-message-notice {
-  padding: 4px !important;
-  text-align: center;
+  padding: 4px 0 !important;
+  text-align: right !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  width: 100% !important;
 }
 
 .ant-message .ant-message-notice-content {
@@ -93,6 +110,7 @@
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  pointer-events: auto !important;
 }
 
 .ant-message .ant-message-custom-content {
