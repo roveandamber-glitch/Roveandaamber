@@ -563,18 +563,59 @@ export default function GiftsPage() {
         </div>
       </section>
 
-      {/* 7. GIFTS FOR EVERY OCCASION (Luxury Occasions Banner) */}
-      <section className="py-6 sm:py-10 lg:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <Link
-          href="/shop?category=Gifts"
-          className="block w-full overflow-hidden transition-all duration-300 hover:opacity-98 focus:outline-none group cursor-pointer"
-        >
-          <img
-            src="/images/perfumes/gifts_for_every_occasion_banner.jpg"
-            alt="Gifts for Every Occasion — Celebrations, Birthdays, Anniversaries, Weddings, Festive Gifting"
-            className="w-full h-auto object-contain block rounded-2xl sm:rounded-3xl transition-transform duration-500 group-hover:scale-[1.008]"
-          />
-        </Link>
+      {/* 7. GIFTS FOR EVERY OCCASION (Occasions Cards) */}
+      <section className="py-8 sm:py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="rounded-2xl sm:rounded-3xl bg-[#160E09] border border-[#2E1E14] p-6 sm:p-10 lg:p-12 flex flex-col lg:flex-row items-center gap-8 justify-between shadow-xl">
+          {/* Left Title & Button */}
+          <div className="max-w-md text-left">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-5 h-[1.5px] bg-[#E5B869]" />
+              <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-[#E5B869] font-semibold">
+                Celebrations
+              </p>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-serif text-white tracking-tight font-normal mb-2 sm:mb-3">
+              Gifts for <br />
+              <span className="italic font-serif text-[#ECC880]">Every Occasion</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-300 font-light leading-relaxed mb-6">
+              From birthdays to anniversaries, celebrate life's special moments with the perfect fragrance.
+            </p>
+            <Link
+              href="/shop?category=Gifts"
+              className="inline-flex items-center gap-2 px-6 sm:px-7 py-3 rounded-full bg-gradient-to-r from-[#ECC880] to-[#C99042] text-[#281608] text-xs sm:text-sm font-semibold tracking-wider shadow-md hover:brightness-105 active:scale-95 transition-all"
+            >
+              <span>Shop by Occasion</span>
+              <ArrowRight size={12} strokeWidth={2.5} />
+            </Link>
+          </div>
+
+          {/* Right: 4 Occasion Thumbnails */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full lg:w-auto">
+            {OCCASIONS_DATA.map((occ) => (
+              <Link
+                key={occ.id}
+                href={occ.href}
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden aspect-[158/232] w-full sm:w-32 md:w-36 lg:w-44 bg-[#251A14] border border-[#3E2B20]/80 hover:border-[#ECC880]/60 transition-all duration-300 group flex flex-col justify-end p-2.5 sm:p-3.5 shadow-lg hover:shadow-2xl hover:shadow-black/50"
+              >
+                <img
+                  src={occ.image}
+                  alt={occ.title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 via-45% to-transparent pointer-events-none" />
+                <div className="relative z-10 flex items-center justify-between text-white">
+                  <span className="text-xs sm:text-sm font-serif font-medium leading-tight text-white group-hover:text-[#ECC880] transition-colors">
+                    {occ.title}
+                  </span>
+                  <span className="w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-[#ECC880] text-[#241306] flex items-center justify-center group-hover:scale-105 group-hover:brightness-110 transition-all shrink-0 shadow-sm">
+                    <ArrowRight size={11} strokeWidth={2.5} />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* 8. LOVED BY OUR CUSTOMERS (Reviews) */}
