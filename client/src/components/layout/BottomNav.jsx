@@ -9,6 +9,27 @@ const BottomNav = () => {
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(pathname !== '/');
+
+  useEffect(() => {
+    if (pathname !== '/') {
+      setIsVisible(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      // On homepage, hide bottom nav while at hero top to display unobstructed luxury visual
+      if (typeof window !== 'undefined' && window.scrollY > 350) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [pathname]);
 
   const updateCartCount = () => {
     setCartCount(cartService.getCartCount());
@@ -89,7 +110,11 @@ const BottomNav = () => {
   return (
     <nav 
       aria-label="Mobile Navigation"
-      className="md:hidden fixed bottom-3 left-4 right-4 z-50 max-w-sm mx-auto pointer-events-auto"
+      className={`md:hidden fixed bottom-3 left-4 right-4 z-50 max-w-sm mx-auto pointer-events-auto transition-all duration-300 ${
+        isVisible 
+          ? 'opacity-100 translate-y-0 pointer-events-auto' 
+          : 'opacity-0 translate-y-6 pointer-events-none'
+      }`}
     >
       <div className="bg-[#F5EFE6]/95 backdrop-blur-md border border-[#E6DDD0] rounded-full px-3 py-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.22)] flex items-center justify-around">
         {navItems.map((item) => {
