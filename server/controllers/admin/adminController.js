@@ -4,7 +4,7 @@ import { OrderModel, Order } from '../../models/orderModel.js';
 import { BannerModel, Banner } from '../../models/bannerModel.js';
 import { ReviewModel, Review } from '../../models/reviewModel.js';
 import { Category } from '../../models/categoryModel.js';
-import { UserModel } from '../../models/userModel.js';
+import { UserModel, User } from '../../models/userModel.js';
 import { emailService } from '../../services/emailService.js';
 
 // Format product for consistent output
@@ -61,6 +61,9 @@ export const getAdminDashboardStats = async (req, res) => {
     const productsCount = await Product.countDocuments();
     const outOfStockCount = await Product.countDocuments({ stock: { $lte: 0 } });
     const ordersCount = await Order.countDocuments();
+    const registeredUsersCount = await User.countDocuments();
+    const guestEmails = await Order.distinct('email');
+    const customersCount = Math.max(registeredUsersCount, guestEmails.filter(Boolean).length, 1);
     const categoriesCount = await Category.countDocuments();
     const bannersCount = await Banner.countDocuments({ isActive: true });
     const giftOrdersCount = await Order.countDocuments({ isGift: true });
@@ -110,30 +113,55 @@ export const getAdminDashboardStats = async (req, res) => {
       }));
     }
 
-    // Recent 5 orders with populated customer info
+    // Recent orders with populated customer & items info
     const recentOrdersRaw = await Order.find()
       .populate('user_id', 'name email')
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(6)
       .lean();
 
-    const recentOrders = recentOrdersRaw.map(o => ({
-      _id: o._id.toString(),
-      id: o._id.toString(),
-      orderId: o.orderId || `#ORD-${o._id.toString().slice(-4).toUpperCase()}`,
-      customerName: o.customer_name || (o.user_id ? o.user_id.name : 'Valued Customer'),
-      email: o.email || (o.user_id ? o.user_id.email : ''),
-      createdAt: o.createdAt ? o.createdAt.toISOString() : new Date().toISOString(),
-      totalPrice: o.total_amount || 0,
-      status: o.status,
-      paymentStatus: o.paymentStatus || 'Pending',
-      isGift: Boolean(o.isGift)
-    }));
+    const recentOrders = recentOrdersRaw.map(o => {
+      const itemsList = o.items || [];
+      const firstItem = itemsList[0];
+      const itemsCount = itemsList.length;
+      let summary = 'Artisanal Perfume Flacon';
+      if (firstItem?.name) {
+        summary = firstItem.name + (itemsCount > 1 ? ` (+${itemsCount - 1} more)` : '');
+      }
+
+      const custName = o.customer_name || (o.user_id ? o.user_id.name : 'Valued Patron');
+      const custEmail = o.email || (o.user_id ? o.user_id.email : '');
+      const orderNum = o.orderId || `#ORD-${o._id.toString().slice(-4).toUpperCase()}`;
+
+      return {
+        _id: o._id.toString(),
+        id: o._id.toString(),
+        orderId: orderNum,
+        orderNumber: orderNum,
+        customerName: custName,
+        customer: {
+          name: custName,
+          email: custEmail,
+          avatar: o.user_id?.avatar || null
+        },
+        email: custEmail,
+        createdAt: o.createdAt ? o.createdAt.toISOString() : new Date().toISOString(),
+        date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Today',
+        totalPrice: o.total_amount || 0,
+        total: o.total_amount || 0,
+        status: o.status || 'Pending',
+        paymentStatus: o.paymentStatus || 'Pending',
+        paymentMethod: o.paymentMethod || 'Razorpay',
+        productSummary: summary,
+        isGift: Boolean(o.isGift)
+      };
+    });
 
     return res.json({
       success: true,
       data: {
         stats: {
+          totalCustomers: customersCount,
           totalProducts: productsCount,
           outOfStockProducts: outOfStockCount,
           totalOrders: ordersCount,

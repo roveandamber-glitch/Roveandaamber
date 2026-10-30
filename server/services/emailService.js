@@ -604,6 +604,43 @@ export const emailService = {
       subject: `${otp} is your ROVE & AMBER verification code`,
       html
     });
+  },
+
+  // 8. Send 6-Digit OTP for Password Reset
+  sendPasswordResetOtp: async (email, otp, name) => {
+    const brandGold = '#C49A45';
+    const contentHtml = `
+      <p>Dear ${name || 'Valued Client'},</p>
+      <p>We received a request to reset the password for your <strong>ROVE & AMBER</strong> client account.</p>
+      <p>Please enter the following single-use verification code to set your new password:</p>
+
+      <div style="background: linear-gradient(135deg, #1A1A1D 0%, #262422 100%); border: 1px solid ${brandGold}; border-radius: 8px; padding: 28px 20px; text-align: center; margin: 28px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+        <div style="font-size: 11px; letter-spacing: 3px; color: #9E9B95; text-transform: uppercase; margin-bottom: 10px;">Password Reset Code</div>
+        <div style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: bold; letter-spacing: 14px; color: ${brandGold}; text-shadow: 0 0 10px rgba(196, 154, 69, 0.3);">
+          ${otp}
+        </div>
+        <div style="font-size: 11px; color: #736E65; margin-top: 10px; letter-spacing: 1px;">Valid for 10 minutes</div>
+      </div>
+
+      <p style="font-size: 13px; color: #9E9B95; line-height: 1.6;">
+        If you did not request a password reset, please disregard this email. Your existing password remains secure.
+      </p>
+      <p style="font-size: 12px; color: #736E65; margin-top: 16px;">
+        🔒 <em>Security notice: Never disclose this code. ROVE & AMBER Concierge representatives will never ask for your verification code.</em>
+      </p>
+    `;
+
+    const html = buildEmailHtml({
+      title: 'Reset Your Password',
+      subtitle: 'Your one-time password reset code',
+      contentHtml
+    });
+
+    return sendEmail({
+      to: email,
+      subject: `${otp} is your ROVE & AMBER password reset code`,
+      html
+    });
   }
 };
 

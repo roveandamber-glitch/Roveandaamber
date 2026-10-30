@@ -61,7 +61,8 @@ export default function AdminOrdersPage() {
     try {
       const res = await adminService.getOrders();
       if (res?.data) {
-        setOrders(res.data);
+        const list = Array.isArray(res.data) ? res.data : (res.data?.orders || []);
+        setOrders(list);
       }
     } catch (err) {
       console.error('Failed to load orders:', err);
@@ -93,7 +94,7 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const filteredOrders = orders.filter(o => {
+  const filteredOrders = (Array.isArray(orders) ? orders : []).filter(o => {
     const matchesSearch = 
       o.orderNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
       o.customer?.name?.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -323,7 +324,7 @@ export default function AdminOrdersPage() {
           </div>
         }
         placement="right"
-        width={Math.min(520, typeof window !== 'undefined' ? window.innerWidth - 20 : 520)}
+        size="large"
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
         className="luxury-admin-drawer"

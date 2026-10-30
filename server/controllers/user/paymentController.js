@@ -215,7 +215,8 @@ export const verifyPayment = async (req, res) => {
         status: paidOrder.status,
         totalAmount: paidOrder.total_amount,
         transactionId: razorpay_payment_id,
-        paidAt: paidOrder.paymentDetails?.paidAt
+        paidAt: paidOrder.paymentDetails?.paidAt,
+        order: paidOrder
       }
     });
   } catch (error) {

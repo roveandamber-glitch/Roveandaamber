@@ -10,6 +10,8 @@ const authService = {
   getProfile: async () => (await api.get('/auth/me')).data,
   updateProfile: async (profileData) => (await api.put('/auth/profile', profileData)).data,
   changePassword: async (passwordData) => (await api.put('/auth/change-password', passwordData)).data,
+  forgotPassword: async (data) => (await api.post('/auth/forgot-password', data)).data,
+  resetPassword: async (data) => (await api.post('/auth/reset-password', data)).data,
 
   // Session & Local Storage Management
   saveSession: (user, token) => {

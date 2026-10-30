@@ -45,9 +45,13 @@ const AdminLayout = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Authentication & Demo Admin Auto-Session Init
+  // Authentication Verification Guard
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      if (pathname === '/admin/login') {
+        return;
+      }
+
       const token = localStorage.getItem('adminToken') || localStorage.getItem('adminKey');
       const userStr = localStorage.getItem('user');
       let userRole = null;
@@ -57,23 +61,17 @@ const AdminLayout = ({ children }) => {
         } catch (e) {}
       }
 
+      // If unauthenticated or not an admin, redirect to dedicated admin login
       if (!token || userRole !== 'admin') {
-        localStorage.setItem('adminToken', 'preview_admin_session_token');
-        localStorage.setItem('adminKey', 'preview_admin_session_token');
-        localStorage.setItem('user', JSON.stringify({
-          id: 'admin-1',
-          name: 'Admin',
-          // email resolved dynamically
-          role: 'admin',
-          designation: 'Super Admin'
-        }));
+        router.replace('/admin/login');
+        return;
       }
 
       adminService.checkHealth().then((status) => {
         setBackendLive(status);
       });
     }
-  }, []);
+  }, [pathname, router]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -84,10 +82,11 @@ const AdminLayout = ({ children }) => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminKey');
+      localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.dispatchEvent(new Event('authChange'));
     }
-    router.push('/login');
+    router.push('/admin/login');
   };
 
   const toggleSubmenu = (menu) => {
@@ -387,6 +386,11 @@ const AdminLayout = ({ children }) => {
       </div>
     </div>
   );
+
+  // Completely bypass admin chrome on the admin login page
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F4ED] font-sans text-[#1B100A] antialiased">

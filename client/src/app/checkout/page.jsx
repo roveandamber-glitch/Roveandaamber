@@ -23,8 +23,26 @@ import {
 import { message, Form, Input, Radio } from 'antd';
 import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
+import paymentService from '@/services/paymentService';
 import { getImageUrl } from '@/utils/imageHelper';
 import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
+
+
+// Dynamically load official Razorpay Checkout SDK
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -53,6 +71,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     setIsClient(true);
     document.title = 'Secure Boutique Checkout | ROVE & AMBER';
+    loadRazorpayScript().catch(() => {});
 
     // Load cart items
     const items = cartService.getCart();
@@ -145,7 +164,7 @@ export default function CheckoutPage() {
         email: values.email?.trim() || '',
         phone: values.phone.trim(),
         address: fullAddress,
-        paymentMethod: paymentMethod,
+        paymentMethod: paymentMethod === 'Cash on Delivery' ? 'Cash on Delivery' : 'Razorpay',
         isGift: !!giftOptions?.isGift,
         occasion: giftOptions?.occasion || '',
         giftMessage: giftOptions?.messageText || '',
@@ -162,25 +181,122 @@ export default function CheckoutPage() {
         }))
       };
 
-      const response = await orderService.createOrder(orderPayload);
-      if (response?.success && response.data) {
-        setOrderConfirmed(response.data);
-        cartService.clearCart();
-        try {
-          localStorage.removeItem('rove_amber_gift_options');
-        } catch (e) {}
-        message.success('Your boutique order has been registered successfully!');
-      } else {
-        const errMsg = response?.message || 'Failed to place order. Please review your details.';
-        setErrorMessage(errMsg);
-        message.error(errMsg);
+      // 1. CASH ON DELIVERY: Directly place order
+      if (paymentMethod === 'Cash on Delivery') {
+        const response = await orderService.createOrder(orderPayload);
+        if (response?.success && response.data) {
+          setOrderConfirmed(response.data);
+          cartService.clearCart();
+          try {
+            localStorage.removeItem('rove_amber_gift_options');
+          } catch (e) {}
+          message.success('Your boutique order has been registered successfully!');
+        } else {
+          const errMsg = response?.message || 'Failed to place order. Please review your details.';
+          setErrorMessage(errMsg);
+          message.error(errMsg);
+        }
+        return;
       }
+
+      // 2. ONLINE PAYMENT VIA RAZORPAY TEST MODE
+      const initRes = await paymentService.createPaymentOrder(orderPayload);
+      if (!initRes?.success || !initRes?.data) {
+        throw new Error(initRes?.message || 'Failed to initialize Razorpay payment order.');
+      }
+
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded || typeof window === 'undefined' || !window.Razorpay) {
+        throw new Error('Razorpay SDK failed to load. Please check your network connection.');
+      }
+
+      const { razorpayOrderId, amount, currency, keyId, orderId, internalId } = initRes.data;
+
+      const rzpOptions = {
+        key: keyId || 'rzp_test_Tq87qYzkJmzGUc',
+        amount: amount,
+        currency: currency || 'INR',
+        name: 'ROVE & AMBER',
+        description: `Order ${orderId || ''} • Luxury Fragrance Formulation`,
+        image: '/images/perfumes/rove_amber_exact_banner_hd.jpg',
+        order_id: razorpayOrderId,
+        prefill: {
+          name: values.customerName.trim(),
+          email: values.email?.trim() || '',
+          contact: values.phone.trim()
+        },
+        notes: {
+          orderId: orderId,
+          deliveryAddress: fullAddress
+        },
+        theme: {
+          color: '#1A1412'
+        },
+        handler: async function (razorpayResponse) {
+          setLoading(true);
+          try {
+            const verifyRes = await paymentService.verifyPayment({
+              razorpay_order_id: razorpayResponse.razorpay_order_id,
+              razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+              razorpay_signature: razorpayResponse.razorpay_signature,
+              orderId: orderId || internalId
+            });
+
+            if (verifyRes?.success) {
+              const confirmedOrder = verifyRes.data?.order || {
+                orderId: orderId,
+                customer_name: values.customerName.trim(),
+                phone: values.phone.trim(),
+                address: fullAddress,
+                paymentMethod: 'Razorpay',
+                total_amount: (amount / 100),
+                paymentStatus: 'Paid'
+              };
+              setOrderConfirmed(confirmedOrder);
+              cartService.clearCart();
+              try {
+                localStorage.removeItem('rove_amber_gift_options');
+              } catch (e) {}
+              message.success('Payment verified! Your luxury order has been confirmed.');
+            } else {
+              message.error(verifyRes?.message || 'Payment signature verification failed.');
+            }
+          } catch (vErr) {
+            console.error('Payment verification error:', vErr);
+            message.error(vErr.response?.data?.message || 'Verification error after payment.');
+          } finally {
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+            message.info('Payment checkout window was closed.');
+          }
+        }
+      };
+
+      const rzpInstance = new window.Razorpay(rzpOptions);
+
+      rzpInstance.on('payment.failed', function (failResp) {
+        console.error('Razorpay payment failed:', failResp.error);
+        message.error(failResp.error?.description || 'Payment was declined or failed.');
+        paymentService.recordPaymentFailure({
+          razorpay_order_id: razorpayOrderId,
+          orderId: orderId,
+          error: failResp.error
+        }).catch(() => {});
+        setLoading(false);
+      });
+
+      rzpInstance.open();
     } catch (err) {
       console.error('Order creation error:', err);
-      const errMsg = err.response?.data?.message || 'Unable to connect to order atelier. Please verify your connection.';
+      const errMsg = err.response?.data?.message || err.message || 'Unable to connect to order atelier. Please verify your connection.';
       setErrorMessage(errMsg);
       message.error(errMsg);
     } finally {
+      // Keep loading false on error; on success, handler or COD turns it off
       setLoading(false);
     }
   };
@@ -562,102 +678,28 @@ export default function CheckoutPage() {
 
                   {/* Payment Details Subform */}
                   <div className="p-4 rounded-2xl bg-[#FAF9F7] border border-[#E8DFC9] space-y-3">
-                    {paymentMethod === 'UPI' && (
-                      <div className="space-y-2">
-                        <span className="text-xs font-semibold text-gray-700 block">
-                          Enter your UPI Virtual Payment Address (VPA)
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            placeholder="username@okhdfcbank / mobile@upi"
-                            value={upiId}
-                            onChange={(e) => setUpiId(e.target.value)}
-                            className="flex-1 px-3.5 py-2.5 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-black"
-                          />
-                          <span className="text-[10px] uppercase font-bold px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl">
-                            Verified Instant
+                    {paymentMethod !== 'Cash on Delivery' ? (
+                      <div className="space-y-2.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
+                            Razorpay Test Mode Active
+                          </span>
+                          <span className="text-[11px] text-gray-500 font-medium">100% Sandbox Safe • Zero Real Deduction</span>
+                        </div>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          {paymentMethod === 'UPI' && 'Zero-fee instant settlement via Google Pay, PhonePe, Paytm, Cred, or QR code simulation.'}
+                          {paymentMethod === 'Card' && 'Securely pay using Visa, Mastercard, RuPay, or any test card number.'}
+                          {paymentMethod === 'NetBanking' && 'Direct clearance with HDFC, ICICI, SBI, Axis, Kotak and all major banks.'}
+                        </p>
+                        <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-950 flex items-start gap-2">
+                          <ShieldCheck size={16} className="text-amber-700 shrink-0 mt-0.5" />
+                          <span>
+                            Clicking <strong>&ldquo;Pay with Razorpay (Test Mode)&rdquo;</strong> below will immediately launch the official Razorpay test window to complete your payment test.
                           </span>
                         </div>
-                        <p className="text-[11px] text-gray-400">
-                          A payment authorization prompt will be dispatched to your UPI application upon order confirmation.
-                        </p>
                       </div>
-                    )}
-
-                    {paymentMethod === 'Card' && (
-                      <div className="space-y-3">
-                        <div>
-                          <span className="text-[11px] text-gray-500 block mb-1">Cardholder Name</span>
-                          <input
-                            type="text"
-                            placeholder="Name as printed on card"
-                            value={cardDetails.name}
-                            onChange={(e) => setCardDetails({ ...cardDetails, name: e.target.value })}
-                            className="w-full px-3.5 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-black"
-                          />
-                        </div>
-                        <div>
-                          <span className="text-[11px] text-gray-500 block mb-1">Card Number</span>
-                          <input
-                            type="text"
-                            maxLength={19}
-                            placeholder="4111 2222 3333 4444"
-                            value={cardDetails.number}
-                            onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value })}
-                            className="w-full px-3.5 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-black font-mono"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <span className="text-[11px] text-gray-500 block mb-1">Expiry (MM/YY)</span>
-                            <input
-                              type="text"
-                              maxLength={5}
-                              placeholder="12/28"
-                              value={cardDetails.expiry}
-                              onChange={(e) => setCardDetails({ ...cardDetails, expiry: e.target.value })}
-                              className="w-full px-3.5 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-black font-mono"
-                            />
-                          </div>
-                          <div>
-                            <span className="text-[11px] text-gray-500 block mb-1">CVV Security Code</span>
-                            <input
-                              type="password"
-                              maxLength={4}
-                              placeholder="•••"
-                              value={cardDetails.cvv}
-                              onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value })}
-                              className="w-full px-3.5 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-black font-mono"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {paymentMethod === 'NetBanking' && (
-                      <div className="space-y-2">
-                        <span className="text-xs font-semibold text-gray-700 block">Select Banking Partner</span>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra', 'Other Banks'].map((bank) => (
-                            <button
-                              key={bank}
-                              type="button"
-                              onClick={() => setSelectedBank(bank)}
-                              className={`p-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
-                                selectedBank === bank
-                                  ? 'bg-black text-white border-black'
-                                  : 'bg-white text-gray-700 border-[#E0D8CA] hover:border-black'
-                              }`}
-                            >
-                              {bank}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {paymentMethod === 'Cash on Delivery' && (
+                    ) : (
                       <div className="text-xs text-gray-600 space-y-1">
                         <p className="font-semibold text-black">Pay upon Courier Delivery</p>
                         <p className="font-light text-[11px]">
@@ -675,7 +717,13 @@ export default function CheckoutPage() {
                   className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-4 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-amber-950/15 transition-all cursor-pointer"
                 >
                   <Lock size={14} strokeWidth={2.4} />
-                  <span>{loading ? 'Compounding Order...' : `Complete Order & Pay • ₹${finalTotal.toLocaleString('en-IN')}`}</span>
+                  <span>
+                    {loading
+                      ? 'Opening Razorpay Gateway...'
+                      : paymentMethod === 'Cash on Delivery'
+                      ? `Place Order (Pay on Delivery) • ₹${finalTotal.toLocaleString('en-IN')}`
+                      : `Pay with Razorpay (Test Mode) • ₹${finalTotal.toLocaleString('en-IN')}`}
+                  </span>
                 </button>
               </Form>
             </div>

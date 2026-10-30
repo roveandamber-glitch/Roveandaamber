@@ -300,3 +300,104 @@ export const changePassword = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to change password.' });
   }
 };
+
+/**
+ * 6. Forgot Password - Send OTP to user email
+ */
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'Email address is required.'
+      });
+    }
+
+    const user = await UserModel.findByEmail(email);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        field: 'email',
+        message: 'No client account found with this email address.'
+      });
+    }
+
+    // Generate secure 6-digit OTP
+    const otp = String(crypto.randomInt(100000, 1000000));
+
+    // Store in Otp collection
+    await OtpModel.createOrUpdateOtp(email, otp, 10);
+
+    // Send reset email
+    await emailService.sendPasswordResetOtp(email, otp, user.name);
+
+    return res.json({
+      success: true,
+      message: `A 6-digit reset code has been sent to ${email}.`
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send password reset code. Please try again.'
+    });
+  }
+};
+
+/**
+ * 7. Reset Password with OTP Verification
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, verification code, and new password are required.'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters.'
+      });
+    }
+
+    // Verify OTP
+    const verification = await OtpModel.verifyOtp(email, otp);
+    if (!verification.isValid) {
+      return res.status(400).json({
+        success: false,
+        field: 'otp',
+        message: verification.message
+      });
+    }
+
+    const user = await UserModel.findByEmail(email);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Account not found.'
+      });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await UserModel.updatePassword(user.id || user._id, hashedNewPassword);
+
+    return res.json({
+      success: true,
+      message: 'Password reset successfully. You can now sign in with your new password.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to reset password. Please try again.'
+    });
+  }
+};

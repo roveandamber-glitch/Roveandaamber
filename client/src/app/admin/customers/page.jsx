@@ -236,7 +236,7 @@ export default function AdminCustomersPage() {
           </span>
         }
         placement="right"
-        width={Math.min(460, typeof window !== 'undefined' ? window.innerWidth - 20 : 460)}
+        size="default"
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
         className="luxury-admin-drawer"

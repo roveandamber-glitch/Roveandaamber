@@ -6,7 +6,9 @@ import {
   login, 
   getProfile, 
   updateProfile, 
-  changePassword 
+  changePassword,
+  forgotPassword,
+  resetPassword
 } from '../../controllers/user/authController.js';
 import { protect } from '../../middlewares/authMiddleware.js';
 import {
@@ -28,6 +30,10 @@ router.post('/register', validateRegister, register);
 
 // Public login endpoint
 router.post('/login', validateLogin, login);
+
+// Password recovery endpoints
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 // Protected profile endpoints with input validation middlewares
 router.get('/me', protect, getProfile);

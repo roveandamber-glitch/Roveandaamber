@@ -184,7 +184,14 @@ const adminService = {
     try {
       const response = await api.get('/admin/orders', { params });
       if (response?.data?.success) {
-        return { ...response.data, isMock: false };
+        const raw = response.data.data;
+        const list = Array.isArray(raw) ? raw : (raw?.orders || []);
+        return {
+          ...response.data,
+          data: list,
+          pagination: raw?.pagination,
+          isMock: false
+        };
       }
     } catch (err) {
       console.warn('Backend API /api/admin/orders unreachable, using mock fallback.');
@@ -398,7 +405,17 @@ const adminService = {
     try {
       const response = await api.get('/admin/reviews');
       if (response?.data?.success) {
-        return { ...response.data, isMock: false };
+        const raw = response.data.data;
+        const list = Array.isArray(raw) 
+          ? raw 
+          : (Array.isArray(raw?.reviews) ? raw.reviews : []);
+        const formatted = list.map(r => ({
+          ...r,
+          id: r.id || r._id,
+          customer: r.customer || r.customerName || 'Valued Patron',
+          date: r.date || (r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '28 Oct 2026')
+        }));
+        return { ...response.data, data: formatted, isMock: false };
       }
     } catch (err) {
       // Fallback
@@ -410,7 +427,7 @@ const adminService = {
     };
   },
 
-  moderateReview: async (id, statusData) => {
+    moderateReview: async (id, statusData) => {
     try {
       const response = await api.put(`/admin/reviews/${id}/moderate`, statusData);
       return { ...response.data, isMock: false };

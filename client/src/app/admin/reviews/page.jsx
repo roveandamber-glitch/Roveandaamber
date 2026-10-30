@@ -40,12 +40,14 @@ export default function AdminReviewsPage() {
     setLoading(true);
     try {
       const res = await adminService.getReviews();
-      if (res?.data) {
-        setReviews(res.data);
-      }
+      const list = Array.isArray(res?.data) 
+        ? res.data 
+        : (Array.isArray(res?.data?.reviews) ? res.data.reviews : []);
+      setReviews(list);
     } catch (err) {
       console.error('Failed to load reviews:', err);
       message.error('Failed to load reviews');
+      setReviews([]);
     } finally {
       setLoading(false);
     }
@@ -54,9 +56,10 @@ export default function AdminReviewsPage() {
   const handleStatusChange = async (id, newStatus) => {
     try {
       await adminService.moderateReview(id, { status: newStatus });
-      setReviews(prev => prev.map(r => 
-        r.id === id ? { ...r, status: newStatus } : r
-      ));
+      setReviews(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return arr.map(r => (r.id === id ? { ...r, status: newStatus } : r));
+      });
       message.success(`Review ${newStatus.toLowerCase()} successfully`);
     } catch (err) {
       message.error('Failed to moderate review');
@@ -64,16 +67,26 @@ export default function AdminReviewsPage() {
   };
 
   const handleDelete = (id) => {
-    setReviews(prev => prev.filter(r => r.id !== id));
+    setReviews(prev => {
+      const arr = Array.isArray(prev) ? prev : [];
+      return arr.filter(r => r.id !== id);
+    });
     message.success('Review deleted');
   };
 
-  const filteredReviews = reviews.filter(r => {
+  const reviewList = Array.isArray(reviews) ? reviews : [];
+  const filteredReviews = reviewList.filter(r => {
+    const customer = (r.customer || r.customerName || '').toLowerCase();
+    const title = (r.title || '').toLowerCase();
+    const comment = (r.comment || '').toLowerCase();
+    const productName = (r.product?.name || '').toLowerCase();
+    const search = searchText.toLowerCase();
+
     const matchesSearch = 
-      r.customer?.toLowerCase().includes(searchText.toLowerCase()) ||
-      r.title?.toLowerCase().includes(searchText.toLowerCase()) ||
-      r.comment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      r.product?.name?.toLowerCase().includes(searchText.toLowerCase());
+      customer.includes(search) ||
+      title.includes(search) ||
+      comment.includes(search) ||
+      productName.includes(search);
     const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
     return matchesSearch && matchesStatus;
   });

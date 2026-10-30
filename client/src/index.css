@@ -288,3 +288,16 @@
 .admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background: #D4A64A;
 }
+
+/* ==========================================================================
+   PREVENT BROWSER BLUE AUTOFILL BACKGROUND (STAY PRISTINE WHITE)
+   ========================================================================== */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 50px white inset !important;
+  -webkit-text-fill-color: #1A1A1A !important;
+  box-shadow: 0 0 0 50px white inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

@@ -83,7 +83,7 @@ export default function HeroDesktop({
       </div>
 
       {/* Hero Carousel Indicators (Centered at bottom) */}
-      <div className="relative z-20 w-full flex items-center justify-center pb-8">
+      <div className="relative z-20 w-full flex items-center justify-center pb-8 sm:pb-10">
         <div className="flex items-center justify-center gap-2.5">
           {slides.map((_, idx) => {
             const isActive = idx === activeSlide;

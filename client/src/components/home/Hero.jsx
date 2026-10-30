@@ -112,7 +112,7 @@ export default function Hero({
   };
 
   return (
-    <>
+    <div className="relative w-full">
       {/* 1. Dedicated Mobile Screen UI (Matches iPhone 1:1 luxury mockup) */}
       <div className="block md:hidden w-full">
         <HeroMobile {...sharedProps} />
@@ -122,9 +122,13 @@ export default function Hero({
       <div className="hidden md:block w-full">
         <HeroDesktop {...sharedProps} />
       </div>
-    </>
+
+      {/* 3. Curved Convex Bottom Scoop (Exact same curve as Gifts Page) */}
+      <div className="relative z-20 w-full overflow-hidden flex flex-col items-center -mt-6 sm:-mt-10 md:-mt-12 pointer-events-none select-none">
+        <div className="w-full h-6 sm:h-10 md:h-12 bg-enva-bg rounded-t-[50%_100%] shadow-[0_-8px_16px_rgba(0,0,0,0.15)]" />
+      </div>
+    </div>
   );
 }
 
-// Re-export both components so they can also be used individually if needed
 export { HeroMobile, HeroDesktop };
