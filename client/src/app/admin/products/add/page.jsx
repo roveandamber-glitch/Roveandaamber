@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, Select, Upload, Button, Row, Col, message, InputNumber, Tag } from 'antd';
+import { Card, Form, Input, Select, Upload, Button, Row, Col, message, InputNumber, Tag, Popconfirm } from 'antd';
 import { PlusOutlined, DeleteOutlined, CheckCircleOutlined, PictureOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import productService from '@/services/productService';
@@ -10,7 +10,6 @@ import adminService from '@/services/adminService';
 import { MOCK_CATEGORIES } from '@/data/adminMockData';
 
 const { Option } = Select;
-const DEFAULT_SIZES = ['50ml', '100ml', 'Discovery Set', '30ml'];
 
 const AddProduct = () => {
   const [form] = Form.useForm();
@@ -22,6 +21,8 @@ const AddProduct = () => {
     '100ml': 10,
     'Discovery Set': 5
   });
+  const [customSizeInput, setCustomSizeInput] = useState('');
+  const [customQtyInput, setCustomQtyInput] = useState(10);
   const router = useRouter();
 
   // Total stock calculated dynamically from size inventory
@@ -46,6 +47,37 @@ const AddProduct = () => {
       ...prev,
       [size]: Math.max(0, Number(value) || 0)
     }));
+  };
+
+  const handleAddCustomSize = (sizeName, initialQty = 10) => {
+    const trimmed = (sizeName || '').trim();
+    if (!trimmed) {
+      message.warning('Please enter a size name (e.g. 30ml, 50ml, 100ml, 200ml).');
+      return;
+    }
+    if (sizeStock[trimmed] !== undefined) {
+      message.info(`Size "${trimmed}" already exists.`);
+      return;
+    }
+    setSizeStock(prev => ({
+      ...prev,
+      [trimmed]: Math.max(0, Number(initialQty) || 0)
+    }));
+    setCustomSizeInput('');
+    message.success(`Added ${trimmed} flacon size option`);
+  };
+
+  const handleRemoveSize = (sizeToRemove) => {
+    if (Object.keys(sizeStock).length <= 1) {
+      message.warning('A perfume product must have at least one flacon size option.');
+      return;
+    }
+    setSizeStock(prev => {
+      const copy = { ...prev };
+      delete copy[sizeToRemove];
+      return copy;
+    });
+    message.info(`Removed ${sizeToRemove} variant`);
   };
 
   const beforeUpload = (file) => {
@@ -79,6 +111,7 @@ const AddProduct = () => {
       formData.append('stock', totalStock);
       formData.append('category_id', values.category_id || '');
       formData.append('sizes', JSON.stringify(sizeStock));
+      formData.append('sizes_stock', JSON.stringify(sizeStock));
 
       fileList.forEach((file) => {
         if (file.originFileObj) {
@@ -131,7 +164,7 @@ const AddProduct = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 font-serif m-0">Add New Perfume</h1>
-            <p className="text-xs text-gray-500 m-0 mt-0.5">Configure perfume details, size inventory, and visual assets in one screen.</p>
+            <p className="text-xs text-gray-500 m-0 mt-0.5">Configure perfume details, custom bottle sizes, stock allocation, and visual assets.</p>
           </div>
           <div className="flex items-center gap-2.5">
             <Button 
@@ -151,7 +184,7 @@ const AddProduct = () => {
           </div>
         </div>
 
-        {/* 2-Column Split: All in One Screen */}
+        {/* 2-Column Split */}
         <Row gutter={20} className="items-stretch">
           
           {/* Left Column: Essential Details & Size Inventory */}
@@ -226,42 +259,111 @@ const AddProduct = () => {
                   </Col>
                 </Row>
 
-                {/* Size-Wise Stock Inventory Box */}
-                <div className="mt-1 p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D6]">
-                  <div className="flex items-center justify-between mb-3">
+                {/* Custom Flacon Sizes & Inventory Allocation Box */}
+                <div className="mt-1 p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D6] space-y-3">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-xs font-bold text-black uppercase tracking-wider m-0">Flacon Sizes & Inventory</h4>
-                      <p className="text-[11px] text-gray-500 m-0">Define available units per size variant.</p>
+                      <h4 className="text-xs font-bold text-black uppercase tracking-wider m-0">Flacon Sizes & Inventory Allocation</h4>
+                      <p className="text-[11px] text-gray-500 m-0">Customize available bottle sizes and stock quantity per variant.</p>
                     </div>
                     <Tag color="gold" className="rounded-full px-2.5 py-0.5 font-mono text-[10px] m-0 !text-[#996515] !bg-[#FAF3E0] !border-[#F0DCB1]">
                       {totalStock} in stock
                     </Tag>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-2">
-                    {DEFAULT_SIZES.map(size => (
-                      <div key={size} className="bg-white p-2 rounded-xl border border-gray-200 text-center shadow-2xs">
-                        <span className="font-bold text-xs text-black block mb-1 font-mono">{size}</span>
+                  {/* Active Variants Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {Object.entries(sizeStock).map(([size, qty]) => (
+                      <div key={size} className="bg-white p-2.5 rounded-xl border border-gray-200 text-center shadow-2xs relative group flex flex-col justify-between">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs text-black block font-mono">{size}</span>
+                          {Object.keys(sizeStock).length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSize(size)}
+                              className="text-gray-300 hover:text-red-500 p-0.5 transition-colors cursor-pointer"
+                              title={`Remove ${size}`}
+                            >
+                              <DeleteOutlined className="text-[11px]" />
+                            </button>
+                          )}
+                        </div>
                         <InputNumber
                           min={0}
                           max={9999}
-                          value={sizeStock[size] ?? 0}
+                          value={qty ?? 0}
                           onChange={val => handleSizeStockChange(size, val)}
-                          className="w-full text-center rounded-md text-xs"
+                          className="w-full text-center rounded-md text-xs font-mono"
                           size="small"
                         />
                         <span className="text-[9px] text-gray-400 block mt-1">
-                          {(sizeStock[size] || 0) > 0 ? `${sizeStock[size]} qty` : 'Out'}
+                          {(qty || 0) > 0 ? `${qty} in stock` : 'Out of stock'}
                         </span>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Add Custom ML Variant Form */}
+                  <div className="pt-2 border-t border-[#E8E2D6] space-y-2">
+                    <span className="text-[11px] font-semibold text-gray-600 block">
+                      Add Custom Size (e.g. 30ml, 50ml, 100ml, 200ml, Discovery Set):
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Size name"
+                        value={customSizeInput}
+                        onChange={(e) => setCustomSizeInput(e.target.value)}
+                        onPressEnter={() => handleAddCustomSize(customSizeInput, customQtyInput)}
+                        className="rounded-lg text-xs py-1 flex-1"
+                        size="small"
+                      />
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-[10px] text-gray-400">Qty:</span>
+                        <InputNumber
+                          min={0}
+                          max={9999}
+                          value={customQtyInput}
+                          onChange={(v) => setCustomQtyInput(v || 0)}
+                          className="w-16 rounded-lg text-xs"
+                          size="small"
+                        />
+                      </div>
+                      <Button
+                        type="default"
+                        size="small"
+                        icon={<PlusOutlined />}
+                        onClick={() => handleAddCustomSize(customSizeInput, customQtyInput)}
+                        className="rounded-lg text-xs font-semibold border-[#D4A64A] text-[#8C6D1F]"
+                      >
+                        Add
+                      </Button>
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                      {['30ml', '50ml', '100ml', '200ml', 'Discovery Set'].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          disabled={sizeStock[preset] !== undefined}
+                          onClick={() => handleAddCustomSize(preset, 10)}
+                          className={`text-[10px] px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
+                            sizeStock[preset] !== undefined
+                              ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'
+                              : 'bg-white text-[#8C6D1F] border-[#E8E2D6] hover:border-[#8C6D1F]'
+                          }`}
+                        >
+                          + {preset}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </Card>
           </Col>
 
-          {/* Right Column: Product Image Upload with Live Card */}
+          {/* Right Column: Visual Media */}
           <Col xs={24} lg={10} className="flex flex-col mt-4 lg:mt-0">
             <Card className="border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] rounded-2xl p-5 bg-white flex-1 flex flex-col justify-between">
               <div>

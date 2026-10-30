@@ -19,12 +19,14 @@ import {
   AlertCircle,
   Check,
   User,
-  ExternalLink
+  ExternalLink,
+  Edit3
 } from 'lucide-react';
 import { Modal, Form, Input, message, ConfigProvider } from 'antd';
 import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
 import { getImageUrl } from '@/utils/imageHelper';
+import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
 
 const cartTheme = {
   token: {
@@ -60,6 +62,7 @@ export default function CartPage() {
   const [orderSuccessData, setOrderSuccessData] = useState(null);
   const [checkoutError, setCheckoutError] = useState(null);
   const [giftOptions, setGiftOptions] = useState(null);
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
   const [checkoutForm] = Form.useForm();
 
@@ -175,7 +178,8 @@ export default function CartPage() {
 
   // Check auth before starting checkout
   const handleStartCheckout = () => {
-    if (typeof window === 'undefined') return;
+    router.push('/checkout');
+    return;
 
     const token = 
       localStorage.getItem('userToken') || 
@@ -528,13 +532,30 @@ export default function CartPage() {
                           Complimentary Gift Presentation Configured
                         </h4>
                       </div>
-                      <Link
-                        href="/gifts"
-                        className="text-xs font-bold text-[#8C6D1F] hover:text-black uppercase tracking-wider transition-colors inline-flex items-center gap-1"
-                      >
-                        <span>Edit</span>
-                        <ExternalLink size={11} />
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsGiftModalOpen(true)}
+                          className="text-xs font-bold text-[#8C6D1F] hover:text-black uppercase tracking-wider transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Edit3 size={11} />
+                          <span>Edit Details</span>
+                        </button>
+                        <span className="text-gray-300">•</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGiftOptions(null);
+                            try {
+                              localStorage.removeItem('rove_amber_gift_options');
+                            } catch (e) {}
+                            message.info('Gift customization removed');
+                          }}
+                          className="text-xs text-stone-400 hover:text-red-500 uppercase tracking-wider transition-colors cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
@@ -596,12 +617,13 @@ export default function CartPage() {
                       </p>
                     </div>
 
-                    <Link
-                      href="/gifts"
-                      className="px-5 py-2.5 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#E0D8CA] text-xs font-bold uppercase tracking-wider transition-all shadow-2xs whitespace-nowrap"
+                    <button
+                      type="button"
+                      onClick={() => setIsGiftModalOpen(true)}
+                      className="px-5 py-2.5 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#E0D8CA] text-xs font-bold uppercase tracking-wider transition-all shadow-2xs whitespace-nowrap cursor-pointer"
                     >
                       Personalize Gift
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>
@@ -700,7 +722,16 @@ export default function CartPage() {
 
           </div>
         )}
-      </main>
+        {/* Gift Studio Personalization Popup Modal */}
+      <GiftPersonalizeModal
+        open={isGiftModalOpen}
+        onClose={() => setIsGiftModalOpen(false)}
+        initialData={giftOptions}
+        onSave={(data) => {
+          setGiftOptions(data);
+        }}
+      />
+    </main>
 
       {/* MODAL: AUTHENTICATION GATE PROMPT (For Unauthenticated Checkout Attempts) */}
       <Modal
