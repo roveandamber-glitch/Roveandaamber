@@ -76,17 +76,16 @@ export default function CartPage() {
     document.title = 'Shopping Bag | ROVE & AMBER Fine Fragrance';
     loadCart();
 
-    // Read saved gift options from localStorage if any
-    try {
-      const storedGifts = localStorage.getItem('rove_amber_gift_options');
-      if (storedGifts) {
-        const parsed = JSON.parse(storedGifts);
-        if (parsed && (parsed.recipientName || parsed.messageText || parsed.packagingId)) {
-          setGiftOptions(parsed);
-        }
-      }
-    } catch (e) {
-      console.warn('Could not read gift options', e);
+    const liveGifts = cartService.getGiftOptions();
+    if (liveGifts && (liveGifts.isGift || liveGifts.giftRecipient?.name)) {
+      setGiftOptions({
+        recipientName: liveGifts.giftRecipient?.name || '',
+        recipientPhone: liveGifts.giftRecipient?.phone || '',
+        recipientAddress: liveGifts.giftRecipient?.address || '',
+        occasion: liveGifts.occasion || '',
+        giftMessage: liveGifts.giftMessage || '',
+        giftWrap: liveGifts.giftWrap
+      });
     }
 
     window.addEventListener('cartChange', loadCart);
@@ -551,7 +550,7 @@ export default function CartPage() {
                           onClick={() => {
                             setGiftOptions(null);
                             try {
-                              localStorage.removeItem('rove_amber_gift_options');
+                              
                             } catch (e) {}
                             message.info('Gift customization removed');
                           }}

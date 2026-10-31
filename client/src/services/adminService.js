@@ -37,9 +37,9 @@ const adminService = {
   /* --------------------------------------------------------------------------
      1. DASHBOARD & OVERVIEW
      -------------------------------------------------------------------------- */
-  getDashboardStats: async () => {
+  getDashboardStats: async (params = {}) => {
     try {
-      const response = await api.get('/admin/stats');
+      const response = await api.get('/admin/stats', { params });
       if (response?.data?.success) {
         isBackendConnected = true;
         return {

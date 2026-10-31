@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, message } from 'antd';
 import { Gift, Sparkles, Heart, Check, X, BookmarkCheck } from 'lucide-react';
+import cartService from '@/services/cartService';
 
 const { Option } = Select;
 
@@ -116,11 +117,7 @@ export default function GiftPersonalizeModal({
       giftWrap: true
     };
 
-    try {
-      localStorage.setItem('rove_amber_gift_options', JSON.stringify(giftData));
-    } catch (e) {
-      console.warn('Could not save gift options to localStorage', e);
-    }
+    cartService.updateGiftOptions(giftData);
 
     if (onSave) {
       onSave(giftData);

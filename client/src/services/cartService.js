@@ -1,135 +1,352 @@
-// ROVE & AMBER Luxury Fragrance Cart State Manager
-const BASE_CART_KEY = 'rove_amber_cart';
+import api from './api';
 
 /**
- * Helper to determine active cart key scoped to the logged-in customer.
- * - Logged-in Customer: `rove_amber_cart_<userId>` (completely private, isolated per customer)
- * - Guest Visitor: `rove_amber_cart_guest`
- * This ensures newly created user accounts ALWAYS start with a pristine, empty cart
- * and never inherit leftover items from previous browser sessions or test data.
+ * ROVE & AMBER — Luxury Fragrance Cart State Manager
+ * 
+ * ARCHITECTURAL MANDATE:
+ * - Strictly NO cart items stored in localStorage.
+ * - All shopping bag data, quantities, pricing, and gift preferences
+ *   are persisted directly in the MongoDB Atlas database via the backend Cart API (/api/cart).
+ * - localStorage is strictly reserved ONLY for authentication tokens (userToken, adminToken).
  */
-const getCartKey = () => {
-  if (typeof window === 'undefined') return BASE_CART_KEY;
-  try {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      const uid = user?.id || user?._id;
-      if (uid && user?.role !== 'admin') {
-        return `${BASE_CART_KEY}_${uid}`;
-      }
-    }
-  } catch (e) {}
-  return `${BASE_CART_KEY}_guest`;
+
+// In-memory runtime cart state
+let inMemoryCart = [];
+let inMemorySummary = null;
+let hasInitialFetch = false;
+let isFetching = false;
+
+// Format backend item to standard client representation
+const formatItem = (item) => {
+  if (!item) return null;
+  return {
+    id: item.itemId || item._id || item.productId,
+    itemId: item.itemId || item._id,
+    productId: item.productId?._id || item.productId || item.id,
+    name: item.name || item.productId?.name || 'Artisanal Perfume Flacon',
+    slug: item.slug || item.productId?.slug || '',
+    price: Number(item.price || item.productId?.price || 0),
+    originalPrice: Number(item.originalPrice || item.productId?.originalPrice || item.price || 0),
+    image: item.image || item.productId?.image || '/images/perfumes/signature_collection.jpg',
+    size: (item.size || '50ML').toUpperCase(),
+    quantity: Math.max(1, parseInt(item.quantity, 10) || 1),
+    maxStock: item.maxStock !== undefined ? item.maxStock : (item.productId?.stock ?? 99),
+    itemTotal: Number(item.itemTotal || ((item.price || 0) * (item.quantity || 1)))
+  };
 };
 
+// Purge any deprecated legacy localStorage keys so localStorage stays pristine
+const purgeLegacyLocalStorage = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    const keysToRemove = [
+      'rove_amber_cart',
+      'rove_amber_cart_guest',
+      'zyra_cart',
+      'cart',
+      'rove_amber_gift_options',
+      'rove_amber_gift_note'
+    ];
+
+    // Scan for any user-scoped legacy cart keys
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('rove_amber_cart') || k.includes('cart_') || k.includes('gift_options'))) {
+        keysToRemove.push(k);
+      }
+    }
+
+    keysToRemove.forEach((k) => {
+      try { localStorage.removeItem(k); } catch (e) {}
+    });
+  } catch (e) {}
+};
+
+// Run purge on module load
+if (typeof window !== 'undefined') {
+  purgeLegacyLocalStorage();
+}
+
 export const cartService = {
-  getCart: () => {
+  /**
+   * Fetch authoritative cart state from MongoDB Atlas database
+   */
+  fetchCart: async () => {
     if (typeof window === 'undefined') return [];
+    if (isFetching) return inMemoryCart;
+    isFetching = true;
+
     try {
-      const storageKey = getCartKey();
-      const data = localStorage.getItem(storageKey);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      console.error('Error reading cart from localStorage', e);
-      return [];
+      const res = await api.get('/cart');
+      if (res?.data?.success && res.data.data) {
+        const cartData = res.data.data;
+        inMemorySummary = cartData;
+        const rawItems = cartData.items || [];
+        inMemoryCart = rawItems.map(formatItem).filter(Boolean);
+        hasInitialFetch = true;
+
+        window.dispatchEvent(new Event('cartChange'));
+        return inMemoryCart;
+      }
+    } catch (err) {
+      console.warn('Backend /api/cart fetch notice:', err?.response?.data?.message || err.message);
+    } finally {
+      isFetching = false;
     }
+
+    return inMemoryCart;
   },
 
-  saveCart: (cart) => {
-    if (typeof window === 'undefined') return;
-    try {
-      const storageKey = getCartKey();
-      localStorage.setItem(storageKey, JSON.stringify(cart));
-      window.dispatchEvent(new Event('cartChange'));
-    } catch (e) {
-      console.error('Error saving cart to localStorage', e);
+  /**
+   * Synchronous accessor for fast React rendering
+   * Initiates background database sync if not yet loaded
+   */
+  getCart: () => {
+    if (typeof window !== 'undefined' && !hasInitialFetch && !isFetching) {
+      cartService.fetchCart();
     }
+    return [...inMemoryCart];
   },
 
-  addToCart: (item) => {
-    const cart = cartService.getCart();
-    const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
-    const existingIndex = cart.findIndex((i) => `${i.productId || i.id}_${i.size || '50ML'}` === itemKey);
+  /**
+   * Add a product flacon to the database cart
+   */
+  addToCart: async (item) => {
+    const pId = item.productId || item.id;
+    const pSize = item.size || '50ml';
+    const pQty = parseInt(item.quantity, 10) || 1;
+    const pName = item.name || '';
 
-    const maxStock = item.maxStock !== undefined ? item.maxStock : 99;
-    const addQty = parseInt(item.quantity, 10) || 1;
+    // Optimistic UI update in memory
+    const existingIdx = inMemoryCart.findIndex(
+      (i) => String(i.productId) === String(pId) && i.size.toLowerCase() === pSize.toLowerCase()
+    );
 
-    if (existingIndex > -1) {
-      const currentQty = cart[existingIndex].quantity;
-      const newQty = Math.min(maxStock, currentQty + addQty);
-      cart[existingIndex].quantity = newQty;
-      cart[existingIndex].price = item.price;
-      cart[existingIndex].name = item.name;
-      cart[existingIndex].image = item.image;
+    if (existingIdx > -1) {
+      inMemoryCart[existingIdx].quantity += pQty;
     } else {
-      cart.push({
-        id: item.productId || item.id,
-        productId: item.productId || item.id,
-        name: item.name,
+      inMemoryCart.push(formatItem({
+        itemId: `temp_${Date.now()}`,
+        productId: pId,
+        name: pName,
         price: item.price,
         image: item.image,
-        size: (item.size || '50ML').toUpperCase(),
-        quantity: Math.min(maxStock, addQty),
-        maxStock: maxStock
-      });
+        size: pSize,
+        quantity: pQty,
+        maxStock: item.maxStock || 99
+      }));
     }
+    window.dispatchEvent(new Event('cartChange'));
 
-    cartService.saveCart(cart);
-    return cart;
-  },
-
-  updateQuantity: (productId, size, newQty) => {
-    let cart = cartService.getCart();
-    const itemKey = `${productId}_${size}`;
-    
-    if (newQty <= 0) {
-      cart = cart.filter((i) => `${i.productId || i.id}_${i.size || '50ML'}` !== itemKey);
-    } else {
-      cart = cart.map((item) => {
-        if (`${item.productId || item.id}_${item.size || '50ML'}` === itemKey) {
-          const clampedQty = item.maxStock ? Math.min(item.maxStock, newQty) : newQty;
-          return { ...item, quantity: clampedQty };
-        }
-        return item;
-      });
-    }
-
-    cartService.saveCart(cart);
-    return cart;
-  },
-
-  removeFromCart: (productId, size) => {
-    const itemKey = `${productId}_${size}`;
-    const cart = cartService.getCart().filter((i) => `${i.productId || i.id}_${i.size || '50ML'}` !== itemKey);
-    cartService.saveCart(cart);
-    return cart;
-  },
-
-  clearCart: () => {
-    if (typeof window === 'undefined') return;
+    // Persist to MongoDB Atlas backend
     try {
-      const currentKey = getCartKey();
-      localStorage.removeItem(currentKey);
-      // Clean up legacy shared and guest keys
-      localStorage.removeItem(BASE_CART_KEY);
-      localStorage.removeItem('zyra_cart');
-      localStorage.removeItem(`${BASE_CART_KEY}_guest`);
-      localStorage.removeItem('rove_amber_gift_options');
-      window.dispatchEvent(new Event('cartChange'));
-    } catch (e) {
-      console.error('Error clearing cart', e);
+      const res = await api.post('/cart/items', {
+        productId: pId,
+        id: pId,
+        name: pName,
+        size: pSize,
+        quantity: pQty
+      });
+
+      if (res?.data?.success && res.data.data) {
+        const cartData = res.data.data;
+        inMemorySummary = cartData;
+        inMemoryCart = (cartData.items || []).map(formatItem).filter(Boolean);
+        hasInitialFetch = true;
+        window.dispatchEvent(new Event('cartChange'));
+        return inMemoryCart;
+      }
+    } catch (err) {
+      console.error('Failed to add item to database cart:', err);
+      // Re-sync with actual DB state
+      await cartService.fetchCart();
     }
+
+    return inMemoryCart;
   },
 
+  /**
+   * Update item quantity in database cart
+   */
+  updateQuantity: async (productIdOrItemId, size, newQty) => {
+    const qty = parseInt(newQty, 10);
+
+    // Locate item
+    const targetItem = inMemoryCart.find(
+      (i) => (i.itemId === productIdOrItemId || String(i.productId) === String(productIdOrItemId)) &&
+             (!size || i.size.toLowerCase() === String(size).toLowerCase())
+    );
+
+    if (!targetItem) {
+      return inMemoryCart;
+    }
+
+    const itemId = targetItem.itemId;
+
+    // Optimistic memory update
+    if (qty <= 0) {
+      inMemoryCart = inMemoryCart.filter((i) => i.itemId !== itemId);
+    } else {
+      targetItem.quantity = qty;
+    }
+    window.dispatchEvent(new Event('cartChange'));
+
+    // Backend database persistence
+    try {
+      if (qty <= 0) {
+        await api.delete(`/cart/items/${itemId}`);
+      } else {
+        await api.put(`/cart/items/${itemId}`, { quantity: qty });
+      }
+      await cartService.fetchCart();
+    } catch (err) {
+      console.error('Failed to update quantity in database cart:', err);
+      await cartService.fetchCart();
+    }
+
+    return inMemoryCart;
+  },
+
+  /**
+   * Remove a fragrance item from the database cart
+   */
+  removeFromCart: async (productIdOrItemId, size) => {
+    const targetItem = inMemoryCart.find(
+      (i) => (i.itemId === productIdOrItemId || String(i.productId) === String(productIdOrItemId)) &&
+             (!size || i.size.toLowerCase() === String(size).toLowerCase())
+    );
+
+    if (!targetItem) {
+      return inMemoryCart;
+    }
+
+    const itemId = targetItem.itemId;
+
+    // Optimistic memory removal
+    inMemoryCart = inMemoryCart.filter((i) => i.itemId !== itemId);
+    window.dispatchEvent(new Event('cartChange'));
+
+    // Backend database removal
+    try {
+      await api.delete(`/cart/items/${itemId}`);
+      await cartService.fetchCart();
+    } catch (err) {
+      console.error('Failed to remove item from database cart:', err);
+      await cartService.fetchCart();
+    }
+
+    return inMemoryCart;
+  },
+
+  /**
+   * Clear all items from the database cart
+   */
+  clearCart: async () => {
+    inMemoryCart = [];
+    inMemorySummary = null;
+    purgeLegacyLocalStorage();
+    window.dispatchEvent(new Event('cartChange'));
+
+    try {
+      await api.delete('/cart');
+    } catch (err) {
+      console.warn('Backend cart clear notice:', err.message);
+    }
+
+    return [];
+  },
+
+  /**
+   * Total item count
+   */
   getCartCount: () => {
-    const cart = cartService.getCart();
-    return cart.reduce((acc, item) => acc + (parseInt(item.quantity, 10) || 1), 0);
+    return inMemoryCart.reduce((acc, item) => acc + (parseInt(item.quantity, 10) || 1), 0);
   },
 
+  /**
+   * Total cart subtotal in Rupees
+   */
   getCartTotal: () => {
-    const cart = cartService.getCart();
-    return cart.reduce((acc, item) => acc + (Number(item.price) || 0) * (parseInt(item.quantity, 10) || 1), 0);
+    if (inMemorySummary && inMemorySummary.total !== undefined) {
+      return inMemorySummary.total;
+    }
+    return inMemoryCart.reduce(
+      (acc, item) => acc + (Number(item.price) || 0) * (parseInt(item.quantity, 10) || 1),
+      0
+    );
+  },
+
+  /**
+   * Retrieve active gift options from the database cart
+   */
+  getGiftOptions: () => {
+    if (!inMemorySummary) return null;
+    return {
+      isGift: Boolean(inMemorySummary.isGift),
+      occasion: inMemorySummary.occasion || '',
+      giftMessage: inMemorySummary.giftMessage || '',
+      giftWrap: Boolean(inMemorySummary.giftWrap),
+      giftRecipient: inMemorySummary.giftRecipient || {}
+    };
+  },
+
+  /**
+   * Save gift personalization preferences directly to the database cart
+   */
+  updateGiftOptions: async (giftData) => {
+    try {
+      const res = await api.put('/cart/gift-options', {
+        isGift: true,
+        occasion: giftData.occasion || '',
+        giftMessage: giftData.giftMessage || giftData.messageText || '',
+        giftWrap: giftData.giftWrap !== undefined ? giftData.giftWrap : true,
+        giftRecipient: {
+          name: giftData.recipientName || '',
+          phone: giftData.recipientPhone || '',
+          address: giftData.recipientAddress || '',
+          city: giftData.recipientCity || '',
+          postalCode: giftData.recipientPostalCode || '',
+          email: giftData.recipientEmail || ''
+        }
+      });
+
+      if (res?.data?.success && res.data.data) {
+        inMemorySummary = res.data.data;
+        window.dispatchEvent(new Event('cartChange'));
+        return inMemorySummary;
+      }
+    } catch (err) {
+      console.error('Failed to update gift options in DB:', err);
+    }
+    return null;
+  },
+
+  /**
+   * Apply promotional coupon
+   */
+  applyCoupon: async (code) => {
+    const res = await api.post('/cart/apply-coupon', { code });
+    if (res?.data?.success && res.data.data) {
+      inMemorySummary = res.data.data;
+      inMemoryCart = (res.data.data.items || []).map(formatItem).filter(Boolean);
+      window.dispatchEvent(new Event('cartChange'));
+      return res.data;
+    }
+    return res?.data;
+  },
+
+  /**
+   * Remove promotional coupon
+   */
+  removeCoupon: async () => {
+    const res = await api.delete('/cart/remove-coupon');
+    if (res?.data?.success && res.data.data) {
+      inMemorySummary = res.data.data;
+      inMemoryCart = (res.data.data.items || []).map(formatItem).filter(Boolean);
+      window.dispatchEvent(new Event('cartChange'));
+      return res.data;
+    }
+    return res?.data;
   }
 };
 

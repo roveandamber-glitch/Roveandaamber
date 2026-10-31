@@ -95,12 +95,18 @@ export default function AdminOrdersPage() {
   };
 
   const filteredOrders = (Array.isArray(orders) ? orders : []).filter(o => {
-    const matchesSearch = 
-      o.orderNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
-      o.customer?.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      o.customer?.email?.toLowerCase().includes(searchText.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || o.status === statusFilter;
-    const matchesPayment = paymentFilter === 'ALL' || o.payment?.status === paymentFilter;
+    const q = (searchText || '').trim().toLowerCase();
+    const orderNum = (o.orderNumber || o.orderId || '').toLowerCase();
+    const cName = (o.customer?.name || o.customerName || '').toLowerCase();
+    const cEmail = (o.customer?.email || o.email || '').toLowerCase();
+
+    const matchesSearch = !q || orderNum.includes(q) || cName.includes(q) || cEmail.includes(q);
+    const ordStatus = (o.status || '').toLowerCase();
+    const matchesStatus = statusFilter === 'ALL' || ordStatus === statusFilter.toLowerCase();
+    const pStatus = (o.payment?.status || o.paymentStatus || '').toLowerCase();
+    const matchesPayment = paymentFilter === 'ALL' || 
+      (paymentFilter === 'COD' ? (pStatus.includes('cod') || pStatus.includes('delivery')) : pStatus === paymentFilter.toLowerCase());
+
     return matchesSearch && matchesStatus && matchesPayment;
   });
 
@@ -168,7 +174,7 @@ export default function AdminOrdersPage() {
       width: 130,
       render: (_, record) => (
         <span className="text-xs font-bold text-[#1B100A]">
-          ₹{(record.total || 4950).toLocaleString('en-IN')}
+          ₹{Number(record.total ?? record.total_amount ?? 0).toLocaleString('en-IN')}
         </span>
       )
     },
@@ -211,7 +217,7 @@ export default function AdminOrdersPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 110,
-      render: (val) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{val || '29 Oct 2026'}</span>
+      render: (val) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{record.date || (val ? new Date(val).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Today')}</span>
     },
     {
       title: 'Action',
@@ -391,11 +397,11 @@ export default function AdminOrdersPage() {
                 <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-2 text-[11px] text-gray-600">
                   <div className="flex items-center gap-1.5">
                     <Phone size={13} className="text-[#B8860B]" />
-                    <span>{selectedOrder.customer?.phone || '+91 98765 43210'}</span>
+                    <span>{selectedOrder.customer?.phone || selectedOrder.phone || 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <MapPin size={13} className="text-[#B8860B]" />
-                    <span className="truncate">{selectedOrder.shippingAddress?.city || 'Mumbai, MH'}</span>
+                    <span className="truncate">{selectedOrder.address || (typeof selectedOrder.shippingAddress === 'string' ? selectedOrder.shippingAddress : selectedOrder.shippingAddress?.city) || 'Direct Dispatch'}</span>
                   </div>
                 </div>
               </div>

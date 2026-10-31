@@ -13,22 +13,12 @@ import { luxuryCategories, initialPerfumes } from './seedData.js';
  */
 export const seedDatabase = async () => {
   try {
-    // 1. Seed or verify administrator account using environment configuration
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    const adminName = process.env.ADMIN_NAME || 'Admin User';
-
+    // 1. Verify administrator account in database
     const existingAdmin = await User.findOne({ role: 'admin' });
-
-    if (!existingAdmin && adminEmail && adminPassword) {
-      const hashedPassword = await bcrypt.hash(adminPassword, 10);
-      await User.create({
-        name: adminName,
-        email: adminEmail.toLowerCase().trim(),
-        password: hashedPassword,
-        role: 'admin'
-      });
-      console.log(`✨ Seeded default admin account from environment: ${adminEmail}`);
+    if (existingAdmin) {
+      console.log(`✨ Verified active administrator account in database: ${existingAdmin.email}`);
+    } else {
+      console.log('ℹ️ Administrator accounts are managed directly via backend MongoDB database.');
     }
 
     // 2. Seed default categories if empty

@@ -150,13 +150,7 @@ export const UserModel = {
   },
 
   findAdmin: async () => {
-    let admin = null;
-    if (process.env.ADMIN_EMAIL) {
-      admin = await User.findOne({ email: process.env.ADMIN_EMAIL.toLowerCase().trim() }).select('-password');
-    }
-    if (!admin) {
-      admin = await User.findOne({ role: 'admin' }).select('-password');
-    }
+    const admin = await User.findOne({ role: 'admin' }).select('-password');
     if (!admin) return null;
     const doc = admin.toObject ? admin.toObject() : admin;
     return { ...doc, id: admin._id ? admin._id.toString() : admin.id, _id: admin._id ? admin._id.toString() : admin._id };

@@ -1,5 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-const BACKEND_URL = API_URL.replace('/api', '');
+import { BASE_URL } from '@/services/api';
+
+const BACKEND_URL = BASE_URL;
 
 export const DEFAULT_FALLBACK_IMAGE = '/images/no-image.jpg';
 

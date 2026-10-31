@@ -20,20 +20,17 @@ export const protect = async (req, res, next) => {
     });
   }
 
-  // Developer & Preview admin session support (resolves admin dynamically without hardcoded email)
+  // Developer & Preview admin session support (resolves admin dynamically directly from database)
   if (token === 'preview_admin_session_token') {
     const adminUser = await UserModel.findAdmin();
     if (adminUser) {
       req.user = adminUser;
       return next();
     }
-    req.user = {
-      id: 'admin-preview',
-      name: process.env.ADMIN_NAME || 'Admin User',
-      role: 'admin',
-      email: process.env.ADMIN_EMAIL || ''
-    };
-    return next();
+    return res.status(401).json({
+      success: false,
+      message: 'No administrator account found in database.'
+    });
   }
 
   try {
@@ -75,13 +72,6 @@ export const optionalAuth = async (req, res, next) => {
     const adminUser = await UserModel.findAdmin();
     if (adminUser) {
       req.user = adminUser;
-    } else {
-      req.user = {
-        id: 'admin-preview',
-        name: process.env.ADMIN_NAME || 'Admin User',
-        role: 'admin',
-        email: process.env.ADMIN_EMAIL || ''
-      };
     }
     return next();
   }

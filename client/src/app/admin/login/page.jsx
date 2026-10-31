@@ -185,7 +185,7 @@ export default function AdminLoginPage() {
             >
               <Input
                 prefix={<Mail size={14} className="text-stone-500 mr-2" />}
-                placeholder="admin@roveandamber.com"
+                placeholder="admin@company.com"
                 disabled={loading}
                 className="!bg-[#22150D]/80 !border-stone-700/80 !text-white !rounded-xl !h-11 hover:!border-[#DEB368] focus:!border-[#ECC880] placeholder:!text-stone-500 text-xs"
               />
@@ -210,17 +210,7 @@ export default function AdminLoginPage() {
               />
             </Form.Item>
 
-            {/* Quick Demo Credentials Fill Pill */}
-            <div className="mb-5 flex justify-center">
-              <button
-                type="button"
-                onClick={handleQuickFill}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-stone-400 hover:text-amber-200 text-[11px] transition-all cursor-pointer"
-              >
-                <KeyRound size={12} className="text-[#DEB368]" />
-                <span>Fill Default Credentials: <strong className="text-stone-300">admin@roveandamber.com</strong></span>
-              </button>
-            </div>
+            
 
             {/* Primary Submit Button */}
             <button

@@ -176,7 +176,7 @@ app.use('/api/reports', reportRoutes);
 // ==========================================
 // 9. Health & Diagnostics Telemetry
 // ==========================================
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
   res.json({
     status: 'online',
     uptime: `${Math.floor(process.uptime())}s`,
