@@ -647,14 +647,23 @@ const Navbar = () => {
                 href="/" 
                 prefetch={true}
                 onClick={() => setIsMenuOpen(false)}
-                className="flex flex-col items-center justify-center text-center cursor-pointer"
+                className="flex items-center gap-2.5 cursor-pointer group"
               >
-                <span className="font-serif text-[15px] sm:text-base font-semibold tracking-[0.22em] text-[#E5B869] uppercase leading-tight">
-                  ROVE & AMBER
-                </span>
-                <span className="text-[7.5px] tracking-[0.32em] uppercase font-sans font-medium text-[#8C7A6B] mt-0.5">
-                  FINE FRAGRANCE
-                </span>
+                <div className="w-8 h-8 rounded-full bg-black/95 p-1 flex items-center justify-center border border-[#E5B869]/40 shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                  <img 
+                    src="/favicon.png" 
+                    alt="ROVE & AMBER" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="flex flex-col items-start text-left">
+                  <span className="font-serif text-[15px] sm:text-base font-semibold tracking-[0.22em] text-[#C49A45] uppercase leading-tight">
+                    ROVE & AMBER
+                  </span>
+                  <span className="text-[7.5px] tracking-[0.32em] uppercase font-sans font-medium text-[#8C7A6B] mt-0.5">
+                    FINE FRAGRANCE
+                  </span>
+                </div>
               </Link>
               
               <button

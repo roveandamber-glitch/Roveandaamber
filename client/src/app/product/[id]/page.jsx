@@ -44,6 +44,7 @@ const ProductDetails = () => {
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [includeSampleBottle, setIncludeSampleBottle] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   // Related Products State
@@ -305,10 +306,24 @@ const ProductDetails = () => {
         image: currentMainImage,
         size: selectedSize || '50ml',
         quantity: quantity,
-        maxStock: maxStockForSize
+        maxStock: maxStockForSize,
+        hasSample: includeSampleBottle
       });
 
-      message.success(`Added ${product.name}${selectedSize ? ` (${selectedSize})` : ''} to cart`);
+      if (includeSampleBottle) {
+        cartService.addToCart({
+          id: `${product._id || product.id}_sample_2ml`,
+          productId: product._id || product.id,
+          name: `${product.name} (2 ml Companion Sample Bottle)`,
+          price: 199,
+          image: currentMainImage,
+          size: '2ML',
+          quantity: 1,
+          hasSample: true
+        });
+      }
+
+      message.success(`Added ${product.name}${selectedSize ? ` (${selectedSize})` : ''}${includeSampleBottle ? ' with 2 ml sample' : ''} to cart`);
 
       if (redirectToCart) {
         router.push('/cart');
@@ -628,6 +643,42 @@ const ProductDetails = () => {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* 2 ml Sample Companion Add-on (Enables Return & Refund) */}
+            <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E8DFC9] space-y-1.5 transition-all">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={includeSampleBottle}
+                  onChange={(e) => setIncludeSampleBottle(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded text-[#B86526] focus:ring-[#B86526] border-gray-300 cursor-pointer accent-[#B86526]"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between flex-wrap gap-1">
+                    <span className="text-xs font-bold text-black font-serif flex items-center gap-1.5">
+                      <span>Add Companion 2 ml Sample Bottle</span>
+                      <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-sans font-semibold">
+                        Enables Return & Refund
+                      </span>
+                    </span>
+                    <span className="text-xs font-bold text-[#A47E3B] font-sans">
+                      +₹199
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#6B5D50] leading-snug mt-1 font-light">
+                    {includeSampleBottle ? (
+                      <span className="text-emerald-800">
+                        ✓ <strong>Return & Refund Eligible:</strong> Test the 2 ml sample vial first while keeping the main flacon sealed. If unsatisfied, return within 7 days for a 100% refund.
+                      </span>
+                    ) : (
+                      <span className="text-amber-800">
+                        ⚠ <strong>Non-Returnable:</strong> Customers purchasing without the 2 ml sample bottle are not eligible for a return or refund.
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </label>
             </div>
 
             {/* Action Buttons: Add to Cart and Buy Now */}

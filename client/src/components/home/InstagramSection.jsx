@@ -1,6 +1,8 @@
 "use client";
 import React from 'react';
-import { Play } from 'lucide-react';
+import { Play, Instagram } from 'lucide-react';
+
+const INSTAGRAM_URL = "https://www.instagram.com/roveandamber?dlrf=NzhjOGd5aGprdG96";
 
 const INSTA_POSTS = [
   {
@@ -44,21 +46,26 @@ const InstagramSection = () => {
           </h2>
         </div>
         <a
-          href="https://instagram.com"
+          href={INSTAGRAM_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[11px] sm:text-sm lg:text-base text-[#7A6B5D] hover:text-[#1A1A1A] transition-colors font-medium tracking-wide"
+          className="inline-flex items-center gap-1.5 text-[11px] sm:text-sm lg:text-base text-[#7A6B5D] hover:text-[#1A1A1A] transition-colors font-medium tracking-wide group cursor-pointer"
         >
-          @roveandamber
+          <Instagram size={15} className="text-[#B86526] group-hover:scale-110 transition-transform" />
+          <span className="group-hover:underline">@roveandamber</span>
         </a>
       </div>
 
       {/* 4 Image Grid in one row across */}
       <div className="grid grid-cols-4 gap-1.5 sm:gap-6 lg:gap-8">
         {INSTA_POSTS.map((post) => (
-          <div
+          <a
             key={post.id}
-            className="relative rounded-lg sm:rounded-2xl lg:rounded-3xl overflow-hidden aspect-square bg-[#1E140E] group shadow-sm hover:shadow-xl transition-all"
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`View ${post.alt} on Instagram`}
+            className="group relative block rounded-lg sm:rounded-2xl lg:rounded-3xl overflow-hidden aspect-square bg-[#1E140E] shadow-sm hover:shadow-xl transition-all cursor-pointer"
           >
             <img
               src={post.image}
@@ -69,15 +76,22 @@ const InstagramSection = () => {
               }}
             />
 
+            {/* Subtle Luxury Hover Overlay with Instagram Icon */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition-colors duration-300 flex items-center justify-center pointer-events-none">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:scale-100 scale-75 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/25 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-lg">
+                <Instagram size={14} className="sm:w-5 sm:h-5 text-white" />
+              </div>
+            </div>
+
             {/* Video Play Overlay */}
             {post.isVideo && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/25 pointer-events-none group-hover:opacity-0 transition-opacity">
                 <div className="w-6 h-6 sm:w-12 sm:h-12 rounded-full bg-white/30 backdrop-blur-sm border border-white/40 flex items-center justify-center text-white pl-0.5 shadow-md">
                   <Play size={10} className="sm:w-5 sm:h-5" fill="white" />
                 </div>
               </div>
             )}
-          </div>
+          </a>
         ))}
       </div>
     </section>
