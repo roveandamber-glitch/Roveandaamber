@@ -1,15 +1,34 @@
 // ROVE & AMBER Luxury Fragrance Cart State Manager
-const CART_STORAGE_KEY = 'rove_amber_cart';
-const LEGACY_CART_KEY = 'zyra_cart';
+const BASE_CART_KEY = 'rove_amber_cart';
+
+/**
+ * Helper to determine active cart key scoped to the logged-in customer.
+ * - Logged-in Customer: `rove_amber_cart_<userId>` (completely private, isolated per customer)
+ * - Guest Visitor: `rove_amber_cart_guest`
+ * This ensures newly created user accounts ALWAYS start with a pristine, empty cart
+ * and never inherit leftover items from previous browser sessions or test data.
+ */
+const getCartKey = () => {
+  if (typeof window === 'undefined') return BASE_CART_KEY;
+  try {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      const uid = user?.id || user?._id;
+      if (uid && user?.role !== 'admin') {
+        return `${BASE_CART_KEY}_${uid}`;
+      }
+    }
+  } catch (e) {}
+  return `${BASE_CART_KEY}_guest`;
+};
 
 export const cartService = {
   getCart: () => {
     if (typeof window === 'undefined') return [];
     try {
-      let data = localStorage.getItem(CART_STORAGE_KEY);
-      if (!data) {
-        data = localStorage.getItem(LEGACY_CART_KEY);
-      }
+      const storageKey = getCartKey();
+      const data = localStorage.getItem(storageKey);
       return data ? JSON.parse(data) : [];
     } catch (e) {
       console.error('Error reading cart from localStorage', e);
@@ -20,7 +39,8 @@ export const cartService = {
   saveCart: (cart) => {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      const storageKey = getCartKey();
+      localStorage.setItem(storageKey, JSON.stringify(cart));
       window.dispatchEvent(new Event('cartChange'));
     } catch (e) {
       console.error('Error saving cart to localStorage', e);
@@ -88,9 +108,18 @@ export const cartService = {
 
   clearCart: () => {
     if (typeof window === 'undefined') return;
-    localStorage.removeItem(CART_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_CART_KEY);
-    window.dispatchEvent(new Event('cartChange'));
+    try {
+      const currentKey = getCartKey();
+      localStorage.removeItem(currentKey);
+      // Clean up legacy shared and guest keys
+      localStorage.removeItem(BASE_CART_KEY);
+      localStorage.removeItem('zyra_cart');
+      localStorage.removeItem(`${BASE_CART_KEY}_guest`);
+      localStorage.removeItem('rove_amber_gift_options');
+      window.dispatchEvent(new Event('cartChange'));
+    } catch (e) {
+      console.error('Error clearing cart', e);
+    }
   },
 
   getCartCount: () => {

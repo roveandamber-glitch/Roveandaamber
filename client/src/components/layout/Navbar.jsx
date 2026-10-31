@@ -81,9 +81,11 @@ const Navbar = () => {
     updateCartCount();
     updateWishlistCount();
     window.addEventListener('cartChange', updateCartCount);
+    window.addEventListener('authChange', updateCartCount);
     window.addEventListener('wishlistChange', updateWishlistCount);
     return () => {
       window.removeEventListener('cartChange', updateCartCount);
+      window.removeEventListener('authChange', updateCartCount);
       window.removeEventListener('wishlistChange', updateWishlistCount);
     };
   }, []);
@@ -141,6 +143,7 @@ const Navbar = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('adminKey');
+    cartService.clearCart();
     setCurrentUser(null);
     window.dispatchEvent(new Event('authChange'));
     message.success('Logged out successfully');

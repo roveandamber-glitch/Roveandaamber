@@ -38,7 +38,11 @@ const BottomNav = () => {
   useEffect(() => {
     updateCartCount();
     window.addEventListener('cartChange', updateCartCount);
-    return () => window.removeEventListener('cartChange', updateCartCount);
+    window.addEventListener('authChange', updateCartCount);
+    return () => {
+      window.removeEventListener('cartChange', updateCartCount);
+      window.removeEventListener('authChange', updateCartCount);
+    };
   }, []);
 
   const checkAuth = () => {

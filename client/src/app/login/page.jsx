@@ -17,6 +17,7 @@ import {
   CheckCircle2 
 } from 'lucide-react';
 import authService from '@/services/authService';
+import cartService from '@/services/cartService';
 
 const antdTheme = {
   token: {
@@ -299,6 +300,7 @@ const LoginContent = () => {
 
       if (res?.success && res.token && res.user) {
         authService.saveSession(res.user, res.token);
+        cartService.clearCart(); // Fresh account starts with empty cart
         message.success(`Account successfully created! Welcome to ROVE & AMBER, ${res.user.name}.`);
         router.push(redirect === '/admin' ? '/' : redirect);
       } else {

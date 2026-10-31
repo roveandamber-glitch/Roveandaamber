@@ -90,7 +90,11 @@ export default function CartPage() {
     }
 
     window.addEventListener('cartChange', loadCart);
-    return () => window.removeEventListener('cartChange', loadCart);
+    window.addEventListener('authChange', loadCart);
+    return () => {
+      window.removeEventListener('cartChange', loadCart);
+      window.removeEventListener('authChange', loadCart);
+    };
   }, [loadCart]);
 
   // Calculations
