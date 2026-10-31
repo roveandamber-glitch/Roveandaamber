@@ -54,7 +54,7 @@ export default function CheckoutPage() {
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
   
-  const [paymentMethod, setPaymentMethod] = useState('UPI');
+  const [paymentMethod, setPaymentMethod] = useState('Razorpay');
   const [upiId, setUpiId] = useState('');
   const [cardDetails, setCardDetails] = useState({
     number: '',
@@ -579,97 +579,55 @@ export default function CheckoutPage() {
                     </h2>
                   </div>
 
-                  {/* Payment Method Selector Grid */}
+                  {/* Payment Method Selector Grid - Exclusively Razorpay & Cash on Delivery */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     
-                    {/* Option 1: UPI / QR */}
+                    {/* Option 1: Razorpay (Cards, UPI, Net Banking, Wallets) */}
                     <div
-                      onClick={() => setPaymentMethod('UPI')}
+                      onClick={() => setPaymentMethod('Razorpay')}
                       className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
-                        paymentMethod === 'UPI'
-                          ? 'border-[#B8860B] bg-[#FAF8F3] ring-1 ring-[#B8860B]'
-                          : 'border-[#E0D8CA] bg-white hover:border-gray-400'
+                        paymentMethod === 'Razorpay'
+                          ? 'border-[#B8860B] bg-[#FAF8F3] ring-2 ring-[#B8860B]/40 shadow-sm'
+                          : 'border-[#E0D8CA] bg-white hover:border-[#B8860B]/50'
                       }`}
                     >
                       <div className="w-5 h-5 rounded-full border border-stone-400 flex items-center justify-center shrink-0 mt-0.5 bg-white">
-                        {paymentMethod === 'UPI' && <div className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />}
+                        {paymentMethod === 'Razorpay' && <div className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Smartphone size={16} className="text-[#8C6D1F]" />
-                          <span className="font-bold text-xs text-black">Instant UPI / QR</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-black">Razorpay</span>
+                          <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
+                            Instant
+                          </span>
                         </div>
-                        <p className="text-[11px] text-gray-500 mt-1">
-                          GPay, PhonePe, Paytm, Cred, BHIM with zero processing fees.
+                        <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                          UPI (GPay, PhonePe, Paytm), Cards, Net Banking & Wallets.
                         </p>
                       </div>
                     </div>
 
-                    {/* Option 2: Cards */}
-                    <div
-                      onClick={() => setPaymentMethod('Card')}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
-                        paymentMethod === 'Card'
-                          ? 'border-[#B8860B] bg-[#FAF8F3] ring-1 ring-[#B8860B]'
-                          : 'border-[#E0D8CA] bg-white hover:border-gray-400'
-                      }`}
-                    >
-                      <div className="w-5 h-5 rounded-full border border-stone-400 flex items-center justify-center shrink-0 mt-0.5 bg-white">
-                        {paymentMethod === 'Card' && <div className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <CreditCard size={16} className="text-[#8C6D1F]" />
-                          <span className="font-bold text-xs text-black">Credit / Debit Card</span>
-                        </div>
-                        <p className="text-[11px] text-gray-500 mt-1">
-                          Visa, Mastercard, RuPay, American Express.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Option 3: Net Banking */}
-                    <div
-                      onClick={() => setPaymentMethod('NetBanking')}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
-                        paymentMethod === 'NetBanking'
-                          ? 'border-[#B8860B] bg-[#FAF8F3] ring-1 ring-[#B8860B]'
-                          : 'border-[#E0D8CA] bg-white hover:border-gray-400'
-                      }`}
-                    >
-                      <div className="w-5 h-5 rounded-full border border-stone-400 flex items-center justify-center shrink-0 mt-0.5 bg-white">
-                        {paymentMethod === 'NetBanking' && <div className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Building2 size={16} className="text-[#8C6D1F]" />
-                          <span className="font-bold text-xs text-black">Net Banking</span>
-                        </div>
-                        <p className="text-[11px] text-gray-500 mt-1">
-                          Direct clearance with HDFC, ICICI, SBI, Axis, and all major banks.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Option 4: Cash on Delivery */}
+                    {/* Option 2: Cash on Delivery */}
                     <div
                       onClick={() => setPaymentMethod('Cash on Delivery')}
                       className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
                         paymentMethod === 'Cash on Delivery'
-                          ? 'border-[#B8860B] bg-[#FAF8F3] ring-1 ring-[#B8860B]'
-                          : 'border-[#E0D8CA] bg-white hover:border-gray-400'
+                          ? 'border-[#B8860B] bg-[#FAF8F3] ring-2 ring-[#B8860B]/40 shadow-sm'
+                          : 'border-[#E0D8CA] bg-white hover:border-[#B8860B]/50'
                       }`}
                     >
                       <div className="w-5 h-5 rounded-full border border-stone-400 flex items-center justify-center shrink-0 mt-0.5 bg-white">
                         {paymentMethod === 'Cash on Delivery' && <div className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Banknote size={16} className="text-[#8C6D1F]" />
-                          <span className="font-bold text-xs text-black">Pay on Delivery</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-black">Cash on Delivery</span>
+                          <span className="text-[10px] font-semibold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200">
+                            COD
+                          </span>
                         </div>
-                        <p className="text-[11px] text-gray-500 mt-1">
-                          Settle upon courier arrival via cash or UPI.
+                        <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                          Pay upon courier arrival at your doorstep via cash or UPI.
                         </p>
                       </div>
                     </div>
@@ -678,24 +636,22 @@ export default function CheckoutPage() {
 
                   {/* Payment Details Subform */}
                   <div className="p-4 rounded-2xl bg-[#FAF9F7] border border-[#E8DFC9] space-y-3">
-                    {paymentMethod !== 'Cash on Delivery' ? (
+                    {paymentMethod === 'Razorpay' ? (
                       <div className="space-y-2.5">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
-                            Razorpay Test Mode Active
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                            Razorpay Gateway Online
                           </span>
-                          <span className="text-[11px] text-gray-500 font-medium">100% Sandbox Safe • Zero Real Deduction</span>
+                          <span className="text-[11px] text-gray-500 font-medium">100% Encrypted & Safe • Zero Extra Fees</span>
                         </div>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          {paymentMethod === 'UPI' && 'Zero-fee instant settlement via Google Pay, PhonePe, Paytm, Cred, or QR code simulation.'}
-                          {paymentMethod === 'Card' && 'Securely pay using Visa, Mastercard, RuPay, or any test card number.'}
-                          {paymentMethod === 'NetBanking' && 'Direct clearance with HDFC, ICICI, SBI, Axis, Kotak and all major banks.'}
+                          Pay smoothly using Google Pay, PhonePe, Paytm, BHIM UPI, Visa, Mastercard, RuPay, or major Net Banking.
                         </p>
                         <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-950 flex items-start gap-2">
                           <ShieldCheck size={16} className="text-amber-700 shrink-0 mt-0.5" />
                           <span>
-                            Clicking <strong>&ldquo;Pay with Razorpay (Test Mode)&rdquo;</strong> below will immediately launch the official Razorpay test window to complete your payment test.
+                            Clicking <strong>&ldquo;Pay with Razorpay • ₹{finalTotal.toLocaleString('en-IN')}&rdquo;</strong> below will launch the official Razorpay payment window to complete your purchase.
                           </span>
                         </div>
                       </div>
@@ -703,7 +659,7 @@ export default function CheckoutPage() {
                       <div className="text-xs text-gray-600 space-y-1">
                         <p className="font-semibold text-black">Pay upon Courier Delivery</p>
                         <p className="font-light text-[11px]">
-                          Please keep exact cash or have your UPI application ready when our white-glove logistics executive arrives with your luxury fragrance order.
+                          Please keep exact cash ready or have your UPI application open when our white-glove logistics executive arrives with your luxury fragrance order.
                         </p>
                       </div>
                     )}
@@ -722,7 +678,7 @@ export default function CheckoutPage() {
                       ? 'Opening Razorpay Gateway...'
                       : paymentMethod === 'Cash on Delivery'
                       ? `Place Order (Pay on Delivery) • ₹${finalTotal.toLocaleString('en-IN')}`
-                      : `Pay with Razorpay (Test Mode) • ₹${finalTotal.toLocaleString('en-IN')}`}
+                      : `Pay with Razorpay • ₹${finalTotal.toLocaleString('en-IN')}`}
                   </span>
                 </button>
               </Form>

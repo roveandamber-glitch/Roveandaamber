@@ -243,13 +243,20 @@ export const getMyOrders = async (req, res) => {
         paymentStatus: o.paymentStatus || 'Pending',
         paymentMethod: o.paymentMethod || 'Razorpay',
         totalAmount: o.total_amount,
+        total_amount: o.total_amount,
+        total: o.total_amount,
+        subtotal: o.subtotal || o.total_amount,
+        address: o.address || 'Standard Delivery Address',
+        isGift: !!o.isGift,
+        giftMessage: o.giftMessage || '',
+        giftRecipient: o.giftRecipient || null,
         itemsCount: (o.items || []).reduce((sum, i) => sum + (i.quantity || 1), 0),
         items: o.items,
         tracking: {
           currentStage: o.status,
-          courierName: o.tracking?.courierName,
-          trackingNumber: o.tracking?.trackingNumber,
-          estimatedDelivery: o.tracking?.estimatedDelivery
+          courierName: o.tracking?.courierName || 'Maison White-Glove Express',
+          trackingNumber: o.tracking?.trackingNumber || `TRK-${String(o.id || o._id).slice(-8).toUpperCase()}`,
+          estimatedDelivery: o.tracking?.estimatedDelivery || new Date(new Date(o.createdAt || Date.now()).getTime() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         },
         invoiceUrl: `/api/orders/${ordId}/invoice`
       };
