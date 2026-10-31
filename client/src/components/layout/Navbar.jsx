@@ -102,23 +102,30 @@ const Navbar = () => {
 
   const checkAuth = () => {
     if (typeof window !== 'undefined') {
-      const token = 
-        localStorage.getItem('userToken') || 
-        localStorage.getItem('adminToken') || 
-        localStorage.getItem('token') || 
-        localStorage.getItem('adminKey');
       const userStr = localStorage.getItem('user');
-      if (token && userStr) {
+      const userToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+      
+      if (userStr) {
         try {
-          setCurrentUser(JSON.parse(userStr));
+          const parsedUser = JSON.parse(userStr);
+          // Admin credentials belong solely to /admin and should NEVER appear as a logged-in user on the customer storefront
+          if (parsedUser && parsedUser.role === 'admin') {
+            setCurrentUser(null);
+            return;
+          }
+          if (userToken && parsedUser) {
+            setCurrentUser(parsedUser);
+            return;
+          }
         } catch (e) {
-          setCurrentUser({ name: 'Customer' });
+          console.error('Error parsing customer session:', e);
         }
-      } else if (token) {
+      } else if (userToken && !localStorage.getItem('adminToken')) {
         setCurrentUser({ name: 'Customer' });
-      } else {
-        setCurrentUser(null);
+        return;
       }
+      
+      setCurrentUser(null);
     }
   };
 

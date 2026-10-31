@@ -43,23 +43,26 @@ const BottomNav = () => {
 
   const checkAuth = () => {
     if (typeof window !== 'undefined') {
-      const token = 
-        localStorage.getItem('userToken') || 
-        localStorage.getItem('adminToken') || 
-        localStorage.getItem('token') || 
-        localStorage.getItem('adminKey');
       const userStr = localStorage.getItem('user');
-      if (token && userStr) {
+      const userToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+      if (userStr) {
         try {
-          setCurrentUser(JSON.parse(userStr));
-        } catch (e) {
-          setCurrentUser({ name: 'Account' });
-        }
-      } else if (token) {
+          const parsedUser = JSON.parse(userStr);
+          // Admin credentials should never appear as customer profile in mobile bottom navigation
+          if (parsedUser && parsedUser.role === 'admin') {
+            setCurrentUser(null);
+            return;
+          }
+          if (userToken && parsedUser) {
+            setCurrentUser(parsedUser);
+            return;
+          }
+        } catch (e) {}
+      } else if (userToken && !localStorage.getItem('adminToken')) {
         setCurrentUser({ name: 'Account' });
-      } else {
-        setCurrentUser(null);
+        return;
       }
+      setCurrentUser(null);
     }
   };
 

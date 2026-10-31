@@ -25,8 +25,8 @@ export default function AdminLoginPage() {
   // If already logged in as admin, redirect directly to /admin dashboard
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const user = authService.getUser();
-      const token = authService.getToken();
+      const user = authService.getAdminUser ? authService.getAdminUser() : authService.getUser();
+      const token = authService.getAdminToken ? authService.getAdminToken() : authService.getToken();
       if (user && user.role === 'admin' && token) {
         router.replace('/admin');
       }

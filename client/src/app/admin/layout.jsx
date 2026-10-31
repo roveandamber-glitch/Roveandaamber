@@ -53,7 +53,7 @@ const AdminLayout = ({ children }) => {
       }
 
       const token = localStorage.getItem('adminToken') || localStorage.getItem('adminKey');
-      const userStr = localStorage.getItem('user');
+      const userStr = localStorage.getItem('adminUser') || localStorage.getItem('user');
       let userRole = null;
       if (userStr) {
         try {
@@ -83,7 +83,7 @@ const AdminLayout = ({ children }) => {
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminKey');
       localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      localStorage.removeItem('adminUser');
       window.dispatchEvent(new Event('authChange'));
     }
     router.push('/admin/login');
