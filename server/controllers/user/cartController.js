@@ -26,17 +26,19 @@ export const getCart = async (req, res) => {
 // 2. Add Product to Shopping Cart
 export const addItemToCart = async (req, res) => {
   try {
-    const { productId, size, quantity } = req.body;
+    const { productId, id, name, size, quantity } = req.body;
+    const targetId = productId || id;
 
-    if (!productId) {
-      return res.status(400).json({ success: false, message: 'productId is required.' });
+    if (!targetId && !name) {
+      return res.status(400).json({ success: false, message: 'productId or name is required.' });
     }
 
     const { userId, guestId } = getIdentity(req);
     const updatedCart = await CartModel.addItem({
       userId,
       guestId,
-      productId,
+      productId: targetId,
+      name,
       size: size || '50ml',
       quantity: parseInt(quantity, 10) || 1
     });

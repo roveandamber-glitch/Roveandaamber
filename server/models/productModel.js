@@ -353,15 +353,32 @@ export const ProductModel = {
     });
   },
 
-  findById: async (id) => {
-    if (!id) return null;
+  findById: async (id, nameFallback = null) => {
+    if (!id && !nameFallback) return null;
     let product = null;
 
-    if (mongoose.Types.ObjectId.isValid(id)) {
+    if (id && mongoose.Types.ObjectId.isValid(id)) {
       product = await Product.findById(id).populate('category_id');
     }
-    if (!product) {
+    if (!product && id) {
       product = await Product.findOne({ slug: String(id).toLowerCase().trim() }).populate('category_id');
+    }
+    if (!product) {
+      const searchTarget = nameFallback || id;
+      if (searchTarget) {
+        product = await Product.findOne({
+          $or: [
+            { name: new RegExp(`^${String(searchTarget).trim()}$`, 'i') },
+            { slug: String(searchTarget).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-') }
+          ]
+        }).populate('category_id');
+
+        if (!product) {
+          product = await Product.findOne({
+            name: new RegExp(String(searchTarget).trim(), 'i')
+          }).populate('category_id');
+        }
+      }
     }
 
     if (!product) return null;

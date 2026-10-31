@@ -205,8 +205,11 @@ export const CartModel = {
     return calculateCartSummary(cart);
   },
 
-  addItem: async ({ userId, guestId, productId, size = '50ml', quantity = 1 }) => {
-    const product = await ProductModel.findById(productId);
+  addItem: async ({ userId, guestId, productId, name, size = '50ml', quantity = 1 }) => {
+    let product = await ProductModel.findById(productId, name);
+    if (!product && name) {
+      product = await ProductModel.findById(null, name);
+    }
     if (!product) {
       throw new Error('Perfume product not found.');
     }
