@@ -21,6 +21,8 @@ import { message, Modal } from 'antd';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { cartService } from '@/services/cartService';
+import productService from '@/services/productService';
+import { getImageUrl } from '@/utils/imageHelper';
 
 const GIFT_CATEGORIES = [
   { id: 'birthday', name: 'Birthday Gifts', icon: Cake, filter: 'Birthday' },
@@ -29,69 +31,6 @@ const GIFT_CATEGORIES = [
   { id: 'for-him', name: 'For Him', icon: Crown, filter: 'Men' },
   { id: 'wedding', name: 'Wedding Gifts', icon: Sparkles, filter: 'Wedding' },
   { id: 'special', name: 'Special Occasions', icon: Star, filter: 'Special' }
-];
-
-const FEATURED_GIFT_SETS = [
-  {
-    id: 'gift-royal-elegance',
-    _id: 'gift-royal-elegance',
-    name: 'Royal Elegance Gift Set',
-    slug: 'royal-elegance-gift-set',
-    price: 5850,
-    originalPrice: 7200,
-    rating: 5.0,
-    reviewsCount: 38,
-    isBestSeller: false,
-    image: '/images/perfumes/gift_set_royal_elegance.jpg',
-    fallback: '/images/perfumes/signature_collection.jpg',
-    description: 'Amber Royal Eau de Parfum (100ml) paired with artisanal amber candle and gold velvet coffret.',
-    notes: 'Aged Amber • Bulgarian Rose • Sandalwood'
-  },
-  {
-    id: 'gift-oud-luxury',
-    _id: 'gift-oud-luxury',
-    name: 'Oud Luxury Set',
-    slug: 'oud-luxury-set',
-    price: 6250,
-    originalPrice: 7800,
-    rating: 5.0,
-    reviewsCount: 64,
-    isBestSeller: true,
-    image: '/images/perfumes/gift_set_oud_luxury.jpg',
-    fallback: '/images/perfumes/noir_intense.jpg',
-    description: 'Oud Noir Extrait (100ml) accompanied by Cambodian Oud travel flacon (20ml) in obsidian silk box.',
-    notes: 'Cambodian Oud • Smoked Birch • Tonka'
-  },
-  {
-    id: 'gift-velvet-romance',
-    _id: 'gift-velvet-romance',
-    name: 'Velvet Romance Set',
-    slug: 'velvet-romance-set',
-    price: 4950,
-    originalPrice: 6100,
-    rating: 4.9,
-    reviewsCount: 42,
-    isBestSeller: false,
-    image: '/images/perfumes/gift_set_velvet_romance.jpg',
-    fallback: '/images/perfumes/gemini_rose_elixir.jpg',
-    description: 'Rose Elixir (100ml) with nourishing perfumed body silk and embossed greeting card in blush coffret.',
-    notes: 'Damask Rose • Pink Pepper • Ambergris'
-  },
-  {
-    id: 'gift-signature-collection',
-    _id: 'gift-signature-collection',
-    name: 'Signature Collection',
-    slug: 'signature-collection',
-    price: 7450,
-    originalPrice: 9200,
-    rating: 5.0,
-    reviewsCount: 89,
-    isBestSeller: false,
-    image: '/images/perfumes/gift_set_signature_coffret.jpg',
-    fallback: '/images/perfumes/amber_oud_perfume.jpg',
-    description: 'Duo grand flacons: Amber Royal & Oud Noir (100ml each) presented in heavy embossed gold foil chest.',
-    notes: 'Aged Amber • Cambodian Oud • Royal Woods'
-  }
 ];
 
 const OCCASIONS_DATA = [
@@ -143,6 +82,8 @@ const CUSTOMER_REVIEWS = [
 ];
 
 export default function GiftsPage() {
+  const [giftSets, setGiftSets] = useState([]);
+  const [loadingGifts, setLoadingGifts] = useState(true);
   const [wishlist, setWishlist] = useState([]);
   const [addingId, setAddingId] = useState(null);
   const [isPersonalizeOpen, setIsPersonalizeOpen] = useState(false);
@@ -295,7 +236,7 @@ export default function GiftsPage() {
             const IconComponent = item.icon;
             return (
               <a
-                key={item.id}
+                key={itemId}
                 href="#featured-gift-sets"
                 className="flex flex-col items-center text-center group cursor-pointer"
               >
@@ -401,8 +342,10 @@ export default function GiftsPage() {
 
         {/* 4 Cards Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7">
-          {FEATURED_GIFT_SETS.map((item) => {
-            const isFavorited = wishlist.includes(item.id);
+          {giftSets.map((item) => {
+            const itemId = item._id || item.id;
+            const itemImg = getImageUrl(item.image || item.images?.[0]?.url || item.images?.[0]);
+            const isFavorited = wishlist.includes(itemId);
             return (
               <div
                 key={item.id}
@@ -419,7 +362,7 @@ export default function GiftsPage() {
                   {/* Wishlist Button */}
                   <button
                     type="button"
-                    onClick={(e) => toggleWishlist(e, item.id)}
+                    onClick={(e) => toggleWishlist(e, itemId)}
                     className={`absolute top-2 right-2 z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-white/90 backdrop-blur-md shadow-xs border border-white/60 transition-all hover:scale-110 active:scale-95 ${
                       isFavorited ? 'text-rose-600 bg-rose-50' : 'text-gray-400 hover:text-[#1A1A1A]'
                     }`}
@@ -429,7 +372,7 @@ export default function GiftsPage() {
                   </button>
 
                   <img
-                    src={item.image}
+                    src={itemImg}
                     alt={item.name}
                     className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out drop-shadow-md"
                     onError={(e) => {
@@ -455,11 +398,11 @@ export default function GiftsPage() {
                 <button
                   type="button"
                   onClick={(e) => handleAddToCart(e, item)}
-                  disabled={addingId === item.id}
+                  disabled={addingId === itemId}
                   className="w-full py-2 sm:py-2.5 px-3 rounded-xl bg-[#1E120A] hover:bg-[#DEB368] text-white hover:text-[#1E120A] text-xs font-medium tracking-wide flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 shadow-sm cursor-pointer"
                 >
                   <ShoppingBag size={13} strokeWidth={2} />
-                  <span>{addingId === item.id ? 'Adding...' : 'Add to Cart'}</span>
+                  <span>{addingId === itemId ? 'Adding...' : 'Add to Cart'}</span>
                 </button>
               </div>
             );

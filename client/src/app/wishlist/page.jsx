@@ -18,7 +18,7 @@ import ProductCard from '@/components/product/ProductCard';
 import QuickViewModal from '@/components/common/QuickViewModal';
 import productService from '@/services/productService';
 import { cartService } from '@/services/cartService';
-import { DUMMY_PRODUCTS } from '@/data/dummyProducts';
+
 
 export default function WishlistPage() {
   const [savedIds, setSavedIds] = useState([]);
@@ -26,7 +26,7 @@ export default function WishlistPage() {
   const [unavailableCount, setUnavailableCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isUsingFallback, setIsUsingFallback] = useState(false);
+
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [isAddingAll, setIsAddingAll] = useState(false);
 
@@ -49,7 +49,7 @@ export default function WishlistPage() {
     }
   }, []);
 
-  // Resolve saved IDs against live API or fallback catalog
+  // Resolve saved IDs strictly against live API catalog
   const loadWishlistItems = useCallback(async () => {
     const ids = getStoredWishlistIds();
     setSavedIds(ids);
@@ -65,7 +65,6 @@ export default function WishlistPage() {
     setError(null);
 
     let allCatalogProducts = [];
-    let isFallback = false;
 
     try {
       const res = await productService.getAllProducts();
@@ -76,18 +75,13 @@ export default function WishlistPage() {
       } else if (Array.isArray(res) && res.length > 0) {
         allCatalogProducts = res;
       } else {
-        // Fallback to offline catalog if response is empty
-        allCatalogProducts = DUMMY_PRODUCTS;
-        isFallback = true;
+        allCatalogProducts = [];
       }
     } catch (apiErr) {
-      console.warn('Live API unavailable for wishlist resolution, using showcase catalog:', apiErr);
-      allCatalogProducts = DUMMY_PRODUCTS;
-      isFallback = true;
-      setError('Live atelier catalog is currently offline. Showing saved fragrances from local showcase archive.');
+      console.warn('Live API unavailable for wishlist resolution:', apiErr);
+      allCatalogProducts = [];
+      setError('Unable to reach the live store catalog.');
     }
-
-    setIsUsingFallback(isFallback);
 
     // Resolve IDs against the catalog with deduplication
     const matched = [];
@@ -279,26 +273,6 @@ export default function WishlistPage() {
               )}
             </div>
           </div>
-
-          {/* Atelier Offline / Showcase Notice */}
-          {(isUsingFallback || error) && (
-            <div className="mb-6 p-4 rounded-xl bg-[#FAF6ED] border border-[#E8DFC9] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#6B5738]">
-              <div className="flex items-center gap-2.5">
-                <AlertCircle size={16} className="text-[#B8860B] flex-shrink-0" />
-                <span>
-                  <strong>Atelier Showcase Mode:</strong> {error || 'Displaying saved creations from the local showcase archive while the live store server is offline.'}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={loadWishlistItems}
-                className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-[11px] text-[#B8860B] hover:text-black transition-colors cursor-pointer self-end sm:self-auto"
-              >
-                <RefreshCw size={12} />
-                Retry Live Store
-              </button>
-            </div>
-          )}
 
           {/* Unavailable Items Notice */}
           {unavailableCount > 0 && (

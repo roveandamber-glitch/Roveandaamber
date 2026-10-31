@@ -22,7 +22,7 @@ import SortDropdown, { SORT_OPTIONS } from '@/components/SortDropdown';
 import QuickViewModal from '@/components/common/QuickViewModal';
 import productService from '@/services/productService';
 import categoryService from '@/services/categoryService';
-import { DUMMY_PRODUCTS, DUMMY_CATEGORIES } from '@/data/dummyProducts';
+
 
 const ShopContent = () => {
   const router = useRouter();
@@ -33,7 +33,7 @@ const ShopContent = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isUsingFallback, setIsUsingFallback] = useState(false);
+
 
   // Filter States
   const initialSearch = searchParams ? searchParams.get('search') || '' : '';
@@ -77,87 +77,74 @@ const ShopContent = () => {
     setPriceRange([0, calculatedMax]);
   };
 
-  // Load products and categories from backend API with fallback support
-  const loadData = useCallback(async (allowFallback = true) => {
+  // Load products and categories strictly from live backend database
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [productRes, categoryRes] = await Promise.all([
         productService.getAllProducts().catch(err => {
-          throw err;
+          console.error('Products API error:', err);
+          return { success: false, data: [] };
         }),
         categoryService.getAllCategories().catch(err => {
-          console.warn('Categories API warning:', err);
+          console.error('Categories API error:', err);
           return { success: false, data: [] };
         })
       ]);
 
       let loadedProducts = [];
-      if (productRes?.success && Array.isArray(productRes.data?.products) && productRes.data.products.length > 0) {
+      if (productRes?.success && Array.isArray(productRes.data?.products)) {
         loadedProducts = productRes.data.products;
-      } else if (productRes?.success && Array.isArray(productRes.data) && productRes.data.length > 0) {
+      } else if (productRes?.success && Array.isArray(productRes.data)) {
         loadedProducts = productRes.data;
-      } else if (Array.isArray(productRes) && productRes.length > 0) {
+      } else if (Array.isArray(productRes)) {
         loadedProducts = productRes;
       }
 
       let loadedCategories = [];
-      if (categoryRes?.success && Array.isArray(categoryRes.data) && categoryRes.data.length > 0) {
+      if (categoryRes?.success && Array.isArray(categoryRes.data)) {
         loadedCategories = categoryRes.data;
+      } else if (Array.isArray(categoryRes)) {
+        loadedCategories = categoryRes;
       }
 
-      if (loadedProducts.length > 0) {
-        setProducts(loadedProducts);
-        setCategories(loadedCategories.length > 0 ? loadedCategories : DUMMY_CATEGORIES);
-        setIsUsingFallback(false);
-        initializePriceAndSizes(loadedProducts);
-      } else {
-        if (allowFallback) {
-          setProducts(DUMMY_PRODUCTS);
-          setCategories(DUMMY_CATEGORIES);
-          setIsUsingFallback(true);
-          initializePriceAndSizes(DUMMY_PRODUCTS);
-        } else {
-          setProducts([]);
-          setIsUsingFallback(false);
-        }
-      }
+      setProducts(loadedProducts);
+      setCategories(loadedCategories);
+      initializePriceAndSizes(loadedProducts);
     } catch (err) {
       console.error('Failed to load shop data from API:', err);
-      setError('Unable to reach the live store API. The backend server may be offline or unreachable.');
-      
-      if (allowFallback) {
-        setProducts(DUMMY_PRODUCTS);
-        setCategories(DUMMY_CATEGORIES);
-        setIsUsingFallback(true);
-        initializePriceAndSizes(DUMMY_PRODUCTS);
-      } else {
-        setProducts([]);
-        setIsUsingFallback(false);
-      }
+      setError('Unable to load fragrances from the atelier server.');
+      setProducts([]);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadData(true);
+    loadData();
   }, [loadData]);
 
-  // Extract available sizes dynamically from product catalog
+  // Extract available sizes dynamically from product catalog (deduplicated)
   const availableSizes = useMemo(() => {
-    const sizeSet = new Set();
+    const sizeMap = new Map();
     products.forEach(p => {
-      if (Array.isArray(p.sizes)) {
-        p.sizes.forEach(s => sizeSet.add(s));
-      } else if (p.sizes_stock && typeof p.sizes_stock === 'object') {
-        Object.keys(p.sizes_stock).forEach(s => sizeSet.add(s));
-      }
+      const prodSizes = Array.isArray(p.sizes)
+        ? p.sizes
+        : (p.sizes_stock && typeof p.sizes_stock === 'object' ? Object.keys(p.sizes_stock) : []);
+      prodSizes.forEach(s => {
+        if (!s || typeof s !== 'string') return;
+        const key = s.trim().toUpperCase();
+        if (!sizeMap.has(key)) {
+          sizeMap.set(key, s.trim());
+        }
+      });
     });
-    return Array.from(sizeSet).filter(Boolean);
+    return Array.from(sizeMap.values());
   }, [products]);
 
-  // Extract available categories dynamically
+  // Extract available categories dynamically from live DB
   const availableCategoryList = useMemo(() => {
     if (categories.length > 0) {
       return categories.map(c => ({
@@ -167,8 +154,8 @@ const ShopContent = () => {
     }
     const catSet = new Set();
     products.forEach(p => {
-      if (p.category_name) catSet.add(p.category_name);
-      else if (p.category) catSet.add(p.category);
+      const cat = p.categoryName || p.category_name || p.category;
+      if (cat) catSet.add(cat);
     });
     return Array.from(catSet).map(name => ({ id: name, name }));
   }, [categories, products]);
@@ -208,11 +195,12 @@ const ShopContent = () => {
       return pPrice >= priceRange[0] && pPrice <= priceRange[1];
     });
 
-    // 4. Size Filter (when data supports it)
+    // 4. Size Filter (case-insensitive deduplicated matching)
     if (selectedSizes.length > 0) {
+      const upperSelected = selectedSizes.map(s => s.toUpperCase());
       result = result.filter(p => {
-        const prodSizes = p.sizes || (p.sizes_stock ? Object.keys(p.sizes_stock) : []);
-        return prodSizes.some(s => selectedSizes.includes(s));
+        const prodSizes = (p.sizes || (p.sizes_stock ? Object.keys(p.sizes_stock) : [])).map(s => String(s).toUpperCase());
+        return prodSizes.some(s => upperSelected.includes(s));
       });
     }
 
@@ -308,59 +296,26 @@ const ShopContent = () => {
           )}
         </nav>
 
-        {/* Fallback Notice Banner (shown only when API fails and showcase catalogue is displayed) */}
-        {error && isUsingFallback && (
-          <div className="mb-6 p-4 rounded-xl bg-[#FFFDF5] border border-[#E8DCC0] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
-            <div className="flex items-start gap-2.5 text-[#8C6D1F]">
-              <AlertCircle size={18} className="shrink-0 mt-0.5 text-[#B8860B]" />
-              <div>
-                <p className="font-semibold text-black">Live API Connection Notice</p>
-                <p className="text-gray-600 font-light mt-0.5">
-                  Currently viewing the signature ROVE & AMBER showcase catalogue. Live backend connection can be retried anytime.
-                </p>
-              </div>
+        {error && !loading && (
+          <div className="my-12 p-8 max-w-xl mx-auto rounded-3xl bg-white border border-[#E8DCC0] text-center shadow-sm">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-50 text-[#B8860B] flex items-center justify-center">
+              <AlertCircle size={28} />
             </div>
+            <h2 className="text-xl font-serif font-bold text-black mb-2">Connection to Atelier API Failed</h2>
+            <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+              We encountered an issue communicating with the store backend.
+            </p>
             <button
               type="button"
-              onClick={() => loadData(false)}
-              className="px-3.5 py-1.5 rounded-full bg-black text-white hover:bg-gray-800 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
+              onClick={loadData}
+              className="px-6 py-2.5 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors cursor-pointer"
             >
-              <RefreshCw size={12} />
-              <span>Retry Live API</span>
+              Retry Connection
             </button>
           </div>
         )}
 
-        {/* Severe API Error State (when fallback is disabled and API call fails completely) */}
-        {error && !isUsingFallback && !loading && (
-          <div className="my-12 p-8 max-w-xl mx-auto rounded-3xl bg-white border border-red-100 text-center shadow-sm">
-            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
-              <AlertCircle size={28} />
-            </div>
-            <h2 className="text-xl font-serif font-bold text-black mb-2">Connection to Inventory API Failed</h2>
-            <p className="text-xs text-gray-500 mb-6 leading-relaxed">
-              We encountered an issue communicating with the store backend. You can retry the connection or view the signature showroom catalogue.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => loadData(false)}
-                className="w-full sm:w-auto px-6 py-2.5 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors cursor-pointer"
-              >
-                Retry Connection
-              </button>
-              <button
-                type="button"
-                onClick={() => loadData(true)}
-                className="w-full sm:w-auto px-6 py-2.5 bg-[#FAF8F5] border border-[#E0D8CA] text-black rounded-full text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors cursor-pointer"
-              >
-                Explore Showroom Catalogue
-              </button>
-            </div>
-          </div>
-        )}
-
-        {(!error || isUsingFallback || loading) && (
+        {(!error || loading) && (
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
             
             {/* DESKTOP SIDEBAR FILTERS */}

@@ -24,7 +24,7 @@ import ProductCard from '@/components/product/ProductCard';
 import productService from '@/services/productService';
 import cartService from '@/services/cartService';
 import { getImageUrl } from '@/utils/imageHelper';
-import { DUMMY_PRODUCTS } from '@/data/dummyProducts';
+
 
 const ProductDetails = () => {
   const params = useParams();
@@ -35,7 +35,7 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isUsingShowcase, setIsUsingShowcase] = useState(false);
+
 
   // Gallery State
   const [selectedImage, setSelectedImage] = useState(null);
@@ -52,7 +52,7 @@ const ProductDetails = () => {
   // Active Tab
   const [activeTab, setActiveTab] = useState('notes'); // 'notes' | 'details' | 'shipping' | 'reviews'
 
-  // Fetch product by ID
+  // Fetch product strictly by ID from live backend database
   const fetchProductData = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -72,39 +72,16 @@ const ProductDetails = () => {
 
       if (foundProduct) {
         setProduct(foundProduct);
-        setIsUsingShowcase(false);
         initializeProductVariants(foundProduct);
         fetchRelated(foundProduct);
       } else {
-        // Fallback matching by ID or slug in showcase catalog
-        const showcaseMatch = DUMMY_PRODUCTS.find(p => 
-          String(p._id) === String(id) || String(p.id) === String(id) || p.slug === id
-        );
-        if (showcaseMatch) {
-          setProduct(showcaseMatch);
-          setIsUsingShowcase(true);
-          initializeProductVariants(showcaseMatch);
-          fetchRelated(showcaseMatch);
-        } else {
-          setProduct(null);
-        }
+        setProduct(null);
+        setError('Fragrance formulation not found.');
       }
     } catch (err) {
-      console.warn('API error fetching product by ID, checking showcase catalog:', err);
-      // Attempt strictly matching showcase catalog
-      const showcaseMatch = DUMMY_PRODUCTS.find(p => 
-        String(p._id) === String(id) || String(p.id) === String(id) || p.slug === id
-      );
-
-      if (showcaseMatch) {
-        setProduct(showcaseMatch);
-        setIsUsingShowcase(true);
-        initializeProductVariants(showcaseMatch);
-        fetchRelated(showcaseMatch);
-      } else {
-        setProduct(null);
-        setError('Fragrance not found in atelier archives.');
-      }
+      console.error('API error fetching product by ID:', err);
+      setProduct(null);
+      setError('Unable to load fragrance details from the atelier server.');
     } finally {
       setLoading(false);
     }
@@ -132,7 +109,7 @@ const ProductDetails = () => {
     setQuantity(1);
   };
 
-  // Fetch related products
+  // Fetch related products strictly from live backend database
   const fetchRelated = async (currentProd) => {
     try {
       const response = await productService.getAllProducts().catch(() => null);
@@ -141,19 +118,19 @@ const ProductDetails = () => {
         all = response.data.products;
       } else if (response?.success && Array.isArray(response.data)) {
         all = response.data;
-      } else {
-        all = DUMMY_PRODUCTS;
+      } else if (Array.isArray(response)) {
+        all = response;
       }
 
-      const currentCategory = currentProd.category_name || currentProd.category || '';
-      const currentId = currentProd._id || currentProd.id;
+      const currentCategory = (currentProd.categoryName || currentProd.category_name || currentProd.category || '').toLowerCase();
+      const currentId = String(currentProd._id || currentProd.id);
 
       // Filter out current product
-      const others = all.filter(p => String(p._id || p.id) !== String(currentId));
+      const others = all.filter(p => String(p._id || p.id) !== currentId);
 
       // Prefer products from same category
       const sameCategory = others.filter(p => 
-        (p.category_name || p.category || '').toLowerCase() === currentCategory.toLowerCase()
+        (p.categoryName || p.category_name || p.category || '').toLowerCase() === currentCategory
       );
 
       if (sameCategory.length >= 2) {
@@ -162,8 +139,7 @@ const ProductDetails = () => {
         setRelatedProducts(others.slice(0, 4));
       }
     } catch (e) {
-      const others = DUMMY_PRODUCTS.filter(p => String(p._id || p.id) !== String(currentProd._id || currentProd.id));
-      setRelatedProducts(others.slice(0, 4));
+      setRelatedProducts([]);
     }
   };
 
@@ -396,19 +372,6 @@ const ProductDetails = () => {
           <ChevronRight size={10} className="text-gray-400" />
           <span className="text-black font-semibold truncate max-w-[200px] sm:max-w-xs">{product.name}</span>
         </nav>
-
-        {/* Offline Showcase Notice Banner */}
-        {isUsingShowcase && (
-          <div className="mb-6 p-3.5 rounded-xl bg-[#FFFDF5] border border-[#E8DCC0] text-xs text-[#8C6D1F] flex items-center justify-between gap-3 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-[#B8860B] shrink-0" />
-              <span>{error ? `${error} Viewing` : 'Viewing'} ROVE & AMBER Signature Showroom Showcase archive.</span>
-            </div>
-            <Link href="/shop" className="text-[11px] font-bold uppercase tracking-wider text-black underline shrink-0">
-              Browse All
-            </Link>
-          </div>
-        )}
 
         {/* Hero Product Showcase Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
