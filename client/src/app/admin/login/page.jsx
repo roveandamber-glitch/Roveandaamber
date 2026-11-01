@@ -1,18 +1,18 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Form, Input, message } from 'antd';
 import { 
   Mail, 
   Lock, 
-  ShieldCheck, 
   ArrowRight, 
   ArrowLeft, 
   AlertCircle, 
   Loader2, 
   Sparkles,
-  KeyRound
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 import authService from '@/services/authService';
 
@@ -22,7 +22,18 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  // If already logged in as admin, redirect directly to /admin dashboard
+  // 3-second debouncing for administrator email validation
+  const emailTimerRef = useRef(null);
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (emailTimerRef.current) clearTimeout(emailTimerRef.current);
+    };
+  }, []);
+
+  // Redirect if already authenticated as admin
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const user = authService.getAdminUser ? authService.getAdminUser() : authService.getUser();
@@ -33,6 +44,57 @@ export default function AdminLoginPage() {
     }
   }, [router]);
 
+  const handleEmailChange = (e) => {
+    const val = e.target.value;
+    if (errorMessage) setErrorMessage(null);
+    if (emailTimerRef.current) {
+      clearTimeout(emailTimerRef.current);
+    }
+    // Clear validation error immediately while typing
+    form.setFields([{ name: 'email', errors: [] }]);
+
+    const trimmed = (val || '').trim();
+    if (!trimmed) return;
+
+    // Wait 3 seconds (3000ms) of typing pause before validating
+    emailTimerRef.current = setTimeout(() => {
+      if (trimmed && !EMAIL_REGEX.test(trimmed)) {
+        form.setFields([
+          {
+            name: 'email',
+            errors: ['Please enter a valid administrator email address']
+          }
+        ]);
+      } else {
+        form.setFields([{ name: 'email', errors: [] }]);
+      }
+    }, 3000);
+  };
+
+  const handleEmailBlur = () => {
+    if (emailTimerRef.current) {
+      clearTimeout(emailTimerRef.current);
+    }
+    const val = (form.getFieldValue('email') || '').trim();
+    if (!val) {
+      form.setFields([
+        {
+          name: 'email',
+          errors: ['Administrator email is required']
+        }
+      ]);
+    } else if (!EMAIL_REGEX.test(val)) {
+      form.setFields([
+        {
+          name: 'email',
+          errors: ['Please enter a valid administrator email address']
+        }
+      ]);
+    } else {
+      form.setFields([{ name: 'email', errors: [] }]);
+    }
+  };
+
   const handleAdminLogin = async (values) => {
     setLoading(true);
     setErrorMessage(null);
@@ -41,40 +103,23 @@ export default function AdminLoginPage() {
     const password = values.password;
 
     try {
-      // 1. Attempt official backend authentication
-      let res = null;
-      try {
-        res = await authService.login({ email, password });
-      } catch (apiErr) {
-        // Fallback for offline or local preview admin
-        if (
-          (email === 'admin@roveandamber.com' || email === 'admin@eventflow.com') &&
-          password === 'admin123'
-        ) {
-          res = {
-            success: true,
-            token: 'preview_admin_session_token',
-            user: {
-              id: 'admin-1',
-              name: 'Atelier Director',
-              email: email,
-              role: 'admin',
-              designation: 'Super Admin'
-            }
-          };
-        } else {
-          throw apiErr;
-        }
-      }
+      const res = await authService.login({ email, password });
 
       if (res?.success && res.token && res.user) {
-        // Enforce strict administrative authorization
         if (res.user.role !== 'admin') {
           setErrorMessage('Access Denied: This portal requires verified Administrator credentials.');
           return;
         }
 
+        // Save session in both authService and localStorage
         authService.saveSession(res.user, res.token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('adminToken', res.token);
+          localStorage.setItem('adminKey', res.token);
+          localStorage.setItem('adminUser', JSON.stringify(res.user));
+          window.dispatchEvent(new Event('authChange'));
+        }
+
         message.success(`Welcome back, ${res.user.name || 'Administrator'}!`);
         router.replace('/admin');
       } else {
@@ -84,7 +129,7 @@ export default function AdminLoginPage() {
       console.error('Admin authentication error:', err);
       const isNetworkError = err.code === 'ERR_NETWORK' || !err.response;
       const errorText = isNetworkError
-        ? 'Unable to connect to authentication atelier. Please verify your connection.'
+        ? 'Unable to connect to the authentication service. Please check your network connection and try again.'
         : (err.response?.data?.message || 'Invalid credentials. Please verify your administrator email and password.');
       setErrorMessage(errorText);
     } finally {
@@ -92,74 +137,87 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleQuickFill = () => {
-    form.setFieldsValue({
-      email: 'admin@roveandamber.com',
-      password: 'admin123'
-    });
-    setErrorMessage(null);
-    message.info('Demo administrative credentials pre-filled.');
-  };
-
   return (
-    <div className="min-h-screen w-full bg-[#0D0704] flex flex-col justify-between items-center p-4 sm:p-6 md:p-8 relative overflow-hidden font-sans select-none">
-      
-      {/* Ambient Luxury Amber / Gold Glows in the background */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-amber-700/15 via-[#DEB368]/10 to-transparent rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-amber-900/10 rounded-full blur-3xl pointer-events-none" />
-      
-      {/* Top Header: Return to Boutique Navigation */}
-      <header className="w-full max-w-5xl flex items-center justify-between relative z-20">
-        <Link 
-          href="/"
-          className="inline-flex items-center gap-2.5 text-xs font-medium text-amber-200/70 hover:text-white transition-colors group"
-        >
-          <span className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:border-[#DEB368]/40 transition-all text-amber-100">
-            <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
-          </span>
-          <span className="tracking-widest uppercase text-[10px] font-semibold">
-            Return to Boutique
-          </span>
-        </Link>
+    <div 
+      className="min-h-screen md:h-screen w-full flex items-center justify-center p-3 sm:p-5 md:p-8 relative overflow-y-auto md:overflow-hidden font-sans selection:bg-[#B3874B]/20 selection:text-black bg-cover bg-center"
+      style={{
+        backgroundImage: "url('/images/perfumes/login_ambient_bg.jpg')",
+        backgroundColor: '#EAE1D5'
+      }}
+    >
+      {/* Warm Ambient Atmosphere Overlay matching user storefront login */}
+      <div className="absolute inset-0 bg-[#F5EFE6]/40 backdrop-blur-[2px] pointer-events-none" />
 
-        <div className="flex items-center gap-2 text-amber-400/80 text-xs">
-          <ShieldCheck size={14} className="text-[#DEB368]" />
-          <span className="tracking-widest uppercase text-[10px] font-semibold text-gray-400">
-            Restricted Atelier Zone
-          </span>
+      {/* Main Luxury Card - matches Storefront Login Architecture 1:1 */}
+      <div className="w-full max-w-[420px] md:max-w-[880px] bg-white rounded-[28px] sm:rounded-[36px] shadow-[0_30px_90px_-15px_rgba(40,25,15,0.22)] overflow-hidden grid grid-cols-1 md:grid-cols-2 border border-white/80 relative z-10 my-auto">
+        
+        {/* DESKTOP LEFT COLUMN: Luxury Perfume Banner with Atelier Command Badge */}
+        <div className="hidden md:block relative w-full h-full min-h-[520px] bg-[#EFE9DF] overflow-hidden select-none">
+          <img
+            src="/images/perfumes/login_mockup_desktop.jpg"
+            alt="ROVE & AMBER Fine Fragrance"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex flex-col justify-end p-8 text-white">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-semibold tracking-widest uppercase mb-2 w-fit">
+              <ShieldCheck size={12} className="text-[#DEB368]" />
+              <span>Atelier Command</span>
+            </div>
+            <h2 className="font-serif text-xl font-normal text-white drop-shadow-sm mb-1">
+              Boutique Operations Portal
+            </h2>
+            <p className="text-[11px] text-white/80 font-light leading-relaxed max-w-xs">
+              Manage artisanal flacons, patron orders, inventory stock, and boutique analytics.
+            </p>
+          </div>
         </div>
-      </header>
 
-      {/* Centerpiece Luxury Executive Login Card */}
-      <main className="w-full max-w-[440px] my-auto relative z-20 py-8">
-        <div className="bg-[#170E08]/90 backdrop-blur-2xl rounded-[32px] border border-[#DEB368]/30 shadow-[0_30px_90px_rgba(0,0,0,0.85)] p-7 sm:p-9 text-white">
+        {/* MOBILE TOP BANNER */}
+        <div className="block md:hidden relative w-full h-[210px] xs:h-[240px] bg-[#EFE9DF] overflow-hidden select-none">
+          <img
+            src="/images/perfumes/login_mockup_mobile.jpg"
+            alt="ROVE & AMBER Fine Fragrance"
+            className="w-full h-full object-cover object-top"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-end p-5 text-white">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[9px] font-semibold tracking-widest uppercase">
+              <ShieldCheck size={11} className="text-[#DEB368]" />
+              <span>Atelier Command</span>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Clean, User-Friendly Editorial Form */}
+        <div className="p-6 sm:p-8 md:p-10 flex flex-col justify-center bg-white overflow-y-auto">
           
-          {/* Emblem & Branding */}
-          <div className="text-center mb-7">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-b from-[#28180E] to-[#120B07] border border-[#DEB368]/40 shadow-inner flex items-center justify-center mx-auto mb-4 text-[#ECC880]">
-              <Sparkles size={24} className="text-[#DEB368]" />
+          {/* Header */}
+          <div className="mb-5 sm:mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-lg bg-[#FAF5EE] border border-[#E8DFC8] flex items-center justify-center text-[#B3874B]">
+                <Sparkles size={13} />
+              </span>
+              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#B3874B]">
+                Executive Suite
+              </span>
             </div>
 
-            <span className="text-[10px] uppercase font-bold tracking-[0.3em] text-[#ECC880] block mb-1">
-              ROVE & AMBER
-            </span>
-            <h1 className="text-2xl sm:text-[26px] font-serif font-normal text-white tracking-tight">
-              Executive Atelier Access
+            <h1 className="font-serif text-2xl sm:text-[30px] font-normal text-gray-900 tracking-tight leading-tight mb-1">
+              Welcome Back
             </h1>
-            <p className="text-xs text-stone-400 font-light mt-1.5 max-w-[320px] mx-auto leading-relaxed">
-              Authorized personnel access to boutique formulations, inventory dispatch, and patron orders.
+            <p className="text-[11px] sm:text-xs text-gray-500 font-light leading-relaxed">
+              Sign in to access your Rove & Amber administrative atelier dashboard.
             </p>
           </div>
 
           {/* Error Notice */}
           {errorMessage && (
-            <div className="mb-5 p-3 rounded-xl bg-red-950/50 border border-red-800/60 flex items-start gap-2.5 text-red-200 text-xs">
-              <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-400" />
+            <div className="mb-4 p-3 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] flex items-start gap-2.5 text-[#9A3412] text-xs">
+              <AlertCircle size={15} className="shrink-0 mt-0.5 text-[#C2410C]" />
               <span className="leading-relaxed font-light">{errorMessage}</span>
             </div>
           )}
 
-          {/* Login Form */}
+          {/* Admin Login Form */}
           <Form
             form={form}
             layout="vertical"
@@ -168,91 +226,85 @@ export default function AdminLoginPage() {
               if (errorMessage) setErrorMessage(null);
             }}
             requiredMark={false}
+            autoComplete="off"
           >
             {/* Email Field */}
             <Form.Item
+              label={<span className="text-xs font-semibold text-gray-800">Administrator Email</span>}
               name="email"
-              label={
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-300">
-                  Administrator Email
-                </span>
-              }
+              validateTrigger={[]}
               rules={[
-                { required: true, message: 'Please enter your administrator email' },
-                { type: 'email', message: 'Please enter a valid email address' }
+                { required: true, message: 'Administrator email is required' },
+                { type: 'email', message: 'Please enter a valid administrator email address' }
               ]}
-              className="mb-4"
+              className="mb-3.5"
             >
               <Input
-                prefix={<Mail size={14} className="text-stone-500 mr-2" />}
-                placeholder="admin@company.com"
+                prefix={<Mail size={14} className="text-gray-400 mr-2" />}
+                placeholder="Enter your administrator email"
+                autoComplete="off"
+                onChange={handleEmailChange}
+                onBlur={handleEmailBlur}
                 disabled={loading}
-                className="!bg-[#22150D]/80 !border-stone-700/80 !text-white !rounded-xl !h-11 hover:!border-[#DEB368] focus:!border-[#ECC880] placeholder:!text-stone-500 text-xs"
+                className="rounded-xl text-xs h-11 bg-white border-[#E8E2D8] focus:bg-white placeholder:text-gray-400"
               />
             </Form.Item>
 
             {/* Password Field */}
             <Form.Item
+              label={<span className="text-xs font-semibold text-gray-800">Security Passcode</span>}
               name="password"
-              label={
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-300">
-                  Security Passcode
-                </span>
-              }
-              rules={[{ required: true, message: 'Please enter your administrator passcode' }]}
+              validateTrigger={['onBlur']}
+              rules={[{ required: true, message: 'Security passcode is required' }]}
               className="mb-5"
             >
               <Input.Password
-                prefix={<Lock size={14} className="text-stone-500 mr-2" />}
-                placeholder="••••••••"
+                prefix={<Lock size={14} className="text-gray-400 mr-2" />}
+                placeholder="Enter your security passcode"
+                autoComplete="current-password"
                 disabled={loading}
-                className="!bg-[#22150D]/80 !border-stone-700/80 !text-white !rounded-xl !h-11 hover:!border-[#DEB368] focus:!border-[#ECC880] placeholder:!text-stone-500 text-xs"
+                className="rounded-xl text-xs h-11 bg-white border-[#E8E2D8] focus:bg-white placeholder:text-gray-400"
               />
             </Form.Item>
 
-            
-
-            {/* Primary Submit Button */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-110 active:scale-[0.99] py-3.5 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all cursor-pointer disabled:opacity-60"
+              className="w-full bg-[#181411] hover:bg-[#2A231E] active:bg-black text-white h-11 rounded-full font-medium text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all disabled:opacity-60"
             >
               {loading ? (
                 <>
-                  <Loader2 size={15} className="animate-spin text-[#281608]" />
+                  <Loader2 size={14} className="animate-spin" />
                   <span>Verifying Credentials...</span>
                 </>
               ) : (
                 <>
-                  <span>Authenticate Atelier Session</span>
-                  <ArrowRight size={14} strokeWidth={2.4} />
+                  <span>Sign In to Atelier</span>
+                  <ArrowRight size={14} />
                 </>
               )}
             </button>
           </Form>
 
-          {/* Security Subnote */}
-          <div className="mt-6 pt-5 border-t border-stone-800/80 text-center text-[10px] text-stone-500 tracking-wider uppercase flex items-center justify-center gap-2">
-            <span>256-Bit TLS</span>
-            <span>•</span>
-            <span>Role-Based Access Guard</span>
-            <span>•</span>
-            <span>Encrypted Atelier Session</span>
-          </div>
-        </div>
-      </main>
+          {/* Footer Navigation: Return to Boutique & Security Info */}
+          <div className="mt-6 pt-4 border-t border-[#E8E2D8] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-light">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-[#B3874B] hover:text-[#8C6228] font-medium transition-colors cursor-pointer"
+            >
+              <ArrowLeft size={13} />
+              <span>Return to Storefront</span>
+            </Link>
 
-      {/* Footer System Status */}
-      <footer className="w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 gap-2 relative z-20 pb-2">
-        <p className="m-0">
-          © {new Date().getFullYear()} ROVE & AMBER Fine Fragrance Atelier. All rights reserved.
-        </p>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Atelier Secure Node: <strong>Active Online</strong></span>
+            <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>256-Bit SSL Secured</span>
+            </div>
+          </div>
+
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
