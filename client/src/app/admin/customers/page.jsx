@@ -4,11 +4,8 @@ import {
   Table, 
   Input, 
   Avatar, 
-  Tag, 
-  Button, 
   Drawer, 
-  message, 
-  Tooltip 
+  message 
 } from 'antd';
 import { 
   Users, 
@@ -17,21 +14,13 @@ import {
   Mail, 
   MapPin, 
   Calendar, 
-  Award, 
   ShoppingBag, 
   Coins, 
-  Crown, 
   Eye, 
+  PackageCheck,
   Clock 
 } from 'lucide-react';
 import adminService from '@/services/adminService';
-
-const TIER_CONFIG = {
-  Platinum: { bg: 'bg-[#F3E8FF]', text: 'text-[#6B21A8]', border: 'border-[#E9D5FF]', icon: Crown },
-  Gold: { bg: 'bg-[#FEF3C7]', text: 'text-[#92400E]', border: 'border-[#FDE68A]', icon: Award },
-  Silver: { bg: 'bg-[#F1F5F9]', text: 'text-[#334155]', border: 'border-[#E2E8F0]', icon: Award },
-  Bronze: { bg: 'bg-[#FFF7ED]', text: 'text-[#9A3412]', border: 'border-[#FFEDD5]', icon: Award }
-};
 
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState([]);
@@ -106,61 +95,58 @@ export default function AdminCustomersPage() {
       render: (val) => <span className="text-xs text-gray-600 truncate max-w-[150px] inline-block">{val || 'Mumbai, Maharashtra'}</span>
     },
     {
-      title: 'Loyalty Tier',
-      key: 'tier',
-      width: 130,
-      render: (_, record) => {
-        const tier = record.tier || 'Silver';
-        const cfg = TIER_CONFIG[tier] || TIER_CONFIG.Silver;
-        const IconComponent = cfg.icon;
-        return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border} whitespace-nowrap`}>
-            <IconComponent size={12} />
-            {tier}
-          </span>
-        );
-      }
-    },
-    {
       title: 'Orders Placed',
       dataIndex: 'ordersCount',
       key: 'ordersCount',
-      width: 120,
-      render: (count) => (
-        <span className="text-xs font-semibold text-gray-800 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] whitespace-nowrap">
-          {count || 1} Orders
-        </span>
-      )
+      width: 130,
+      render: (_, record) => {
+        const count = record.ordersCount ?? record.orders_count ?? 0;
+        return (
+          <span className="text-xs font-semibold text-gray-800 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] whitespace-nowrap">
+            {count} {count === 1 ? 'Order' : 'Orders'}
+          </span>
+        );
+      }
     },
     {
       title: 'Lifetime Spending',
       dataIndex: 'totalSpent',
       key: 'totalSpent',
       width: 140,
-      render: (val) => (
-        <span className="text-xs font-bold text-[#1B100A]">
-          ₹{(val || 4950).toLocaleString('en-IN')}
-        </span>
-      )
+      render: (_, record) => {
+        const val = record.totalSpent ?? record.total_spent ?? 0;
+        return (
+          <span className="text-xs font-bold text-[#1B100A]">
+            ₹{Number(val).toLocaleString('en-IN')}
+          </span>
+        );
+      }
     },
     {
       title: 'Reward Points',
       dataIndex: 'rewardPoints',
       key: 'rewardPoints',
       width: 130,
-      render: (val) => (
-        <span className="text-xs font-semibold text-[#B38728] flex items-center gap-1 whitespace-nowrap">
-          <Coins size={13} className="text-[#D4A64A]" />
-          {(val || 450).toLocaleString('en-IN')} pts
-        </span>
-      )
+      render: (_, record) => {
+        const spent = record.totalSpent ?? record.total_spent ?? 0;
+        const val = record.rewardPoints ?? Math.floor(spent * 0.1);
+        return (
+          <span className="text-xs font-semibold text-[#B38728] flex items-center gap-1 whitespace-nowrap">
+            <Coins size={13} className="text-[#D4A64A]" />
+            {val.toLocaleString('en-IN')} pts
+          </span>
+        );
+      }
     },
     {
       title: 'Joined Date',
       dataIndex: 'joinedDate',
       key: 'joinedDate',
-      width: 110,
-      render: (val) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{val || '29 Oct 2026'}</span>
+      width: 120,
+      render: (val, record) => {
+        const d = val || (record.createdAt ? new Date(record.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '29 Oct 2026');
+        return <span className="text-[11px] text-gray-400 whitespace-nowrap">{d}</span>;
+      }
     },
     {
       title: 'Action',
@@ -178,6 +164,11 @@ export default function AdminCustomersPage() {
       )
     }
   ];
+
+  const totalSpend = selectedCustomer?.totalSpent ?? selectedCustomer?.total_spent ?? 0;
+  const ordersCount = selectedCustomer?.ordersCount ?? selectedCustomer?.orders_count ?? 0;
+  const rewardPoints = selectedCustomer?.rewardPoints ?? Math.floor(totalSpend * 0.1);
+  const customerOrders = selectedCustomer?.orders || [];
 
   return (
     <div className="space-y-6 text-[#1B100A]">
@@ -254,15 +245,7 @@ export default function AdminCustomersPage() {
               <p className="text-xs text-gray-500 mt-0.5">{selectedCustomer.email}</p>
               
               <div className="mt-3 flex items-center gap-2">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
-                  TIER_CONFIG[selectedCustomer.tier]?.bg || 'bg-gray-100'
-                } ${TIER_CONFIG[selectedCustomer.tier]?.text || 'text-gray-700'} ${
-                  TIER_CONFIG[selectedCustomer.tier]?.border || 'border-gray-200'
-                }`}>
-                  <Crown size={12} />
-                  {selectedCustomer.tier || 'Silver'} Member
-                </span>
-                <span className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-0.5 rounded-full font-medium">
                   Active
                 </span>
               </div>
@@ -273,19 +256,19 @@ export default function AdminCustomersPage() {
               <div className="bg-white p-3 rounded-xl border border-[#EAE3D6] text-center">
                 <div className="text-[11px] text-gray-400">Total Spend</div>
                 <div className="font-bold text-sm text-[#1A1A1A] mt-1">
-                  ₹{(selectedCustomer.totalSpent || 0).toLocaleString('en-IN')}
+                  ₹{Number(totalSpend).toLocaleString('en-IN')}
                 </div>
               </div>
               <div className="bg-white p-3 rounded-xl border border-[#EAE3D6] text-center">
                 <div className="text-[11px] text-gray-400">Orders</div>
                 <div className="font-bold text-sm text-[#1A1A1A] mt-1">
-                  {selectedCustomer.ordersCount || 0}
+                  {ordersCount}
                 </div>
               </div>
               <div className="bg-white p-3 rounded-xl border border-[#EAE3D6] text-center">
                 <div className="text-[11px] text-gray-400">Reward Points</div>
                 <div className="font-bold text-sm text-[#B8860B] mt-1">
-                  {(selectedCustomer.rewardPoints || 0).toLocaleString('en-IN')}
+                  {Number(rewardPoints).toLocaleString('en-IN')}
                 </div>
               </div>
             </div>
@@ -312,10 +295,51 @@ export default function AdminCustomersPage() {
                 </div>
               </div>
             </div>
+
+            {/* Order History */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-serif font-bold text-sm text-[#1A1A1A]">
+                  Recent Orders
+                </h4>
+                <span className="text-[11px] text-gray-400">
+                  {ordersCount} {ordersCount === 1 ? 'order' : 'orders'} total
+                </span>
+              </div>
+              
+              {customerOrders.length > 0 ? (
+                <div className="space-y-2.5">
+                  {customerOrders.map((ord, idx) => (
+                    <div key={ord._id || idx} className="bg-white p-3 rounded-xl border border-[#EAE3D6] flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-xs text-[#1A1A1A]">{ord.orderNumber}</div>
+                        <div className="text-[11px] text-gray-400 mt-0.5">
+                          {ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-xs text-[#1A1A1A]">₹{Number(ord.totalAmount).toLocaleString('en-IN')}</div>
+                        <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-medium mt-0.5 ${
+                          ord.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          ord.status === 'Dispatch' || ord.status === 'Shipped' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          ord.status === 'Processing' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          'bg-rose-50 text-rose-700 border border-rose-200'
+                        }`}>
+                          {ord.status === 'Shipped' ? 'Dispatch' : ord.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white p-4 rounded-xl border border-[#EAE3D6] text-center text-gray-400 text-xs">
+                  No orders recorded yet.
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Drawer>
     </div>
   );
 }
-
