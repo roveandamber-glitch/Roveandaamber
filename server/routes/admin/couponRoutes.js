@@ -19,3 +19,4 @@ router.patch('/:id', updateAdminCoupon);
 router.delete('/:id', deleteAdminCoupon);
 
 export default router;
+
