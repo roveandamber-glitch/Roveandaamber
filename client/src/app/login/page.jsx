@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, Suspense, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Form, Input, Modal, ConfigProvider, App } from 'antd';
 import { 
@@ -64,6 +63,120 @@ const LoginContent = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState(null);
   const [forgotCountdown, setForgotCountdown] = useState(0);
+
+  // 3-second debouncing for email input validation
+  const loginEmailTimerRef = React.useRef(null);
+  const registerEmailTimerRef = React.useRef(null);
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Cleanup debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      if (loginEmailTimerRef.current) clearTimeout(loginEmailTimerRef.current);
+      if (registerEmailTimerRef.current) clearTimeout(registerEmailTimerRef.current);
+    };
+  }, []);
+
+  const handleLoginEmailChange = (e) => {
+    const val = e.target.value;
+    if (errorMessage) setErrorMessage(null);
+    if (loginEmailTimerRef.current) {
+      clearTimeout(loginEmailTimerRef.current);
+    }
+    // Clear any active error message while user is typing
+    loginForm.setFields([{ name: 'email', errors: [] }]);
+
+    const trimmed = (val || '').trim();
+    if (!trimmed) return;
+
+    // Wait 3 seconds (3000ms) of inactivity before displaying invalid email warning
+    loginEmailTimerRef.current = setTimeout(() => {
+      if (trimmed && !EMAIL_REGEX.test(trimmed)) {
+        loginForm.setFields([
+          {
+            name: 'email',
+            errors: ['Please enter a valid email address']
+          }
+        ]);
+      } else {
+        loginForm.setFields([{ name: 'email', errors: [] }]);
+      }
+    }, 3000);
+  };
+
+  const handleLoginEmailBlur = () => {
+    if (loginEmailTimerRef.current) {
+      clearTimeout(loginEmailTimerRef.current);
+    }
+    const val = (loginForm.getFieldValue('email') || '').trim();
+    if (!val) {
+      loginForm.setFields([
+        {
+          name: 'email',
+          errors: ['Email address is required']
+        }
+      ]);
+    } else if (!EMAIL_REGEX.test(val)) {
+      loginForm.setFields([
+        {
+          name: 'email',
+          errors: ['Please enter a valid email address']
+        }
+      ]);
+    } else {
+      loginForm.setFields([{ name: 'email', errors: [] }]);
+    }
+  };
+
+  const handleRegisterEmailChange = (e) => {
+    const val = e.target.value;
+    if (errorMessage) setErrorMessage(null);
+    if (registerEmailTimerRef.current) {
+      clearTimeout(registerEmailTimerRef.current);
+    }
+    registerForm.setFields([{ name: 'email', errors: [] }]);
+
+    const trimmed = (val || '').trim();
+    if (!trimmed) return;
+
+    // Wait 3 seconds (3000ms) of inactivity before displaying invalid email warning
+    registerEmailTimerRef.current = setTimeout(() => {
+      if (trimmed && !EMAIL_REGEX.test(trimmed)) {
+        registerForm.setFields([
+          {
+            name: 'email',
+            errors: ['Please enter a valid email address']
+          }
+        ]);
+      } else {
+        registerForm.setFields([{ name: 'email', errors: [] }]);
+      }
+    }, 3000);
+  };
+
+  const handleRegisterEmailBlur = () => {
+    if (registerEmailTimerRef.current) {
+      clearTimeout(registerEmailTimerRef.current);
+    }
+    const val = (registerForm.getFieldValue('email') || '').trim();
+    if (!val) {
+      registerForm.setFields([
+        {
+          name: 'email',
+          errors: ['Email address is required']
+        }
+      ]);
+    } else if (!EMAIL_REGEX.test(val)) {
+      registerForm.setFields([
+        {
+          name: 'email',
+          errors: ['Please enter a valid email address']
+        }
+      ]);
+    } else {
+      registerForm.setFields([{ name: 'email', errors: [] }]);
+    }
+  };
 
   const [loginForm] = Form.useForm();
   const [registerForm] = Form.useForm();
@@ -215,7 +328,7 @@ const LoginContent = () => {
 
       const isNetworkError = err.code === 'ERR_NETWORK' || !err.response;
       const errorText = isNetworkError
-        ? 'Unable to connect to the authentication server. Please ensure the backend is running on http://localhost:5000.'
+        ? 'Unable to connect to the authentication server. Please check your network connection and try again.'
         : (err.response?.data?.message || 'The email or password you entered is incorrect. Please check your credentials.');
       setErrorMessage(errorText);
     } finally {
@@ -271,7 +384,7 @@ const LoginContent = () => {
 
       const isNetworkError = err.code === 'ERR_NETWORK' || !err.response;
       const errorText = isNetworkError
-        ? 'Unable to connect to the authentication server. Please ensure the backend is running on http://localhost:5000.'
+        ? 'Unable to connect to the authentication server. Please check your network connection and try again.'
         : (err.response?.data?.message || 'Failed to send verification code. Please check your email and try again.');
       setErrorMessage(errorText);
     } finally {
@@ -359,16 +472,7 @@ const LoginContent = () => {
       {/* Warm Ambient Atmosphere Overlay matching mockup */}
       <div className="absolute inset-0 bg-[#F5EFE6]/40 backdrop-blur-[2px] pointer-events-none" />
 
-      {/* Subtle Back Link to Maison Home */}
-      <Link
-        href="/"
-        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-30 inline-flex items-center gap-2 text-xs font-medium text-gray-700 hover:text-black transition-colors group cursor-pointer"
-      >
-        <span className="w-8 h-8 rounded-full bg-white/75 backdrop-blur-md border border-black/10 flex items-center justify-center group-hover:bg-white group-hover:border-black/25 shadow-xs transition-all text-gray-800">
-          <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
-        </span>
-        <span className="hidden sm:inline tracking-wider uppercase text-[10px] font-semibold">Back to Maison</span>
-      </Link>
+      
 
       {/* Main Luxury Card - matches Desktop & Mobile Mockups 1:1 */}
       <div className="w-full max-w-[420px] md:max-w-[880px] bg-white rounded-[28px] sm:rounded-[36px] shadow-[0_30px_90px_-15px_rgba(40,25,15,0.22)] overflow-hidden grid grid-cols-1 md:grid-cols-2 border border-white/80 relative z-10 my-auto">
@@ -435,7 +539,7 @@ const LoginContent = () => {
               <Form.Item
                 label={<span className="text-xs font-semibold text-gray-800">Email Address</span>}
                 name="email"
-                validateTrigger={['onChange', 'onBlur']}
+                validateTrigger={[]}
                 rules={[
                   { required: true, message: 'Email address is required' },
                   { type: 'email', message: 'Please enter a valid email address' }
@@ -446,6 +550,8 @@ const LoginContent = () => {
                   prefix={<Mail size={14} className="text-gray-400 mr-2" />} 
                   placeholder="Enter your email address" 
                   autoComplete="off"
+                  onChange={handleLoginEmailChange}
+                  onBlur={handleLoginEmailBlur}
                   className="rounded-xl text-xs h-10 bg-white border-[#E8E2D8] focus:bg-white placeholder:text-gray-400 placeholder:text-xs"
                   disabled={loading}
                 />
@@ -576,7 +682,7 @@ const LoginContent = () => {
               <Form.Item
                 label={<span className="text-xs font-semibold text-gray-800">Email Address</span>}
                 name="email"
-                validateTrigger={['onChange', 'onBlur']}
+                validateTrigger={[]}
                 rules={[
                   { required: true, message: 'Email address is required' },
                   { type: 'email', message: 'Please enter a valid email address' }
@@ -586,6 +692,8 @@ const LoginContent = () => {
                 <Input 
                   prefix={<Mail size={14} className="text-gray-400 mr-2" />} 
                   placeholder="Enter your email address" 
+                  onChange={handleRegisterEmailChange}
+                  onBlur={handleRegisterEmailBlur}
                   className="rounded-xl text-xs h-10 bg-white border-[#E8E2D8] focus:bg-white placeholder:text-gray-400 placeholder:text-xs"
                   disabled={loading}
                 />

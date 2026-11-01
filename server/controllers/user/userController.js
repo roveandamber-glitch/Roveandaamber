@@ -1,3 +1,21 @@
+
+// Helper to verify if an order qualifies for return based on the 2 ml sample bottle rule:
+// Customers are eligible for a return and refund only if they purchase the perfume along with its 2 ml sample bottle.
+export const hasSampleBottle = (order) => {
+  if (!order) return false;
+  if (Array.isArray(order.items) && order.items.length > 0) {
+    const hasSampleItem = order.items.some(item => {
+      const size = String(item.size || '').toLowerCase().trim();
+      const name = String(item.name || item.product_name || '').toLowerCase().trim();
+      const is2ml = size === '2ml' || size === '2 ml' || size.includes('2ml') || size.includes('2 ml');
+      const isSampleName = name.includes('2ml') || name.includes('2 ml') || name.includes('sample');
+      const isSampleFlag = Boolean(item.hasSample || item.withSample || item.isSample);
+      return is2ml || isSampleName || isSampleFlag;
+    });
+    if (hasSampleItem) return true;
+  }
+  return Boolean(order.hasSample || order.has2mlSample || order.withSample || order.hasSampleBottle);
+};
 import mongoose from 'mongoose';
 import { User } from '../../models/userModel.js';
 import { OrderModel, Order } from '../../models/orderModel.js';
@@ -98,7 +116,8 @@ export const getAccountOrders = async (req, res) => {
       const isDelivered = o.status === 'Delivered';
       const deliveryDate = o.tracking?.deliveredAt || o.updatedAt;
       const daysSinceDelivery = deliveryDate ? (Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24) : 999;
-      const canReturn = isDelivered && daysSinceDelivery <= 7 && !o.returnDetails?.isReturnRequested;
+      const hasSample = hasSampleBottle(o);
+      const canReturn = isDelivered && daysSinceDelivery <= 7 && hasSample && !o.returnDetails?.isReturnRequested;
 
       return {
         id: o._id.toString(),
@@ -167,7 +186,8 @@ export const getAccountOrderDetails = async (req, res) => {
     const isDelivered = order.status === 'Delivered';
     const deliveryDate = order.tracking?.deliveredAt || order.updatedAt;
     const daysSinceDelivery = deliveryDate ? (Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24) : 999;
-    const canReturn = isDelivered && daysSinceDelivery <= 7 && !order.returnDetails?.isReturnRequested;
+    const hasSample = hasSampleBottle(order);
+    const canReturn = isDelivered && daysSinceDelivery <= 7 && hasSample && !order.returnDetails?.isReturnRequested;
 
     return res.json({
       success: true,
@@ -180,7 +200,8 @@ export const getAccountOrderDetails = async (req, res) => {
         eligibility: {
           canCancel,
           canReturn,
-          returnPolicy: 'Returns eligible within 7 days of delivery for untampered, sealed luxury flacons.',
+          hasSampleBottle: hasSample,
+          returnPolicy: 'Customers are eligible for a return and refund only if they purchase the perfume along with its 2 ml sample bottle. Perfumes purchased without the 2 ml sample are not eligible for a return or refund.',
           returnWindowDaysRemaining: canReturn ? Math.max(0, Math.ceil(7 - daysSinceDelivery)) : 0
         }
       }
@@ -439,11 +460,13 @@ export const checkOrderEligibility = async (req, res) => {
     const isDelivered = status === 'Delivered';
     const deliveryDate = order.tracking?.deliveredAt || order.updatedAt;
     const daysSinceDelivery = deliveryDate ? (Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24) : 999;
-    const canReturn = isDelivered && daysSinceDelivery <= 7 && !order.returnDetails?.isReturnRequested;
+    const hasSample = hasSampleBottle(order);
+    const canReturn = isDelivered && daysSinceDelivery <= 7 && hasSample && !order.returnDetails?.isReturnRequested;
 
     let returnBlockReason = '';
     if (!canReturn) {
       if (!isDelivered) returnBlockReason = 'Returns can only be requested after the parcel has been delivered.';
+      else if (!hasSample) returnBlockReason = 'Ineligible for return: Customers are eligible for a return and refund only if they purchase the perfume along with its 2 ml sample bottle. Perfumes purchased without the 2 ml sample are not eligible for a return or refund.';
       else if (daysSinceDelivery > 7) returnBlockReason = 'The 7-day return window from delivery has elapsed.';
       else if (order.returnDetails?.isReturnRequested) returnBlockReason = `Return request has already been submitted (Status: ${order.returnDetails.status}).`;
     }
@@ -462,7 +485,8 @@ export const checkOrderEligibility = async (req, res) => {
           eligible: canReturn,
           reason: canReturn ? 'Eligible for return within the 7-day luxury preservation window.' : returnBlockReason,
           daysRemaining: canReturn ? Math.max(0, Math.ceil(7 - daysSinceDelivery)) : 0,
-          policy: 'Flacons must remain sealed, un-sprayed, and housed in original presentation coffrets.'
+          hasSampleBottle: hasSample,
+          policy: 'Customers are eligible for a return and refund only if they purchase the perfume along with its 2 ml sample bottle. Full-size flacons must remain sealed, un-sprayed, and in original packaging.'
         }
       }
     });
@@ -580,6 +604,14 @@ export const requestOrderReturn = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Returns can only be requested after the parcel has been confirmed as delivered.'
+      });
+    }
+
+    // 2 ml sample bottle eligibility enforcement
+    if (!hasSampleBottle(order)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ineligible for return: Customers are eligible for a return and refund only if they purchase the perfume along with its 2 ml sample bottle. Perfumes purchased without the 2 ml sample are not eligible for a return or refund.'
       });
     }
 

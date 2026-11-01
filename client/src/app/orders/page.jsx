@@ -45,6 +45,58 @@ export default function MyOrdersPage() {
   // Modals state
   const [activeTrackingOrder, setActiveTrackingOrder] = useState(null);
   const [activeInvoiceOrder, setActiveInvoiceOrder] = useState(null);
+  const [activeReturnOrder, setActiveReturnOrder] = useState(null);
+  const [returnReason, setReturnReason] = useState('Scent profile does not suit skin chemistry (Tested 2 ml sample)');
+  const [returnComment, setReturnComment] = useState('');
+  const [confirmSealed, setConfirmSealed] = useState(false);
+  const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
+
+  const hasSampleBottle = (ord) => {
+    if (!ord) return false;
+    if (Array.isArray(ord.items)) {
+      const found = ord.items.some(item => {
+        const size = String(item.size || '').toLowerCase().trim();
+        const name = String(item.name || item.product_name || '').toLowerCase().trim();
+        return size.includes('2ml') || size.includes('2 ml') || name.includes('2ml') || name.includes('2 ml') || name.includes('sample') || item.hasSample;
+      });
+      if (found) return true;
+    }
+    return Boolean(ord.hasSample || ord.has2mlSample || ord.withSample);
+  };
+
+  const handleOpenReturnModal = (ord) => {
+    setActiveReturnOrder(ord);
+    setReturnReason('Scent profile does not suit skin chemistry (Tested 2 ml sample)');
+    setReturnComment('');
+    setConfirmSealed(false);
+  };
+
+  const handleSubmitReturn = async () => {
+    if (!activeReturnOrder) return;
+    if (!confirmSealed) {
+      message.error('Please confirm that the full-size flacon remains factory-sealed and untampered.');
+      return;
+    }
+    setIsSubmittingReturn(true);
+    try {
+      const res = await orderService.requestReturn(activeReturnOrder._id || activeReturnOrder.id, {
+        reason: returnReason,
+        comment: returnComment
+      });
+      if (res?.success) {
+        message.success('Return request submitted successfully. Our concierge will contact you within 24 hours.');
+        setActiveReturnOrder(null);
+        fetchOrders();
+      } else {
+        message.error(res?.message || 'Could not submit return request.');
+      }
+    } catch (err) {
+      const errTxt = err.response?.data?.message || err.message || 'Failed to submit return request.';
+      message.error(errTxt);
+    } finally {
+      setIsSubmittingReturn(false);
+    }
+  };
 
   useEffect(() => {
     const token = typeof window !== 'undefined' 
@@ -535,6 +587,24 @@ export default function MyOrdersPage() {
                           <Truck size={13} />
                           <span>Track Dispatch</span>
                         </button>
+
+                        {String(order.status || '').toLowerCase() === 'delivered' && !order.returnDetails?.isReturnRequested && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReturnModal(order)}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#8C6D1F] bg-[#FAF6ED] hover:bg-[#F3EBD9] border border-[#E8DFC9] shadow-2xs transition-all cursor-pointer"
+                          >
+                            <RotateCcw size={13} />
+                            <span>Return / Refund</span>
+                          </button>
+                        )}
+
+                        {order.returnDetails?.isReturnRequested && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200">
+                            <RotateCcw size={12} />
+                            <span>Return: {order.returnDetails.status || 'Pending'}</span>
+                          </span>
+                        )}
                       </div>
 
                     </div>
@@ -749,6 +819,156 @@ export default function MyOrdersPage() {
                 Close
               </button>
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* 7. LUXURY RETURN & REFUND MODAL (Enforces 2 ml Sample Bottle Rule) */}
+      <Modal
+        open={Boolean(activeReturnOrder)}
+        onCancel={() => setActiveReturnOrder(null)}
+        footer={null}
+        centered
+        width={540}
+        className="rounded-3xl overflow-hidden"
+      >
+        {activeReturnOrder && (
+          <div className="p-4 sm:p-6 space-y-5">
+            {/* Modal Header */}
+            <div className="text-center pb-4 border-b border-[#ECE5D8]">
+              <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center bg-[#FAF6ED] border border-[#E5DFD5]">
+                {hasSampleBottle(activeReturnOrder) ? (
+                  <RotateCcw size={22} className="text-[#C49A45]" />
+                ) : (
+                  <AlertTriangle size={22} className="text-[#B86526]" />
+                )}
+              </div>
+              <h3 className="font-serif text-lg font-bold text-[#120905]">
+                {hasSampleBottle(activeReturnOrder)
+                  ? 'Request Return & Refund'
+                  : 'Return & Refund Policy Notice'}
+              </h3>
+              <p className="text-xs text-[#7A7067] mt-0.5 font-light">
+                Order {activeReturnOrder.orderId || activeReturnOrder.id} • Delivered
+              </p>
+            </div>
+
+            {hasSampleBottle(activeReturnOrder) ? (
+              /* ELIGIBLE FLOW: Purchased with 2 ml sample bottle */
+              <div className="space-y-4">
+                <div className="p-3.5 rounded-xl bg-[#FAFDF9] border border-emerald-200/80 space-y-1">
+                  <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                    <ShieldCheck size={14} />
+                    <span>Eligible: 2 ml Companion Sample Bottle Included</span>
+                  </span>
+                  <p className="text-[11px] text-[#4A5D4E] leading-relaxed">
+                    This order was purchased with the companion 2 ml sample bottle. You are entitled to a 100% refund on the full-size flacon within 7 days of delivery, provided the main flacon remains unopened and sealed in its original presentation box.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
+                    Reason for Return
+                  </label>
+                  <select
+                    value={returnReason}
+                    onChange={(e) => setReturnReason(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-[#D5CDBD] text-xs bg-[#FAF9F7] focus:outline-none focus:border-black text-black"
+                  >
+                    <option value="Scent profile does not suit skin chemistry (Tested 2 ml sample)">
+                      Scent profile does not suit skin chemistry (Tested 2 ml sample)
+                    </option>
+                    <option value="Atomizer defect or compromised flacon">
+                      Atomizer defect or compromised flacon
+                    </option>
+                    <option value="Accidental duplicate purchase (Main flacon sealed)">
+                      Accidental duplicate purchase (Main flacon sealed)
+                    </option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
+                    Additional Comments (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={returnComment}
+                    onChange={(e) => setReturnComment(e.target.value)}
+                    placeholder="Provide any details for the concierge team..."
+                    className="w-full px-3 py-2 rounded-xl border border-[#D5CDBD] text-xs bg-[#FAF9F7] focus:outline-none focus:border-black text-black placeholder-gray-400 resize-none"
+                  />
+                </div>
+
+                {/* Mandatory Confirmation Checkbox */}
+                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#E8DFC9]">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={confirmSealed}
+                      onChange={(e) => setConfirmSealed(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded text-[#B86526] focus:ring-[#B86526] border-gray-300 cursor-pointer accent-[#B86526]"
+                    />
+                    <span className="text-[11px] text-[#3D352E] leading-snug">
+                      I confirm that I have only tested the companion 2 ml sample bottle, and the main perfume flacon remains unopened and factory-sealed in its original packaging.
+                    </span>
+                  </label>
+                </div>
+
+                {/* Submit Action Buttons */}
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveReturnOrder(null)}
+                    className="flex-1 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 py-3 rounded-full text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitReturn}
+                    disabled={!confirmSealed || isSubmittingReturn}
+                    className="flex-1 bg-[#120905] hover:bg-[#261C14] disabled:bg-gray-200 disabled:text-gray-400 text-[#ECC880] py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    {isSubmittingReturn ? 'Submitting...' : 'Submit Return Request'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* INELIGIBLE FLOW: Purchased without 2 ml sample bottle */
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-[#FFFDF9] border border-amber-300 space-y-2">
+                  <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                    <AlertTriangle size={15} className="text-[#B86526]" />
+                    <span>Ineligible for Return or Refund</span>
+                  </span>
+                  <p className="text-xs text-[#5C5248] leading-relaxed">
+                    Under ROVE & AMBER&apos;s return and refund policy, customers are eligible for a return and refund <strong>only if they purchase the perfume along with its companion 2 ml sample bottle</strong>.
+                  </p>
+                  <p className="text-xs text-[#5C5248] leading-relaxed">
+                    Because this perfume was acquired without the 2 ml sample bottle, it is classified as a final handcrafted formulation and is strictly non-returnable and non-refundable.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <Link
+                    href="/return-policy"
+                    onClick={() => setActiveReturnOrder(null)}
+                    className="flex-1 text-center bg-[#FAF8F5] hover:bg-[#F2EDE4] border border-[#D8CEBE] text-black py-3 rounded-full text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    View Return Policy
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setActiveReturnOrder(null)}
+                    className="flex-1 bg-[#120905] text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-[#261C14] transition-colors cursor-pointer"
+                  >
+                    Understood
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>

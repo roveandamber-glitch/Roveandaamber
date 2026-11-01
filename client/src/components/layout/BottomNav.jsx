@@ -76,7 +76,8 @@ const BottomNav = () => {
     return () => window.removeEventListener('authChange', checkAuth);
   }, []);
 
-  if (pathname && pathname.startsWith('/admin')) {
+  // Hide bottom navigation on admin and customer auth pages in mobile view
+  if (pathname && (pathname.startsWith('/admin') || pathname === '/login' || pathname === '/register')) {
     return null;
   }
 

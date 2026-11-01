@@ -64,12 +64,12 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/about#shipping" className="hover:text-[#E5B869] transition-colors">
+                <Link href="/terms-and-conditions#shipping-delivery" className="hover:text-[#E5B869] transition-colors">
                   Shipping & Delivery
                 </Link>
               </li>
               <li>
-                <Link href="/about#returns" className="hover:text-[#E5B869] transition-colors">
+                <Link href="/return-policy" className="hover:text-[#E5B869] transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
@@ -117,7 +117,7 @@ const Footer = () => {
             </h4>
             <div className="flex items-center gap-2">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/roveandamber?dlrf=NzhjOGd5aGprdG96"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/75 hover:text-[#E5B869] hover:bg-white/20 transition-all"
@@ -158,11 +158,11 @@ const Footer = () => {
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-white/50 font-light gap-3">
           <p>© 2026 ROVE & AMBER. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="/about" className="hover:text-white transition-colors">
+            <Link href="/privacy-policy" className="hover:text-[#E5B869] transition-colors">
               Privacy Policy
             </Link>
-            <span>|</span>
-            <Link href="/about" className="hover:text-white transition-colors">
+            <span className="text-white/30">|</span>
+            <Link href="/terms-and-conditions" className="hover:text-[#E5B869] transition-colors">
               Terms & Conditions
             </Link>
           </div>
