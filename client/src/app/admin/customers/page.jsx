@@ -116,8 +116,7 @@ export default function AdminCustomersPage() {
 
   const filteredCustomers = customers.filter(c => 
     c.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-    c.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-    c.city?.toLowerCase().includes(searchText.toLowerCase())
+    c.email?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const columns = [
@@ -152,27 +151,20 @@ export default function AdminCustomersPage() {
       title: 'Status',
       dataIndex: 'isBlocked',
       key: 'status',
-      width: 110,
+      width: 120,
       render: (isBlocked) => (
         isBlocked ? (
-          <span className="inline-flex items-center gap-1.5 text-[11px] bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full font-medium">
+          <span className="inline-flex items-center gap-1.5 text-[11px] bg-rose-50 text-rose-700 border border-rose-200 px-3 py-0.5 rounded-full font-medium whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
             Blocked
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">
+          <span className="inline-flex items-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-0.5 rounded-full font-medium whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             Active
           </span>
         )
       )
-    },
-    {
-      title: 'City & Region',
-      dataIndex: 'city',
-      key: 'city',
-      width: 160,
-      render: (val) => <span className="text-xs text-gray-600 truncate max-w-[140px] inline-block">{val || 'Mumbai, Maharashtra'}</span>
     },
     {
       title: 'Orders Placed',
@@ -290,7 +282,7 @@ export default function AdminCustomersPage() {
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by customer name, email, or city..."
+            placeholder="Search by customer name or email..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E8DFC8] rounded-xl focus:outline-none focus:border-[#D4A64A] transition-colors"
@@ -422,19 +414,21 @@ export default function AdminCustomersPage() {
               <div className="bg-white p-3.5 rounded-xl border border-[#EAE3D6] space-y-2.5 text-gray-600">
                 <div className="flex items-center gap-2.5">
                   <Phone size={14} className="text-[#B8860B]" />
-                  <span>{selectedCustomer.phone || '+91 98765 43210'}</span>
+                  <span>{selectedCustomer.phone || 'Phone not provided'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Mail size={14} className="text-[#B8860B]" />
                   <span>{selectedCustomer.email}</span>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <MapPin size={14} className="text-[#B8860B]" />
-                  <span>{selectedCustomer.city || 'Mumbai, Maharashtra, India'}</span>
-                </div>
+                {selectedCustomer.city && (
+                  <div className="flex items-center gap-2.5">
+                    <MapPin size={14} className="text-[#B8860B]" />
+                    <span>{selectedCustomer.city}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2.5">
                   <Calendar size={14} className="text-[#B8860B]" />
-                  <span>Customer since {selectedCustomer.joinedDate || 'October 2026'}</span>
+                  <span>Customer since {selectedCustomer.joinedDate || 'Recently joined'}</span>
                 </div>
               </div>
             </div>
