@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { message } from 'antd';
-import { Heart, Star, ShoppingBag, Eye } from 'lucide-react';
+import { Heart, Star, ShoppingBag } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageHelper';
 import { cartService } from '../../services/cartService';
 
@@ -156,22 +156,6 @@ const ProductCard = ({ product, onQuickView }) => {
               e.target.src = '/images/perfumes/amber_oud_perfume.jpg';
             }}
           />
-
-          {/* Quick View Hover Action (Desktop only) */}
-          {onQuickView && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onQuickView(product);
-              }}
-              className="hidden lg:flex items-center gap-1.5 absolute bottom-2.5 px-3 py-1.5 bg-black/80 hover:bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 cursor-pointer shadow-xs"
-            >
-              <Eye size={12} />
-              <span>Quick View</span>
-            </button>
-          )}
         </div>
 
         {/* Product Metadata */}

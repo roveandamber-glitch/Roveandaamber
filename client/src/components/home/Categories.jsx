@@ -45,8 +45,8 @@ const Categories = () => {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       const overflowing = scrollWidth > clientWidth + 4;
       setIsOverflowing(overflowing);
-      setCanScrollLeft(scrollLeft > 10);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+      setCanScrollLeft(scrollLeft > 8);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 8);
     }
   };
 
@@ -55,7 +55,7 @@ const Categories = () => {
     const handleResize = () => updateScrollButtons();
     window.addEventListener('resize', handleResize);
     
-    // Check after brief delays for layout/image settle
+    // Check after brief delays for font/images to settle layout dimensions
     const timer1 = setTimeout(updateScrollButtons, 150);
     const timer2 = setTimeout(updateScrollButtons, 400);
 
@@ -73,6 +73,22 @@ const Categories = () => {
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
       });
+      setTimeout(updateScrollButtons, 350);
+    }
+  };
+
+  // Enable mouse wheel horizontal scrolling when content overflows
+  const handleWheel = (e) => {
+    if (!scrollRef.current || !isOverflowing) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      const canScrollRightNow = e.deltaY > 0 && scrollLeft < scrollWidth - clientWidth - 2;
+      const canScrollLeftNow = e.deltaY < 0 && scrollLeft > 2;
+      if (canScrollRightNow || canScrollLeftNow) {
+        e.preventDefault();
+        scrollRef.current.scrollLeft += e.deltaY * 0.85;
+        updateScrollButtons();
+      }
     }
   };
 
@@ -117,47 +133,48 @@ const Categories = () => {
 
       {/* Horizontal Scroll Wrapper */}
       <div className="relative">
-        {/* Subtle Edge Fade Indicators */}
+        {/* Subtle Luxury Gradient Edge Indicators */}
         {canScrollLeft && (
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-[#FAF9F7] to-transparent z-10 transition-opacity duration-300" />
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 sm:w-16 bg-gradient-to-r from-[#FAF9F7] via-[#FAF9F7]/80 to-transparent z-10 transition-opacity duration-300" />
         )}
         {canScrollRight && (
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-l from-[#FAF9F7] to-transparent z-10 transition-opacity duration-300" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 sm:w-16 bg-gradient-to-l from-[#FAF9F7] via-[#FAF9F7]/80 to-transparent z-10 transition-opacity duration-300" />
         )}
 
-        {/* Left Arrow Button */}
+        {/* Left Scroll Button */}
         <button
           type="button"
           onClick={() => handleScroll('left')}
-          aria-label="Scroll left"
-          className={`absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-[#1A1A1A] text-[#1A1A1A] hover:text-[#E5B869] shadow-md hover:shadow-xl border border-[#E5DFD5] flex items-center justify-center transition-all duration-300 backdrop-blur-sm cursor-pointer ${
+          aria-label="Scroll left to view previous categories"
+          className={`absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#18110B] hover:bg-[#B8860B] text-[#ECC880] hover:text-white shadow-xl border border-[#ECC880]/40 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer ${
             canScrollLeft ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-90 pointer-events-none'
           }`}
         >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.4} />
         </button>
 
-        {/* Right Arrow Button */}
+        {/* Right Scroll Button */}
         <button
           type="button"
           onClick={() => handleScroll('right')}
-          aria-label="Scroll right"
-          className={`absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-[#1A1A1A] text-[#1A1A1A] hover:text-[#E5B869] shadow-md hover:shadow-xl border border-[#E5DFD5] flex items-center justify-center transition-all duration-300 backdrop-blur-sm cursor-pointer ${
+          aria-label="Scroll right to view more categories"
+          className={`absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#18110B] hover:bg-[#B8860B] text-[#ECC880] hover:text-white shadow-xl border border-[#ECC880]/40 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer ${
             canScrollRight ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-90 pointer-events-none'
           }`}
         >
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.4} />
         </button>
 
-        {/* Scrollable Track */}
+        {/* Scrollable Category Track */}
         <div
           ref={scrollRef}
           onScroll={updateScrollButtons}
+          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
-          className={`flex items-start gap-4 sm:gap-6 md:gap-8 overflow-x-auto scroll-smooth py-4 px-2 select-none touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+          className={`flex items-start gap-5 sm:gap-7 md:gap-9 overflow-x-auto scroll-smooth py-4 px-3 select-none touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           } ${isOverflowing ? 'justify-start' : 'justify-start md:justify-center'}`}
           style={{
@@ -177,7 +194,7 @@ const Categories = () => {
                     e.preventDefault();
                   }
                 }}
-                className="group/item shrink-0 flex flex-col items-center cursor-pointer transition-transform duration-300 hover:-translate-y-1.5 w-24 sm:w-32 md:w-36 lg:w-40 text-center"
+                className="group/item shrink-0 flex flex-col items-center cursor-pointer transition-transform duration-300 hover:-translate-y-1.5 w-28 sm:w-36 md:w-40 lg:w-44 text-center"
               >
                 {/* Circular Thumbnail with Polished Gold Border */}
                 <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden p-0.5 sm:p-1 bg-gradient-to-b from-[#E5B869] to-[#C49444] shadow-md group-hover/item:shadow-2xl group-hover/item:shadow-amber-900/25 transition-all duration-300">
@@ -194,8 +211,8 @@ const Categories = () => {
                   </div>
                 </div>
 
-                {/* Label (gracefully wraps up to 2 lines without truncating awkwardly) */}
-                <span className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-serif font-medium text-[#1A1A1A] group-hover/item:text-[#B86526] transition-colors tracking-wide text-center leading-snug w-full px-1 min-h-[2.5em] flex items-center justify-center">
+                {/* Full Unclipped Label */}
+                <span className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-serif font-medium text-[#1A1A1A] group-hover/item:text-[#B86526] transition-colors tracking-wide text-center whitespace-normal max-w-full px-1">
                   {item.name}
                 </span>
               </Link>

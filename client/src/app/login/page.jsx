@@ -63,7 +63,7 @@ const LoginContent = () => {
       if (res?.success && res.token && res.user) {
         authService.saveSession(res.user, res.token);
         message.success(`Welcome to Rove & Amber, ${res.user.name || 'Customer'}!`);
-        router.push(redirect && redirect !== '/admin' && redirect !== '/profile' ? redirect : '/');
+        router.push(redirect && redirect.startsWith('/') && !redirect.startsWith('/login') && redirect !== '/admin' ? redirect : '/');
       } else {
         setErrorMessage(res?.message || 'Google authentication failed.');
       }
@@ -243,7 +243,7 @@ const LoginContent = () => {
       const currentToken = authService.getToken();
 
       if (currentUser && currentToken) {
-        router.replace(redirect && redirect !== '/admin' && redirect !== '/profile' ? redirect : '/');
+        router.replace(redirect && redirect.startsWith('/') && !redirect.startsWith('/login') && redirect !== '/admin' ? redirect : '/');
       }
     }
   }, [router, redirect, searchParams]);
@@ -343,7 +343,7 @@ const LoginContent = () => {
         authService.saveSession(res.user, res.token);
 
         message.success(`Welcome back, ${res.user.name || 'Customer'}!`);
-        router.push(redirect && redirect !== '/admin' && redirect !== '/profile' ? redirect : '/');
+        router.push(redirect && redirect.startsWith('/') && !redirect.startsWith('/login') && redirect !== '/admin' ? redirect : '/');
       } else {
         const errorText = res?.message || 'Incorrect email or password.';
         setErrorMessage(errorText);
@@ -456,7 +456,7 @@ const LoginContent = () => {
         authService.saveSession(res.user, res.token);
         cartService.clearCart(); // Fresh account starts with empty cart
         message.success(`Account successfully created! Welcome to ROVE & AMBER, ${res.user.name}.`);
-        router.push(redirect && redirect !== '/admin' && redirect !== '/profile' ? redirect : '/');
+        router.push(redirect && redirect.startsWith('/') && !redirect.startsWith('/login') && redirect !== '/admin' ? redirect : '/');
       } else {
         setErrorMessage(res?.message || 'Registration failed. Please check the code and try again.');
       }

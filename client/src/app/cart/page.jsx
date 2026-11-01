@@ -181,38 +181,16 @@ export default function CartPage() {
 
   // Check auth before starting checkout
   const handleStartCheckout = () => {
-    router.push('/checkout');
-    return;
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('adminKey'))
+      : null;
 
-    const token = 
-      localStorage.getItem('userToken') || 
-      localStorage.getItem('adminToken') || 
-      localStorage.getItem('token') || 
-      localStorage.getItem('adminKey');
-    
-    // Backend POST /orders requires protect middleware (token)
     if (!token) {
-      setIsAuthPromptOpen(true);
+      router.push('/login?redirect=/checkout');
       return;
     }
 
-    // Prefill form from localStorage user profile if available
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        checkoutForm.setFieldsValue({
-          customerName: user.name || '',
-          phone: user.phone || '',
-          address: user.address || ''
-        });
-      } catch (e) {
-        console.warn('Could not parse user info for checkout', e);
-      }
-    }
-
-    setCheckoutError(null);
-    setIsCheckoutModalOpen(true);
+    router.push('/checkout');
   };
 
   // Toggle recipient address from gift options if available
@@ -522,114 +500,6 @@ export default function CartPage() {
                 </Link>
               </div>
 
-              {/* GIFT OPTIONS SUMMARY / BANNER */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-[#FAF6ED] via-[#FFFDF9] to-[#FAF6ED] border border-[#E8DFC9] shadow-xs">
-                {giftOptions ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center text-[#B8860B]">
-                          <Gift size={14} />
-                        </div>
-                        <h4 className="font-serif text-sm sm:text-base font-bold text-black">
-                          Complimentary Gift Presentation Configured
-                        </h4>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setIsGiftModalOpen(true)}
-                          className="text-xs font-bold text-[#8C6D1F] hover:text-black uppercase tracking-wider transition-colors inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <Edit3 size={11} />
-                          <span>Edit Details</span>
-                        </button>
-                        <span className="text-gray-300">•</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setGiftOptions(null);
-                            try {
-                              
-                            } catch (e) {}
-                            message.info('Gift customization removed');
-                          }}
-                          className="text-xs text-stone-400 hover:text-red-500 uppercase tracking-wider transition-colors cursor-pointer"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-                      <div className="bg-white p-3 rounded-xl border border-[#E0D8CA]">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">
-                          Packaging Selection
-                        </span>
-                        <span className="font-semibold text-black">
-                          {giftOptions.packagingId === 'velvet_coffret' 
-                            ? 'Midnight Velvet Presentation Coffret' 
-                            : giftOptions.packagingId === 'silk_sachet'
-                            ? 'Imperial Raw Silk Keepsake Sachet'
-                            : 'Atelier Signature Gold Foil Box'}
-                        </span>
-                        <span className="text-[10px] text-emerald-700 font-semibold block mt-0.5">
-                          Included Complimentary
-                        </span>
-                      </div>
-
-                      <div className="bg-white p-3 rounded-xl border border-[#E0D8CA]">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">
-                          Recipient & Occasion
-                        </span>
-                        <span className="font-semibold text-black block truncate">
-                          To: {giftOptions.recipientName || 'Gift Recipient'}
-                        </span>
-                        <span className="text-[10px] text-gray-500 block mt-0.5">
-                          Motif: {giftOptions.occasion || 'Milestone Celebration'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {giftOptions.messageText && (
-                      <div className="p-3 bg-white rounded-xl border border-[#E0D8CA] text-xs">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">
-                          Personal Inscription Card
-                        </span>
-                        <p className="font-serif italic text-gray-700 line-clamp-2">
-                          &ldquo;{giftOptions.messageText}&rdquo;
-                        </p>
-                      </div>
-                    )}
-
-                    <p className="text-[11px] text-gray-500 font-light pt-1 leading-relaxed">
-                      <strong>Transparency Notice:</strong> Complimentary gold-embossed packaging and ribbon are prepared for your order. Your inscription is saved in your current browsing session and confirmed with our concierge team prior to dispatch.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Gift size={16} className="text-[#B8860B]" />
-                        <h4 className="font-serif text-sm font-bold text-black">
-                          Sending as a Gift?
-                        </h4>
-                      </div>
-                      <p className="text-xs text-gray-600 font-light max-w-lg">
-                        Select complimentary gold foil packaging, embossed satin ribbon, and a personalized wax-sealed calligraphic note in our Gift Studio.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsGiftModalOpen(true)}
-                      className="px-5 py-2.5 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#E0D8CA] text-xs font-bold uppercase tracking-wider transition-all shadow-2xs whitespace-nowrap cursor-pointer"
-                    >
-                      Personalize Gift
-                    </button>
-                  </div>
-                )}
-              </div>
 
             </div>
 

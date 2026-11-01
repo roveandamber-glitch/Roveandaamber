@@ -23,6 +23,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import orderService from '@/services/orderService';
@@ -37,6 +38,7 @@ const TRACKING_STEPS = [
 ];
 
 export default function MyOrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -136,7 +138,7 @@ export default function MyOrdersPage() {
 
   useEffect(() => {
     const token = typeof window !== 'undefined' 
-      ? (localStorage.getItem('userToken') || localStorage.getItem('token')) 
+      ? (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('adminKey')) 
       : null;
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
     
@@ -151,8 +153,9 @@ export default function MyOrdersPage() {
     } else {
       setIsLoggedIn(false);
       setLoading(false);
+      router.replace('/login?redirect=/orders');
     }
-  }, []);
+  }, [router]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -216,6 +219,21 @@ export default function MyOrdersPage() {
     const s = String(o.status || '').toLowerCase();
     return s === 'delivered';
   }).length;
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#FBF9F5] flex flex-col justify-between pt-24 sm:pt-28 font-sans text-stone-900">
+        <Navbar />
+        <main className="max-w-5xl w-full mx-auto px-4 py-36 flex flex-col items-center justify-center space-y-4 flex-1">
+          <Spin size="large" />
+          <p className="text-xs text-[#8C7A6B] font-semibold uppercase tracking-widest">
+            Redirecting to sign in...
+          </p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] flex flex-col justify-between pt-24 sm:pt-28 font-sans text-stone-900">
@@ -281,25 +299,7 @@ export default function MyOrdersPage() {
           )}
         </div>
 
-        {/* 1. SIGN IN PROMPT IF GUEST */}
-        {!isLoggedIn ? (
-          <div className="bg-white rounded-3xl p-10 sm:p-14 text-center border border-[#ECE5D8] shadow-sm max-w-lg mx-auto my-12 space-y-5">
-            <div className="w-16 h-16 bg-[#F8F4EC] rounded-2xl flex items-center justify-center mx-auto text-[#8C6D1F] border border-[#EAE2D2] shadow-inner">
-              <Package size={28} strokeWidth={1.7} />
-            </div>
-            <div>
-              <h3 className="text-2xl font-serif font-normal text-[#1C1714] mb-1.5">Sign In to View Orders</h3>
-              <p className="text-xs sm:text-sm text-[#7D7063] font-light leading-relaxed max-w-sm mx-auto">
-                Sign in to your ROVE & AMBER user account to view live dispatch milestones, certificate serials, and orders history.
-              </p>
-            </div>
-            <Link href="/login?redirect=/orders" className="inline-block pt-2">
-              <button className="bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-95 px-8 py-3.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-md shadow-amber-950/15 transition-all cursor-pointer">
-                User Sign In
-              </button>
-            </Link>
-          </div>
-        ) : loading ? (
+        {loading ? (
           /* 2. LOADING STATE */
           <div className="py-28 flex flex-col items-center justify-center space-y-4">
             <Spin size="large" />

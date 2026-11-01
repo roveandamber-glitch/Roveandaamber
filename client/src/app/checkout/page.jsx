@@ -20,7 +20,7 @@ import {
   Package,
   Edit3
 } from 'lucide-react';
-import { message, Form, Input, Radio } from 'antd';
+import { message, Form, Input, Radio, Spin } from 'antd';
 import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
 import paymentService from '@/services/paymentService';
@@ -50,6 +50,7 @@ export default function CheckoutPage() {
   
   const [cartItems, setCartItems] = useState([]);
   const [isClient, setIsClient] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [giftOptions, setGiftOptions] = useState(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
@@ -71,6 +72,18 @@ export default function CheckoutPage() {
   useEffect(() => {
     setIsClient(true);
     document.title = 'Secure Boutique Checkout | ROVE & AMBER';
+
+    // Verify authentication before exposing checkout
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('adminKey'))
+      : null;
+
+    if (!token) {
+      router.replace('/login?redirect=/checkout');
+      return;
+    }
+
+    setIsCheckingAuth(false);
     loadRazorpayScript().catch(() => {});
 
     // Load cart items
@@ -164,7 +177,7 @@ export default function CheckoutPage() {
         email: values.email?.trim() || '',
         phone: values.phone.trim(),
         address: fullAddress,
-        paymentMethod: paymentMethod === 'Cash on Delivery' ? 'Cash on Delivery' : 'Razorpay',
+        paymentMethod: 'Razorpay',
         isGift: !!giftOptions?.isGift,
         occasion: giftOptions?.occasion || '',
         giftMessage: giftOptions?.messageText || '',
@@ -186,25 +199,7 @@ export default function CheckoutPage() {
         }))
       };
 
-      // 1. CASH ON DELIVERY: Directly place order
-      if (paymentMethod === 'Cash on Delivery') {
-        const response = await orderService.createOrder(orderPayload);
-        if (response?.success && response.data) {
-          setOrderConfirmed(response.data);
-          cartService.clearCart();
-          try {
-            localStorage.removeItem('rove_amber_gift_options');
-          } catch (e) {}
-          message.success('Your boutique order has been registered successfully!');
-        } else {
-          const errMsg = response?.message || 'Failed to place order. Please review your details.';
-          setErrorMessage(errMsg);
-          message.error(errMsg);
-        }
-        return;
-      }
-
-      // 2. ONLINE PAYMENT VIA RAZORPAY TEST MODE
+      // ONLINE PAYMENT VIA RAZORPAY GATEWAY
       const initRes = await paymentService.createPaymentOrder(orderPayload);
       if (!initRes?.success || !initRes?.data) {
         throw new Error(initRes?.message || 'Failed to initialize Razorpay payment order.');
@@ -306,7 +301,20 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!isClient) return null;
+  if (!isClient || isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center py-32 space-y-4">
+          <Spin size="large" />
+          <p className="text-xs uppercase tracking-widest text-[#8C7A6B] font-semibold">
+            Verifying Authentication...
+          </p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
@@ -423,40 +431,56 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Gift Options Active Banner */}
-              {giftOptions?.isGift && (
-                <div className="bg-[#FAF3E0] border border-[#E0D0A5] rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
-                      <Gift size={18} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-serif font-bold text-xs text-[#1B100A]">
-                          Gift Presentation For {giftOptions.recipientName}
-                        </span>
-                        <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
+              {/* Gift Options Section (Simple English) */}
+              <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                    <Gift size={18} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-serif text-sm font-bold text-gray-900">
+                        {giftOptions?.isGift ? `Gift for ${giftOptions.recipientName}` : 'Sending as a gift?'}
+                      </h4>
+                      {giftOptions?.occasion && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
                           {giftOptions.occasion}
                         </span>
-                      </div>
-                      <p className="text-[11px] text-gray-600 mt-0.5">
-                        Packaging: {giftOptions.packagingName} • Inscription card prepared
-                      </p>
+                      )}
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setIsGiftModalOpen(true)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#8C6D1F] hover:underline cursor-pointer"
-                    >
-                      <Edit3 size={12} />
-                      <span>Edit Gift</span>
-                    </button>
+                    <p className="text-xs text-gray-600 font-light mt-0.5">
+                      {giftOptions?.isGift
+                        ? 'Free gift box and personal message card added.'
+                        : 'Add free gift packaging and a personal message card.'}
+                    </p>
                   </div>
                 </div>
-              )}
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setIsGiftModalOpen(true)}
+                    className="px-4 py-2 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#D5C9B8] text-xs font-semibold tracking-wide transition-all shadow-xs cursor-pointer"
+                  >
+                    {giftOptions?.isGift ? 'Edit Message' : 'Add Gift Details'}
+                  </button>
+                  {giftOptions?.isGift && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGiftOptions(null);
+                        try {
+                          localStorage.removeItem('rove_amber_gift_options');
+                        } catch (e) {}
+                        message.info('Gift option removed');
+                      }}
+                      className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {/* Form starts */}
               <Form
@@ -573,101 +597,45 @@ export default function CheckoutPage() {
                   </Form.Item>
                 </div>
 
-                {/* 2. PAYMENT METHOD SELECTION CARD */}
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E8DFC9] shadow-xs space-y-5">
-                  <div className="flex items-center gap-2.5 pb-3 border-b border-[#ECE7DE]">
-                    <span className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
-                      2
+                {/* 2. PAYMENT METHOD CARD (Razorpay Online Gateway) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DFC9] shadow-xs space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
+                        2
+                      </span>
+                      <h2 className="text-base sm:text-lg font-serif font-bold text-black m-0">
+                        Payment Method
+                      </h2>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <ShieldCheck size={13} className="text-emerald-600" />
+                      100% Secure
                     </span>
-                    <h2 className="font-serif text-lg font-bold text-black m-0">
-                      Payment & Settlement Method
-                    </h2>
                   </div>
 
-                  {/* Payment Method Selector Grid - Exclusively Razorpay & Cash on Delivery */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    
-                    {/* Option 1: Razorpay (Cards, UPI, Net Banking, Wallets) */}
-                    <div
-                      onClick={() => setPaymentMethod('Razorpay')}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
-                        paymentMethod === 'Razorpay'
-                          ? 'border-[#B8860B] bg-[#FAF8F3] ring-2 ring-[#B8860B]/40 shadow-sm'
-                          : 'border-[#E0D8CA] bg-white hover:border-[#B8860B]/50'
-                      }`}
-                    >
-                      <div className="w-5 h-5 rounded-full border border-stone-400 flex items-center justify-center shrink-0 mt-0.5 bg-white">
-                        {paymentMethod === 'Razorpay' && <div className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />}
+                  {/* Clean Minimal Razorpay Option */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9F7] border border-[#E2D8C3] flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-black text-[#DEB368] flex items-center justify-center shrink-0 shadow-sm">
+                        <CreditCard size={20} />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs text-black">Razorpay</span>
-                          <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-stone-900">Razorpay</span>
+                          <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-stone-900 text-[#DEB368]">
                             Instant
                           </span>
                         </div>
-                        <p className="text-[11px] text-gray-500 mt-1 leading-snug">
-                          UPI (GPay, PhonePe, Paytm), Cards, Net Banking & Wallets.
+                        <p className="text-xs text-stone-500 font-light mt-0.5">
+                          UPI, Cards, Net Banking & Wallets
                         </p>
                       </div>
                     </div>
 
-                    {/* Option 2: Cash on Delivery */}
-                    <div
-                      onClick={() => setPaymentMethod('Cash on Delivery')}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
-                        paymentMethod === 'Cash on Delivery'
-                          ? 'border-[#B8860B] bg-[#FAF8F3] ring-2 ring-[#B8860B]/40 shadow-sm'
-                          : 'border-[#E0D8CA] bg-white hover:border-[#B8860B]/50'
-                      }`}
-                    >
-                      <div className="w-5 h-5 rounded-full border border-stone-400 flex items-center justify-center shrink-0 mt-0.5 bg-white">
-                        {paymentMethod === 'Cash on Delivery' && <div className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs text-black">Cash on Delivery</span>
-                          <span className="text-[10px] font-semibold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200">
-                            COD
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-gray-500 mt-1 leading-snug">
-                          Pay upon courier arrival at your doorstep via cash or UPI.
-                        </p>
-                      </div>
+                    <div className="w-5 h-5 rounded-full border-2 border-black flex items-center justify-center shrink-0">
+                      <div className="w-2.5 h-2.5 rounded-full bg-black" />
                     </div>
-
-                  </div>
-
-                  {/* Payment Details Subform */}
-                  <div className="p-4 rounded-2xl bg-[#FAF9F7] border border-[#E8DFC9] space-y-3">
-                    {paymentMethod === 'Razorpay' ? (
-                      <div className="space-y-2.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
-                            Razorpay Gateway Online
-                          </span>
-                          <span className="text-[11px] text-gray-500 font-medium">100% Encrypted & Safe • Zero Extra Fees</span>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Pay smoothly using Google Pay, PhonePe, Paytm, BHIM UPI, Visa, Mastercard, RuPay, or major Net Banking.
-                        </p>
-                        <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-950 flex items-start gap-2">
-                          <ShieldCheck size={16} className="text-amber-700 shrink-0 mt-0.5" />
-                          <span>
-                            Clicking <strong>&ldquo;Pay with Razorpay • ₹{finalTotal.toLocaleString('en-IN')}&rdquo;</strong> below will launch the official Razorpay payment window to complete your purchase.
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-gray-600 space-y-1">
-                        <p className="font-semibold text-black">Pay upon Courier Delivery</p>
-                        <p className="font-light text-[11px]">
-                          Please keep exact cash ready or have your UPI application open when our white-glove logistics executive arrives with your luxury fragrance order.
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -681,8 +649,6 @@ export default function CheckoutPage() {
                   <span>
                     {loading
                       ? 'Opening Razorpay Gateway...'
-                      : paymentMethod === 'Cash on Delivery'
-                      ? `Place Order (Pay on Delivery) • ₹${finalTotal.toLocaleString('en-IN')}`
                       : `Pay with Razorpay • ₹${finalTotal.toLocaleString('en-IN')}`}
                   </span>
                 </button>
