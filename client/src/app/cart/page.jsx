@@ -27,6 +27,7 @@ import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
 import { getImageUrl } from '@/utils/imageHelper';
 import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
+import { showLuxuryDeleteModal } from '@/components/common';
 
 const cartTheme = {
   token: {
@@ -125,14 +126,14 @@ export default function CartPage() {
   };
 
   const handleRemoveItem = (productId, size, name) => {
-    Modal.confirm({
-      title: 'Remove Fragrance?',
-      content: `Remove ${name} (${size}) from your shopping bag?`,
-      okText: 'Remove',
-      okType: 'danger',
+    showLuxuryDeleteModal({
+      title: 'Remove Fragrance',
+      itemName: `${name} (${size})`,
+      itemType: 'flacon from your bag',
+      description: `Remove ${name} (${size}) from your shopping bag? You can always add it again later from the boutique collection.`,
+      confirmText: 'Remove Item',
       cancelText: 'Keep in Bag',
-      centered: true,
-      onOk() {
+      onConfirm: () => {
         cartService.removeFromCart(productId, size);
         message.info(`Removed ${name} from your bag`);
       }
@@ -140,14 +141,13 @@ export default function CartPage() {
   };
 
   const handleClearCart = () => {
-    Modal.confirm({
-      title: 'Clear Shopping Bag?',
-      content: 'Are you sure you want to remove all items from your bag?',
-      okText: 'Clear All',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      centered: true,
-      onOk() {
+    showLuxuryDeleteModal({
+      title: 'Clear Shopping Bag',
+      itemType: 'all items in your bag',
+      description: 'Are you sure you want to remove all selected fragrance flacons and coffrets from your luxury bag?',
+      confirmText: 'Clear Entire Bag',
+      cancelText: 'Keep Items',
+      onConfirm: () => {
         cartService.clearCart();
         message.info('Shopping bag cleared');
       }

@@ -18,6 +18,7 @@ import ProductCard from '@/components/product/ProductCard';
 import QuickViewModal from '@/components/common/QuickViewModal';
 import productService from '@/services/productService';
 import { cartService } from '@/services/cartService';
+import { showLuxuryDeleteModal } from '@/components/common';
 
 
 export default function WishlistPage() {
@@ -184,14 +185,13 @@ export default function WishlistPage() {
 
   // Clear all items from wishlist
   const handleClearWishlist = () => {
-    Modal.confirm({
-      title: 'Clear your wishlist?',
-      content: 'Are you sure you want to remove all saved fragrances from your atelier wishlist?',
-      okText: 'Clear Wishlist',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      centered: true,
-      onOk() {
+    showLuxuryDeleteModal({
+      title: 'Clear Saved Fragrances',
+      itemType: 'all items in your wishlist',
+      description: 'Are you sure you want to remove all saved fragrances from your private atelier wishlist?',
+      confirmText: 'Clear Wishlist',
+      cancelText: 'Keep Wishlist',
+      onConfirm: () => {
         try {
           localStorage.setItem('rove_amber_wishlist', JSON.stringify([]));
           window.dispatchEvent(new Event('wishlistChange'));

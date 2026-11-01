@@ -12,8 +12,7 @@ import {
   Drawer,
   Tooltip,
   Spin,
-  Divider,
-  Popconfirm
+  Divider
 } from 'antd';
 import { 
   Search, 

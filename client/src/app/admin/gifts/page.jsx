@@ -9,7 +9,6 @@ import {
   InputNumber, 
   Switch, 
   message, 
-  Popconfirm,
   Tooltip,
   Tag,
   Tabs
@@ -34,6 +33,7 @@ import {
 } from 'lucide-react';
 import adminService from '@/services/adminService';
 import { getImageUrl } from '@/utils/imageHelper';
+import { showLuxuryDeleteModal } from '@/components/common';
 
 const { TextArea } = Input;
 
@@ -347,18 +347,23 @@ export default function AdminGiftsPage() {
                   >
                     <Edit3 size={14} />
                   </button>
-                  <Popconfirm
+                  <button
+                    type="button"
+                    onClick={() => {
+                      showLuxuryDeleteModal({
+                        title: 'Delete Luxury Gift Set',
+                        itemName: gift.name,
+                        itemType: 'gift coffret',
+                        description: `Remove "${gift.name}" from the boutique gift collection? This coffret will no longer be visible or purchasable by patrons.`,
+                        confirmText: 'Delete Gift Set',
+                        onConfirm: () => handleDelete(gift.id)
+                      });
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                     title="Delete Gift Set"
-                    description="Remove this luxury coffret from the gift shop?"
-                    okText="Delete"
-                    cancelText="Cancel"
-                    okButtonProps={{ danger: true }}
-                    onConfirm={() => handleDelete(gift.id)}
                   >
-                    <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
-                      <Trash2 size={14} />
-                    </button>
-                  </Popconfirm>
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
             </div>

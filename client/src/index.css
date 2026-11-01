@@ -306,3 +306,69 @@ input:-webkit-autofill:active {
 body.mobile-menu-open nav[aria-label="Mobile Navigation"] {
   display: none !important;
 }
+
+
+/* ==========================================================================
+   ROVE & AMBER — LUXURY DELETE CONFIRMATION MODAL
+   ========================================================================== */
+.luxury-delete-modal .ant-modal-content,
+.luxury-delete-confirm-modal .ant-modal-content {
+  border-radius: 24px !important;
+  padding: 24px 28px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E8DFC8 !important;
+  box-shadow: 0 25px 60px -15px rgba(27, 16, 10, 0.28) !important;
+  overflow: hidden !important;
+}
+
+.luxury-delete-confirm-modal .ant-modal-confirm-body {
+  display: block !important;
+}
+
+.luxury-delete-confirm-modal .ant-modal-confirm-paragraph {
+  max-width: 100% !important;
+  margin-inline-start: 0 !important;
+}
+
+.luxury-delete-confirm-modal .ant-modal-confirm-btns {
+  margin-top: 20px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid #F0EAE1 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+}
+
+.luxury-delete-confirm-modal .ant-btn {
+  height: 38px !important;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.luxury-delete-confirm-modal .ant-btn-default {
+  background: #FFFFFF !important;
+  border: 1px solid #E8DFC8 !important;
+  color: #4A3E36 !important;
+}
+
+.luxury-delete-confirm-modal .ant-btn-default:hover {
+  background: #FAF7F2 !important;
+  border-color: #D4A64A !important;
+  color: #1B100A !important;
+}
+
+.luxury-delete-confirm-modal .ant-btn-primary {
+  background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%) !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3) !important;
+}
+
+.luxury-delete-confirm-modal .ant-btn-primary:hover {
+  background: linear-gradient(135deg, #BE123C 0%, #9F1239 100%) !important;
+  box-shadow: 0 6px 18px rgba(225, 29, 72, 0.4) !important;
+}

@@ -7,7 +7,6 @@ import {
   Select, 
   Tag, 
   message, 
-  Popconfirm, 
   Rate,
   Tooltip 
 } from 'antd';
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import adminService from '@/services/adminService';
 import { getImageUrl } from '@/utils/imageHelper';
+import { showLuxuryDeleteModal } from '@/components/common';
 
 const { Option } = Select;
 
@@ -175,6 +175,7 @@ export default function AdminReviewsPage() {
           {record.status !== 'Approved' && (
             <Tooltip title="Approve & Publish Review">
               <button
+                type="button"
                 onClick={() => handleStatusChange(record.id, 'Approved')}
                 className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-200 cursor-pointer"
               >
@@ -186,6 +187,7 @@ export default function AdminReviewsPage() {
           {record.status !== 'Hidden' && (
             <Tooltip title="Hide from Public View">
               <button
+                type="button"
                 onClick={() => handleStatusChange(record.id, 'Hidden')}
                 className="p-1.5 text-amber-700 hover:bg-amber-50 rounded-lg transition-colors border border-amber-200 cursor-pointer"
               >
@@ -194,18 +196,23 @@ export default function AdminReviewsPage() {
             </Tooltip>
           )}
 
-          <Popconfirm
+          <button
+            type="button"
+            onClick={() => {
+              showLuxuryDeleteModal({
+                title: 'Delete Customer Review',
+                itemName: `Review for ${record.product?.name || 'Perfume'} by ${record.customer || 'Customer'}`,
+                itemType: 'customer review',
+                description: 'Permanently remove this customer testimonial from the boutique storefront? This action cannot be reversed.',
+                confirmText: 'Delete Review',
+                onConfirm: () => handleDelete(record.id)
+              });
+            }}
+            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
             title="Delete Review"
-            description="Permanently remove this customer testimonial?"
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{ danger: true }}
-            onConfirm={() => handleDelete(record.id)}
           >
-            <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
-              <Trash2 size={15} />
-            </button>
-          </Popconfirm>
+            <Trash2 size={15} />
+          </button>
         </div>
       )
     }
@@ -275,4 +282,3 @@ export default function AdminReviewsPage() {
     </div>
   );
 }
-

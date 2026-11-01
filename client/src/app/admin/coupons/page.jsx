@@ -10,7 +10,6 @@ import {
   InputNumber, 
   Switch, 
   message, 
-  Popconfirm,
   Tooltip 
 } from 'antd';
 import { 
@@ -27,7 +26,7 @@ import {
   Filter
 } from 'lucide-react';
 import adminService from '@/services/adminService';
-import { CustomDatePicker } from '@/components/common';
+import { CustomDatePicker, showLuxuryDeleteModal } from '@/components/common';
 
 const { Option } = Select;
 
@@ -227,18 +226,23 @@ export default function AdminCouponsPage() {
       width: 90,
       align: 'right',
       render: (_, record) => (
-        <Popconfirm
+        <button
+          type="button"
+          onClick={() => {
+            showLuxuryDeleteModal({
+              title: 'Remove Privilege Coupon',
+              itemName: record.code,
+              itemType: 'privilege coupon code',
+              description: `Are you sure you want to deactivate and remove privilege code "${record.code}"? Customers will no longer be able to redeem this atelier offer.`,
+              confirmText: 'Remove Coupon',
+              onConfirm: () => handleDelete(record.id)
+            });
+          }}
+          className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
           title="Remove Coupon"
-          description="Are you sure you want to deactivate and remove this privilege code?"
-          onConfirm={() => handleDelete(record.id)}
-          okText="Remove"
-          cancelText="Cancel"
-          okButtonProps={{ danger: true }}
         >
-          <button className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer">
-            <Trash2 size={15} />
-          </button>
-        </Popconfirm>
+          <Trash2 size={15} />
+        </button>
       )
     }
   ];

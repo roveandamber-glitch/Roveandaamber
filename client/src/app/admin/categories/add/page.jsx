@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, Upload, Button, Row, Col, Popconfirm, message, Modal } from 'antd';
+import { Card, Form, Input, Upload, Button, Row, Col, message, Modal } from 'antd';
 import { UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import categoryService from '@/services/categoryService';
 import { getImageUrl } from '@/utils/imageHelper';
+import { showLuxuryDeleteModal } from '@/components/common';
 
 const AddCategory = () => {
   const [form] = Form.useForm();
@@ -222,14 +223,23 @@ const AddCategory = () => {
                         className="bg-white/90 hover:bg-white text-black"
                         onClick={() => showEditModal(cat)}
                       />
-                      <Popconfirm
-                        title="Delete category"
-                        description={`Are you sure you want to delete ${cat.name}?`}
-                        onConfirm={() => handleDelete(cat.id || cat._id)}
-                        okButtonProps={{ className: 'bg-black text-white border-0' }}
-                      >
-                        <Button type="text" shape="circle" danger icon={<DeleteOutlined />} className="bg-white/90 hover:bg-white" />
-                      </Popconfirm>
+                      <Button 
+                        type="text" 
+                        shape="circle" 
+                        danger 
+                        icon={<DeleteOutlined />} 
+                        className="bg-white/90 hover:bg-white"
+                        onClick={() => {
+                          showLuxuryDeleteModal({
+                            title: 'Delete Category',
+                            itemName: cat.name,
+                            itemType: 'olfactory category',
+                            description: `Are you sure you want to permanently delete category "${cat.name}"? Any perfumes assigned to this category will be uncategorized.`,
+                            confirmText: 'Delete Category',
+                            onConfirm: () => handleDelete(cat.id || cat._id)
+                          });
+                        }}
+                      />
                     </div>
                   </div>
                 </div>

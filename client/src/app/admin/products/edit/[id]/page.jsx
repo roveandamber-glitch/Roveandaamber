@@ -1,7 +1,7 @@
 "use client";
 import { useRouter, useParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, Select, Upload, Button, Row, Col, message, InputNumber, Tag, Tooltip, Popconfirm } from 'antd';
+import { Card, Form, Input, Select, Upload, Button, Row, Col, message, InputNumber, Tag, Tooltip } from 'antd';
 import { PlusOutlined, PictureOutlined, DeleteOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import productService from '@/services/productService';
@@ -9,6 +9,7 @@ import categoryService from '@/services/categoryService';
 import adminService from '@/services/adminService';
 
 import { getImageUrl } from '@/utils/imageHelper';
+import { showLuxuryDeleteModal } from '@/components/common';
 
 const { Option } = Select;
 
@@ -303,22 +304,23 @@ const EditProduct = () => {
                             )}
                           </div>
                           {Object.keys(sizeStock).length > 1 && (
-                            <Popconfirm
-                              title={`Remove ${size} variant?`}
-                              onConfirm={() => handleRemoveSize(size)}
-                              okText="Remove"
-                              cancelText="Cancel"
-                              okButtonProps={{ danger: true, size: 'small' }}
-                              cancelButtonProps={{ size: 'small' }}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                showLuxuryDeleteModal({
+                                  title: 'Remove Flacon Size Variant',
+                                  itemName: size,
+                                  itemType: 'size variant',
+                                  description: `Are you sure you want to remove the ${size} flacon variant from this perfume formulation?`,
+                                  confirmText: 'Remove Variant',
+                                  onConfirm: () => handleRemoveSize(size)
+                                });
+                              }}
+                              className="text-stone-400 hover:text-rose-600 hover:bg-rose-50 p-1 rounded-md transition-colors cursor-pointer"
+                              title={`Remove ${size}`}
                             >
-                              <button
-                                type="button"
-                                className="text-stone-400 hover:text-rose-600 hover:bg-rose-50 p-1 rounded-md transition-colors cursor-pointer"
-                                title={`Remove ${size}`}
-                              >
-                                <DeleteOutlined className="text-xs" />
-                              </button>
-                            </Popconfirm>
+                              <DeleteOutlined className="text-xs" />
+                            </button>
                           )}
                         </div>
 

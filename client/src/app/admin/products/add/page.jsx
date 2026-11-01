@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, Select, Upload, Button, Row, Col, message, InputNumber, Tag, Popconfirm } from 'antd';
+import { Card, Form, Input, Select, Upload, Button, Row, Col, message, InputNumber, Tag } from 'antd';
 import { PlusOutlined, DeleteOutlined, CheckCircleOutlined, PictureOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import productService from '@/services/productService';
