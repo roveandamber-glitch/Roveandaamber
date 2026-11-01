@@ -20,7 +20,9 @@ import {
   Check,
   User,
   ExternalLink,
-  Edit3
+  Edit3,
+  Tag,
+  Loader2
 } from 'lucide-react';
 import { Modal, Form, Input, message, ConfigProvider } from 'antd';
 import cartService from '@/services/cartService';
@@ -56,7 +58,9 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [promoCode, setPromoCode] = useState('');
-  const [appliedPrivilege, setAppliedPrivilege] = useState(null);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -70,12 +74,22 @@ export default function CartPage() {
   // Initialize and load cart data safely on client
   const loadCart = useCallback(() => {
     setCartItems(cartService.getCart());
+    const summary = cartService.getCartSummary();
+    if (summary && summary.coupon && summary.coupon.code) {
+      setAppliedCoupon(summary.coupon);
+      setDiscountAmount(Number(summary.discountAmount) || Number(summary.coupon.discountAmount) || 0);
+    } else {
+      setAppliedCoupon(null);
+      setDiscountAmount(0);
+    }
   }, []);
 
   useEffect(() => {
     setIsClient(true);
     document.title = 'Shopping Bag | ROVE & AMBER Fine Fragrance';
-    loadCart();
+    cartService.fetchCart().then(() => {
+      loadCart();
+    });
 
     const liveGifts = cartService.getGiftOptions();
     if (liveGifts && (liveGifts.isGift || liveGifts.giftRecipient?.name)) {
@@ -108,8 +122,8 @@ export default function CartPage() {
     0
   );
 
-  // Final Total matches verified catalog subtotal
-  const finalTotal = subtotal;
+  // Final Total calculates subtotal minus verified promotional discount
+  const finalTotal = Math.max(0, subtotal - discountAmount);
 
   // Quantity updates with min (1) and maxStock validation
   const handleUpdateQty = (productId, size, currentQty, delta, maxStock) => {
@@ -154,28 +168,44 @@ export default function CartPage() {
     });
   };
 
-  // Promo code / voucher handling
-  const handleApplyPromo = (e) => {
+  // Promo code / voucher handling connecting directly to backend Coupon verification
+  const handleApplyPromo = async (e) => {
     e.preventDefault();
-    const code = promoCode.trim().toUpperCase();
-    if (!code) return;
+    const cleanCode = promoCode.trim().toUpperCase();
+    if (!cleanCode) {
+      message.warning('Please enter a promotional voucher code.');
+      return;
+    }
 
-    if (code === 'AMBER10' || code === 'ROVE10' || code === 'ZYRA10' || code === 'VIP10' || code === 'WELCOME10') {
-      setAppliedPrivilege({
-        code,
-        title: 'VIP Patron Privilege',
-        benefit: 'Complimentary Deluxe 2ml Discovery Miniature Coffret & Signature Satin Ribboning applied to your order.'
-      });
-      message.success('Promotional privilege applied to your order!');
-    } else if (code === 'AMBER15' || code === 'LUXE15' || code === 'ATELIER15') {
-      setAppliedPrivilege({
-        code,
-        title: 'Atelier Discovery Privilege',
-        benefit: 'Dual Complimentary Extrait Discovery Miniatures included with your dispatch.'
-      });
-      message.success('Atelier privilege applied to your order!');
-    } else {
-      message.info('Promotional voucher not recognized. Note: Direct currency discounts require an active store payment promotion gateway.');
+    setPromoLoading(true);
+    try {
+      const res = await cartService.applyCoupon(cleanCode);
+      if (res?.success) {
+        message.success(res.message || `Promotional code "${cleanCode}" applied successfully!`);
+        setPromoCode('');
+        loadCart();
+      } else {
+        message.error(res?.message || 'Invalid promotional voucher code.');
+      }
+    } catch (err) {
+      message.error(err.message || 'Failed to apply promotional coupon.');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setPromoLoading(true);
+    try {
+      const res = await cartService.removeCoupon();
+      message.info(res?.message || 'Promotional coupon removed from shopping bag.');
+      setAppliedCoupon(null);
+      setDiscountAmount(0);
+      loadCart();
+    } catch (err) {
+      message.error(err.message || 'Failed to remove promotional coupon.');
+    } finally {
+      setPromoLoading(false);
     }
   };
 
@@ -526,15 +556,25 @@ export default function CartPage() {
                     <span className="text-emerald-700 font-bold uppercase text-[10px]">INCLUDED</span>
                   </div>
 
-                  {appliedPrivilege && (
-                    <div className="p-2.5 rounded-xl bg-[#FAF6ED] border border-[#E8DFC9] text-[11px] text-[#6B5738] space-y-0.5">
-                      <span className="font-bold flex items-center gap-1 text-[#8C6D1F]">
-                        <Check size={12} />
-                        {appliedPrivilege.title}
-                      </span>
-                      <p className="text-[10px] text-gray-600 leading-snug">
-                        {appliedPrivilege.benefit}
-                      </p>
+                  {discountAmount > 0 && appliedCoupon && (
+                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
+                      <div className="flex items-center gap-1.5">
+                        <Tag size={13} className="text-emerald-700" />
+                        <span className="font-bold uppercase tracking-wider text-[11px]">
+                          {appliedCoupon.code} {appliedCoupon.discountType === 'percentage' ? `(${appliedCoupon.discountValue}% OFF)` : `(₹${appliedCoupon.discountValue} OFF)`}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-sans font-bold text-emerald-700">-₹{discountAmount.toLocaleString('en-IN')}</span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
+                          title="Remove coupon"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -546,27 +586,69 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Promo Code Input Form */}
-                <form onSubmit={handleApplyPromo} className="pt-1">
-                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">
-                    Promotional Voucher / Patron Code
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="e.g. AMBER10"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-xl text-xs bg-[#FAF9F7] border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-gray-400"
-                    />
-                    <button
-                      type="submit"
-                      className="bg-black hover:bg-[#262626] text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
-                    >
-                      Apply
-                    </button>
+                {/* Promo Code Input Form or Active Coupon Card */}
+                {appliedCoupon ? (
+                  <div className="pt-1">
+                    <label className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">
+                      Applied Promotional Voucher
+                    </label>
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF6ED] border border-[#E8DFC9]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-[#8C6D1F]/15 text-[#8C6D1F] flex items-center justify-center font-bold text-xs">
+                          <Check size={14} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-xs text-[#8C6D1F] tracking-wider uppercase">
+                              {appliedCoupon.code}
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                              Applied
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-gray-500 m-0">
+                            {appliedCoupon.description || 'Promotional coupon discount activated'}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        disabled={promoLoading}
+                        className="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline px-2 py-1 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                </form>
+                ) : (
+                  <form onSubmit={handleApplyPromo} className="pt-1">
+                    <label className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">
+                      Promotional Voucher / Patron Code
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. ROVE101"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                        disabled={promoLoading}
+                        className="flex-1 px-3 py-2 rounded-xl text-xs bg-[#FAF9F7] border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-gray-400 disabled:opacity-50"
+                      />
+                      <button
+                        type="submit"
+                        disabled={promoLoading || !promoCode.trim()}
+                        className="bg-black hover:bg-[#262626] text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 min-w-[70px]"
+                      >
+                        {promoLoading ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          'Apply'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
 
                 {/* Primary Proceed to Checkout CTA */}
                 <button

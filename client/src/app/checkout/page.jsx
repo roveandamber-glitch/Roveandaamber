@@ -18,7 +18,8 @@ import {
   ArrowRight,
   AlertCircle,
   Package,
-  Edit3
+  Edit3,
+  Tag
 } from 'lucide-react';
 import { message, Form, Input, Radio, Spin } from 'antd';
 import cartService from '@/services/cartService';
@@ -68,6 +69,8 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [orderConfirmed, setOrderConfirmed] = useState(null);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   useEffect(() => {
     setIsClient(true);
@@ -86,9 +89,14 @@ export default function CheckoutPage() {
     setIsCheckingAuth(false);
     loadRazorpayScript().catch(() => {});
 
-    // Load cart items
+    // Load cart items & verified summary
     const items = cartService.getCart();
     setCartItems(items);
+    const summary = cartService.getCartSummary();
+    if (summary && summary.coupon && summary.coupon.code) {
+      setAppliedCoupon(summary.coupon);
+      setDiscountAmount(Number(summary.discountAmount) || Number(summary.coupon.discountAmount) || 0);
+    }
 
     // Read saved gift options
     try {
@@ -126,7 +134,7 @@ export default function CheckoutPage() {
     (acc, item) => acc + (Number(item.price) || 0) * (parseInt(item.quantity, 10) || 1),
     0
   );
-  const finalTotal = subtotal;
+  const finalTotal = Math.max(0, subtotal - discountAmount);
 
   // Toggle delivery address to gift recipient
   const handleToggleGiftAddress = (checked) => {
@@ -187,6 +195,7 @@ export default function CheckoutPage() {
           phone: giftOptions.recipientPhone || '',
           address: giftOptions.recipientAddress || ''
         } : {},
+        couponCode: appliedCoupon?.code || '',
         hasSample: cartItems.some(i => i.hasSample || String(i.size || '').toLowerCase().includes('2ml') || String(i.name || '').toLowerCase().includes('sample')),
         items: cartItems.map((item) => ({
           productId: item.productId || item.id,
@@ -702,6 +711,16 @@ export default function CheckoutPage() {
                     <span>Subtotal</span>
                     <span className="font-bold text-black">₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
+
+                  {discountAmount > 0 && appliedCoupon && (
+                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+                      <span className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1">
+                        <Tag size={12} className="text-emerald-700" />
+                        Privilege Discount ({appliedCoupon.code})
+                      </span>
+                      <span className="font-sans font-bold text-emerald-700">-₹{discountAmount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
 
                   <div className="flex justify-between text-gray-600">
                     <span>White-Glove Courier Delivery</span>

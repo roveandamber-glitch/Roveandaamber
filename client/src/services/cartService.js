@@ -322,31 +322,48 @@ export const cartService = {
   },
 
   /**
+   * Authoritative cart summary containing coupon, discounts, and item metrics
+   */
+  getCartSummary: () => {
+    return inMemorySummary;
+  },
+
+  /**
    * Apply promotional coupon
    */
   applyCoupon: async (code) => {
-    const res = await api.post('/cart/apply-coupon', { code });
-    if (res?.data?.success && res.data.data) {
-      inMemorySummary = res.data.data;
-      inMemoryCart = (res.data.data.items || []).map(formatItem).filter(Boolean);
-      window.dispatchEvent(new Event('cartChange'));
-      return res.data;
+    try {
+      const res = await api.post('/cart/apply-coupon', { code });
+      if (res?.data?.success && res.data.data) {
+        inMemorySummary = res.data.data;
+        inMemoryCart = (res.data.data.items || []).map(formatItem).filter(Boolean);
+        window.dispatchEvent(new Event('cartChange'));
+        return res.data;
+      }
+      return res?.data;
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || 'Failed to apply coupon.';
+      throw new Error(errMsg);
     }
-    return res?.data;
   },
 
   /**
    * Remove promotional coupon
    */
   removeCoupon: async () => {
-    const res = await api.delete('/cart/remove-coupon');
-    if (res?.data?.success && res.data.data) {
-      inMemorySummary = res.data.data;
-      inMemoryCart = (res.data.data.items || []).map(formatItem).filter(Boolean);
-      window.dispatchEvent(new Event('cartChange'));
-      return res.data;
+    try {
+      const res = await api.delete('/cart/remove-coupon');
+      if (res?.data?.success && res.data.data) {
+        inMemorySummary = res.data.data;
+        inMemoryCart = (res.data.data.items || []).map(formatItem).filter(Boolean);
+        window.dispatchEvent(new Event('cartChange'));
+        return res.data;
+      }
+      return res?.data;
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || 'Failed to remove coupon.';
+      throw new Error(errMsg);
     }
-    return res?.data;
   }
 };
 
