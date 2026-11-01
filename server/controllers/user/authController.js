@@ -187,21 +187,21 @@ export const login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        field: 'password',
-        message: 'Incorrect password. Please check your password and try again.'
-      });
-    }
-
     // Check if account is blocked by administration
     if (user.isBlocked) {
       return res.status(403).json({
         success: false,
         isBlocked: true,
         message: 'Your account has been blocked. Please contact admin for support.'
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        field: 'password',
+        message: 'Incorrect password. Please check your password and try again.'
       });
     }
 
