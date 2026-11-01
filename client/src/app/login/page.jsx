@@ -200,11 +200,7 @@ const LoginContent = () => {
       const currentToken = authService.getToken();
 
       if (currentUser && currentToken) {
-        if (redirect === '/admin' && currentUser.role === 'admin') {
-          router.replace('/admin');
-        } else {
-          router.replace(redirect === '/admin' ? '/profile' : (redirect === '/' ? '/profile' : redirect));
-        }
+        router.replace(redirect && redirect !== '/admin' && redirect !== '/' ? redirect : '/profile');
       }
     }
   }, [router, redirect, searchParams]);
@@ -303,13 +299,8 @@ const LoginContent = () => {
       if (res?.success && res.token && res.user) {
         authService.saveSession(res.user, res.token);
 
-        if (redirect === '/admin' && res.user.role === 'admin') {
-          message.success('Administrator authenticated.');
-          router.push('/admin');
-        } else {
-          message.success(`Welcome back, ${res.user.name || 'Customer'}!`);
-          router.push(redirect === '/admin' ? '/profile' : (redirect === '/' ? '/profile' : redirect));
-        }
+        message.success(`Welcome back, ${res.user.name || 'Customer'}!`);
+        router.push(redirect && redirect !== '/admin' && redirect !== '/' ? redirect : '/profile');
       } else {
         const errorText = res?.message || 'Incorrect email or password.';
         setErrorMessage(errorText);

@@ -18,7 +18,8 @@ import {
   Sparkles,
   Gift,
   Compass,
-  MessageSquare
+  MessageSquare,
+  ShieldCheck
 } from 'lucide-react';
 import { message } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -110,11 +111,6 @@ const Navbar = () => {
       if (userStr) {
         try {
           const parsedUser = JSON.parse(userStr);
-          // Admin credentials belong solely to /admin and should NEVER appear as a logged-in user on the customer storefront
-          if (parsedUser && parsedUser.role === 'admin') {
-            setCurrentUser(null);
-            return;
-          }
           if (userToken && parsedUser) {
             setCurrentUser(parsedUser);
             return;
@@ -122,7 +118,7 @@ const Navbar = () => {
         } catch (e) {
           console.error('Error parsing customer session:', e);
         }
-      } else if (userToken && !localStorage.getItem('adminToken')) {
+      } else if (userToken) {
         setCurrentUser({ name: 'Customer' });
         return;
       }
@@ -599,6 +595,15 @@ const Navbar = () => {
               </Link>
 
               {/* Desktop User Account Button */}
+              {currentUser?.role === 'admin' && (
+                <a
+                  href={typeof window !== 'undefined' && window.location.hostname.includes('roveandamber.com') ? 'https://admin.roveandamber.com' : '/admin'}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#1C120C] text-[#ECC880] border border-[#DEB368]/50 hover:bg-black transition-all shadow-xs"
+                >
+                  <ShieldCheck size={13} className="text-[#DEB368]" />
+                  <span>Atelier Admin</span>
+                </a>
+              )}
               {currentUser ? (
                 <Link href="/profile" prefetch={true}>
                   <button className={`flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
@@ -720,6 +725,21 @@ const Navbar = () => {
             <div className="p-5 bg-[#FAF9F7] border-t border-[#ECE7DE] space-y-3">
               {currentUser ? (
                 <div className="space-y-2">
+                  {currentUser.role === 'admin' && (
+                    <a
+                      href={typeof window !== 'undefined' && window.location.hostname.includes('roveandamber.com') ? 'https://admin.roveandamber.com' : '/admin'}
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block mb-2"
+                    >
+                      <button
+                        type="button"
+                        className="w-full bg-[#18110D] text-[#ECC880] border border-[#DEB368]/50 py-2.5 rounded-xl font-bold uppercase text-[11px] tracking-wider flex items-center justify-center gap-1.5 shadow-sm cursor-pointer hover:bg-black transition-all"
+                      >
+                        <ShieldCheck size={14} className="text-[#DEB368]" />
+                        <span>Executive Atelier Portal</span>
+                      </button>
+                    </a>
+                  )}
                   <div className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-[#ECE7DE]">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-black text-white">
                       {currentUser.name?.[0]?.toUpperCase() || 'U'}
