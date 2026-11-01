@@ -53,6 +53,24 @@ const ProductDetails = () => {
   // Active Tab
   const [activeTab, setActiveTab] = useState('notes'); // 'notes' | 'details' | 'shipping' | 'reviews'
 
+  // Hash anchor listener (e.g. #reviews)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkHash = () => {
+        if (window.location.hash === '#reviews') {
+          setActiveTab('reviews');
+          setTimeout(() => {
+            const el = document.getElementById('reviews');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 350);
+        }
+      };
+      checkHash();
+      window.addEventListener('hashchange', checkHash);
+      return () => window.removeEventListener('hashchange', checkHash);
+    }
+  }, [id]);
+
   // Fetch product strictly by ID from live backend database
   const fetchProductData = useCallback(async () => {
     if (!id) return;
@@ -701,7 +719,7 @@ const ProductDetails = () => {
         </div>
 
         {/* SECTION 2: Detailed Accordion / Tabs (Notes, Details, Specifications, Reviews) */}
-        <section className="mt-12 sm:mt-16 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-10 border border-[#ECE7DE] shadow-2xs">
+        <section id="reviews" className="mt-12 sm:mt-16 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-10 border border-[#ECE7DE] shadow-2xs">
           
           {/* Tab Navigation */}
           <div className="flex items-center space-x-6 sm:space-x-8 border-b border-gray-100 pb-3 overflow-x-auto scrollbar-none text-xs uppercase tracking-widest font-serif">

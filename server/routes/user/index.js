@@ -8,6 +8,7 @@ import orderRoutes from './orderRoutes.js';
 import paymentRoutes from './paymentRoutes.js';
 import wishlistRoutes from './wishlistRoutes.js';
 import bannerRoutes from './bannerRoutes.js';
+import reviewRoutes from './reviewRoutes.js';
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.use('/orders', orderRoutes);
 router.use('/payment', paymentRoutes);
 router.use('/wishlist', wishlistRoutes);
 router.use('/banners', bannerRoutes);
+router.use('/reviews', reviewRoutes);
 
 export {
   authRoutes,
@@ -30,7 +32,8 @@ export {
   orderRoutes,
   paymentRoutes,
   wishlistRoutes,
-  bannerRoutes
+  bannerRoutes,
+  reviewRoutes
 };
 
 export default router;
