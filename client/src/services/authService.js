@@ -16,29 +16,17 @@ const authService = {
 
   // Session & Local Storage Management
   saveSession: (user, token) => {
-    if (typeof window === 'undefined') return;
-
-    if (user?.role === 'admin') {
-      localStorage.setItem('adminUser', JSON.stringify(user));
-      localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminKey', token);
-      // Clean up customer user key so admin session never appears on customer storefront
-      const existingUser = localStorage.getItem('user');
-      if (existingUser) {
-        try {
-          if (JSON.parse(existingUser)?.role === 'admin') {
-            localStorage.removeItem('user');
-          }
-        } catch (e) {}
+    if (typeof window !== 'undefined') {
+      if (user?.role === 'admin') {
+        localStorage.setItem('adminUser', JSON.stringify(user));
+        localStorage.setItem('adminToken', token);
+        localStorage.setItem('adminKey', token);
       }
-      localStorage.removeItem('userToken');
-    } else {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('userToken', token);
       localStorage.setItem('token', token);
+      window.dispatchEvent(new Event('authChange'));
     }
-
-    window.dispatchEvent(new Event('authChange'));
   },
 
   clearSession: () => {
@@ -62,8 +50,7 @@ const authService = {
     const userStr = localStorage.getItem('user');
     if (!userStr) return null;
     try {
-      const parsed = JSON.parse(userStr);
-      return parsed?.role !== 'admin' ? parsed : null;
+      return JSON.parse(userStr);
     } catch {
       return null;
     }

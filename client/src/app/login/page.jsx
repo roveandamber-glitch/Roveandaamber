@@ -200,7 +200,7 @@ const LoginContent = () => {
       const currentToken = authService.getToken();
 
       if (currentUser && currentToken) {
-        if (currentUser.role === 'admin') {
+        if (redirect === '/admin' && currentUser.role === 'admin') {
           router.replace('/admin');
         } else {
           router.replace(redirect === '/admin' ? '/profile' : (redirect === '/' ? '/profile' : redirect));
@@ -303,12 +303,12 @@ const LoginContent = () => {
       if (res?.success && res.token && res.user) {
         authService.saveSession(res.user, res.token);
 
-        if (res.user.role === 'admin') {
+        if (redirect === '/admin' && res.user.role === 'admin') {
           message.success('Administrator authenticated.');
           router.push('/admin');
         } else {
           message.success(`Welcome back, ${res.user.name || 'Customer'}!`);
-          router.push(redirect === '/admin' ? '/' : redirect);
+          router.push(redirect === '/admin' ? '/profile' : (redirect === '/' ? '/profile' : redirect));
         }
       } else {
         const errorText = res?.message || 'Incorrect email or password.';
