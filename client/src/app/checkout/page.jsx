@@ -598,81 +598,43 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* 2. PAYMENT METHOD CARD (Razorpay Online Gateway) */}
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E8DFC9] shadow-xs space-y-5">
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DFC9] shadow-xs space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
                     <div className="flex items-center gap-2.5">
                       <span className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
                         2
                       </span>
-                      <div>
-                        <h2 className="text-base sm:text-lg font-serif font-bold text-black m-0">
-                          Payment Method
-                        </h2>
-                        <p className="text-[11px] text-gray-500 font-light mt-0.5">
-                          Instant, encrypted checkout with zero extra fees
-                        </p>
-                      </div>
+                      <h2 className="text-base sm:text-lg font-serif font-bold text-black m-0">
+                        Payment Method
+                      </h2>
                     </div>
-                    <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
-                      100% Secure & Encrypted
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <ShieldCheck size={13} className="text-emerald-600" />
+                      100% Secure
                     </span>
                   </div>
 
-                  {/* Razorpay Showcase Card */}
-                  <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#FAF8F3] via-white to-[#FAF6ED] border-2 border-[#C49A45] shadow-xs space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-xl bg-[#1A1A1A] text-[#E5B869] flex items-center justify-center shrink-0 shadow-sm">
-                          <CreditCard size={22} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-serif font-bold text-sm text-black">
-                              Razorpay Official Gateway
-                            </span>
-                            <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#1A1A1A] text-[#E5B869]">
-                              Instant
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-600 font-light mt-0.5">
-                            UPI (Google Pay, PhonePe, Paytm), Debit & Credit Cards, Net Banking & Wallets
-                          </p>
-                        </div>
+                  {/* Clean Minimal Razorpay Option */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9F7] border border-[#E2D8C3] flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-black text-[#DEB368] flex items-center justify-center shrink-0 shadow-sm">
+                        <CreditCard size={20} />
                       </div>
-
-                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50 sm:bg-transparent px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg">
-                        <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                        <span>Zero Extra Surcharges</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-stone-900">Razorpay</span>
+                          <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-stone-900 text-[#DEB368]">
+                            Instant
+                          </span>
+                        </div>
+                        <p className="text-xs text-stone-500 font-light mt-0.5">
+                          UPI, Cards, Net Banking & Wallets
+                        </p>
                       </div>
                     </div>
 
-                    {/* Supported Payment Channels Chips */}
-                    <div className="pt-3 border-t border-[#EAE3D2] flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-semibold text-gray-500 mr-1">Accepted:</span>
-                      <span className="px-3 py-1 rounded-full bg-white border border-[#E0D8CA] text-[11px] font-medium text-gray-800 shadow-2xs">
-                        Google Pay
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-white border border-[#E0D8CA] text-[11px] font-medium text-gray-800 shadow-2xs">
-                        PhonePe
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-white border border-[#E0D8CA] text-[11px] font-medium text-gray-800 shadow-2xs">
-                        Paytm & BHIM UPI
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-white border border-[#E0D8CA] text-[11px] font-medium text-gray-800 shadow-2xs">
-                        Visa & Mastercard
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-white border border-[#E0D8CA] text-[11px] font-medium text-gray-800 shadow-2xs">
-                        RuPay & Net Banking
-                      </span>
-                    </div>
-
-                    {/* Security Assurance Banner */}
-                    <div className="p-3.5 rounded-xl bg-white/90 border border-[#E5DEC9] text-xs text-gray-700 flex items-start gap-2.5 shadow-2xs">
-                      <ShieldCheck size={17} className="text-[#8C6D1F] shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-gray-600 leading-relaxed font-light">
-                        Clicking <strong className="font-semibold text-black">&ldquo;Pay with Razorpay • ₹{finalTotal.toLocaleString('en-IN')}&rdquo;</strong> below will open the official Razorpay payment window to complete your purchase safely.
-                      </p>
+                    <div className="w-5 h-5 rounded-full border-2 border-black flex items-center justify-center shrink-0">
+                      <div className="w-2.5 h-2.5 rounded-full bg-black" />
                     </div>
                   </div>
                 </div>
