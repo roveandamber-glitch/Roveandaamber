@@ -555,12 +555,12 @@ const AdminDashboard = () => {
               </Link>
 
               <Link
-                href="/admin/inventory"
+                href="/admin/products"
                 className="p-3 bg-white hover:bg-[#FAF7F2] rounded-xl border border-[#E8DFC8] text-left transition-all group"
               >
                 <Layers size={16} className="text-[#B38728] mb-1.5 group-hover:scale-110 transition-transform" />
-                <p className="text-xs font-semibold text-gray-900">Stock Levels</p>
-                <p className="text-[10px] text-gray-500">Restock flacons</p>
+                <p className="text-xs font-semibold text-gray-900">All Perfumes</p>
+                <p className="text-[10px] text-gray-500">Catalog & flacons</p>
               </Link>
 
               <Link

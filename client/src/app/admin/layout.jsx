@@ -14,7 +14,6 @@ import {
   Tag, 
   Star, 
   FileEdit, 
-  Warehouse, 
   BarChart3, 
   Settings, 
   LogOut, 
@@ -154,11 +153,6 @@ const AdminLayout = ({ children }) => {
       name: 'Content Studio',
       path: '/admin/content',
       icon: FileEdit
-    },
-    {
-      name: 'Inventory',
-      path: '/admin/inventory',
-      icon: Warehouse
     },
     {
       name: 'Reports',
