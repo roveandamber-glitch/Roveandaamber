@@ -89,7 +89,8 @@ const AdminDashboard = () => {
   const statusCounts = {
     Delivered: Number(ordersByStatus.Delivered || 0),
     Processing: Number(ordersByStatus.Processing || 0),
-    Shipped: Number(ordersByStatus.Shipped || 0),
+    Dispatch: Number(ordersByStatus.Dispatch || ordersByStatus.Dispatched || ordersByStatus.Shipped || 0),
+    Shipped: Number(ordersByStatus.Dispatch || ordersByStatus.Dispatched || ordersByStatus.Shipped || 0),
     Pending: Number(ordersByStatus.Pending || 0),
     Cancelled: Number(ordersByStatus.Cancelled || 0)
   };
@@ -477,12 +478,12 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Shipped */}
+              {/* Dispatch */}
               <div>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="flex items-center gap-1.5 font-medium text-gray-700">
                     <span className="w-2 h-2 rounded-full bg-sky-500" />
-                    Shipped
+                    Dispatch
                   </span>
                   <span className="font-semibold text-gray-900">{statusCounts.Shipped} orders</span>
                 </div>

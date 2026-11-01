@@ -1157,7 +1157,7 @@ export const updateOrderStatus = async (req, res) => {
     if (currentLocation) order.tracking.currentLocation = currentLocation;
     if (estimatedDelivery) order.tracking.estimatedDelivery = new Date(estimatedDelivery);
 
-    if (status === 'Shipped' && !order.tracking.dispatchedAt) {
+    if ((status === 'Shipped' || status === 'Dispatch' || status === 'Dispatched') && !order.tracking.dispatchedAt) {
       order.tracking.dispatchedAt = new Date();
     }
     if (status === 'Delivered' && !order.tracking.deliveredAt) {
@@ -1176,7 +1176,7 @@ export const updateOrderStatus = async (req, res) => {
     await order.save();
 
     // Trigger automated email notifications on major fulfillment milestones
-    if (status === 'Shipped' && previousStatus !== 'Shipped') {
+    if ((status === 'Shipped' || status === 'Dispatch' || status === 'Dispatched') && previousStatus !== 'Shipped' && previousStatus !== 'Dispatch' && previousStatus !== 'Dispatched') {
       emailService.sendShippingNotification(order).catch(err => {
         console.warn('⚠️ Auto shipping email dispatch failed:', err.message);
       });

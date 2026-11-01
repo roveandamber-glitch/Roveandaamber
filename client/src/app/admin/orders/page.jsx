@@ -36,6 +36,8 @@ const { Option } = Select;
 
 const STATUS_CONFIG = {
   Processing: { bg: 'bg-[#FAF3E0]', text: 'text-[#996515]', border: 'border-[#F0DCB1]', icon: Clock },
+  Dispatch: { bg: 'bg-[#EBF3FB]', text: 'text-[#1D63B8]', border: 'border-[#CFE3F7]', icon: Truck },
+  Dispatched: { bg: 'bg-[#EBF3FB]', text: 'text-[#1D63B8]', border: 'border-[#CFE3F7]', icon: Truck },
   Shipped: { bg: 'bg-[#EBF3FB]', text: 'text-[#1D63B8]', border: 'border-[#CFE3F7]', icon: Truck },
   Delivered: { bg: 'bg-[#EAF7EE]', text: 'text-[#1E7E34]', border: 'border-[#C2E8CC]', icon: CheckCircle2 },
   Pending: { bg: 'bg-[#FFF0F0]', text: 'text-[#C92A2A]', border: 'border-[#F8D2D2]', icon: Clock },
@@ -202,12 +204,13 @@ export default function AdminOrdersPage() {
       key: 'status',
       width: 140,
       render: (_, record) => {
-        const cfg = STATUS_CONFIG[record.status] || STATUS_CONFIG.Processing;
+        const displayStatus = (record.status === 'Shipped' || record.status === 'Dispatched') ? 'Dispatch' : record.status;
+        const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG[record.status] || STATUS_CONFIG.Processing;
         const IconComponent = cfg.icon;
         return (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border ${cfg.bg} ${cfg.text} ${cfg.border} whitespace-nowrap`}>
             <IconComponent size={12} />
-            {record.status}
+            {displayStatus}
           </span>
         );
       }
@@ -280,7 +283,7 @@ export default function AdminOrdersPage() {
           >
             <Option value="ALL">All Statuses</Option>
             <Option value="Processing">Processing</Option>
-            <Option value="Shipped">Shipped</Option>
+            <Option value="Dispatch">Dispatch</Option>
             <Option value="Delivered">Delivered</Option>
             <Option value="Pending">Pending</Option>
             <Option value="Cancelled">Cancelled</Option>
@@ -353,14 +356,14 @@ export default function AdminOrdersPage() {
               <div className="pt-2 border-t border-[#EAE3D6] flex items-center justify-between gap-3">
                 <span className="text-gray-600 font-medium">Update Status:</span>
                 <Select
-                  value={selectedOrder.status}
+                  value={selectedOrder.status === 'Shipped' || selectedOrder.status === 'Dispatched' ? 'Dispatch' : selectedOrder.status}
                   onChange={handleStatusChange}
                   loading={updatingStatus}
                   className="w-44 text-xs"
                 >
                   <Option value="Pending">Pending</Option>
                   <Option value="Processing">Processing</Option>
-                  <Option value="Shipped">Shipped</Option>
+                  <Option value="Dispatch">Dispatch</Option>
                   <Option value="Delivered">Delivered</Option>
                   <Option value="Cancelled">Cancelled</Option>
                 </Select>

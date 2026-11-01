@@ -102,7 +102,7 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Return Requested', 'Returned'],
+      enum: ['Pending', 'Processing', 'Confirmed', 'Shipped', 'Dispatch', 'Dispatched', 'Delivered', 'Cancelled', 'Return Requested', 'Returned'],
       default: 'Pending'
     },
     // 8. Cancellation & Return Options
