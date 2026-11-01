@@ -62,10 +62,14 @@ export default function CustomDatePicker({
   disablePast = false,
   className = '',
   showPresets = true,
+  placement = 'auto', // 'auto' | 'top' | 'bottom'
   id
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
+  const popoverRef = useRef(null);
+  const [dropdownPosition, setDropdownPosition] = useState('bottom');
+  const [dropdownAlign, setDropdownAlign] = useState('left');
 
   // Parse initial selected date
   const parsedDate = value ? new Date(value) : null;
@@ -85,6 +89,49 @@ export default function CustomDatePicker({
       }
     }
   }, [value]);
+
+  // Auto-calculate smart placement (top vs bottom, left vs right) to avoid viewport/modal cutoff
+  useEffect(() => {
+    if (!isOpen || !containerRef.current) return;
+
+    const calculatePlacement = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const neededHeight = 350; // approximate height of calendar popup
+
+      if (placement === 'top') {
+        setDropdownPosition('top');
+      } else if (placement === 'bottom') {
+        setDropdownPosition('bottom');
+      } else {
+        // In 'auto' mode: if not enough space below, open upward
+        if (spaceBelow < neededHeight && spaceAbove >= spaceBelow) {
+          setDropdownPosition('top');
+        } else {
+          setDropdownPosition('bottom');
+        }
+      }
+
+      // Horizontal boundary check (ensure popover doesn't overflow right edge)
+      const neededWidth = 320;
+      if (rect.left + neededWidth > window.innerWidth - 16) {
+        setDropdownAlign('right');
+      } else {
+        setDropdownAlign('left');
+      }
+    };
+
+    calculatePlacement();
+    window.addEventListener('resize', calculatePlacement);
+    window.addEventListener('scroll', calculatePlacement, true);
+    return () => {
+      window.removeEventListener('resize', calculatePlacement);
+      window.removeEventListener('scroll', calculatePlacement, true);
+    };
+  }, [isOpen, placement]);
 
   // Click-outside listener
   useEffect(() => {
@@ -276,9 +323,18 @@ export default function CustomDatePicker({
         </div>
       </div>
 
-      {/* Luxury Custom Calendar Popover */}
+      {/* Luxury Custom Calendar Popover with Smart Boundary Awareness */}
       {isOpen && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-72 sm:w-80 bg-white border border-[#EAE3D6] rounded-2xl shadow-[0_12px_36px_rgba(24,17,13,0.12)] p-4 text-[#18110D] animate-in fade-in zoom-in-95 duration-150">
+        <div 
+          ref={popoverRef}
+          className={`absolute z-50 w-72 sm:w-80 bg-white border border-[#EAE3D6] rounded-2xl shadow-[0_16px_40px_rgba(24,17,13,0.18)] p-4 text-[#18110D] animate-in fade-in zoom-in-95 duration-150 ${
+            dropdownAlign === 'right' ? 'right-0' : 'left-0'
+          } ${
+            dropdownPosition === 'top' 
+              ? 'bottom-[calc(100%+8px)]' 
+              : 'top-[calc(100%+8px)]'
+          } max-h-[min(420px,calc(100vh-60px))] overflow-y-auto`}
+        >
           {/* Header: Navigation & Month/Year Selectors */}
           <div className="flex items-center justify-between pb-3 border-b border-[#F0EAE1]">
             <button

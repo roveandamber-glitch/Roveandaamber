@@ -547,6 +547,7 @@ export default function AdminCouponsPage() {
             <CustomDatePicker 
               placeholder="Select expiry date" 
               disablePast={true} 
+              placement="auto"
             />
           </Form.Item>
 
