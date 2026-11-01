@@ -1,3 +1,14 @@
 "use client";
-export { default } from '../categories/page';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function AdminCollectionsRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/admin/categories');
+  }, [router]);
+
+  return null;
+}
 

@@ -118,11 +118,6 @@ const AdminLayout = ({ children }) => {
       icon: FolderTree
     },
     {
-      name: 'Collections',
-      path: '/admin/collections',
-      icon: Sparkles
-    },
-    {
       name: 'Gift Sets',
       path: '/admin/gifts',
       icon: Gift
