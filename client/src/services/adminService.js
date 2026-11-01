@@ -87,6 +87,16 @@ const adminService = {
     };
   },
 
+  toggleBlockUser: async (userId, isBlocked, reason = '') => {
+    try {
+      const response = await api.put(`/admin/users/${userId}/block`, { isBlocked, reason });
+      return response.data;
+    } catch (err) {
+      console.error('Error toggling customer block status:', err);
+      throw err;
+    }
+  },
+
   /* --------------------------------------------------------------------------
      3. PRODUCT MANAGEMENT
      -------------------------------------------------------------------------- */

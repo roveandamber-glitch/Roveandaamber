@@ -5,6 +5,8 @@ import {
   Input, 
   Avatar, 
   Drawer, 
+  Modal,
+  Button,
   message 
 } from 'antd';
 import { 
@@ -18,6 +20,9 @@ import {
   Coins, 
   Eye, 
   PackageCheck,
+  Ban,
+  ShieldCheck,
+  ShieldAlert,
   Clock 
 } from 'lucide-react';
 import adminService from '@/services/adminService';
@@ -28,6 +33,7 @@ export default function AdminCustomersPage() {
   const [searchText, setSearchText] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -51,6 +57,61 @@ export default function AdminCustomersPage() {
   const handleOpenCustomer = (customer) => {
     setSelectedCustomer(customer);
     setDrawerOpen(true);
+  };
+
+  const handleToggleBlock = async (customer, nextStatus) => {
+    setActionLoading(true);
+    try {
+      const res = await adminService.toggleBlockUser(customer.id || customer._id, nextStatus);
+      if (res?.success) {
+        message.success(nextStatus ? `${customer.name} has been blocked.` : `${customer.name} has been unblocked.`);
+        
+        // Update local list
+        setCustomers(prev => prev.map(c => 
+          (String(c.id || c._id) === String(customer.id || customer._id)) 
+            ? { ...c, isBlocked: nextStatus } 
+            : c
+        ));
+
+        // Update selected customer in drawer if open
+        setSelectedCustomer(prev => {
+          if (!prev) return null;
+          if (String(prev.id || prev._id) === String(customer.id || customer._id)) {
+            return { ...prev, isBlocked: nextStatus };
+          }
+          return prev;
+        });
+      } else {
+        message.error(res?.message || 'Failed to update customer status');
+      }
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      message.error(err.response?.data?.message || 'Failed to update customer block status');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmBlockCustomer = (customer) => {
+    Modal.confirm({
+      title: 'Block Customer Account?',
+      icon: <ShieldAlert className="text-rose-600 mr-2" size={22} />,
+      content: (
+        <div className="text-xs space-y-2 mt-2 text-gray-600">
+          <p>
+            Are you sure you want to block <strong className="text-gray-900">{customer.name}</strong> ({customer.email})?
+          </p>
+          <p className="text-rose-600">
+            This customer will immediately be prohibited from signing in and will see an alert to contact admin for support.
+          </p>
+        </div>
+      ),
+      okText: 'Yes, Block Account',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      okButtonProps: { className: '!bg-rose-600 hover:!bg-rose-700' },
+      onOk: () => handleToggleBlock(customer, true)
+    });
   };
 
   const filteredCustomers = customers.filter(c => 
@@ -88,17 +149,36 @@ export default function AdminCustomersPage() {
       )
     },
     {
+      title: 'Status',
+      dataIndex: 'isBlocked',
+      key: 'status',
+      width: 110,
+      render: (isBlocked) => (
+        isBlocked ? (
+          <span className="inline-flex items-center gap-1.5 text-[11px] bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            Blocked
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Active
+          </span>
+        )
+      )
+    },
+    {
       title: 'City & Region',
       dataIndex: 'city',
       key: 'city',
-      width: 170,
-      render: (val) => <span className="text-xs text-gray-600 truncate max-w-[150px] inline-block">{val || 'Mumbai, Maharashtra'}</span>
+      width: 160,
+      render: (val) => <span className="text-xs text-gray-600 truncate max-w-[140px] inline-block">{val || 'Mumbai, Maharashtra'}</span>
     },
     {
       title: 'Orders Placed',
       dataIndex: 'ordersCount',
       key: 'ordersCount',
-      width: 130,
+      width: 120,
       render: (_, record) => {
         const count = record.ordersCount ?? record.orders_count ?? 0;
         return (
@@ -126,7 +206,7 @@ export default function AdminCustomersPage() {
       title: 'Reward Points',
       dataIndex: 'rewardPoints',
       key: 'rewardPoints',
-      width: 130,
+      width: 120,
       render: (_, record) => {
         const spent = record.totalSpent ?? record.total_spent ?? 0;
         const val = record.rewardPoints ?? Math.floor(spent * 0.1);
@@ -139,28 +219,42 @@ export default function AdminCustomersPage() {
       }
     },
     {
-      title: 'Joined Date',
-      dataIndex: 'joinedDate',
-      key: 'joinedDate',
-      width: 120,
-      render: (val, record) => {
-        const d = val || (record.createdAt ? new Date(record.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '29 Oct 2026');
-        return <span className="text-[11px] text-gray-400 whitespace-nowrap">{d}</span>;
-      }
-    },
-    {
       title: 'Action',
       key: 'action',
-      width: 100,
+      width: 160,
       align: 'right',
       render: (_, record) => (
-        <button 
-          onClick={() => handleOpenCustomer(record)}
-          className="inline-flex items-center gap-1 text-xs text-[#1B100A] hover:text-[#D4A64A] bg-[#FAF7F2] hover:bg-[#F5EEDF] px-3 py-1.5 rounded-lg border border-[#E8DFC8] font-medium transition-colors cursor-pointer"
-        >
-          <Eye size={13} />
-          <span>Profile</span>
-        </button>
+        <div className="flex items-center justify-end gap-1.5">
+          <button 
+            onClick={() => handleOpenCustomer(record)}
+            className="inline-flex items-center gap-1 text-xs text-[#1B100A] hover:text-[#D4A64A] bg-[#FAF7F2] hover:bg-[#F5EEDF] px-2.5 py-1.5 rounded-lg border border-[#E8DFC8] font-medium transition-colors cursor-pointer"
+          >
+            <Eye size={12} />
+            <span>Profile</span>
+          </button>
+          
+          {record.isBlocked ? (
+            <button
+              onClick={() => handleToggleBlock(record, false)}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg border border-emerald-200 font-medium transition-colors cursor-pointer"
+              title="Unblock Customer"
+            >
+              <ShieldCheck size={12} />
+              <span>Unblock</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => confirmBlockCustomer(record)}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-1 text-xs text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium transition-colors cursor-pointer"
+              title="Block Customer"
+            >
+              <Ban size={12} />
+              <span>Block</span>
+            </button>
+          )}
+        </div>
       )
     }
   ];
@@ -169,6 +263,7 @@ export default function AdminCustomersPage() {
   const ordersCount = selectedCustomer?.ordersCount ?? selectedCustomer?.orders_count ?? 0;
   const rewardPoints = selectedCustomer?.rewardPoints ?? Math.floor(totalSpend * 0.1);
   const customerOrders = selectedCustomer?.orders || [];
+  const isSelectedBlocked = Boolean(selectedCustomer?.isBlocked);
 
   return (
     <div className="space-y-6 text-[#1B100A]">
@@ -184,7 +279,7 @@ export default function AdminCustomersPage() {
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            View customer profiles, lifetime spending, loyalty points, and purchase history.
+            View customer profiles, manage account access, lifetime spending, and purchase history.
           </p>
         </div>
       </div>
@@ -209,7 +304,7 @@ export default function AdminCustomersPage() {
           columns={columns}
           dataSource={filteredCustomers.map((c, idx) => ({ ...c, key: c.id || idx }))}
           loading={loading}
-          scroll={{ x: 820 }}
+          scroll={{ x: 860 }}
           pagination={{ 
             pageSize: 8, 
             showSizeChanger: false,
@@ -245,9 +340,57 @@ export default function AdminCustomersPage() {
               <p className="text-xs text-gray-500 mt-0.5">{selectedCustomer.email}</p>
               
               <div className="mt-3 flex items-center gap-2">
-                <span className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-0.5 rounded-full font-medium">
-                  Active
-                </span>
+                {isSelectedBlocked ? (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] bg-rose-50 text-rose-800 border border-rose-200 px-3 py-0.5 rounded-full font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    Account Blocked
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-0.5 rounded-full font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Active Patron
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Account Status & Admin Actions */}
+            <div className="p-4 rounded-xl border bg-white space-y-3 border-[#EAE3D6]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-xs text-[#1A1A1A]">
+                    {isSelectedBlocked ? 'Account is Suspended' : 'Account Status: Active'}
+                  </div>
+                  <div className="text-[11px] text-gray-400 mt-0.5">
+                    {isSelectedBlocked 
+                      ? 'Customer cannot log in to their account or place orders.' 
+                      : 'Customer has full access to the boutique storefront.'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#F0EAE1]">
+                {isSelectedBlocked ? (
+                  <Button 
+                    type="primary"
+                    loading={actionLoading}
+                    onClick={() => handleToggleBlock(selectedCustomer, false)}
+                    icon={<ShieldCheck size={14} />}
+                    className="!bg-[#B8860B] hover:!bg-[#996e07] text-xs h-9 w-full rounded-xl font-medium"
+                  >
+                    Unblock Customer Account
+                  </Button>
+                ) : (
+                  <Button 
+                    danger
+                    loading={actionLoading}
+                    onClick={() => confirmBlockCustomer(selectedCustomer)}
+                    icon={<Ban size={14} />}
+                    className="text-xs h-9 w-full rounded-xl font-medium"
+                  >
+                    Block Customer Account
+                  </Button>
+                )}
               </div>
             </div>
 

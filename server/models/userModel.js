@@ -93,6 +93,18 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    isBlocked: {
+      type: Boolean,
+      default: false
+    },
+    blockedReason: {
+      type: String,
+      default: ''
+    },
+    blockedAt: {
+      type: Date,
+      default: null
+    },
     addresses: [addressSchema]
   },
   {
@@ -234,6 +246,9 @@ export const UserModel = {
           total_spent: totalSpent,
           totalSpent: totalSpent,
           rewardPoints: Math.floor(totalSpent * 0.1),
+          isBlocked: Boolean(u.isBlocked),
+          blockedReason: u.blockedReason || '',
+          blockedAt: u.blockedAt || null,
           city: cityStr,
           phone: u.phone || (defaultAddr && defaultAddr.phone) || '',
           joinedDate: joinedDateStr,
@@ -273,6 +288,18 @@ export const UserModel = {
     if (!mongoose.Types.ObjectId.isValid(id)) return false;
     await User.findByIdAndUpdate(id, { password: hashedPassword });
     return true;
+  },
+
+  setBlockStatus: async (id, isBlocked, reason = '') => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const user = await User.findById(id);
+    if (!user) return null;
+    user.isBlocked = Boolean(isBlocked);
+    user.blockedReason = isBlocked ? (reason || 'Account suspended by administrator') : '';
+    user.blockedAt = isBlocked ? new Date() : null;
+    await user.save();
+    const doc = user.toObject();
+    return { ...doc, id: user._id.toString(), _id: user._id.toString() };
   }
 };
 

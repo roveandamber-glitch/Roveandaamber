@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getAdminDashboardStats,
   getAdminUsers,
+  toggleUserBlockStatus,
   getAdminProducts,
   createAdminProduct,
   updateAdminProduct,
@@ -46,6 +47,8 @@ router.use(protect, adminOnly);
    -------------------------------------------------------------------------- */
 router.get('/stats', getAdminDashboardStats);
 router.get('/users', getAdminUsers);
+router.put('/users/:id/block', toggleUserBlockStatus);
+router.patch('/users/:id/block', toggleUserBlockStatus);
 
 /* --------------------------------------------------------------------------
    9.1 PRODUCT MANAGEMENT

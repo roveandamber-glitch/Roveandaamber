@@ -44,6 +44,14 @@ export const protect = async (req, res, next) => {
       });
     }
 
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        isBlocked: true,
+        message: 'Your account has been blocked. Please contact admin for support.'
+      });
+    }
+
     req.user = user;
     next();
   } catch (error) {

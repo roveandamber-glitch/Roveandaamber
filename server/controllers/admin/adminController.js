@@ -366,6 +366,50 @@ export const getAdminUsers = async (req, res) => {
   }
 };
 
+/**
+ * PUT /api/admin/users/:id/block
+ * Toggle customer account blocked / active status
+ */
+export const toggleUserBlockStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isBlocked, reason } = req.body;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Customer not found.' });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(400).json({ success: false, message: 'Administrator accounts cannot be blocked.' });
+    }
+
+    const nextBlocked = typeof isBlocked === 'boolean' ? isBlocked : !user.isBlocked;
+    user.isBlocked = nextBlocked;
+    user.blockedReason = nextBlocked ? (reason || 'Account suspended by administrator') : '';
+    user.blockedAt = nextBlocked ? new Date() : null;
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: nextBlocked ? 'Customer account has been blocked.' : 'Customer account has been unblocked.',
+      data: {
+        id: user._id.toString(),
+        _id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        isBlocked: user.isBlocked,
+        blockedReason: user.blockedReason,
+        blockedAt: user.blockedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error toggling customer block status:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update customer status.' });
+  }
+};
+
 /* ==========================================================================
    9.1 PRODUCT MANAGEMENT
    • Add, edit, and remove perfume products.
