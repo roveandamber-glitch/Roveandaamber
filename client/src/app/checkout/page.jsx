@@ -423,40 +423,56 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Gift Options Active Banner */}
-              {giftOptions?.isGift && (
-                <div className="bg-[#FAF3E0] border border-[#E0D0A5] rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
-                      <Gift size={18} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-serif font-bold text-xs text-[#1B100A]">
-                          Gift Presentation For {giftOptions.recipientName}
-                        </span>
-                        <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
+              {/* Gift Options Section (Simple English) */}
+              <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                    <Gift size={18} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-serif text-sm font-bold text-gray-900">
+                        {giftOptions?.isGift ? `Gift for ${giftOptions.recipientName}` : 'Sending as a gift?'}
+                      </h4>
+                      {giftOptions?.occasion && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
                           {giftOptions.occasion}
                         </span>
-                      </div>
-                      <p className="text-[11px] text-gray-600 mt-0.5">
-                        Packaging: {giftOptions.packagingName} • Inscription card prepared
-                      </p>
+                      )}
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setIsGiftModalOpen(true)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#8C6D1F] hover:underline cursor-pointer"
-                    >
-                      <Edit3 size={12} />
-                      <span>Edit Gift</span>
-                    </button>
+                    <p className="text-xs text-gray-600 font-light mt-0.5">
+                      {giftOptions?.isGift
+                        ? 'Free gift box and personal message card added.'
+                        : 'Add free gift packaging and a personal message card.'}
+                    </p>
                   </div>
                 </div>
-              )}
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setIsGiftModalOpen(true)}
+                    className="px-4 py-2 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#D5C9B8] text-xs font-semibold tracking-wide transition-all shadow-xs cursor-pointer"
+                  >
+                    {giftOptions?.isGift ? 'Edit Message' : 'Add Gift Details'}
+                  </button>
+                  {giftOptions?.isGift && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGiftOptions(null);
+                        try {
+                          localStorage.removeItem('rove_amber_gift_options');
+                        } catch (e) {}
+                        message.info('Gift option removed');
+                      }}
+                      className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {/* Form starts */}
               <Form

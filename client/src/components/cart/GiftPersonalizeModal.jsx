@@ -1,62 +1,60 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, message } from 'antd';
-import { Gift, Sparkles, Heart, Check, X, BookmarkCheck } from 'lucide-react';
+import { Modal, message } from 'antd';
+import { Gift, Check, BookmarkCheck } from 'lucide-react';
 import cartService from '@/services/cartService';
-
-const { Option } = Select;
 
 const PACKAGING_OPTIONS = [
   {
     id: 'imperial_gold',
-    name: 'Imperial Gold Foil Coffret',
-    tagline: 'Signature gold-embossed presentation box with black obsidian wax seal',
-    badge: 'Most Popular',
-    fee: 'COMPLIMENTARY'
+    name: 'Signature Gold Box',
+    tagline: 'Classic gold gift box with an elegant ribbon',
+    badge: 'Popular',
+    fee: 'FREE'
   },
   {
     id: 'royal_velvet',
-    name: 'Royal Velvet & Amber Coffret',
-    tagline: 'Handcrafted rich amber box lined with velvet and woven silk ribbon',
-    badge: 'Luxury Atelier',
-    fee: 'COMPLIMENTARY'
+    name: 'Royal Velvet Box',
+    tagline: 'Warm amber gift box lined with soft velvet',
+    badge: 'Luxury',
+    fee: 'FREE'
   },
   {
     id: 'atelier_noir',
-    name: 'Signature Atelier Noir Presentation',
-    tagline: 'Deep noir presentation with gold hot-stamped ROVE & AMBER monogram',
-    badge: 'Minimalist Luxe',
-    fee: 'COMPLIMENTARY'
+    name: 'Classic Black Box',
+    tagline: 'Elegant black gift box with gold logo',
+    badge: 'Minimalist',
+    fee: 'FREE'
   }
 ];
 
 const OCCASIONS = [
-  'Birthday Celebration',
+  'Birthday',
   'Anniversary',
-  'Milestone Celebration',
-  'Wedding & Reception',
+  'Wedding',
+  'Celebration',
   'Festive & Holidays',
-  'Expression of Love',
-  'Heartfelt Gratitude',
+  'With Love',
+  'Thank You',
   'Just Because'
 ];
 
 const MESSAGE_TEMPLATES = [
   {
     label: 'Birthday',
-    text: 'May this noble fragrance bring radiant joy and elegance to your special day. Happy Birthday!'
+    text: 'Wishing you a wonderful birthday filled with joy and happiness!'
   },
   {
     label: 'Anniversary',
-    text: 'To timeless elegance and unforgettable memories. Happy Anniversary, with all my love.'
+    text: 'Happy Anniversary! Wishing you many more years of love and joy.'
   },
   {
     label: 'Celebration',
-    text: 'Celebrating your extraordinary milestone. May every spray remind you of this triumph!'
+    text: 'Congratulations on your special day! Best wishes for the future.'
   },
   {
-    label: 'Affection',
-    text: 'A signature scent crafted with noble essences, chosen especially for you. With all my affection.'
+    label: 'With Love',
+    text: 'A special fragrance chosen just for you. With all my love.'
   }
 ];
 
@@ -98,7 +96,7 @@ export default function GiftPersonalizeModal({
 
   const handleApply = () => {
     if (!recipientName.trim()) {
-      message.warning('Please provide the recipient name for the gift presentation.');
+      message.warning('Please enter the recipient’s name.');
       return;
     }
 
@@ -122,7 +120,7 @@ export default function GiftPersonalizeModal({
     if (onSave) {
       onSave(giftData);
     }
-    message.success('Gift personalization saved! Complimentary packaging applied.');
+    message.success('Gift details saved! Free gift packaging applied.');
     onClose();
   };
 
@@ -132,7 +130,7 @@ export default function GiftPersonalizeModal({
       onCancel={onClose}
       footer={null}
       centered
-      width={640}
+      width={600}
       className="font-sans gift-studio-modal"
       styles={{
         content: {
@@ -144,7 +142,7 @@ export default function GiftPersonalizeModal({
       }}
     >
       <div className="bg-[#FAF8F5] text-black">
-        {/* Luxury Header Banner */}
+        {/* Header Banner */}
         <div className="bg-gradient-to-r from-[#1B100A] via-[#2A1A10] to-[#1B100A] text-white p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4A64A]/10 rounded-full blur-2xl pointer-events-none" />
           
@@ -153,32 +151,32 @@ export default function GiftPersonalizeModal({
               <Gift size={13} />
             </span>
             <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#ECC880]">
-              ROVE & AMBER GIFT STUDIO
+              GIFT OPTIONS
             </span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-serif font-medium tracking-tight text-white m-0">
-            Personalize Your Fragrance Gift
+            Send as a Gift
           </h2>
           <p className="text-xs text-stone-300 font-light mt-1.5 max-w-lg leading-relaxed">
-            Every gifted flacon is hand-finished with luxury gold-foil presentation coffrets, embossed satin ribbons, and a personalized wax-sealed calligraphic parchment card.
+            We will include free luxury gift packaging, an elegant ribbon, and your personal note card with this order.
           </p>
         </div>
 
-        {/* Modal Body Form */}
+        {/* Modal Form */}
         <div className="p-6 space-y-6 max-h-[72vh] overflow-y-auto">
           
           {/* 1. Recipient Details */}
           <div className="space-y-3">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
-              1. Recipient Information
+              1. Recipient Details
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <span className="text-[11px] text-stone-500 block mb-1">Recipient Full Name *</span>
+                <span className="text-[11px] text-stone-500 block mb-1">Recipient Name *</span>
                 <input
                   type="text"
-                  placeholder="e.g. Lady Genevieve / Dr. Aryan Sharma"
+                  placeholder="e.g. John Doe / Priya Sharma"
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors"
@@ -186,7 +184,7 @@ export default function GiftPersonalizeModal({
               </div>
 
               <div>
-                <span className="text-[11px] text-stone-500 block mb-1">Recipient Phone (Optional for Courier Updates)</span>
+                <span className="text-[11px] text-stone-500 block mb-1">Recipient Phone (Optional)</span>
                 <input
                   type="text"
                   placeholder="+91 98765 43210"
@@ -207,7 +205,7 @@ export default function GiftPersonalizeModal({
                   className="w-4 h-4 rounded accent-[#B8860B] cursor-pointer"
                 />
                 <span className="text-xs text-stone-700 font-medium">
-                  Ship directly to recipient&apos;s address
+                  Deliver directly to the recipient&apos;s address
                 </span>
               </label>
 
@@ -216,7 +214,7 @@ export default function GiftPersonalizeModal({
                   <span className="text-[11px] text-stone-500 block mb-1">Recipient Delivery Address</span>
                   <textarea
                     rows={2}
-                    placeholder="Enter recipient's complete street address, city, state, and pin code..."
+                    placeholder="Enter recipient's full address, street, city, state, and pin code..."
                     value={recipientAddress}
                     onChange={(e) => setRecipientAddress(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors"
@@ -230,7 +228,7 @@ export default function GiftPersonalizeModal({
           <div className="space-y-2 pt-2 border-t border-[#ECE7DE]">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-stone-700">
-                2. Select Occasion Motif
+                2. Choose Occasion
               </label>
               <span className="text-[11px] text-[#8C6D1F] font-semibold">{occasion}</span>
             </div>
@@ -253,10 +251,10 @@ export default function GiftPersonalizeModal({
             </div>
           </div>
 
-          {/* 3. Luxury Packaging Style */}
+          {/* 3. Packaging Style */}
           <div className="space-y-3 pt-2 border-t border-[#ECE7DE]">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
-              3. Select Luxury Presentation Box
+              3. Choose Gift Box (Free)
             </label>
 
             <div className="grid grid-cols-1 gap-2.5">
@@ -299,20 +297,20 @@ export default function GiftPersonalizeModal({
             </div>
           </div>
 
-          {/* 4. Wax-Sealed Inscription Card Note */}
+          {/* 4. Personal Message Card */}
           <div className="space-y-3 pt-2 border-t border-[#ECE7DE]">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-stone-700">
-                4. Personalized Calligraphic Inscription Note
+                4. Your Personal Note Card
               </label>
               <span className="text-[10px] text-stone-400 font-mono">
                 {messageText.length}/250 chars
               </span>
             </div>
 
-            {/* Quick Templates */}
+            {/* Quick Inspiration */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] text-stone-400">Quick Inspiration:</span>
+              <span className="text-[11px] text-stone-400">Quick Templates:</span>
               {MESSAGE_TEMPLATES.map((tmpl) => (
                 <button
                   key={tmpl.label}
@@ -328,28 +326,28 @@ export default function GiftPersonalizeModal({
             <textarea
               rows={3}
               maxLength={250}
-              placeholder="Write your bespoke sentiments here. Our calligrapher will hand-inscribe this note onto textured cream cardstock and seal it with black molten wax..."
+              placeholder="Write your personal gift message here..."
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors leading-relaxed font-serif"
             />
 
-            {/* Live Parchment Card Preview */}
+            {/* Live Card Preview */}
             {messageText.trim() && (
               <div className="p-4 rounded-xl bg-gradient-to-br from-[#FFFDF9] via-[#FAF6ED] to-[#F5ECE0] border border-[#E2D5BE] shadow-xs relative overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#8C6D1F]">
-                    Inscription Card Preview
+                    Note Card Preview
                   </span>
                   <span className="text-[10px] font-serif italic text-stone-400">
-                    Wax-Sealed Flacon Inscription
+                    Gift Message
                   </span>
                 </div>
                 <p className="font-serif italic text-stone-800 text-xs sm:text-sm leading-relaxed text-center py-2 px-4 border-y border-[#E8DFC8]/60 my-1">
                   &ldquo;{messageText}&rdquo;
                 </p>
                 <div className="text-right text-[11px] font-serif text-stone-600 font-medium pt-1">
-                  — With Compliments for {recipientName || 'Gift Recipient'}
+                  — For {recipientName || 'Gift Recipient'}
                 </div>
               </div>
             )}
@@ -357,7 +355,7 @@ export default function GiftPersonalizeModal({
 
         </div>
 
-        {/* Modal Footer Controls */}
+        {/* Modal Footer */}
         <div className="p-4 sm:p-5 bg-white border-t border-[#ECE7DE] flex items-center justify-between gap-3">
           <button
             type="button"
@@ -373,7 +371,7 @@ export default function GiftPersonalizeModal({
             className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] font-bold uppercase tracking-wider text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer"
           >
             <BookmarkCheck size={14} />
-            <span>Apply Gift Presentation</span>
+            <span>Save Gift Details</span>
           </button>
         </div>
 
@@ -381,4 +379,3 @@ export default function GiftPersonalizeModal({
     </Modal>
   );
 }
-
