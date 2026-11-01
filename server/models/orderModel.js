@@ -40,6 +40,10 @@ const orderItemSchema = new mongoose.Schema(
     product_image: {
       type: String,
       default: ''
+    },
+    hasSample: {
+      type: Boolean,
+      default: false
     }
   },
   { _id: true }
@@ -116,6 +120,16 @@ const orderSchema = new mongoose.Schema(
       status: { type: String, enum: ['None', 'Pending', 'Approved', 'Rejected', 'Completed'], default: 'None' },
       refundAmount: { type: Number, default: 0 },
       adminNote: { type: String, default: '' }
+    },
+    // 2 ml Sample Guarantee & Policy flag
+    hasSample: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    has2mlSample: {
+      type: Boolean,
+      default: false
     },
     // 3.2: Razorpay Payment Tracking Fields
     paymentMethod: {
@@ -310,6 +324,15 @@ export const OrderModel = {
       const itemTotal = finalPrice * qty;
       calculatedSubtotal += itemTotal;
 
+      const isItemSample = Boolean(
+        item.hasSample ||
+        String(size).toLowerCase().includes('2ml') ||
+        String(size).toLowerCase().includes('2 ml') ||
+        String(finalName).toLowerCase().includes('2ml') ||
+        String(finalName).toLowerCase().includes('2 ml') ||
+        String(finalName).toLowerCase().includes('sample')
+      );
+
       verifiedItems.push({
         productId: finalId,
         product_id: finalId.toString(),
@@ -319,9 +342,12 @@ export const OrderModel = {
         quantity: qty,
         size,
         image: finalImage,
-        product_image: finalImage
+        product_image: finalImage,
+        hasSample: isItemSample
       });
     }
+
+    const orderHasSample = verifiedItems.some(i => i.hasSample) || Boolean(items.some(i => i.hasSample));
 
     const calculatedTotal = Math.max(0, calculatedSubtotal - discountAmount + shippingFee + giftWrapFee);
 
@@ -377,6 +403,8 @@ export const OrderModel = {
       status: paymentStatus === 'Paid' ? 'Processing' : 'Pending',
       paymentMethod,
       paymentStatus,
+      hasSample: orderHasSample,
+      has2mlSample: orderHasSample,
       razorpayOrderId,
       isGift: !!isGift,
       occasion: occasion || '',

@@ -242,121 +242,184 @@ const EditProduct = () => {
             </div>
 
             {/* Custom Flacon Sizes & Inventory Allocation */}
-            <div className="bg-white rounded-2xl p-6 border border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-[#EAE3D6]">
+            {/* Custom Flacon Sizes & Inventory Allocation Box */}
+            <div className="bg-white rounded-2xl p-6 border-2 border-[#E2D6C0] shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E8DFC8]">
                 <div>
-                  <h3 className="font-serif font-bold text-sm text-[#1A1A1A]">
-                    Flacon Sizes & Inventory Allocation
+                  <h3 className="font-serif font-bold text-sm text-[#1B100A] uppercase tracking-wider m-0 flex items-center gap-2">
+                    <span>Flacon Sizes & Inventory Allocation</span>
+                    <span className="text-[10px] font-sans font-semibold bg-[#B3874B]/15 text-[#6B4B18] px-2 py-0.5 rounded-md border border-[#B3874B]/30">
+                      Live Catalog
+                    </span>
                   </h3>
-                  <p className="text-[11px] text-gray-500 mt-0.5">
+                  <p className="text-xs text-stone-600 m-0 mt-0.5">
                     Customize available ML bottle sizes and specify inventory quantity per variant.
                   </p>
                 </div>
-                <span className="text-xs bg-[#FAF7F2] text-[#B8860B] font-semibold px-3 py-1 rounded-full border border-[#EAE3D6]">
-                  Total: {totalStock} Flacons
-                </span>
+                <div className="bg-[#1B100A] text-[#FAF7F2] px-3.5 py-1 rounded-full font-mono text-xs font-bold shadow-xs">
+                  {totalStock} Total Flacons
+                </div>
+              </div>
+
+              {/* 2ml Sample Guarantee Guidance Banner */}
+              <div className="bg-amber-50/90 border-2 border-amber-300/80 rounded-xl p-3 text-xs text-amber-950 flex items-start gap-2.5">
+                <span className="text-base leading-none mt-0.5">🛡️</span>
+                <div className="space-y-0.5">
+                  <p className="font-bold text-amber-950 m-0">
+                    2ml Companion Sample & Return/Cancellation Guarantee
+                  </p>
+                  <p className="text-[11px] text-amber-900 leading-relaxed m-0">
+                    Adding a <strong>2ml Sample</strong> variant allows patrons to test the formulation at home. Under boutique policy, patrons who buy the 2ml sample are eligible to <strong>cancel their order</strong> before dispatch or <strong>return the sealed flacon</strong> within 7 days for a 100% full refund. Orders without the 2ml sample are final sales.
+                  </p>
+                </div>
               </div>
 
               {/* Active Sizes Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {Object.entries(sizeStock).map(([size, qty]) => (
-                  <div 
-                    key={size} 
-                    className="bg-[#FAF7F2] p-3 rounded-xl border border-[#EAE3D6] flex flex-col justify-between hover:border-[#D4A64A] transition-colors relative group"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-serif font-bold text-xs text-[#1A1A1A] px-2 py-0.5 bg-white rounded-md border border-[#EAE3D6]">
-                        {size}
-                      </span>
-                      {Object.keys(sizeStock).length > 1 && (
-                        <Popconfirm
-                          title={`Remove ${size} variant?`}
-                          onConfirm={() => handleRemoveSize(size)}
-                          okText="Remove"
-                          cancelText="Cancel"
-                          okButtonProps={{ danger: true, size: 'small' }}
-                          cancelButtonProps={{ size: 'small' }}
-                        >
-                          <button
-                            type="button"
-                            className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors cursor-pointer"
-                            title={`Remove ${size}`}
-                          >
-                            <DeleteOutlined className="text-xs" />
-                          </button>
-                        </Popconfirm>
-                      )}
-                    </div>
+              <div>
+                <span className="text-xs font-bold text-[#1B100A] block mb-2 uppercase tracking-wide">
+                  Active Variants in Formulation ({Object.keys(sizeStock).length}):
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries(sizeStock).map(([size, qty]) => {
+                    const isSample = size.toLowerCase().includes('2ml') || size.toLowerCase().includes('sample');
+                    return (
+                      <div 
+                        key={size} 
+                        className={`p-3.5 rounded-xl border-2 transition-all shadow-xs flex flex-col justify-between ${
+                          isSample 
+                            ? 'bg-amber-50/60 border-amber-400 ring-1 ring-amber-300' 
+                            : 'bg-[#FAF7F2] border-[#D8C7A5]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-sm text-[#1B100A] font-mono">
+                              {size}
+                            </span>
+                            {isSample && (
+                              <span className="text-[9px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                ★ Sample Vial
+                              </span>
+                            )}
+                          </div>
+                          {Object.keys(sizeStock).length > 1 && (
+                            <Popconfirm
+                              title={`Remove ${size} variant?`}
+                              onConfirm={() => handleRemoveSize(size)}
+                              okText="Remove"
+                              cancelText="Cancel"
+                              okButtonProps={{ danger: true, size: 'small' }}
+                              cancelButtonProps={{ size: 'small' }}
+                            >
+                              <button
+                                type="button"
+                                className="text-stone-400 hover:text-rose-600 hover:bg-rose-50 p-1 rounded-md transition-colors cursor-pointer"
+                                title={`Remove ${size}`}
+                              >
+                                <DeleteOutlined className="text-xs" />
+                              </button>
+                            </Popconfirm>
+                          )}
+                        </div>
 
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] text-gray-500 mb-1">
-                        <span>Units in Stock</span>
-                        <span className="font-mono font-semibold text-[#1A1A1A]">{qty}</span>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[11px] text-stone-600">
+                            <span>Units in Stock:</span>
+                            <span className="font-mono font-bold text-[#1B100A]">{qty || 0}</span>
+                          </div>
+                          <InputNumber
+                            min={0}
+                            max={99999}
+                            value={qty}
+                            onChange={(val) => handleSizeStockChange(size, val)}
+                            className="w-full text-center rounded-lg text-xs font-mono font-bold border-stone-300"
+                            placeholder="Quantity"
+                          />
+                          <span className={`text-[10px] block font-medium ${
+                            (qty || 0) > 0 ? 'text-emerald-700' : 'text-rose-600 font-bold'
+                          }`}>
+                            {(qty || 0) > 0 ? `✓ ${qty} in inventory` : '⚠ Out of stock'}
+                          </span>
+                        </div>
                       </div>
-                      <InputNumber
-                        min={0}
-                        max={99999}
-                        value={qty}
-                        onChange={(val) => handleSizeStockChange(size, val)}
-                        className="w-full text-xs rounded-lg font-mono"
-                        placeholder="Quantity"
-                      />
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Add Custom ML Size Option */}
-              <div className="pt-3 border-t border-[#EAE3D6] space-y-3">
-                <span className="text-xs font-semibold text-gray-700 block">
-                  Add Custom Flacon Size Variant
+              <div className="pt-3 border-t-2 border-[#E8DFC8] space-y-2.5">
+                <span className="text-xs font-bold text-[#1B100A] block uppercase tracking-wide">
+                  Add Custom Flacon Size Variant:
                 </span>
                 <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                   <Input
-                    placeholder="e.g. 30ml, 50ml, 100ml, 200ml, Discovery Set"
+                    placeholder="e.g. 2ml Sample, 30ml, 50ml, 100ml, 200ml, Discovery Set"
                     value={customSizeInput}
                     onChange={(e) => setCustomSizeInput(e.target.value)}
                     onPressEnter={() => handleAddCustomSize(customSizeInput, customQtyInput)}
-                    className="rounded-xl text-xs py-1.5 flex-1"
+                    className="rounded-xl text-xs py-2 flex-1 border-2 border-stone-300 font-medium"
                   />
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[11px] text-gray-400">Qty:</span>
+                  <div className="flex items-center gap-1.5 shrink-0 bg-white px-2.5 py-1 rounded-xl border-2 border-stone-300">
+                    <span className="text-xs text-stone-600 font-bold">Qty:</span>
                     <InputNumber
                       min={0}
                       max={9999}
                       value={customQtyInput}
                       onChange={(v) => setCustomQtyInput(v || 0)}
-                      className="w-20 rounded-xl text-xs py-0.5"
+                      className="w-16 rounded-lg text-xs font-mono font-bold border-none"
                     />
                   </div>
-                  <Button
-                    type="default"
-                    icon={<PlusOutlined />}
+                  <button
+                    type="button"
                     onClick={() => handleAddCustomSize(customSizeInput, customQtyInput)}
-                    className="!rounded-xl text-xs font-semibold !h-8 border-[#D4A64A] text-[#8C6D1F] hover:!border-[#8C6D1F] hover:!text-[#8C6D1F]"
+                    className="bg-[#B3874B] hover:bg-[#8C6D1F] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
                   >
-                    Add Size
-                  </Button>
+                    <PlusOutlined />
+                    <span>Add Size</span>
+                  </button>
                 </div>
 
-                {/* Quick Presets */}
-                <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="text-[11px] text-gray-400 mr-1">Quick Presets:</span>
-                  {['30ml', '50ml', '100ml', '200ml', 'Discovery Set', '10ml Travel Spray'].map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      disabled={sizeStock[preset] !== undefined}
-                      onClick={() => handleAddCustomSize(preset, 10)}
-                      className={`text-[11px] px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
-                        sizeStock[preset] !== undefined
-                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : 'bg-[#FAF7F2] text-[#8C6D1F] border-[#EAE3D6] hover:border-[#8C6D1F] hover:bg-white'
-                      }`}
-                    >
-                      + {preset}
-                    </button>
-                  ))}
+                {/* Quick Presets (High Visibility) */}
+                <div className="pt-2">
+                  <span className="text-xs font-bold text-[#1B100A] block mb-2">
+                    Quick Add Presets (Click to add to formulation):
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {['2ml Sample', '30ml', '50ml', '100ml', '200ml', 'Discovery Set'].map((preset) => {
+                      const isAdded = sizeStock[preset] !== undefined;
+                      const isSamplePreset = preset === '2ml Sample';
+
+                      if (isAdded) {
+                        return (
+                          <div
+                            key={preset}
+                            className="bg-emerald-50 text-emerald-900 border-2 border-emerald-500 font-bold text-xs px-3 py-1.5 rounded-xl shadow-2xs flex items-center gap-1.5 select-none"
+                          >
+                            <span className="text-emerald-700 font-extrabold text-sm">✓</span>
+                            <span>{preset} Added</span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => handleAddCustomSize(preset, preset === '2ml Sample' ? 50 : 10)}
+                          className={`text-xs px-3.5 py-1.5 rounded-xl border-2 font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1 ${
+                            isSamplePreset
+                              ? 'bg-amber-100/80 text-amber-950 border-amber-500 hover:bg-amber-500 hover:text-white'
+                              : 'bg-white text-[#3B2914] border-[#B3874B] hover:bg-[#B3874B] hover:text-white'
+                          }`}
+                        >
+                          <span className="font-extrabold">+</span>
+                          <span>{preset}</span>
+                          {isSamplePreset && <span className="text-[10px] ml-1 opacity-90">✨ Guarantee</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

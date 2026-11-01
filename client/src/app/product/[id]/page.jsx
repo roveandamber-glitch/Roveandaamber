@@ -274,6 +274,9 @@ const ProductDetails = () => {
 
     setIsAddingToCart(true);
     try {
+      const isSizeSample = Boolean(selectedSize && (selectedSize.toLowerCase().includes('2ml') || selectedSize.toLowerCase().includes('sample')));
+      const hasGuaranteeSample = includeSampleBottle || isSizeSample;
+
       cartService.addToCart({
         id: product._id || product.id,
         productId: product._id || product.id,
@@ -283,10 +286,10 @@ const ProductDetails = () => {
         size: selectedSize || '50ml',
         quantity: quantity,
         maxStock: maxStockForSize,
-        hasSample: includeSampleBottle
+        hasSample: hasGuaranteeSample
       });
 
-      if (includeSampleBottle) {
+      if (includeSampleBottle && !isSizeSample) {
         cartService.addToCart({
           id: `${product._id || product.id}_sample_2ml`,
           productId: product._id || product.id,
@@ -299,7 +302,7 @@ const ProductDetails = () => {
         });
       }
 
-      message.success(`Added ${product.name}${selectedSize ? ` (${selectedSize})` : ''}${includeSampleBottle ? ' with 2 ml sample' : ''} to cart`);
+      message.success(`Added ${product.name}${selectedSize ? ` (${selectedSize})` : ''}${hasGuaranteeSample ? ' with 2 ml sample guarantee' : ''} to cart`);
 
       if (redirectToCart) {
         router.push('/cart');
@@ -608,38 +611,48 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            {/* 2 ml Sample Companion Add-on (Enables Return & Refund) */}
-            <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E8DFC9] space-y-1.5 transition-all">
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            {/* 2 ml Sample Companion Add-on (Enables Return & Cancellation Guarantee) */}
+            <div className={`p-4 rounded-2xl border transition-all ${
+              includeSampleBottle 
+                ? 'bg-[#F4FAF5] border-emerald-300 ring-1 ring-emerald-200' 
+                : 'bg-[#FAF8F5] border-[#E8DFC9]'
+            }`}>
+              <label className="flex items-start gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={includeSampleBottle}
                   onChange={(e) => setIncludeSampleBottle(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded text-[#B86526] focus:ring-[#B86526] border-gray-300 cursor-pointer accent-[#B86526]"
+                  className="mt-1 w-4 h-4 rounded text-emerald-700 focus:ring-emerald-700 border-gray-300 cursor-pointer accent-emerald-700"
                 />
                 <div className="flex-1">
-                  <div className="flex items-center justify-between flex-wrap gap-1">
-                    <span className="text-xs font-bold text-black font-serif flex items-center gap-1.5">
+                  <div className="flex items-center justify-between flex-wrap gap-1.5">
+                    <span className="text-xs font-bold text-black font-serif flex items-center gap-2">
                       <span>Add Companion 2 ml Sample Bottle</span>
-                      <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-sans font-semibold">
-                        Enables Return & Refund
+                      <span className="text-[10px] text-emerald-900 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full font-sans font-bold uppercase tracking-wider">
+                        Enables Order Cancellation & Return
                       </span>
                     </span>
                     <span className="text-xs font-bold text-[#A47E3B] font-sans">
                       +₹199
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#6B5D50] leading-snug mt-1 font-light">
+                  <div className="text-[11px] leading-snug mt-1.5 font-light">
                     {includeSampleBottle ? (
-                      <span className="text-emerald-800">
-                        ✓ <strong>Return & Refund Eligible:</strong> Test the 2 ml sample vial first while keeping the main flacon sealed. If unsatisfied, return within 7 days for a 100% refund.
-                      </span>
+                      <div className="text-emerald-900 bg-emerald-50/70 p-2 rounded-xl border border-emerald-200 space-y-0.5">
+                        <p className="font-semibold text-emerald-950 m-0">✓ Cancellation & Return Guarantee Active</p>
+                        <p className="m-0 text-emerald-900">
+                          Includes 2 ml companion sample vial. Test the scent at home while keeping the main flacon sealed. If you change your mind, you can <strong>cancel your order before dispatch</strong> or <strong>return the sealed flacon within 7 days</strong> for a 100% full refund.
+                        </p>
+                      </div>
                     ) : (
-                      <span className="text-amber-800">
-                        ⚠ <strong>Non-Returnable:</strong> Customers purchasing without the 2 ml sample bottle are not eligible for a return or refund.
-                      </span>
+                      <div className="text-amber-950 bg-amber-50/80 p-2 rounded-xl border border-amber-200 space-y-0.5">
+                        <p className="font-semibold text-amber-900 m-0">⚠ Final Sale Notice (No Cancellation / No Return)</p>
+                        <p className="m-0 text-amber-900">
+                          Under boutique policy, purchases without the companion 2 ml sample bottle are handcrafted final sales. You <strong>cannot cancel this order</strong> once placed and <strong>cannot request a return or refund</strong>.
+                        </p>
+                      </div>
                     )}
-                  </p>
+                  </div>
                 </div>
               </label>
             </div>

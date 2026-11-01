@@ -260,102 +260,173 @@ const AddProduct = () => {
                 </Row>
 
                 {/* Custom Flacon Sizes & Inventory Allocation Box */}
-                <div className="mt-1 p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D6] space-y-3">
-                  <div className="flex items-center justify-between">
+                <div className="mt-3 p-5 rounded-2xl bg-[#FAF7F2] border-2 border-[#E2D6C0] shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E8DFC8]">
                     <div>
-                      <h4 className="text-xs font-bold text-black uppercase tracking-wider m-0">Flacon Sizes & Inventory Allocation</h4>
-                      <p className="text-[11px] text-gray-500 m-0">Customize available bottle sizes and stock quantity per variant.</p>
+                      <h4 className="text-sm font-bold text-[#1B100A] uppercase tracking-wider m-0 flex items-center gap-2">
+                        <span>Flacon Sizes & Inventory Allocation</span>
+                        <span className="text-[10px] font-sans font-semibold bg-[#B3874B]/15 text-[#6B4B18] px-2 py-0.5 rounded-md border border-[#B3874B]/30">
+                          Boutique Stock
+                        </span>
+                      </h4>
+                      <p className="text-xs text-stone-600 m-0 mt-0.5">Customize available bottle sizes and allocated stock units per variant.</p>
                     </div>
-                    <Tag color="gold" className="rounded-full px-2.5 py-0.5 font-mono text-[10px] m-0 !text-[#996515] !bg-[#FAF3E0] !border-[#F0DCB1]">
-                      {totalStock} in stock
-                    </Tag>
+                    <div className="bg-[#1B100A] text-[#FAF7F2] px-3.5 py-1 rounded-full font-mono text-xs font-bold shadow-xs">
+                      {totalStock} Total Units
+                    </div>
+                  </div>
+
+                  {/* 2ml Sample Guarantee Guidance Banner */}
+                  <div className="bg-amber-50/90 border-2 border-amber-300/80 rounded-xl p-3 text-xs text-amber-950 flex items-start gap-2.5">
+                    <span className="text-base leading-none mt-0.5">🛡️</span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-amber-950 m-0">
+                        2ml Companion Sample & Return/Cancellation Guarantee
+                      </p>
+                      <p className="text-[11px] text-amber-900 leading-relaxed m-0">
+                        Adding a <strong>2ml Sample</strong> variant allows patrons to test the formulation at home. Under maison policy, patrons who buy the 2ml sample are eligible to <strong>cancel their order</strong> before dispatch or <strong>return the sealed flacon</strong> within 7 days for a full refund. Orders without the 2ml sample are final sales.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Active Variants Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                    {Object.entries(sizeStock).map(([size, qty]) => (
-                      <div key={size} className="bg-white p-2.5 rounded-xl border border-gray-200 text-center shadow-2xs relative group flex flex-col justify-between">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-xs text-black block font-mono">{size}</span>
-                          {Object.keys(sizeStock).length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSize(size)}
-                              className="text-gray-300 hover:text-red-500 p-0.5 transition-colors cursor-pointer"
-                              title={`Remove ${size}`}
-                            >
-                              <DeleteOutlined className="text-[11px]" />
-                            </button>
-                          )}
-                        </div>
-                        <InputNumber
-                          min={0}
-                          max={9999}
-                          value={qty ?? 0}
-                          onChange={val => handleSizeStockChange(size, val)}
-                          className="w-full text-center rounded-md text-xs font-mono"
-                          size="small"
-                        />
-                        <span className="text-[9px] text-gray-400 block mt-1">
-                          {(qty || 0) > 0 ? `${qty} in stock` : 'Out of stock'}
-                        </span>
-                      </div>
-                    ))}
+                  <div>
+                    <span className="text-xs font-bold text-[#1B100A] block mb-2 uppercase tracking-wide">
+                      Active Formulations in Catalog ({Object.keys(sizeStock).length}):
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {Object.entries(sizeStock).map(([size, qty]) => {
+                        const isSample = size.toLowerCase().includes('2ml') || size.toLowerCase().includes('sample');
+                        return (
+                          <div 
+                            key={size} 
+                            className={`p-3.5 rounded-xl border-2 transition-all shadow-xs flex flex-col justify-between ${
+                              isSample 
+                                ? 'bg-amber-50/60 border-amber-400 ring-1 ring-amber-300' 
+                                : 'bg-white border-[#D8C7A5]'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-sm text-[#1B100A] font-mono">
+                                  {size}
+                                </span>
+                                {isSample && (
+                                  <span className="text-[9px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                    ★ Sample Vial
+                                  </span>
+                                )}
+                              </div>
+                              {Object.keys(sizeStock).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSize(size)}
+                                  className="text-stone-400 hover:text-rose-600 hover:bg-rose-50 p-1 rounded-md transition-colors cursor-pointer"
+                                  title={`Remove ${size}`}
+                                >
+                                  <DeleteOutlined className="text-xs" />
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[11px] text-stone-600">
+                                <span>Units in Stock:</span>
+                                <span className="font-mono font-bold text-[#1B100A]">{qty || 0}</span>
+                              </div>
+                              <InputNumber
+                                min={0}
+                                max={9999}
+                                value={qty ?? 0}
+                                onChange={val => handleSizeStockChange(size, val)}
+                                className="w-full text-center rounded-lg text-xs font-mono font-bold border-stone-300"
+                                size="middle"
+                              />
+                              <span className={`text-[10px] block font-medium ${
+                                (qty || 0) > 0 ? 'text-emerald-700' : 'text-rose-600 font-bold'
+                              }`}>
+                                {(qty || 0) > 0 ? `✓ ${qty} available for orders` : '⚠ Out of stock'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Add Custom ML Variant Form */}
-                  <div className="pt-2 border-t border-[#E8E2D6] space-y-2">
-                    <span className="text-[11px] font-semibold text-gray-600 block">
-                      Add Custom Size (e.g. 30ml, 50ml, 100ml, 200ml, Discovery Set):
+                  <div className="pt-3 border-t-2 border-[#E8DFC8] space-y-2.5">
+                    <span className="text-xs font-bold text-[#1B100A] block uppercase tracking-wide">
+                      Add Custom Flacon Size Variant:
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                       <Input
-                        placeholder="Size name"
+                        placeholder="e.g. 2ml Sample, 30ml, 50ml, 100ml, 200ml, Discovery Set"
                         value={customSizeInput}
                         onChange={(e) => setCustomSizeInput(e.target.value)}
                         onPressEnter={() => handleAddCustomSize(customSizeInput, customQtyInput)}
-                        className="rounded-lg text-xs py-1 flex-1"
-                        size="small"
+                        className="rounded-xl text-xs py-2 flex-1 border-2 border-stone-300 font-medium"
                       />
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-[10px] text-gray-400">Qty:</span>
+                      <div className="flex items-center gap-1.5 shrink-0 bg-white px-2.5 py-1 rounded-xl border-2 border-stone-300">
+                        <span className="text-xs text-stone-600 font-bold">Qty:</span>
                         <InputNumber
                           min={0}
                           max={9999}
                           value={customQtyInput}
                           onChange={(v) => setCustomQtyInput(v || 0)}
-                          className="w-16 rounded-lg text-xs"
-                          size="small"
+                          className="w-16 rounded-lg text-xs font-mono font-bold border-none"
                         />
                       </div>
-                      <Button
-                        type="default"
-                        size="small"
-                        icon={<PlusOutlined />}
+                      <button
+                        type="button"
                         onClick={() => handleAddCustomSize(customSizeInput, customQtyInput)}
-                        className="rounded-lg text-xs font-semibold border-[#D4A64A] text-[#8C6D1F]"
+                        className="bg-[#B3874B] hover:bg-[#8C6D1F] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
                       >
-                        Add
-                      </Button>
+                        <PlusOutlined />
+                        <span>Add Size</span>
+                      </button>
                     </div>
 
-                    {/* Quick Presets */}
-                    <div className="flex items-center gap-1 flex-wrap pt-0.5">
-                      {['30ml', '50ml', '100ml', '200ml', 'Discovery Set'].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          disabled={sizeStock[preset] !== undefined}
-                          onClick={() => handleAddCustomSize(preset, 10)}
-                          className={`text-[10px] px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
-                            sizeStock[preset] !== undefined
-                              ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'
-                              : 'bg-white text-[#8C6D1F] border-[#E8E2D6] hover:border-[#8C6D1F]'
-                          }`}
-                        >
-                          + {preset}
-                        </button>
-                      ))}
+                    {/* Quick Presets (High Visibility) */}
+                    <div className="pt-2">
+                      <span className="text-xs font-bold text-[#1B100A] block mb-2">
+                        Quick Add Presets (Click to add to formulation):
+                      </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {['2ml Sample', '30ml', '50ml', '100ml', '200ml', 'Discovery Set'].map((preset) => {
+                          const isAdded = sizeStock[preset] !== undefined;
+                          const isSamplePreset = preset === '2ml Sample';
+
+                          if (isAdded) {
+                            return (
+                              <div
+                                key={preset}
+                                className="bg-emerald-50 text-emerald-900 border-2 border-emerald-500 font-bold text-xs px-3 py-1.5 rounded-xl shadow-2xs flex items-center gap-1.5 select-none"
+                              >
+                                <span className="text-emerald-700 font-extrabold text-sm">✓</span>
+                                <span>{preset} Added</span>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => handleAddCustomSize(preset, preset === '2ml Sample' ? 50 : 10)}
+                              className={`text-xs px-3.5 py-1.5 rounded-xl border-2 font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1 ${
+                                isSamplePreset
+                                  ? 'bg-amber-100/80 text-amber-950 border-amber-500 hover:bg-amber-500 hover:text-white'
+                                  : 'bg-white text-[#3B2914] border-[#B3874B] hover:bg-[#B3874B] hover:text-white'
+                              }`}
+                            >
+                              <span className="font-extrabold">+</span>
+                              <span>{preset}</span>
+                              {isSamplePreset && <span className="text-[10px] ml-1 opacity-90">✨ Guarantee</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>

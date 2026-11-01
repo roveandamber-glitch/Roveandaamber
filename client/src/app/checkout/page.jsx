@@ -174,10 +174,15 @@ export default function CheckoutPage() {
           phone: giftOptions.recipientPhone || '',
           address: giftOptions.recipientAddress || ''
         } : {},
+        hasSample: cartItems.some(i => i.hasSample || String(i.size || '').toLowerCase().includes('2ml') || String(i.name || '').toLowerCase().includes('sample')),
         items: cartItems.map((item) => ({
           productId: item.productId || item.id,
+          name: item.name || '',
+          price: Number(item.price) || 0,
           quantity: parseInt(item.quantity, 10) || 1,
-          size: item.size || '50ml'
+          size: item.size || '50ml',
+          image: item.image || '',
+          hasSample: Boolean(item.hasSample || String(item.size || '').toLowerCase().includes('2ml') || String(item.name || '').toLowerCase().includes('sample'))
         }))
       };
 

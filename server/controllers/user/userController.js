@@ -112,11 +112,11 @@ export const getAccountOrders = async (req, res) => {
       const ordId = o.orderId || `#ORD-${String(o._id).slice(-4).toUpperCase()}`;
       
       // Calculate cancellation and return eligibility
-      const canCancel = ['Pending', 'Processing', 'Confirmed'].includes(o.status);
+      const hasSample = hasSampleBottle(o);
+      const canCancel = ['Pending', 'Processing', 'Confirmed'].includes(o.status) && hasSample;
       const isDelivered = o.status === 'Delivered';
       const deliveryDate = o.tracking?.deliveredAt || o.updatedAt;
       const daysSinceDelivery = deliveryDate ? (Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24) : 999;
-      const hasSample = hasSampleBottle(o);
       const canReturn = isDelivered && daysSinceDelivery <= 7 && hasSample && !o.returnDetails?.isReturnRequested;
 
       return {
@@ -182,11 +182,11 @@ export const getAccountOrderDetails = async (req, res) => {
     }
 
     const ordId = order.orderId || `#ORD-${String(order._id).slice(-4).toUpperCase()}`;
-    const canCancel = ['Pending', 'Processing', 'Confirmed'].includes(order.status);
+    const hasSample = hasSampleBottle(order);
+    const canCancel = ['Pending', 'Processing', 'Confirmed'].includes(order.status) && hasSample;
     const isDelivered = order.status === 'Delivered';
     const deliveryDate = order.tracking?.deliveredAt || order.updatedAt;
     const daysSinceDelivery = deliveryDate ? (Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24) : 999;
-    const hasSample = hasSampleBottle(order);
     const canReturn = isDelivered && daysSinceDelivery <= 7 && hasSample && !order.returnDetails?.isReturnRequested;
 
     return res.json({
@@ -448,10 +448,12 @@ export const checkOrderEligibility = async (req, res) => {
     }
 
     const status = order.status;
-    const canCancel = ['Pending', 'Processing', 'Confirmed'].includes(status);
+    const hasSample = hasSampleBottle(order);
+    const canCancel = ['Pending', 'Processing', 'Confirmed'].includes(status) && hasSample;
     let cancelBlockReason = '';
     if (!canCancel) {
-      if (status === 'Shipped') cancelBlockReason = 'Order has already been dispatched with our courier partner. Cancellation is no longer possible in transit.';
+      if (!hasSample) cancelBlockReason = 'Under ROVE & AMBER atelier policy, orders without the companion 2 ml sample bottle are final handcrafted creations and cannot be cancelled or returned. Only orders including the 2 ml sample guarantee are eligible for cancellation.';
+      else if (status === 'Shipped') cancelBlockReason = 'Order has already been dispatched with our courier partner. Cancellation is no longer possible in transit.';
       else if (status === 'Delivered') cancelBlockReason = 'Order has already been delivered. You may initiate an eligible return within 7 days instead.';
       else if (status === 'Cancelled') cancelBlockReason = 'Order is already cancelled.';
       else cancelBlockReason = `Cancellation is unavailable for status "${status}".`;
@@ -460,7 +462,6 @@ export const checkOrderEligibility = async (req, res) => {
     const isDelivered = status === 'Delivered';
     const deliveryDate = order.tracking?.deliveredAt || order.updatedAt;
     const daysSinceDelivery = deliveryDate ? (Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24) : 999;
-    const hasSample = hasSampleBottle(order);
     const canReturn = isDelivered && daysSinceDelivery <= 7 && hasSample && !order.returnDetails?.isReturnRequested;
 
     let returnBlockReason = '';
@@ -524,6 +525,14 @@ export const cancelOrder = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: `Order cannot be cancelled because it is already "${order.status}". Packages that have dispatched cannot be cancelled in transit.`
+      });
+    }
+
+    // 2 ml sample bottle eligibility enforcement: Orders without 2 ml sample are final sale
+    if (!hasSampleBottle(order)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Under ROVE & AMBER atelier policy, orders without the companion 2 ml sample bottle are final handcrafted creations and cannot be cancelled or returned. Only orders including the 2 ml sample guarantee are eligible for cancellation.'
       });
     }
 

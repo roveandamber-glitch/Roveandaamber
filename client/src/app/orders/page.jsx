@@ -19,7 +19,8 @@ import {
   ShieldCheck,
   ChevronRight,
   Printer,
-  Sparkles
+  Sparkles,
+  AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
@@ -51,6 +52,12 @@ export default function MyOrdersPage() {
   const [confirmSealed, setConfirmSealed] = useState(false);
   const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
 
+  // Cancellation state
+  const [activeCancelOrder, setActiveCancelOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState('Changed mind before dispatch (2ml Sample Guarantee)');
+  const [cancelComment, setCancelComment] = useState('');
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+
   const hasSampleBottle = (ord) => {
     if (!ord) return false;
     if (Array.isArray(ord.items)) {
@@ -62,6 +69,35 @@ export default function MyOrdersPage() {
       if (found) return true;
     }
     return Boolean(ord.hasSample || ord.has2mlSample || ord.withSample);
+  };
+
+  const handleOpenCancelModal = (ord) => {
+    setActiveCancelOrder(ord);
+    setCancelReason('Changed mind before dispatch (2ml Sample Guarantee)');
+    setCancelComment('');
+  };
+
+  const handleSubmitCancel = async () => {
+    if (!activeCancelOrder) return;
+    setIsSubmittingCancel(true);
+    try {
+      const res = await orderService.cancelOrder(activeCancelOrder._id || activeCancelOrder.id, {
+        reason: cancelReason,
+        comment: cancelComment
+      });
+      if (res?.success) {
+        message.success('Order cancelled successfully. Full refund initiated according to your payment method.');
+        setActiveCancelOrder(null);
+        fetchOrders();
+      } else {
+        message.error(res?.message || 'Could not cancel order.');
+      }
+    } catch (err) {
+      const errTxt = err.response?.data?.message || err.message || 'Failed to cancel order.';
+      message.error(errTxt);
+    } finally {
+      setIsSubmittingCancel(false);
+    }
   };
 
   const handleOpenReturnModal = (ord) => {
@@ -588,15 +624,47 @@ export default function MyOrdersPage() {
                           <span>Track Dispatch</span>
                         </button>
 
+                        {/* Cancellation options for active orders (Pending, Processing, Confirmed) */}
+                        {['pending', 'processing', 'confirmed'].includes(String(order.status || '').toLowerCase()) && (
+                          hasSampleBottle(order) ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenCancelModal(order)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 shadow-2xs transition-all cursor-pointer"
+                              title="Cancel order before dispatch (2ml Sample Guarantee)"
+                            >
+                              <XCircle size={13} />
+                              <span>Cancel Order</span>
+                            </button>
+                          ) : (
+                            <span 
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-medium text-stone-500 bg-stone-100 border border-stone-200 select-none"
+                              title="Orders without the companion 2 ml sample guarantee are final handcrafted sales and cannot be cancelled or returned."
+                            >
+                              <span>Final Sale (No 2ml Sample)</span>
+                            </span>
+                          )
+                        )}
+
+                        {/* Return options for delivered orders */}
                         {String(order.status || '').toLowerCase() === 'delivered' && !order.returnDetails?.isReturnRequested && (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenReturnModal(order)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#8C6D1F] bg-[#FAF6ED] hover:bg-[#F3EBD9] border border-[#E8DFC9] shadow-2xs transition-all cursor-pointer"
-                          >
-                            <RotateCcw size={13} />
-                            <span>Return / Refund</span>
-                          </button>
+                          hasSampleBottle(order) ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReturnModal(order)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#8C6D1F] bg-[#FAF6ED] hover:bg-[#F3EBD9] border border-[#E8DFC9] shadow-2xs transition-all cursor-pointer"
+                            >
+                              <RotateCcw size={13} />
+                              <span>Return / Refund</span>
+                            </button>
+                          ) : (
+                            <span 
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-medium text-stone-500 bg-stone-100 border border-stone-200 select-none"
+                              title="Non-returnable: Under maison policy, returns are only eligible for orders containing the companion 2 ml sample."
+                            >
+                              <span>Non-Returnable (Final Sale)</span>
+                            </span>
+                          )
                         )}
 
                         {order.returnDetails?.isReturnRequested && (
@@ -969,6 +1037,109 @@ export default function MyOrdersPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* LUXURY CANCEL ORDER MODAL */}
+      <Modal
+        open={Boolean(activeCancelOrder)}
+        onCancel={() => setActiveCancelOrder(null)}
+        footer={null}
+        centered
+        width={520}
+        className="rounded-3xl overflow-hidden"
+      >
+        {activeCancelOrder && (
+          <div className="p-4 sm:p-6 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-[#ECE5D8]">
+              <div>
+                <span className="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A47E3B]">
+                  Atelier Cancellation
+                </span>
+                <h3 className="text-xl font-serif font-bold text-[#1C1714]">
+                  Cancel Order {activeCancelOrder.orderId || `#ORD-${String(activeCancelOrder.id || '').slice(-6)}`}
+                </h3>
+              </div>
+              <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                {activeCancelOrder.status}
+              </span>
+            </div>
+
+            {/* 2ml Sample Guarantee Badge */}
+            <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-1">
+              <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                <CheckCircle2 size={14} className="text-emerald-700" />
+                <span>2ml Sample Guarantee Protection Active</span>
+              </span>
+              <p className="text-[11px] text-emerald-900 leading-relaxed m-0">
+                Because this order was placed with the companion 2 ml sample bottle, you are entitled to cancel your order prior to dispatch.
+                {activeCancelOrder.paymentStatus === 'Paid' ? (
+                  <span> A <strong>100% full refund</strong> will be returned to your original payment method within 3-5 business days.</span>
+                ) : (
+                  <span> Your order will be cancelled with zero penalty.</span>
+                )}
+              </p>
+            </div>
+
+            {/* Cancellation Reason */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
+                Reason for Cancellation
+              </label>
+              <select
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-[#D5CDBD] text-xs bg-[#FAF9F7] focus:outline-none focus:border-black text-black"
+              >
+                <option value="Changed mind before dispatch (2ml Sample Guarantee)">
+                  Changed mind before dispatch (2ml Sample Guarantee)
+                </option>
+                <option value="Ordered incorrect flacon size or formulation">
+                  Ordered incorrect flacon size or formulation
+                </option>
+                <option value="Need to change shipping address or delivery instructions">
+                  Need to change shipping address or delivery instructions
+                </option>
+                <option value="Accidental duplicate order">
+                  Accidental duplicate order
+                </option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* Additional note */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
+                Additional Comments (Optional)
+              </label>
+              <textarea
+                rows={2}
+                value={cancelComment}
+                onChange={(e) => setCancelComment(e.target.value)}
+                placeholder="Any special instructions for our concierge..."
+                className="w-full px-3 py-2 rounded-xl border border-[#D5CDBD] text-xs bg-[#FAF9F7] focus:outline-none focus:border-black text-black placeholder-gray-400 resize-none"
+              />
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setActiveCancelOrder(null)}
+                className="flex-1 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 py-3 rounded-full text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitCancel}
+                disabled={isSubmittingCancel}
+                className="flex-1 bg-rose-700 hover:bg-rose-800 disabled:opacity-50 text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-sm"
+              >
+                {isSubmittingCancel ? 'Cancelling...' : 'Confirm Cancellation'}
+              </button>
+            </div>
           </div>
         )}
       </Modal>
