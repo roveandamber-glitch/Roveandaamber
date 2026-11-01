@@ -64,6 +64,7 @@ const allowedOrigins = [
   'http://127.0.0.1:3000',
   'https://roveandamber.com',
   'https://www.roveandamber.com',
+  'https://admin.roveandamber.com',
   'https://api.roveandamber.com',
   ...configuredOrigins
 ].filter(Boolean);

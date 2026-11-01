@@ -23,7 +23,8 @@ import {
   ShoppingBag, 
   Trash2, 
   Plus, 
-  Minus 
+  Minus,
+  ShieldCheck
 } from 'lucide-react';
 import { message, Spin } from 'antd';
 import authService from '@/services/authService';
@@ -304,6 +305,18 @@ const ProfilePage = () => {
 
               {/* Navigation Menu Links */}
               <nav className="space-y-1.5">
+                {user?.role === 'admin' && (
+                  <a
+                    href={typeof window !== 'undefined' && window.location.hostname.includes('roveandamber.com') ? 'https://admin.roveandamber.com' : '/admin'}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-semibold bg-[#1C120C] text-[#ECC880] hover:bg-black transition-all shadow-xs cursor-pointer border border-[#DEB368]/40 mb-1"
+                  >
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck size={16} className="text-[#DEB368]" />
+                      <span>Executive Atelier Portal</span>
+                    </div>
+                    <ChevronRight size={14} className="text-[#DEB368]" />
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={() => setActiveTab('details')}
