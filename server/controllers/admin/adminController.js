@@ -1475,8 +1475,19 @@ export const getAdminReviews = async (req, res) => {
 export const moderateReview = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, isVisible } = req.body;
+    let { status, isVisible } = req.body;
     const adminId = req.user ? (req.user._id || req.user.id) : null;
+
+    if (status) {
+      status = String(status).toLowerCase();
+      if ((status === 'hidden' || status === 'rejected') && isVisible === undefined) {
+        isVisible = false;
+      } else if (status === 'approved' && isVisible === undefined) {
+        isVisible = true;
+      }
+    } else if (isVisible !== undefined) {
+      status = isVisible ? 'approved' : 'hidden';
+    }
 
     const updated = await ReviewModel.moderate(id, {
       status,
@@ -1495,7 +1506,7 @@ export const moderateReview = async (req, res) => {
     });
   } catch (error) {
     console.error('Moderate review error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to moderate review.' });
+    return res.status(500).json({ success: false, message: error?.message || 'Failed to moderate review.' });
   }
 };
 

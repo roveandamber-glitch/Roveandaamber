@@ -55,23 +55,74 @@ export default function AdminReviewsPage() {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await adminService.moderateReview(id, { status: newStatus });
+      const isHiding = newStatus.toLowerCase() === 'hidden' || newStatus.toLowerCase() === 'rejected';
+      const payload = {
+        status: isHiding ? 'hidden' : 'approved',
+        isVisible: !isHiding
+      };
+      await adminService.moderateReview(id, payload);
       setReviews(prev => {
         const arr = Array.isArray(prev) ? prev : [];
-        return arr.map(r => (r.id === id ? { ...r, status: newStatus } : r));
+        return arr.map(r => ((r.id === id || r._id === id) ? { 
+          ...r, 
+          status: payload.status, 
+          isVisible: payload.isVisible 
+        } : r));
       });
-      message.success(`Review ${newStatus.toLowerCase()} successfully`);
+      message.success(isHiding ? 'Review hidden from public view' : 'Review approved and published');
     } catch (err) {
-      message.error('Failed to moderate review');
+      console.error('Moderation error:', err);
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to moderate review';
+      message.error(errMsg);
     }
   };
 
-  const handleDelete = (id) => {
-    setReviews(prev => {
-      const arr = Array.isArray(prev) ? prev : [];
-      return arr.filter(r => r.id !== id);
-    });
-    message.success('Review deleted');
+  const handleDelete = async (id) => {
+    try {
+      await adminService.deleteReview(id);
+      setReviews(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return arr.filter(r => (r.id !== id && r._id !== id));
+      });
+      message.success('Review permanently deleted');
+    } catch (err) {
+      console.error('Delete review error:', err);
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to delete review';
+      message.error(errMsg);
+    }
+  };
+
+  const getReviewStatusInfo = (record) => {
+    const isHidden = record.isVisible === false || record.status === 'hidden' || record.status === 'rejected';
+    const isPending = record.status === 'pending';
+    if (isHidden) {
+      return {
+        status: 'Hidden',
+        badgeClass: 'bg-stone-100 text-stone-600 border-stone-200',
+        dotClass: 'bg-stone-400',
+        isApproved: false,
+        isHidden: true,
+        isPending: false
+      };
+    }
+    if (isPending) {
+      return {
+        status: 'Pending',
+        badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+        dotClass: 'bg-amber-500',
+        isApproved: false,
+        isHidden: false,
+        isPending: true
+      };
+    }
+    return {
+      status: 'Approved',
+      badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      dotClass: 'bg-emerald-500',
+      isApproved: true,
+      isHidden: false,
+      isPending: false
+    };
   };
 
   const reviewList = Array.isArray(reviews) ? reviews : [];
@@ -87,7 +138,12 @@ export default function AdminReviewsPage() {
       title.includes(search) ||
       comment.includes(search) ||
       productName.includes(search);
-    const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
+
+    const statusInfo = getReviewStatusInfo(r);
+    let matchesStatus = true;
+    if (statusFilter !== 'ALL') {
+      matchesStatus = statusInfo.status.toLowerCase() === statusFilter.toLowerCase();
+    }
     return matchesSearch && matchesStatus;
   });
 
@@ -119,10 +175,12 @@ export default function AdminReviewsPage() {
       render: (_, record) => (
         <div>
           <div className="font-semibold text-xs text-[#1B100A] flex items-center gap-1.5">
-            <span className="truncate max-w-[100px]">{record.customer}</span>
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
-              <ShieldCheck size={10} /> Verified
-            </span>
+            <span className="truncate max-w-[110px]">{record.customer}</span>
+            {record.isVerifiedPurchase !== false && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
+                <ShieldCheck size={10} /> Verified
+              </span>
+            )}
           </div>
           <div className="text-[11px] text-gray-400 mt-0.5">{record.date || '28 Oct 2026'}</div>
         </div>
@@ -135,7 +193,7 @@ export default function AdminReviewsPage() {
       render: (_, record) => (
         <div className="py-1">
           <div className="flex items-center gap-2 mb-1">
-            <Rate disabled defaultValue={record.rating} className="!text-[#D4A64A] !text-xs" />
+            <Rate disabled value={record.rating || 5} className="!text-[#D4A64A] !text-xs" />
             <span className="text-xs font-semibold text-[#1B100A] truncate max-w-[150px]">{record.title}</span>
           </div>
           <p className="text-xs text-[#555] leading-relaxed line-clamp-2">
@@ -149,18 +207,11 @@ export default function AdminReviewsPage() {
       key: 'status',
       width: 140,
       render: (_, record) => {
-        const isApproved = record.status === 'Approved';
-        const isPending = record.status === 'Pending';
+        const info = getReviewStatusInfo(record);
         return (
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap ${
-            isApproved 
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
-              : isPending 
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : 'bg-gray-100 text-gray-600 border-gray-200'
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-500' : isPending ? 'bg-amber-500' : 'bg-gray-400'}`}></span>
-            {record.status}
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap ${info.badgeClass}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${info.dotClass}`}></span>
+            {info.status}
           </span>
         );
       }
@@ -170,51 +221,55 @@ export default function AdminReviewsPage() {
       key: 'action',
       width: 110,
       align: 'right',
-      render: (_, record) => (
-        <div className="flex items-center justify-end gap-1.5">
-          {record.status !== 'Approved' && (
-            <Tooltip title="Approve & Publish Review">
-              <button
-                type="button"
-                onClick={() => handleStatusChange(record.id, 'Approved')}
-                className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-200 cursor-pointer"
-              >
-                <CheckCircle2 size={15} />
-              </button>
-            </Tooltip>
-          )}
+      render: (_, record) => {
+        const info = getReviewStatusInfo(record);
+        const reviewId = record.id || record._id;
+        return (
+          <div className="flex items-center justify-end gap-1.5">
+            {!info.isApproved && (
+              <Tooltip title="Approve & Publish Review">
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(reviewId, 'Approved')}
+                  className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-200 cursor-pointer"
+                >
+                  <CheckCircle2 size={15} />
+                </button>
+              </Tooltip>
+            )}
 
-          {record.status !== 'Hidden' && (
-            <Tooltip title="Hide from Public View">
-              <button
-                type="button"
-                onClick={() => handleStatusChange(record.id, 'Hidden')}
-                className="p-1.5 text-amber-700 hover:bg-amber-50 rounded-lg transition-colors border border-amber-200 cursor-pointer"
-              >
-                <EyeOff size={15} />
-              </button>
-            </Tooltip>
-          )}
+            {!info.isHidden && (
+              <Tooltip title="Hide from Public View">
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(reviewId, 'Hidden')}
+                  className="p-1.5 text-amber-700 hover:bg-amber-50 rounded-lg transition-colors border border-amber-200 cursor-pointer"
+                >
+                  <EyeOff size={15} />
+                </button>
+              </Tooltip>
+            )}
 
-          <button
-            type="button"
-            onClick={() => {
-              showLuxuryDeleteModal({
-                title: 'Delete Customer Review',
-                itemName: `Review for ${record.product?.name || 'Perfume'} by ${record.customer || 'Customer'}`,
-                itemType: 'customer review',
-                description: 'Permanently remove this customer testimonial from the boutique storefront? This action cannot be reversed.',
-                confirmText: 'Delete Review',
-                onConfirm: () => handleDelete(record.id)
-              });
-            }}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-            title="Delete Review"
-          >
-            <Trash2 size={15} />
-          </button>
-        </div>
-      )
+            <button
+              type="button"
+              onClick={() => {
+                showLuxuryDeleteModal({
+                  title: 'Delete Customer Review',
+                  itemName: `Review for ${record.product?.name || 'Perfume'} by ${record.customer || 'Customer'}`,
+                  itemType: 'customer review',
+                  description: 'Permanently remove this customer testimonial from the boutique storefront? This action cannot be reversed.',
+                  confirmText: 'Delete Review',
+                  onConfirm: () => handleDelete(reviewId)
+                });
+              }}
+              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+              title="Delete Review"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        );
+      }
     }
   ];
 

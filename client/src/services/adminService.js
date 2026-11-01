@@ -351,6 +351,11 @@ const adminService = {
     return response.data;
   },
 
+  deleteReview: async (id) => {
+    const response = await api.delete(`/admin/reviews/${id}`);
+    return response.data;
+  },
+
   /* --------------------------------------------------------------------------
      10. GIFTS MANAGEMENT
      -------------------------------------------------------------------------- */

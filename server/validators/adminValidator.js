@@ -209,23 +209,38 @@ export const validateGiftFulfillmentUpdate = (req, res, next) => {
  * Validates review moderation inputs
  */
 export const validateReviewModeration = (req, res, next) => {
-  const { status, isVisible } = req.body;
+  let { status, isVisible } = req.body;
 
-  if (status && !['pending', 'approved', 'rejected'].includes(status)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Review moderation status must be "pending", "approved", or "rejected".'
-    });
+  if (status !== undefined) {
+    const s = String(status).toLowerCase();
+    if (!['pending', 'approved', 'rejected', 'hidden'].includes(s)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Review moderation status must be "pending", "approved", "rejected", or "hidden".'
+      });
+    }
+    req.body.status = s;
   }
 
-  if (isVisible !== undefined && typeof isVisible !== 'boolean') {
-    return res.status(400).json({
-      success: false,
-      message: 'isVisible must be a boolean.'
-    });
+  if (isVisible !== undefined) {
+    if (typeof isVisible === 'string') {
+      if (isVisible.toLowerCase() === 'true') req.body.isVisible = true;
+      else if (isVisible.toLowerCase() === 'false') req.body.isVisible = false;
+      else {
+        return res.status(400).json({
+          success: false,
+          message: 'isVisible must be a boolean.'
+        });
+      }
+    } else if (typeof isVisible !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'isVisible must be a boolean.'
+      });
+    }
   }
 
-  if (status === undefined && isVisible === undefined) {
+  if (req.body.status === undefined && req.body.isVisible === undefined) {
     return res.status(400).json({
       success: false,
       message: 'Provide status or isVisible to update review moderation.'

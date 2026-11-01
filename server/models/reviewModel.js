@@ -44,7 +44,7 @@ const reviewSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'approved', 'rejected', 'hidden'],
       default: 'approved', // Auto-approves initial verified reviews, pending when flagged
       index: true
     },
@@ -117,6 +117,11 @@ reviewSchema.statics.syncProductRating = async function (productId) {
       rating: roundedRating,
       reviewsCount: stats[0].reviewsCount
     });
+  } else {
+    await Product.findByIdAndUpdate(productId, {
+      rating: 5.0,
+      reviewsCount: 0
+    });
   }
 };
 
@@ -160,9 +165,19 @@ export const ReviewModel = {
     const review = await Review.findById(id);
     if (!review) return null;
 
-    if (status) review.status = status;
-    if (isVisible !== undefined) review.isVisible = isVisible;
-    review.moderatedBy = adminId || null;
+    if (status !== undefined) {
+      const s = String(status).toLowerCase();
+      review.status = s;
+      if (s === 'hidden' && isVisible === undefined) {
+        review.isVisible = false;
+      } else if (s === 'approved' && isVisible === undefined) {
+        review.isVisible = true;
+      }
+    }
+    if (isVisible !== undefined) {
+      review.isVisible = Boolean(isVisible);
+    }
+    review.moderatedBy = (adminId && mongoose.Types.ObjectId.isValid(adminId)) ? adminId : null;
     review.moderatedAt = new Date();
 
     await review.save();
