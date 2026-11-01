@@ -77,7 +77,7 @@ const BottomNav = () => {
   }, []);
 
   // Hide bottom navigation on admin and customer auth pages in mobile view
-  if (pathname && (pathname.startsWith('/admin') || pathname === '/login' || pathname === '/register')) {
+  if (pathname && (pathname.startsWith('/admin') || pathname === '/login' || pathname === '/register' || pathname.startsWith('/gifts'))) {
     return null;
   }
 
