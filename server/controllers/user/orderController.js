@@ -319,7 +319,7 @@ export const getDeliveryTracking = async (req, res) => {
     const currentStatus = order.status || 'Order Placed';
     let progressPercent = 20;
     if (currentStatus === 'Processing' || currentStatus === 'Confirmed') progressPercent = 45;
-    if (currentStatus === 'Shipped') progressPercent = 75;
+    if (currentStatus === 'Shipped' || currentStatus === 'Dispatch' || currentStatus === 'Dispatched') progressPercent = 75;
     if (currentStatus === 'Delivered') progressPercent = 100;
     if (currentStatus === 'Cancelled') progressPercent = 0;
 
@@ -426,7 +426,7 @@ export const updateDeliveryTracking = async (req, res) => {
     });
 
     // 7. Automated Email Notification: Dispatch tracking updates
-    if (stage === 'Shipped') {
+    if (stage === 'Shipped' || stage === 'Dispatch' || stage === 'Dispatched') {
       emailService.sendShippingNotification(updated).catch(e => console.warn(e.message));
     } else if (stage === 'Delivered') {
       emailService.sendDeliveryNotification(updated).catch(e => console.warn(e.message));
@@ -564,7 +564,7 @@ export const updateOrderStatus = async (req, res) => {
     const ordId = updated.orderId || `#ORD-${String(updated.id || updated._id).slice(-4).toUpperCase()}`;
 
     // 7. Automated Email Notification: Status synchronized updates
-    if (status === 'Shipped') {
+    if (status === 'Shipped' || status === 'Dispatch' || status === 'Dispatched') {
       emailService.sendShippingNotification(updated).catch(e => console.warn(e.message));
     } else if (status === 'Delivered') {
       emailService.sendDeliveryNotification(updated).catch(e => console.warn(e.message));

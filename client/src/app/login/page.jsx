@@ -51,6 +51,7 @@ const LoginContent = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
   const [errorMessage, setErrorMessage] = useState(null);
+  const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   // Google OAuth Authentication Handler
@@ -68,6 +69,12 @@ const LoginContent = () => {
       }
     } catch (err) {
       console.error('Google sign in error:', err);
+      const isBlocked = err.response?.status === 403 || err.response?.data?.isBlocked;
+      if (isBlocked) {
+        setIsAccountBlocked(true);
+        setErrorMessage(err.response?.data?.message || 'Your account has been blocked. Please contact admin for support.');
+        return;
+      }
       setErrorMessage(err.response?.data?.message || 'Google authentication failed. Please try again.');
     } finally {
       setGoogleLoading(false);
@@ -115,6 +122,7 @@ const LoginContent = () => {
   const handleLoginEmailChange = (e) => {
     const val = e.target.value;
     if (errorMessage) setErrorMessage(null);
+    if (isAccountBlocked) setIsAccountBlocked(false);
     if (loginEmailTimerRef.current) {
       clearTimeout(loginEmailTimerRef.current);
     }
@@ -343,6 +351,13 @@ const LoginContent = () => {
     } catch (err) {
       console.error('Login error:', err);
 
+      const isBlocked = err.response?.status === 403 || err.response?.data?.isBlocked;
+      if (isBlocked) {
+        setIsAccountBlocked(true);
+        setErrorMessage(err.response?.data?.message || 'Your account has been blocked. Please contact admin for support.');
+        return;
+      }
+
       if (err.response?.data?.field) {
         loginForm.setFields([
           {
@@ -542,8 +557,30 @@ const LoginContent = () => {
             </p>
           </div>
 
-          {/* Error Notice */}
-          {errorMessage && (
+          {/* Account Blocked Notice */}
+          {isAccountBlocked ? (
+            <div className="mb-4 p-4 rounded-2xl bg-[#FFF5F5] border border-[#FED7D7] text-gray-900 text-xs space-y-2.5 animate-fadeIn">
+              <div className="flex items-center gap-2 font-serif font-bold text-sm text-[#9B2C2C]">
+                <AlertCircle size={17} className="text-[#E53E3E] shrink-0" />
+                Account Suspended
+              </div>
+              <p className="leading-relaxed text-[#742A2A] text-xs">
+                Your account has been suspended by administration. You cannot log in at this time.
+              </p>
+              <div className="p-3 bg-white rounded-xl border border-[#FEB2B2] flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-gray-800 text-[11px]">Need assistance?</div>
+                  <div className="text-[11px] text-gray-500">Contact admin for support</div>
+                </div>
+                <a
+                  href="mailto:support@roveandamber.com?subject=Account%20Access%20Assistance"
+                  className="px-3 py-1.5 rounded-lg bg-[#9B2C2C] text-white hover:bg-[#742A2A] text-[11px] font-medium transition-colors"
+                >
+                  Contact Support
+                </a>
+              </div>
+            </div>
+          ) : errorMessage && (
             <div className="mb-3.5 p-2.5 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] flex items-start gap-2 text-[#9A3412] text-xs">
               <AlertCircle size={14} className="shrink-0 mt-0.5 text-[#C2410C]" />
               <span className="leading-relaxed font-light">{errorMessage}</span>

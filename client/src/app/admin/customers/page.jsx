@@ -4,11 +4,10 @@ import {
   Table, 
   Input, 
   Avatar, 
-  Tag, 
-  Button, 
   Drawer, 
-  message, 
-  Tooltip 
+  Modal,
+  Button,
+  message 
 } from 'antd';
 import { 
   Users, 
@@ -17,21 +16,16 @@ import {
   Mail, 
   MapPin, 
   Calendar, 
-  Award, 
   ShoppingBag, 
   Coins, 
-  Crown, 
   Eye, 
+  PackageCheck,
+  Ban,
+  ShieldCheck,
+  ShieldAlert,
   Clock 
 } from 'lucide-react';
 import adminService from '@/services/adminService';
-
-const TIER_CONFIG = {
-  Platinum: { bg: 'bg-[#F3E8FF]', text: 'text-[#6B21A8]', border: 'border-[#E9D5FF]', icon: Crown },
-  Gold: { bg: 'bg-[#FEF3C7]', text: 'text-[#92400E]', border: 'border-[#FDE68A]', icon: Award },
-  Silver: { bg: 'bg-[#F1F5F9]', text: 'text-[#334155]', border: 'border-[#E2E8F0]', icon: Award },
-  Bronze: { bg: 'bg-[#FFF7ED]', text: 'text-[#9A3412]', border: 'border-[#FFEDD5]', icon: Award }
-};
 
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState([]);
@@ -39,6 +33,7 @@ export default function AdminCustomersPage() {
   const [searchText, setSearchText] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -62,6 +57,61 @@ export default function AdminCustomersPage() {
   const handleOpenCustomer = (customer) => {
     setSelectedCustomer(customer);
     setDrawerOpen(true);
+  };
+
+  const handleToggleBlock = async (customer, nextStatus) => {
+    setActionLoading(true);
+    try {
+      const res = await adminService.toggleBlockUser(customer.id || customer._id, nextStatus);
+      if (res?.success) {
+        message.success(nextStatus ? `${customer.name} has been blocked.` : `${customer.name} has been unblocked.`);
+        
+        // Update local list
+        setCustomers(prev => prev.map(c => 
+          (String(c.id || c._id) === String(customer.id || customer._id)) 
+            ? { ...c, isBlocked: nextStatus } 
+            : c
+        ));
+
+        // Update selected customer in drawer if open
+        setSelectedCustomer(prev => {
+          if (!prev) return null;
+          if (String(prev.id || prev._id) === String(customer.id || customer._id)) {
+            return { ...prev, isBlocked: nextStatus };
+          }
+          return prev;
+        });
+      } else {
+        message.error(res?.message || 'Failed to update customer status');
+      }
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      message.error(err.response?.data?.message || 'Failed to update customer block status');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmBlockCustomer = (customer) => {
+    Modal.confirm({
+      title: 'Block Customer Account?',
+      icon: <ShieldAlert className="text-rose-600 mr-2" size={22} />,
+      content: (
+        <div className="text-xs space-y-2 mt-2 text-gray-600">
+          <p>
+            Are you sure you want to block <strong className="text-gray-900">{customer.name}</strong> ({customer.email})?
+          </p>
+          <p className="text-rose-600">
+            This customer will immediately be prohibited from signing in and will see an alert to contact admin for support.
+          </p>
+        </div>
+      ),
+      okText: 'Yes, Block Account',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      okButtonProps: { className: '!bg-rose-600 hover:!bg-rose-700' },
+      onOk: () => handleToggleBlock(customer, true)
+    });
   };
 
   const filteredCustomers = customers.filter(c => 
@@ -99,85 +149,121 @@ export default function AdminCustomersPage() {
       )
     },
     {
+      title: 'Status',
+      dataIndex: 'isBlocked',
+      key: 'status',
+      width: 110,
+      render: (isBlocked) => (
+        isBlocked ? (
+          <span className="inline-flex items-center gap-1.5 text-[11px] bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            Blocked
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Active
+          </span>
+        )
+      )
+    },
+    {
       title: 'City & Region',
       dataIndex: 'city',
       key: 'city',
-      width: 170,
-      render: (val) => <span className="text-xs text-gray-600 truncate max-w-[150px] inline-block">{val || 'Mumbai, Maharashtra'}</span>
-    },
-    {
-      title: 'Loyalty Tier',
-      key: 'tier',
-      width: 130,
-      render: (_, record) => {
-        const tier = record.tier || 'Silver';
-        const cfg = TIER_CONFIG[tier] || TIER_CONFIG.Silver;
-        const IconComponent = cfg.icon;
-        return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border} whitespace-nowrap`}>
-            <IconComponent size={12} />
-            {tier}
-          </span>
-        );
-      }
+      width: 160,
+      render: (val) => <span className="text-xs text-gray-600 truncate max-w-[140px] inline-block">{val || 'Mumbai, Maharashtra'}</span>
     },
     {
       title: 'Orders Placed',
       dataIndex: 'ordersCount',
       key: 'ordersCount',
       width: 120,
-      render: (count) => (
-        <span className="text-xs font-semibold text-gray-800 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] whitespace-nowrap">
-          {count || 1} Orders
-        </span>
-      )
+      render: (_, record) => {
+        const count = record.ordersCount ?? record.orders_count ?? 0;
+        return (
+          <span className="text-xs font-semibold text-gray-800 bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] whitespace-nowrap">
+            {count} {count === 1 ? 'Order' : 'Orders'}
+          </span>
+        );
+      }
     },
     {
       title: 'Lifetime Spending',
       dataIndex: 'totalSpent',
       key: 'totalSpent',
       width: 140,
-      render: (val) => (
-        <span className="text-xs font-bold text-[#1B100A]">
-          ₹{(val || 4950).toLocaleString('en-IN')}
-        </span>
-      )
+      render: (_, record) => {
+        const val = record.totalSpent ?? record.total_spent ?? 0;
+        return (
+          <span className="text-xs font-bold text-[#1B100A]">
+            ₹{Number(val).toLocaleString('en-IN')}
+          </span>
+        );
+      }
     },
     {
       title: 'Reward Points',
       dataIndex: 'rewardPoints',
       key: 'rewardPoints',
-      width: 130,
-      render: (val) => (
-        <span className="text-xs font-semibold text-[#B38728] flex items-center gap-1 whitespace-nowrap">
-          <Coins size={13} className="text-[#D4A64A]" />
-          {(val || 450).toLocaleString('en-IN')} pts
-        </span>
-      )
-    },
-    {
-      title: 'Joined Date',
-      dataIndex: 'joinedDate',
-      key: 'joinedDate',
-      width: 110,
-      render: (val) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{val || '29 Oct 2026'}</span>
+      width: 120,
+      render: (_, record) => {
+        const spent = record.totalSpent ?? record.total_spent ?? 0;
+        const val = record.rewardPoints ?? Math.floor(spent * 0.1);
+        return (
+          <span className="text-xs font-semibold text-[#B38728] flex items-center gap-1 whitespace-nowrap">
+            <Coins size={13} className="text-[#D4A64A]" />
+            {val.toLocaleString('en-IN')} pts
+          </span>
+        );
+      }
     },
     {
       title: 'Action',
       key: 'action',
-      width: 100,
+      width: 160,
       align: 'right',
       render: (_, record) => (
-        <button 
-          onClick={() => handleOpenCustomer(record)}
-          className="inline-flex items-center gap-1 text-xs text-[#1B100A] hover:text-[#D4A64A] bg-[#FAF7F2] hover:bg-[#F5EEDF] px-3 py-1.5 rounded-lg border border-[#E8DFC8] font-medium transition-colors cursor-pointer"
-        >
-          <Eye size={13} />
-          <span>Profile</span>
-        </button>
+        <div className="flex items-center justify-end gap-1.5">
+          <button 
+            onClick={() => handleOpenCustomer(record)}
+            className="inline-flex items-center gap-1 text-xs text-[#1B100A] hover:text-[#D4A64A] bg-[#FAF7F2] hover:bg-[#F5EEDF] px-2.5 py-1.5 rounded-lg border border-[#E8DFC8] font-medium transition-colors cursor-pointer"
+          >
+            <Eye size={12} />
+            <span>Profile</span>
+          </button>
+          
+          {record.isBlocked ? (
+            <button
+              onClick={() => handleToggleBlock(record, false)}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg border border-emerald-200 font-medium transition-colors cursor-pointer"
+              title="Unblock Customer"
+            >
+              <ShieldCheck size={12} />
+              <span>Unblock</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => confirmBlockCustomer(record)}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-1 text-xs text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium transition-colors cursor-pointer"
+              title="Block Customer"
+            >
+              <Ban size={12} />
+              <span>Block</span>
+            </button>
+          )}
+        </div>
       )
     }
   ];
+
+  const totalSpend = selectedCustomer?.totalSpent ?? selectedCustomer?.total_spent ?? 0;
+  const ordersCount = selectedCustomer?.ordersCount ?? selectedCustomer?.orders_count ?? 0;
+  const rewardPoints = selectedCustomer?.rewardPoints ?? Math.floor(totalSpend * 0.1);
+  const customerOrders = selectedCustomer?.orders || [];
+  const isSelectedBlocked = Boolean(selectedCustomer?.isBlocked);
 
   return (
     <div className="space-y-6 text-[#1B100A]">
@@ -193,7 +279,7 @@ export default function AdminCustomersPage() {
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            View customer profiles, lifetime spending, loyalty points, and purchase history.
+            View customer profiles, manage account access, lifetime spending, and purchase history.
           </p>
         </div>
       </div>
@@ -218,7 +304,7 @@ export default function AdminCustomersPage() {
           columns={columns}
           dataSource={filteredCustomers.map((c, idx) => ({ ...c, key: c.id || idx }))}
           loading={loading}
-          scroll={{ x: 820 }}
+          scroll={{ x: 860 }}
           pagination={{ 
             pageSize: 8, 
             showSizeChanger: false,
@@ -254,17 +340,57 @@ export default function AdminCustomersPage() {
               <p className="text-xs text-gray-500 mt-0.5">{selectedCustomer.email}</p>
               
               <div className="mt-3 flex items-center gap-2">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
-                  TIER_CONFIG[selectedCustomer.tier]?.bg || 'bg-gray-100'
-                } ${TIER_CONFIG[selectedCustomer.tier]?.text || 'text-gray-700'} ${
-                  TIER_CONFIG[selectedCustomer.tier]?.border || 'border-gray-200'
-                }`}>
-                  <Crown size={12} />
-                  {selectedCustomer.tier || 'Silver'} Member
-                </span>
-                <span className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
-                  Active
-                </span>
+                {isSelectedBlocked ? (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] bg-rose-50 text-rose-800 border border-rose-200 px-3 py-0.5 rounded-full font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    Account Blocked
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-0.5 rounded-full font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Active Patron
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Account Status & Admin Actions */}
+            <div className="p-4 rounded-xl border bg-white space-y-3 border-[#EAE3D6]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-xs text-[#1A1A1A]">
+                    {isSelectedBlocked ? 'Account is Suspended' : 'Account Status: Active'}
+                  </div>
+                  <div className="text-[11px] text-gray-400 mt-0.5">
+                    {isSelectedBlocked 
+                      ? 'Customer cannot log in to their account or place orders.' 
+                      : 'Customer has full access to the boutique storefront.'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#F0EAE1]">
+                {isSelectedBlocked ? (
+                  <Button 
+                    type="primary"
+                    loading={actionLoading}
+                    onClick={() => handleToggleBlock(selectedCustomer, false)}
+                    icon={<ShieldCheck size={14} />}
+                    className="!bg-[#B8860B] hover:!bg-[#996e07] text-xs h-9 w-full rounded-xl font-medium"
+                  >
+                    Unblock Customer Account
+                  </Button>
+                ) : (
+                  <Button 
+                    danger
+                    loading={actionLoading}
+                    onClick={() => confirmBlockCustomer(selectedCustomer)}
+                    icon={<Ban size={14} />}
+                    className="text-xs h-9 w-full rounded-xl font-medium"
+                  >
+                    Block Customer Account
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -273,19 +399,19 @@ export default function AdminCustomersPage() {
               <div className="bg-white p-3 rounded-xl border border-[#EAE3D6] text-center">
                 <div className="text-[11px] text-gray-400">Total Spend</div>
                 <div className="font-bold text-sm text-[#1A1A1A] mt-1">
-                  ₹{(selectedCustomer.totalSpent || 0).toLocaleString('en-IN')}
+                  ₹{Number(totalSpend).toLocaleString('en-IN')}
                 </div>
               </div>
               <div className="bg-white p-3 rounded-xl border border-[#EAE3D6] text-center">
                 <div className="text-[11px] text-gray-400">Orders</div>
                 <div className="font-bold text-sm text-[#1A1A1A] mt-1">
-                  {selectedCustomer.ordersCount || 0}
+                  {ordersCount}
                 </div>
               </div>
               <div className="bg-white p-3 rounded-xl border border-[#EAE3D6] text-center">
                 <div className="text-[11px] text-gray-400">Reward Points</div>
                 <div className="font-bold text-sm text-[#B8860B] mt-1">
-                  {(selectedCustomer.rewardPoints || 0).toLocaleString('en-IN')}
+                  {Number(rewardPoints).toLocaleString('en-IN')}
                 </div>
               </div>
             </div>
@@ -312,10 +438,51 @@ export default function AdminCustomersPage() {
                 </div>
               </div>
             </div>
+
+            {/* Order History */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-serif font-bold text-sm text-[#1A1A1A]">
+                  Recent Orders
+                </h4>
+                <span className="text-[11px] text-gray-400">
+                  {ordersCount} {ordersCount === 1 ? 'order' : 'orders'} total
+                </span>
+              </div>
+              
+              {customerOrders.length > 0 ? (
+                <div className="space-y-2.5">
+                  {customerOrders.map((ord, idx) => (
+                    <div key={ord._id || idx} className="bg-white p-3 rounded-xl border border-[#EAE3D6] flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-xs text-[#1A1A1A]">{ord.orderNumber}</div>
+                        <div className="text-[11px] text-gray-400 mt-0.5">
+                          {ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-xs text-[#1A1A1A]">₹{Number(ord.totalAmount).toLocaleString('en-IN')}</div>
+                        <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-medium mt-0.5 ${
+                          ord.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          ord.status === 'Dispatch' || ord.status === 'Shipped' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          ord.status === 'Processing' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          'bg-rose-50 text-rose-700 border border-rose-200'
+                        }`}>
+                          {ord.status === 'Shipped' ? 'Dispatch' : ord.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white p-4 rounded-xl border border-[#EAE3D6] text-center text-gray-400 text-xs">
+                  No orders recorded yet.
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Drawer>
     </div>
   );
 }
-

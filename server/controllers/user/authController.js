@@ -187,6 +187,15 @@ export const login = async (req, res) => {
       });
     }
 
+    // Check if account is blocked by administration
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        isBlocked: true,
+        message: 'Your account has been blocked. Please contact admin for support.'
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({
@@ -465,6 +474,14 @@ export const googleAuth = async (req, res) => {
 
     // Check if user already exists in database
     let user = await UserModel.findByEmail(email);
+
+    if (user && user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        isBlocked: true,
+        message: 'Your account has been blocked. Please contact admin for support.'
+      });
+    }
 
     if (!user) {
       // Auto-create new user with secure random password

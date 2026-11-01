@@ -93,6 +93,18 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    isBlocked: {
+      type: Boolean,
+      default: false
+    },
+    blockedReason: {
+      type: String,
+      default: ''
+    },
+    blockedAt: {
+      type: Date,
+      default: null
+    },
     addresses: [addressSchema]
   },
   {
@@ -173,24 +185,74 @@ export const UserModel = {
   },
 
   findAll: async () => {
-    const users = await User.find({ role: { $ne: 'admin' } }).sort({ createdAt: 1 }).lean();
-    const Order = mongoose.models.Order;
+    const users = await User.find({ role: { $ne: 'admin' } }).sort({ createdAt: -1 }).lean();
+    let Order = mongoose.models.Order;
+    if (!Order) {
+      try {
+        const orderMod = await import('./orderModel.js');
+        Order = orderMod.Order || mongoose.models.Order;
+      } catch (err) {
+        Order = mongoose.models.Order;
+      }
+    }
 
     return Promise.all(
       users.map(async (u) => {
         let ordersCount = 0;
         let totalSpent = 0;
+        let ordersList = [];
         if (Order) {
-          const orders = await Order.find({ user_id: u._id }).select('total_amount').lean();
+          const userEmail = (u.email || '').toLowerCase().trim();
+          const orders = await Order.find({
+            $or: [
+              { user_id: u._id },
+              { email: userEmail },
+              { 'customer.email': userEmail }
+            ]
+          }).sort({ createdAt: -1 }).lean();
+
           ordersCount = orders.length;
-          totalSpent = orders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+          totalSpent = orders.reduce((sum, o) => {
+            const amt = Number(o.total_amount ?? o.total ?? o.totalPrice ?? 0);
+            return sum + (isNaN(amt) ? 0 : amt);
+          }, 0);
+
+          ordersList = orders.map(o => ({
+            _id: String(o._id),
+            id: String(o._id),
+            orderNumber: o.order_number || ('#ORD-' + String(o._id).slice(-4).toUpperCase()),
+            totalAmount: Number(o.total_amount ?? o.total ?? 0),
+            status: o.status || 'Pending',
+            paymentStatus: o.payment_status || o.paymentStatus || 'Paid',
+            createdAt: o.createdAt
+          }));
         }
+
+        const defaultAddr = (u.addresses && u.addresses.find(a => a.isDefault)) || (u.addresses && u.addresses[0]);
+        const cityStr = defaultAddr 
+          ? ((defaultAddr.city || '') + (defaultAddr.state ? ', ' + defaultAddr.state : '')).trim()
+          : (u.address || 'Mumbai, Maharashtra');
+
+        const joinedDateStr = u.createdAt 
+          ? new Date(u.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '29 Oct 2026';
+
         return {
           ...u,
           id: u._id.toString(),
           _id: u._id.toString(),
           orders_count: ordersCount,
-          total_spent: totalSpent
+          ordersCount: ordersCount,
+          total_spent: totalSpent,
+          totalSpent: totalSpent,
+          rewardPoints: Math.floor(totalSpent * 0.1),
+          isBlocked: Boolean(u.isBlocked),
+          blockedReason: u.blockedReason || '',
+          blockedAt: u.blockedAt || null,
+          city: cityStr,
+          phone: u.phone || (defaultAddr && defaultAddr.phone) || '',
+          joinedDate: joinedDateStr,
+          orders: ordersList
         };
       })
     );
@@ -226,6 +288,18 @@ export const UserModel = {
     if (!mongoose.Types.ObjectId.isValid(id)) return false;
     await User.findByIdAndUpdate(id, { password: hashedPassword });
     return true;
+  },
+
+  setBlockStatus: async (id, isBlocked, reason = '') => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const user = await User.findById(id);
+    if (!user) return null;
+    user.isBlocked = Boolean(isBlocked);
+    user.blockedReason = isBlocked ? (reason || 'Account suspended by administrator') : '';
+    user.blockedAt = isBlocked ? new Date() : null;
+    await user.save();
+    const doc = user.toObject();
+    return { ...doc, id: user._id.toString(), _id: user._id.toString() };
   }
 };
 
