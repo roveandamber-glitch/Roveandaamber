@@ -809,6 +809,10 @@ export const createAdminBanner = async (req, res) => {
       mobileImage,
       linkUrl,
       buttonText,
+      secondaryButtonText,
+      secondaryButtonLink,
+      titlePart1,
+      titlePart2,
       isActive,
       displayOrder,
       startDate,
@@ -840,6 +844,10 @@ export const createAdminBanner = async (req, res) => {
       mobileImage: bannerMobileImageUrl,
       linkUrl: linkUrl || '/shop',
       buttonText: buttonText || 'EXPLORE COLLECTION',
+      secondaryButtonText: secondaryButtonText || 'Explore Collection',
+      secondaryButtonLink: secondaryButtonLink || '/collections',
+      titlePart1: titlePart1 || '',
+      titlePart2: titlePart2 || '',
       isActive: isActive === undefined ? true : (isActive === 'true' || isActive === true),
       displayOrder: displayOrder ? parseInt(displayOrder, 10) : 0,
       startDate: startDate ? new Date(startDate) : null,
@@ -873,6 +881,10 @@ export const updateAdminBanner = async (req, res) => {
       mobileImage,
       linkUrl,
       buttonText,
+      secondaryButtonText,
+      secondaryButtonLink,
+      titlePart1,
+      titlePart2,
       isActive,
       displayOrder,
       startDate,
@@ -886,6 +898,10 @@ export const updateAdminBanner = async (req, res) => {
     if (highlightType !== undefined) updateData.highlightType = highlightType;
     if (linkUrl !== undefined) updateData.linkUrl = linkUrl;
     if (buttonText !== undefined) updateData.buttonText = buttonText;
+    if (secondaryButtonText !== undefined) updateData.secondaryButtonText = secondaryButtonText;
+    if (secondaryButtonLink !== undefined) updateData.secondaryButtonLink = secondaryButtonLink;
+    if (titlePart1 !== undefined) updateData.titlePart1 = titlePart1;
+    if (titlePart2 !== undefined) updateData.titlePart2 = titlePart2;
     if (isActive !== undefined) updateData.isActive = isActive === 'true' || isActive === true;
     if (displayOrder !== undefined) updateData.displayOrder = parseInt(displayOrder, 10);
     if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;

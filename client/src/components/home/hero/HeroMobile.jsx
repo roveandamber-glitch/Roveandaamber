@@ -2,6 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { getImageUrl } from '@/utils/imageHelper';
 
 /**
  * Mobile-specific Hero Component
@@ -17,7 +18,8 @@ export default function HeroMobile({
 }) {
   const current = slides[activeSlide] || slides[0] || {};
   // Use the exact same window/desktop image as requested
-  const bgImage = current.desktopBg || current.mobileBg || "/images/perfumes/hero_campaign_ultra_clear_master.jpg";
+  const rawBg = current.desktopBg || current.mobileBg || "/images/perfumes/hero_campaign_ultra_clear_master.jpg";
+  const bgImage = getImageUrl(rawBg);
 
   return (
     <section className="relative min-h-[100dvh] w-full flex flex-col justify-between bg-[#120905] overflow-hidden select-none">

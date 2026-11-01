@@ -42,6 +42,26 @@ const bannerSchema = new mongoose.Schema(
       default: 'EXPLORE COLLECTION',
       trim: true
     },
+    secondaryButtonText: {
+      type: String,
+      default: 'Explore Collection',
+      trim: true
+    },
+    secondaryButtonLink: {
+      type: String,
+      default: '/collections',
+      trim: true
+    },
+    titlePart1: {
+      type: String,
+      default: '',
+      trim: true
+    },
+    titlePart2: {
+      type: String,
+      default: '',
+      trim: true
+    },
     isActive: {
       type: Boolean,
       default: true,

@@ -2,6 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { getImageUrl } from '@/utils/imageHelper';
 
 /**
  * Desktop-specific Hero Component (matches widescreen luxury campaign layout)
@@ -15,13 +16,14 @@ export default function HeroDesktop({
   onExplore
 }) {
   const current = slides[activeSlide] || slides[0] || {};
+  const bgImg = getImageUrl(current.desktopBg || "/images/perfumes/hero_campaign_ultra_clear_master.jpg");
 
   return (
     <section className="relative min-h-screen w-full flex flex-col justify-between bg-[#120905] overflow-hidden select-none">
       {/* Background High-Definition Fragrance Photography */}
       <div className="absolute inset-0 z-0">
         <img 
-          src={current.desktopBg || "/images/perfumes/hero_campaign_ultra_clear_master.jpg"} 
+          src={bgImg} 
           alt={current.titlePart1 || "ROVE & AMBER Signature Eau de Parfum"} 
           className="w-full h-full object-cover object-center"
           onError={(e) => {

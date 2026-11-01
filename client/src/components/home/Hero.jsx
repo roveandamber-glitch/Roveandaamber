@@ -74,17 +74,78 @@ export default function Hero({
   ...props
 }) {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [currentSlides, setCurrentSlides] = useState(slides);
+
+  // Dynamically fetch custom hero banners from the database
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchDynamicHero() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${apiUrl}/banners?highlightType=hero`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json?.success && Array.isArray(json.data) && json.data.length > 0) {
+          const dynamicSlides = json.data.map((b, idx) => {
+            let part1 = b.titlePart1;
+            let part2 = b.titlePart2;
+            if (!part1 && !part2 && b.title) {
+              const words = b.title.trim().split(' ');
+              if (words.length > 2) {
+                part1 = words.slice(0, words.length - 2).join(' ');
+                part2 = words.slice(words.length - 2).join(' ');
+              } else if (words.length === 2) {
+                part1 = words[0];
+                part2 = words[1];
+              } else {
+                part1 = b.title;
+                part2 = '';
+              }
+            }
+            return {
+              id: b._id || b.id || `dynamic-${idx}`,
+              tagline: b.badge || 'Fine Fragrance & Artisanal Perfumery',
+              title: b.title,
+              titlePart1: part1,
+              titlePart2: part2,
+              description: b.subtitle || 'Explore fine fragrances crafted to leave a lasting impression. Sculpted with aged amber, wild oud, and rare botanical essences.',
+              primaryCta: {
+                text: b.buttonText || 'Shop Now',
+                href: b.linkUrl || '/shop'
+              },
+              secondaryCta: {
+                text: b.secondaryButtonText || 'Explore Collection',
+                href: b.secondaryButtonLink || '/shop?category=Oud'
+              },
+              desktopBg: b.image || '/images/perfumes/hero_campaign_ultra_clear_master.jpg',
+              mobileBg: b.mobileImage || b.image || '/images/perfumes/hero_campaign_ultra_clear_master.jpg'
+            };
+          });
+
+          if (isMounted && dynamicSlides.length > 0) {
+            // Keep dynamic slide(s) first, then append other default slides so carousel stays rich
+            const extraDefaults = DEFAULT_HERO_SLIDES.slice(dynamicSlides.length);
+            setCurrentSlides([...dynamicSlides, ...extraDefaults]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching dynamic hero slides:', err);
+      }
+    }
+    fetchDynamicHero();
+    return () => { isMounted = false; };
+  }, []);
 
   // Auto-play slide advancement
   useEffect(() => {
-    if (!autoPlay || slides.length <= 1) return;
+    if (!autoPlay || currentSlides.length <= 1) return;
 
     const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % slides.length);
+      setActiveSlide((prev) => (prev + 1) % currentSlides.length);
     }, autoPlayInterval);
 
     return () => clearInterval(timer);
-  }, [autoPlay, autoPlayInterval, slides.length]);
+  }, [autoPlay, autoPlayInterval, currentSlides.length]);
 
   // Shared slide navigation handler
   const handleSlideChange = useCallback((index) => {
@@ -92,16 +153,16 @@ export default function Hero({
   }, []);
 
   const handleNextSlide = useCallback(() => {
-    setActiveSlide((prev) => (prev + 1) % slides.length);
-  }, [slides.length]);
+    setActiveSlide((prev) => (prev + 1) % currentSlides.length);
+  }, [currentSlides.length]);
 
   const handlePrevSlide = useCallback(() => {
-    setActiveSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  }, [slides.length]);
+    setActiveSlide((prev) => (prev - 1 + currentSlides.length) % currentSlides.length);
+  }, [currentSlides.length]);
 
   // Shared props object passed down to both view components
   const sharedProps = {
-    slides,
+    slides: currentSlides,
     activeSlide,
     onSlideChange: handleSlideChange,
     onNextSlide: handleNextSlide,

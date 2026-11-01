@@ -357,6 +357,41 @@ const adminService = {
   },
 
   /* --------------------------------------------------------------------------
+     9.5 BANNERS & HOMEPAGE CONTENT
+     -------------------------------------------------------------------------- */
+  getBanners: async (highlightType) => {
+    const query = highlightType ? `?highlightType=${highlightType}` : '';
+    const response = await api.get(`/admin/banners${query}`);
+    return response.data;
+  },
+
+  createBanner: async (formData) => {
+    const isFormData = typeof FormData !== 'undefined' && formData instanceof FormData;
+    const response = await api.post('/admin/banners', formData, isFormData ? {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    } : {});
+    return response.data;
+  },
+
+  updateBanner: async (id, formData) => {
+    const isFormData = typeof FormData !== 'undefined' && formData instanceof FormData;
+    const response = await api.put(`/admin/banners/${id}`, formData, isFormData ? {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    } : {});
+    return response.data;
+  },
+
+  toggleBannerStatus: async (id) => {
+    const response = await api.patch(`/admin/banners/${id}/toggle`);
+    return response.data;
+  },
+
+  deleteBanner: async (id) => {
+    const response = await api.delete(`/admin/banners/${id}`);
+    return response.data;
+  },
+
+  /* --------------------------------------------------------------------------
      10. GIFTS MANAGEMENT
      -------------------------------------------------------------------------- */
   getGifts: async () => {

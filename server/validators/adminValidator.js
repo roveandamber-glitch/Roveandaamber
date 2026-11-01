@@ -99,13 +99,23 @@ export const validateProductStockUpdate = (req, res, next) => {
  * Validates promotional banner creation and update inputs
  */
 export const validateBannerInput = (req, res, next) => {
-  const { title, image, highlightType, linkUrl } = req.body;
+  const { 
+    title, 
+    image, 
+    highlightType, 
+    linkUrl, 
+    badge, 
+    subtitle, 
+    buttonText, 
+    secondaryButtonText, 
+    secondaryButtonLink 
+  } = req.body;
 
   if (req.method === 'POST') {
     if (!title || typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Banner title is required.'
+        message: 'Hero Headline is required.'
       });
     }
 
@@ -114,9 +124,59 @@ export const validateBannerInput = (req, res, next) => {
     if (!image && !hasUploadedFile) {
       return res.status(400).json({
         success: false,
-        message: 'Banner image or file upload is required.'
+        message: 'Hero banner image or file upload is required.'
       });
     }
+  }
+
+  // Character length limits for content fields
+  if (title && String(title).length > 70) {
+    return res.status(400).json({
+      success: false,
+      message: 'Hero Headline cannot exceed 70 characters.'
+    });
+  }
+
+  if (badge && String(badge).length > 40) {
+    return res.status(400).json({
+      success: false,
+      message: 'Sub-Badge Text cannot exceed 40 characters.'
+    });
+  }
+
+  if (subtitle && String(subtitle).length > 260) {
+    return res.status(400).json({
+      success: false,
+      message: 'Storytelling Body Copy cannot exceed 260 characters.'
+    });
+  }
+
+  if (buttonText && String(buttonText).length > 25) {
+    return res.status(400).json({
+      success: false,
+      message: 'Primary Button Label cannot exceed 25 characters.'
+    });
+  }
+
+  if (linkUrl && String(linkUrl).length > 120) {
+    return res.status(400).json({
+      success: false,
+      message: 'Primary Destination URL cannot exceed 120 characters.'
+    });
+  }
+
+  if (secondaryButtonText && String(secondaryButtonText).length > 25) {
+    return res.status(400).json({
+      success: false,
+      message: 'Secondary Button Label cannot exceed 25 characters.'
+    });
+  }
+
+  if (secondaryButtonLink && String(secondaryButtonLink).length > 120) {
+    return res.status(400).json({
+      success: false,
+      message: 'Secondary Destination URL cannot exceed 120 characters.'
+    });
   }
 
   if (highlightType) {
