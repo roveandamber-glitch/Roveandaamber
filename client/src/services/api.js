@@ -37,13 +37,37 @@ const api = axios.create({ baseURL: API_URL });
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const isAdminUrl = config.url && (config.url.startsWith('/admin') || config.url.includes('admin'));
-    const token = isAdminUrl
-      ? (localStorage.getItem('adminToken') || localStorage.getItem('adminKey') || localStorage.getItem('token'))
-      : (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken'));
-      
+    const inAdminPage = window.location.pathname.startsWith('/admin');
+    const isAdminEndpoint = config.url && (config.url.startsWith('/admin') || config.url.includes('admin'));
+
+    // When inside the admin portal or calling an admin endpoint, strictly prioritize adminToken:
+    let token = null;
+    if (inAdminPage || isAdminEndpoint) {
+      token = localStorage.getItem('adminToken') || localStorage.getItem('adminKey');
+      if (!token) {
+        try {
+          const adminUserObj = JSON.parse(localStorage.getItem('adminUser') || '{}');
+          if (adminUserObj?.role === 'admin') {
+            token = localStorage.getItem('token') || localStorage.getItem('userToken');
+          }
+        } catch (e) {}
+      }
+    } else {
+      token = localStorage.getItem('userToken') || localStorage.getItem('token');
+    }
+
+    // Ultimate fallback if no token found
+    if (!token) {
+      token = inAdminPage
+        ? (localStorage.getItem('adminToken') || localStorage.getItem('adminKey'))
+        : (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken'));
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      if (inAdminPage || isAdminEndpoint) {
+        config.headers['x-admin-key'] = token;
+      }
     } else {
       const guestId = getGuestSessionId();
       if (guestId) {
@@ -53,5 +77,25 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor to handle admin authorization failures
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (typeof window !== 'undefined') {
+      const isAuthError = error.response?.status === 401 || error.response?.status === 403;
+      const inAdminPage = window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login';
+
+      if (isAuthError && inAdminPage) {
+        console.warn('Admin authorization expired or invalid. Redirecting to admin authentication portal.');
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminKey');
+        localStorage.removeItem('adminUser');
+        window.location.href = '/admin/login?reason=unauthorized';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
