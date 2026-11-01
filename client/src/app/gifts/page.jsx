@@ -236,7 +236,7 @@ export default function GiftsPage() {
             const IconComponent = item.icon;
             return (
               <a
-                key={itemId}
+                key={item.id || item.name}
                 href="#featured-gift-sets"
                 className="flex flex-col items-center text-center group cursor-pointer"
               >
