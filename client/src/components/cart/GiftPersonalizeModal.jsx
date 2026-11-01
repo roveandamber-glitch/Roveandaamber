@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Modal, message } from 'antd';
-import { Gift, Check, BookmarkCheck } from 'lucide-react';
+import { Gift, Check, BookmarkCheck, ArrowLeft, X } from 'lucide-react';
 import cartService from '@/services/cartService';
 
 const PACKAGING_OPTIONS = [
@@ -131,6 +131,7 @@ export default function GiftPersonalizeModal({
       footer={null}
       centered
       width={600}
+      closable={false}
       className="font-sans gift-studio-modal"
       styles={{
         content: {
@@ -141,11 +142,32 @@ export default function GiftPersonalizeModal({
         }
       }}
     >
-      <div className="bg-[#FAF8F5] text-black">
+      <div className="bg-[#FAF8F5] text-black flex flex-col max-h-[85vh]">
         {/* Header Banner */}
-        <div className="bg-gradient-to-r from-[#1B100A] via-[#2A1A10] to-[#1B100A] text-white p-6 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#1B100A] via-[#2A1A10] to-[#1B100A] text-white p-5 sm:p-6 relative overflow-hidden shrink-0">
           <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4A64A]/10 rounded-full blur-2xl pointer-events-none" />
           
+          {/* Header Action: Prominent Back & Close Buttons */}
+          <div className="flex items-center justify-between mb-3 relative z-10">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-stone-200 hover:text-white text-xs font-semibold tracking-wide transition-all cursor-pointer border border-white/20 shadow-xs"
+            >
+              <ArrowLeft size={14} />
+              <span>Back</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-stone-200 hover:text-white flex items-center justify-center transition-all cursor-pointer border border-white/20 shadow-xs"
+              aria-label="Close gift options"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
           <div className="flex items-center gap-2 mb-1.5">
             <span className="w-6 h-6 rounded-full bg-[#D4A64A]/20 border border-[#D4A64A]/40 text-[#ECC880] flex items-center justify-center text-xs">
               <Gift size={13} />
@@ -164,7 +186,7 @@ export default function GiftPersonalizeModal({
         </div>
 
         {/* Modal Form */}
-        <div className="p-6 space-y-6 max-h-[72vh] overflow-y-auto">
+        <div className="p-5 sm:p-6 space-y-6 overflow-y-auto flex-1">
           
           {/* 1. Recipient Details */}
           <div className="space-y-3">
@@ -356,13 +378,14 @@ export default function GiftPersonalizeModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 sm:p-5 bg-white border-t border-[#ECE7DE] flex items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 bg-white border-t border-[#ECE7DE] flex items-center justify-between gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-full text-xs font-semibold text-stone-600 hover:text-black transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-bold text-stone-700 hover:text-black bg-stone-100 hover:bg-stone-200 active:scale-95 transition-all cursor-pointer border border-stone-200"
           >
-            Cancel
+            <ArrowLeft size={13} />
+            <span>Back</span>
           </button>
 
           <button
