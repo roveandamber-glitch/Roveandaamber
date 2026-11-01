@@ -215,7 +215,6 @@ const Navbar = () => {
     { name: 'Collections', path: '/shop', icon: Sparkles },
     { name: 'Gifts', path: '/gifts', icon: Gift },
     { name: 'About', path: '/about', icon: Compass },
-    { name: 'Contact', path: '/contact', icon: MessageSquare },
   ];
 
   const drawerLinks = [
@@ -532,21 +531,6 @@ const Navbar = () => {
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* Desktop My Orders Icon */}
-              <Link
-                href="/orders"
-                prefetch={true}
-                className={`p-2 rounded-full transition-colors flex items-center justify-center cursor-pointer ${
-                  (!isDarkHero) 
-                    ? 'text-neutral-700 hover:text-black hover:bg-[#FAF8F5]' 
-                    : 'text-white/85 hover:text-white hover:bg-white/10'
-                }`}
-                title="My Orders"
-                aria-label="My Orders"
-              >
-                <Package size={18} strokeWidth={1.8} />
-              </Link>
 
               {/* Desktop Wishlist Button */}
               <Link
