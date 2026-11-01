@@ -48,8 +48,8 @@ router.post('/:id/email/transactional', protect, adminOnly, sendCustomTransactio
 // ==========================================
 // 4.1 Order Confirmation & History
 // ==========================================
-// Place Order (Supports authenticated user or guest with payload validation)
-router.post('/', optionalAuth, validateCreateOrder, createOrder);
+// Place Order (Strictly requires authenticated customer account)
+router.post('/', protect, validateCreateOrder, createOrder);
 
 // Display order confirmation right after checkout (Supports owner auth or contact verification)
 router.get('/confirmation/:id', optionalAuth, getOrderConfirmation);

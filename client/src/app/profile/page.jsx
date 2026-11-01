@@ -31,6 +31,7 @@ import authService from '@/services/authService';
 import orderService from '@/services/orderService';
 import cartService from '@/services/cartService';
 import { getImageUrl } from '@/utils/imageHelper';
+import { AuthGateModal } from '@/components/common';
 
 const ProfilePage = () => {
   const router = useRouter();
@@ -38,6 +39,7 @@ const ProfilePage = () => {
   const [orders, setOrders] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState('details'); // 'details' | 'cart' | 'orders' | 'security'
 
   // Initial & Form State for Change Detection
@@ -74,13 +76,9 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const initProfile = async () => {
-      const token = typeof window !== 'undefined' 
-        ? (localStorage.getItem('userToken') || (localStorage.getItem('token') && !localStorage.getItem('adminToken') && !localStorage.getItem('adminKey'))) 
-        : null;
-
-      if (!token) {
-        message.warning('Please sign in to access your profile.');
-        router.push('/login?redirect=/profile');
+      if (!authService.isAuthenticated()) {
+        setLoading(false);
+        setShowAuthModal(true);
         return;
       }
 
@@ -231,7 +229,19 @@ const ProfilePage = () => {
           <Spin size="large" />
           <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Loading Profile...</p>
         </div>
-        <Footer />
+        <AuthGateModal
+        open={showAuthModal}
+        onClose={() => router.replace('/')}
+        onCancelAction={() => router.replace('/')}
+        redirectPath="/profile"
+        title="Sign In to Access Profile"
+        subtitle="Private Patron Suite"
+        description="Your profile details, personal preferences, and atelier orders are private. Please sign in to access your customer account."
+        confirmText="Sign In / Register"
+        cancelText="Return to Boutique"
+      />
+
+      <Footer />
       </div>
     );
   }

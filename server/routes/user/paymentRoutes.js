@@ -6,7 +6,7 @@ import {
   handlePaymentFailure,
   getPaymentStatus
 } from '../../controllers/user/paymentController.js';
-import { optionalAuth } from '../../middlewares/authMiddleware.js';
+import { protect, optionalAuth } from '../../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -23,13 +23,12 @@ const paymentLimiter = rateLimit({
 });
 
 router.use(paymentLimiter);
-router.use(optionalAuth);
 
-// 3.2: Razorpay Payment Integration Endpoints
-router.post('/create-order', createPaymentOrder);
-router.post('/verify', verifyPayment);
-router.post('/failure', handlePaymentFailure);
-router.get('/status', getPaymentStatus);
-router.get('/status/:orderId', getPaymentStatus);
+// 3.2: Razorpay Payment Integration Endpoints (Strictly Protected for Authenticated Customer Accounts)
+router.post('/create-order', protect, createPaymentOrder);
+router.post('/verify', protect, verifyPayment);
+router.post('/failure', protect, handlePaymentFailure);
+router.get('/status', optionalAuth, getPaymentStatus);
+router.get('/status/:orderId', optionalAuth, getPaymentStatus);
 
 export default router;

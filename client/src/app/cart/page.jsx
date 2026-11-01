@@ -29,7 +29,8 @@ import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
 import { getImageUrl } from '@/utils/imageHelper';
 import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
-import { showLuxuryDeleteModal } from '@/components/common';
+import { showLuxuryDeleteModal, AuthGateModal } from '@/components/common';
+import authService from '@/services/authService';
 
 const cartTheme = {
   token: {
@@ -209,14 +210,10 @@ export default function CartPage() {
     }
   };
 
-  // Check auth before starting checkout
+  // Check verified patron authentication before starting checkout
   const handleStartCheckout = () => {
-    const token = typeof window !== 'undefined'
-      ? (localStorage.getItem('userToken') || (localStorage.getItem('token') && !localStorage.getItem('adminToken') && !localStorage.getItem('adminKey')))
-      : null;
-
-    if (!token) {
-      router.push('/login?redirect=/checkout');
+    if (!authService.isAuthenticated()) {
+      setIsAuthPromptOpen(true);
       return;
     }
 
@@ -689,50 +686,16 @@ export default function CartPage() {
     </main>
 
       {/* MODAL: AUTHENTICATION GATE PROMPT (For Unauthenticated Checkout Attempts) */}
-      <Modal
+      <AuthGateModal
         open={isAuthPromptOpen}
-        onCancel={() => setIsAuthPromptOpen(false)}
-        footer={null}
-        centered
-        width={440}
-        className="font-sans"
-      >
-        <div className="p-4 sm:p-5 text-center space-y-4">
-          <div className="w-14 h-14 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#B8860B] flex items-center justify-center mx-auto">
-            <User size={26} />
-          </div>
-
-          <div>
-            <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#8C6D1F] block mb-1">
-              Atelier Account
-            </span>
-            <h3 className="font-serif text-2xl font-normal text-black">
-              Sign In to Complete Checkout
-            </h3>
-            <p className="text-xs text-gray-500 font-light mt-2 max-w-sm mx-auto leading-relaxed">
-              To guarantee verified dispatch notifications, direct courier tracking, and order history, please sign in or register your customer profile.
-            </p>
-          </div>
-
-          <div className="space-y-2.5 pt-2">
-            <Link
-              href="/login?redirect=/cart"
-              className="w-full inline-flex items-center justify-center gap-2 bg-black hover:bg-[#262626] text-white py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all shadow-xs"
-            >
-              <span>Sign In to Checkout</span>
-              <ArrowRight size={13} />
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => setIsAuthPromptOpen(false)}
-              className="text-xs text-gray-500 hover:text-black transition-colors"
-            >
-              Continue Reviewing Bag
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onClose={() => setIsAuthPromptOpen(false)}
+        redirectPath="/checkout"
+        title="Sign In to Complete Checkout"
+        subtitle="Atelier Customer Account"
+        description="To guarantee verified dispatch notifications, insured white-glove courier tracking, and order history, please sign in or register your customer profile."
+        confirmText="Sign In to Checkout"
+        cancelText="Continue Reviewing Bag"
+      />
 
       {/* MODAL: CHECKOUT INFORMATION & ORDER PLACEMENT */}
       <Modal

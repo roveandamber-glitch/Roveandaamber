@@ -27,6 +27,8 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import orderService from '@/services/orderService';
+import { AuthGateModal } from '@/components/common';
+import authService from '@/services/authService';
 import cartService from '@/services/cartService';
 import { getImageUrl } from '@/utils/imageHelper';
 
@@ -41,6 +43,7 @@ export default function MyOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -137,23 +140,15 @@ export default function MyOrdersPage() {
   };
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' 
-      ? (localStorage.getItem('userToken') || (localStorage.getItem('token') && !localStorage.getItem('adminToken') && !localStorage.getItem('adminKey'))) 
-      : null;
-    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    
-    if (token) {
+    if (authService.isAuthenticated()) {
       setIsLoggedIn(true);
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (e) {}
-      }
+      const currentUser = authService.getUser();
+      if (currentUser) setUser(currentUser);
       fetchOrders();
     } else {
       setIsLoggedIn(false);
       setLoading(false);
-      router.replace('/login?redirect=/orders');
+      setShowAuthModal(true);
     }
   }, [router]);
 
@@ -230,7 +225,19 @@ export default function MyOrdersPage() {
             Redirecting to sign in...
           </p>
         </main>
-        <Footer />
+        <AuthGateModal
+        open={showAuthModal}
+        onClose={() => router.replace('/')}
+        onCancelAction={() => router.replace('/')}
+        redirectPath="/orders"
+        title="Sign In to View Orders"
+        subtitle="Order History & Tracking"
+        description="Your order history, live courier tracking, and invoices are private to your customer account. Please sign in to view your orders."
+        confirmText="Sign In to View Orders"
+        cancelText="Return to Boutique"
+      />
+
+      <Footer />
       </div>
     );
   }

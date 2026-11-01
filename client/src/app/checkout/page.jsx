@@ -27,6 +27,8 @@ import orderService from '@/services/orderService';
 import paymentService from '@/services/paymentService';
 import { getImageUrl } from '@/utils/imageHelper';
 import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
+import { AuthGateModal } from '@/components/common';
+import authService from '@/services/authService';
 
 
 // Dynamically load official Razorpay Checkout SDK
@@ -71,18 +73,16 @@ export default function CheckoutPage() {
   const [orderConfirmed, setOrderConfirmed] = useState(null);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     document.title = 'Secure Boutique Checkout | ROVE & AMBER';
 
-    // Verify authentication before exposing checkout
-    const token = typeof window !== 'undefined'
-      ? (localStorage.getItem('userToken') || (localStorage.getItem('token') && !localStorage.getItem('adminToken') && !localStorage.getItem('adminKey')))
-      : null;
-
-    if (!token) {
-      router.replace('/login?redirect=/checkout');
+    // Verify authenticated customer account strictly
+    if (!authService.isAuthenticated()) {
+      setIsCheckingAuth(true);
+      setShowAuthModal(true);
       return;
     }
 
@@ -766,6 +766,19 @@ export default function CheckoutPage() {
       </main>
 
       <Footer />
+
+      {/* Strict Authentication Gate for Checkout */}
+      <AuthGateModal
+        open={showAuthModal}
+        onClose={() => router.replace('/cart')}
+        onCancelAction={() => router.replace('/cart')}
+        redirectPath="/checkout"
+        title="Sign In to Complete Checkout"
+        subtitle="Private Checkout Access"
+        description="Private checkout requires verified customer authentication. Please sign in or register to complete your order."
+        confirmText="Sign In to Checkout"
+        cancelText="Return to Shopping Bag"
+      />
 
       {/* Gift Customization Modal Re-usable */}
       <GiftPersonalizeModal
