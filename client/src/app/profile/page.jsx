@@ -75,7 +75,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const initProfile = async () => {
       const token = typeof window !== 'undefined' 
-        ? (localStorage.getItem('userToken') || localStorage.getItem('adminToken') || localStorage.getItem('token') || localStorage.getItem('adminKey')) 
+        ? (localStorage.getItem('userToken') || (localStorage.getItem('token') && !localStorage.getItem('adminToken') && !localStorage.getItem('adminKey'))) 
         : null;
 
       if (!token) {

@@ -138,7 +138,7 @@ export default function MyOrdersPage() {
 
   useEffect(() => {
     const token = typeof window !== 'undefined' 
-      ? (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('adminKey')) 
+      ? (localStorage.getItem('userToken') || (localStorage.getItem('token') && !localStorage.getItem('adminToken') && !localStorage.getItem('adminKey'))) 
       : null;
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
     

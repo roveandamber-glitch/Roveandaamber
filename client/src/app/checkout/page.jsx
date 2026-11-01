@@ -75,7 +75,7 @@ export default function CheckoutPage() {
 
     // Verify authentication before exposing checkout
     const token = typeof window !== 'undefined'
-      ? (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('adminKey'))
+      ? (localStorage.getItem('userToken') || (localStorage.getItem('token') && !localStorage.getItem('adminToken') && !localStorage.getItem('adminKey')))
       : null;
 
     if (!token) {

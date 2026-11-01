@@ -340,6 +340,12 @@ const LoginContent = () => {
       });
 
       if (res?.success && res.token && res.user) {
+        if (res.user.role === 'admin') {
+          authService.saveAdminSession(res.user, res.token);
+          message.success('Administrator session verified. Redirecting to Atelier Admin.');
+          router.push('/admin');
+          return;
+        }
         authService.saveSession(res.user, res.token);
 
         message.success(`Welcome back, ${res.user.name || 'Customer'}!`);

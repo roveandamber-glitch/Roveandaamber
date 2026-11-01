@@ -110,12 +110,19 @@ export default function AdminLoginPage() {
           return;
         }
 
-        // Save session in both authService and localStorage
-        authService.saveSession(res.user, res.token);
+        // Save admin session strictly isolated from customer storefront
+        authService.saveAdminSession(res.user, res.token);
         if (typeof window !== 'undefined') {
           localStorage.setItem('adminToken', res.token);
           localStorage.setItem('adminKey', res.token);
           localStorage.setItem('adminUser', JSON.stringify(res.user));
+          try {
+            const customerUser = localStorage.getItem('user');
+            if (customerUser && JSON.parse(customerUser)?.role === 'admin') {
+              localStorage.removeItem('user');
+              localStorage.removeItem('userToken');
+            }
+          } catch (e) {}
           window.dispatchEvent(new Event('authChange'));
         }
 

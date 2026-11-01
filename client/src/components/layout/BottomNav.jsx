@@ -48,7 +48,7 @@ const BottomNav = () => {
   const checkAuth = () => {
     if (typeof window !== 'undefined') {
       const userStr = localStorage.getItem('user');
-      const userToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+      const userToken = localStorage.getItem('userToken');
       if (userStr) {
         try {
           const parsedUser = JSON.parse(userStr);

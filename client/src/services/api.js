@@ -53,14 +53,25 @@ api.interceptors.request.use((config) => {
         } catch (e) {}
       }
     } else {
-      token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      // Storefront customer requests should only use customer userToken
+      token = localStorage.getItem('userToken');
+      if (!token) {
+        const legacyToken = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        if (legacyToken && userStr) {
+          try {
+            const u = JSON.parse(userStr);
+            if (u?.role !== 'admin') {
+              token = legacyToken;
+            }
+          } catch (e) {}
+        }
+      }
     }
 
-    // Ultimate fallback if no token found
-    if (!token) {
-      token = inAdminPage
-        ? (localStorage.getItem('adminToken') || localStorage.getItem('adminKey'))
-        : (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken'));
+    // Ultimate fallback strictly respects page boundary
+    if (!token && (inAdminPage || isAdminEndpoint)) {
+      token = localStorage.getItem('adminToken') || localStorage.getItem('adminKey');
     }
 
     if (token) {

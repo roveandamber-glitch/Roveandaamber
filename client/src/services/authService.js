@@ -22,10 +22,36 @@ const authService = {
         localStorage.setItem('adminUser', JSON.stringify(user));
         localStorage.setItem('adminToken', token);
         localStorage.setItem('adminKey', token);
+        // Clear any admin user that leaked into customer storage
+        try {
+          const curUser = localStorage.getItem('user');
+          if (curUser && JSON.parse(curUser)?.role === 'admin') {
+            localStorage.removeItem('user');
+            localStorage.removeItem('userToken');
+          }
+        } catch (e) {}
+      } else {
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('userToken', token);
+        localStorage.setItem('token', token);
       }
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('userToken', token);
-      localStorage.setItem('token', token);
+      window.dispatchEvent(new Event('authChange'));
+    }
+  },
+
+  saveAdminSession: (user, token) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('adminUser', JSON.stringify(user));
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminKey', token);
+      // Clean up customer session if it contains admin data
+      try {
+        const curUser = localStorage.getItem('user');
+        if (curUser && JSON.parse(curUser)?.role === 'admin') {
+          localStorage.removeItem('user');
+          localStorage.removeItem('userToken');
+        }
+      } catch (e) {}
       window.dispatchEvent(new Event('authChange'));
     }
   },
@@ -51,7 +77,10 @@ const authService = {
     const userStr = localStorage.getItem('user');
     if (!userStr) return null;
     try {
-      return JSON.parse(userStr);
+      const parsed = JSON.parse(userStr);
+      // Customer user should never be admin
+      if (parsed?.role === 'admin') return null;
+      return parsed;
     } catch {
       return null;
     }
@@ -71,6 +100,8 @@ const authService = {
 
   getToken: () => {
     if (typeof window === 'undefined') return null;
+    const user = authService.getUser();
+    if (!user) return null;
     return (
       localStorage.getItem('userToken') ||
       localStorage.getItem('token') ||

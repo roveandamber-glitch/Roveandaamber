@@ -182,7 +182,7 @@ export default function CartPage() {
   // Check auth before starting checkout
   const handleStartCheckout = () => {
     const token = typeof window !== 'undefined'
-      ? (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('adminKey'))
+      ? (localStorage.getItem('userToken') || (localStorage.getItem('token') && !localStorage.getItem('adminToken') && !localStorage.getItem('adminKey')))
       : null;
 
     if (!token) {
