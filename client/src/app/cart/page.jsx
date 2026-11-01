@@ -181,38 +181,16 @@ export default function CartPage() {
 
   // Check auth before starting checkout
   const handleStartCheckout = () => {
-    router.push('/checkout');
-    return;
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('adminKey'))
+      : null;
 
-    const token = 
-      localStorage.getItem('userToken') || 
-      localStorage.getItem('adminToken') || 
-      localStorage.getItem('token') || 
-      localStorage.getItem('adminKey');
-    
-    // Backend POST /orders requires protect middleware (token)
     if (!token) {
-      setIsAuthPromptOpen(true);
+      router.push('/login?redirect=/checkout');
       return;
     }
 
-    // Prefill form from localStorage user profile if available
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        checkoutForm.setFieldsValue({
-          customerName: user.name || '',
-          phone: user.phone || '',
-          address: user.address || ''
-        });
-      } catch (e) {
-        console.warn('Could not parse user info for checkout', e);
-      }
-    }
-
-    setCheckoutError(null);
-    setIsCheckoutModalOpen(true);
+    router.push('/checkout');
   };
 
   // Toggle recipient address from gift options if available

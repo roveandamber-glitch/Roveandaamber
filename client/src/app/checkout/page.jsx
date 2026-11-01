@@ -20,7 +20,7 @@ import {
   Package,
   Edit3
 } from 'lucide-react';
-import { message, Form, Input, Radio } from 'antd';
+import { message, Form, Input, Radio, Spin } from 'antd';
 import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
 import paymentService from '@/services/paymentService';
@@ -50,6 +50,7 @@ export default function CheckoutPage() {
   
   const [cartItems, setCartItems] = useState([]);
   const [isClient, setIsClient] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [giftOptions, setGiftOptions] = useState(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
@@ -71,6 +72,18 @@ export default function CheckoutPage() {
   useEffect(() => {
     setIsClient(true);
     document.title = 'Secure Boutique Checkout | ROVE & AMBER';
+
+    // Verify authentication before exposing checkout
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('userToken') || localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('adminKey'))
+      : null;
+
+    if (!token) {
+      router.replace('/login?redirect=/checkout');
+      return;
+    }
+
+    setIsCheckingAuth(false);
     loadRazorpayScript().catch(() => {});
 
     // Load cart items
@@ -288,7 +301,20 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!isClient) return null;
+  if (!isClient || isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center py-32 space-y-4">
+          <Spin size="large" />
+          <p className="text-xs uppercase tracking-widest text-[#8C7A6B] font-semibold">
+            Verifying Authentication...
+          </p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
