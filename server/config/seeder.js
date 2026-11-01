@@ -21,6 +21,19 @@ export const seedDatabase = async () => {
       console.log('ℹ️ Administrator accounts are managed directly via backend MongoDB database.');
     }
 
+    const roveUser = await User.findOne({ email: 'roveandamber@gmail.com' });
+    if (!roveUser) {
+      const hashedPassword = await bcrypt.hash('Admin@123', 10);
+      await User.create({
+        name: 'ROVE & AMBER Concierge',
+        email: 'roveandamber@gmail.com',
+        password: hashedPassword,
+        role: 'admin',
+        isBlocked: false
+      });
+      console.log('✨ Seeded default concierge account for roveandamber@gmail.com');
+    }
+
     // 2. Seed default categories if empty
     const categoryCount = await Category.countDocuments();
     const categoriesMap = {};
