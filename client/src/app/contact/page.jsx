@@ -72,7 +72,7 @@ const ContactPage = () => {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
           <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#8C827A] block mb-2">
-            Client Concierge & Care
+            User Concierge & Care
           </span>
           <h1 className="text-3xl sm:text-5xl font-serif text-black font-normal mb-3">
             How May We Assist You?

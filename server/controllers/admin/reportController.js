@@ -490,7 +490,7 @@ export const getCustomerPurchaseAnalytics = async (req, res) => {
       if (!customerOrdersMap[email]) {
         customerOrdersMap[email] = {
           identifier: email,
-          name: o.customer_name || 'Valued Client',
+          name: o.customer_name || 'Valued User',
           email: o.email || '',
           orderCount: 0,
           totalSpent: 0,

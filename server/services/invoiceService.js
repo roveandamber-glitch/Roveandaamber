@@ -31,7 +31,7 @@ export const buildInvoiceData = (order) => {
       gstin: '27AABCR1234F1Z8'
     },
     customer: {
-      name: ord.customer_name || 'Valued Client',
+      name: ord.customer_name || 'Valued User',
       phone: ord.phone || 'N/A',
       email: ord.email || (ord.user_id?.email || 'N/A'),
       billingAddress: ord.address || 'Standard Delivery Address',

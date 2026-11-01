@@ -225,7 +225,7 @@ export default function AdminReviewsPage() {
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Moderate olfactory reviews, verify purchases, and showcase authentic client feedback.
+            Moderate olfactory reviews, verify purchases, and showcase authentic user feedback.
           </p>
         </div>
       </div>

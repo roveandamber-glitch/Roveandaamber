@@ -961,7 +961,7 @@ const LoginContent = () => {
                 Forgot Password
               </h3>
               <p className="text-xs text-gray-500 font-light leading-relaxed max-w-xs mx-auto">
-                Enter your registered client email address and we'll send you a 6-digit recovery code.
+                Enter your registered user email address and we'll send you a 6-digit recovery code.
               </p>
             </div>
 
@@ -979,7 +979,7 @@ const LoginContent = () => {
               requiredMark={false}
             >
               <Form.Item
-                label={<span className="text-xs font-semibold text-gray-800">Client Email</span>}
+                label={<span className="text-xs font-semibold text-gray-800">User Email</span>}
                 name="email"
                 rules={[
                   { required: true, message: 'Email address is required' },

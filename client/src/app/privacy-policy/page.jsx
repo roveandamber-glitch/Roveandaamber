@@ -7,7 +7,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      subtitle="At ROVE & AMBER, we hold the sanctity of your personal privacy and client trust in the highest regard."
+      subtitle="At ROVE & AMBER, we hold the sanctity of your personal privacy and user trust in the highest regard."
       lastUpdated="October 2026"
     >
       {/* Overview Highlight Banner */}
@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle size={14} className="text-[#C49A45] shrink-0 mt-1" />
-            <span><strong>Client Preferences:</strong> Saved wishlist items, scent profile inclinations, and personalized gift card messages.</span>
+            <span><strong>User Preferences:</strong> Saved wishlist items, scent profile inclinations, and personalized gift card messages.</span>
           </li>
         </ul>
       </section>
@@ -89,10 +89,10 @@ export default function PrivacyPolicyPage() {
       {/* Section 5 */}
       <section className="space-y-3">
         <h2 className="text-lg sm:text-xl font-serif text-[#120905] font-semibold">
-          5. Your Client Rights & Account Control
+          5. Your User Rights & Account Control
         </h2>
         <p className="text-xs sm:text-sm text-[#4D453E] leading-relaxed">
-          You possess the explicit right to inspect, revise, or request the deletion of your client profile and order metadata. To execute a data disclosure or account deletion request, please reach out to our privacy officer at <a href="mailto:concierge@roveandamber.com" className="text-[#C49A45] underline font-medium">concierge@roveandamber.com</a>.
+          You possess the explicit right to inspect, revise, or request the deletion of your user profile and order metadata. To execute a data disclosure or account deletion request, please reach out to our privacy officer at <a href="mailto:concierge@roveandamber.com" className="text-[#C49A45] underline font-medium">concierge@roveandamber.com</a>.
         </p>
       </section>
     </LegalPageLayout>

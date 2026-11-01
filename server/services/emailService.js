@@ -315,7 +315,7 @@ export const emailService = {
       : '';
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued Client'},</p>
+      <p>Dear ${order.customer_name || 'Valued User'},</p>
       <p>Thank you for choosing <strong>ROVE & AMBER</strong>. We are pleased to confirm that your order <strong>${orderId}</strong> has been received and logged in our atelier.</p>
       
       <div class="card">
@@ -359,7 +359,7 @@ export const emailService = {
     const transactionId = order.razorpayPaymentId || order.paymentDetails?.transactionId || 'Verified';
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued Client'},</p>
+      <p>Dear ${order.customer_name || 'Valued User'},</p>
       <p>We are delighted to confirm that your payment of <strong>Rs ${(order.total_amount || 0).toLocaleString()}</strong> has been successfully verified.</p>
       
       <div class="card" style="border-left: 3px solid #1E7E34;">
@@ -403,7 +403,7 @@ export const emailService = {
       : 'In 2-3 business days';
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued Client'},</p>
+      <p>Dear ${order.customer_name || 'Valued User'},</p>
       <p>Your artisanal flacons have been hand-packaged and dispatched for delivery.</p>
 
       <div class="card" style="border-left: 3px solid #C49A45;">
@@ -443,7 +443,7 @@ export const emailService = {
     const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued Client'},</p>
+      <p>Dear ${order.customer_name || 'Valued User'},</p>
       <p>Your package for order <strong>${orderId}</strong> has been safely delivered.</p>
 
       <div class="card" style="border-left: 3px solid #1E7E34;">
@@ -492,7 +492,7 @@ export const emailService = {
     }
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued Client'},</p>
+      <p>Dear ${order.customer_name || 'Valued User'},</p>
       <p>Please find attached your official tax invoice <strong>${invNumber}</strong> for order <strong>${orderId}</strong>.</p>
 
       <div class="card">
@@ -504,7 +504,7 @@ export const emailService = {
       </div>
 
       <p style="font-size:13px; color:#9E9B95;">
-        A copy of your PDF invoice is attached to this email. You can also view and download invoices directly from your client account at any time.
+        A copy of your PDF invoice is attached to this email. You can also view and download invoices directly from your user account at any time.
       </p>
     `;
 
@@ -542,7 +542,7 @@ export const emailService = {
     const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued Client'},</p>
+      <p>Dear ${order.customer_name || 'Valued User'},</p>
       <p>We are writing to inform you of an update regarding your order <strong>${orderId}</strong>.</p>
 
       <div class="card" style="border-left: 3px solid #C49A45;">
@@ -573,8 +573,8 @@ export const emailService = {
   sendRegistrationOtp: async (email, otp, name) => {
     const brandGold = '#C49A45';
     const contentHtml = `
-      <p>Dear ${name || 'Valued Client'},</p>
-      <p>Thank you for initiating your client account with <strong>ROVE & AMBER Maison de Haute Parfumerie</strong>.</p>
+      <p>Dear ${name || 'Valued User'},</p>
+      <p>Thank you for initiating your user account with <strong>ROVE & AMBER Maison de Haute Parfumerie</strong>.</p>
       <p>To verify your email address and activate your luxury customer account, please enter the following single-use verification code:</p>
 
       <div style="background: linear-gradient(135deg, #1A1A1D 0%, #262422 100%); border: 1px solid ${brandGold}; border-radius: 8px; padding: 28px 20px; text-align: center; margin: 28px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
@@ -610,8 +610,8 @@ export const emailService = {
   sendPasswordResetOtp: async (email, otp, name) => {
     const brandGold = '#C49A45';
     const contentHtml = `
-      <p>Dear ${name || 'Valued Client'},</p>
-      <p>We received a request to reset the password for your <strong>ROVE & AMBER</strong> client account.</p>
+      <p>Dear ${name || 'Valued User'},</p>
+      <p>We received a request to reset the password for your <strong>ROVE & AMBER</strong> user account.</p>
       <p>Please enter the following single-use verification code to set your new password:</p>
 
       <div style="background: linear-gradient(135deg, #1A1A1D 0%, #262422 100%); border: 1px solid ${brandGold}; border-radius: 8px; padding: 28px 20px; text-align: center; margin: 28px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
