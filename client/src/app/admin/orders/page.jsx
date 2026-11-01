@@ -217,7 +217,7 @@ export default function AdminOrdersPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 110,
-      render: (val) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{record.date || (val ? new Date(val).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Today')}</span>
+      render: (val, record) => <span className="text-[11px] text-gray-400 whitespace-nowrap">{record?.date || (val ? new Date(val).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Today')}</span>
     },
     {
       title: 'Action',

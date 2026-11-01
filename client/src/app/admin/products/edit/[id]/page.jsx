@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import productService from '@/services/productService';
 import categoryService from '@/services/categoryService';
 import adminService from '@/services/adminService';
-import { MOCK_TOP_PRODUCTS, MOCK_LOW_STOCK, MOCK_CATEGORIES } from '@/data/adminMockData';
+
 import { getImageUrl } from '@/utils/imageHelper';
 
 const { Option } = Select;
@@ -16,7 +16,7 @@ const EditProduct = () => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState([]);
   const [sizeStock, setSizeStock] = useState({
     '50ml': 12,
     '100ml': 8,
@@ -51,9 +51,8 @@ const EditProduct = () => {
       }
 
       if (!product) {
-        product = MOCK_TOP_PRODUCTS.find(p => p.id === id || String(p.id) === String(id)) ||
-                  MOCK_LOW_STOCK.find(p => p.id === id || String(p.id) === String(id)) ||
-                  MOCK_TOP_PRODUCTS[0];
+        message.error('Product not found in database.');
+        return;
       }
 
       if (product) {

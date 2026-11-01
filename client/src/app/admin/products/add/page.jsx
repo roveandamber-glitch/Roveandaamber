@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import productService from '@/services/productService';
 import categoryService from '@/services/categoryService';
 import adminService from '@/services/adminService';
-import { MOCK_CATEGORIES } from '@/data/adminMockData';
+
 
 const { Option } = Select;
 
@@ -15,7 +15,7 @@ const AddProduct = () => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState([]);
   const [sizeStock, setSizeStock] = useState({
     '50ml': 15,
     '100ml': 10,

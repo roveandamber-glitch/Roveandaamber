@@ -53,34 +53,55 @@ app.use(
 );
 
 // ==========================================
-// 3. Strict CORS Enforcement
+// 3. Dynamic CORS & Preflight Guard
 // ==========================================
 const configuredOrigins = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(',').map((o) => o.trim())
+  ? process.env.CLIENT_URL.split(',').map((o) => o.trim().replace(/\/+$/, ''))
   : [];
 
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'https://roveandamber.com',
+  'https://www.roveandamber.com',
+  'https://api.roveandamber.com',
   ...configuredOrigins
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow local development, mobile apps, or same-origin non-browser requests
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS blocked: Origin ${origin} not permitted.`));
-    },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-guest-id', 'x-admin-key', 'Accept'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
-    credentials: true,
-    maxAge: 86400 // Preflight cache for 24h
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (mobile apps, server-to-server, curl)
+    if (!origin) return callback(null, true);
+
+    const cleanOrigin = origin.trim().replace(/\/+$/, '');
+
+    // 1. Check explicit allowed list
+    if (allowedOrigins.some(o => o.toLowerCase() === cleanOrigin.toLowerCase())) {
+      return callback(null, true);
+    }
+
+    // 2. Automatically permit roveandamber.com apex and all subdomains (www, api, admin, etc.)
+    if (/^https?:\/\/([a-z0-9-]+\.)*roveandamber\.com(:\d+)?$/i.test(cleanOrigin)) {
+      return callback(null, true);
+    }
+
+    // 3. Automatically permit Vercel and Render deployments
+    if (/^https?:\/\/([a-z0-9-]+\.)*(vercel\.app|onrender\.com)$/i.test(cleanOrigin)) {
+      return callback(null, true);
+    }
+
+    // Gracefully reject without throwing 500 error
+    return callback(null, false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-guest-id', 'x-admin-key', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  credentials: true,
+  maxAge: 86400 // Preflight cache for 24h
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // ==========================================
 // 4. Rate Limiting (DDoS & Brute Force Defense)
@@ -162,15 +183,19 @@ app.use('/images', express.static(path.resolve(__dirname, '../client/public/imag
 // ==========================================
 // 8. Application API Routes (User & Admin Suites)
 // ==========================================
-// User & Customer Facing Routes (/api/auth, /api/products, /api/orders, /api/cart, /api/user, etc.)
+// User & Customer Facing Routes - Dual-mounted at /api and root /
 app.use('/api', userRouter);
+app.use('/', userRouter);
 
-// Admin Operations Suite (/api/admin, /api/admin/inventory, /api/admin/reports)
+// Admin Operations Suite - Dual-mounted at /api/admin and /admin
 app.use('/api/admin', adminRouter);
+app.use('/admin', adminRouter);
 
 // Convenient Root Aliases for Admin Submodules
 app.use('/api/inventory', inventoryRoutes);
+app.use('/inventory', inventoryRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/reports', reportRoutes);
 
 
 // ==========================================
