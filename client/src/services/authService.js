@@ -13,6 +13,7 @@ const authService = {
   changePassword: async (passwordData) => (await api.put('/auth/change-password', passwordData)).data,
   forgotPassword: async (data) => (await api.post('/auth/forgot-password', data)).data,
   resetPassword: async (data) => (await api.post('/auth/reset-password', data)).data,
+  googleAuth: async (payload) => (await api.post('/auth/google', payload)).data,
 
   // Session & Local Storage Management
   saveSession: (user, token) => {

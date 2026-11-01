@@ -8,7 +8,8 @@ import {
   updateProfile, 
   changePassword,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  googleAuth
 } from '../../controllers/user/authController.js';
 import { protect } from '../../middlewares/authMiddleware.js';
 import {
@@ -30,6 +31,7 @@ router.post('/register', validateRegister, register);
 
 // Public login endpoint
 router.post('/login', validateLogin, login);
+router.post('/google', googleAuth);
 
 // Password recovery endpoints
 router.post('/forgot-password', forgotPassword);

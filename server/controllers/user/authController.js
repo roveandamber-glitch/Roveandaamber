@@ -1,3 +1,4 @@
+import { OAuth2Client } from 'google-auth-library';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -398,6 +399,108 @@ export const resetPassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to reset password. Please try again.'
+    });
+  }
+};
+
+
+/**
+ * 8. Google OAuth Authentication (Login or Register)
+ * Accepts either Google ID credential (JWT) or access token, verifies with Google,
+ * and creates or retrieves customer account.
+ */
+export const googleAuth = async (req, res) => {
+  try {
+    const { credential, accessToken } = req.body;
+
+    if (!credential && !accessToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google authorization credential or access token is required.'
+      });
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID || '482109442440-7p41koh4gnvt9586dksii7l5shrje7t1.apps.googleusercontent.com';
+    let email, name, googleId, picture;
+
+    if (credential) {
+      const client = new OAuth2Client(clientId);
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: clientId
+      });
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unable to retrieve email from Google credential.'
+        });
+      }
+      email = payload.email.toLowerCase().trim();
+      name = payload.name || payload.given_name || 'Customer';
+      googleId = payload.sub;
+      picture = payload.picture || '';
+    } else if (accessToken) {
+      const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!userInfoRes.ok) {
+        return res.status(401).json({
+          success: false,
+          message: 'Failed to verify Google access token.'
+        });
+      }
+      const info = await userInfoRes.json();
+      if (!info || !info.email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unable to retrieve email from Google user info.'
+        });
+      }
+      email = info.email.toLowerCase().trim();
+      name = info.name || info.given_name || 'Customer';
+      googleId = info.sub;
+      picture = info.picture || '';
+    }
+
+    // Check if user already exists in database
+    let user = await UserModel.findByEmail(email);
+
+    if (!user) {
+      // Auto-create new user with secure random password
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      user = await UserModel.create({
+        name,
+        email,
+        password: hashedPassword,
+        role: 'user',
+        phone: '',
+        address: ''
+      });
+    }
+
+    const token = generateToken(user.id || user._id, user.role);
+
+    return res.json({
+      success: true,
+      message: 'Google authentication successful.',
+      token,
+      user: {
+        id: user.id || user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: picture || user.avatar || null,
+        phone: user.phone || null,
+        address: user.address || null
+      }
+    });
+  } catch (error) {
+    console.error('Google Auth error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to authenticate with Google. Please try again.'
     });
   }
 };
