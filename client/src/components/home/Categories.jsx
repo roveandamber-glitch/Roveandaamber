@@ -55,18 +55,20 @@ const Categories = () => {
     const handleResize = () => updateScrollButtons();
     window.addEventListener('resize', handleResize);
     
-    // Check after a brief delay in case fonts/images alter layout dimensions
-    const timer = setTimeout(updateScrollButtons, 300);
+    // Check after brief delays for layout/image settle
+    const timer1 = setTimeout(updateScrollButtons, 150);
+    const timer2 = setTimeout(updateScrollButtons, 400);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      clearTimeout(timer);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
     };
   }, [categories]);
 
   const handleScroll = (direction) => {
     if (scrollRef.current) {
-      const scrollAmount = Math.max(scrollRef.current.clientWidth * 0.65, 260);
+      const scrollAmount = Math.max(scrollRef.current.clientWidth * 0.65, 280);
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -115,13 +117,21 @@ const Categories = () => {
 
       {/* Horizontal Scroll Wrapper */}
       <div className="relative">
+        {/* Subtle Edge Fade Indicators */}
+        {canScrollLeft && (
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-[#FAF9F7] to-transparent z-10 transition-opacity duration-300" />
+        )}
+        {canScrollRight && (
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-l from-[#FAF9F7] to-transparent z-10 transition-opacity duration-300" />
+        )}
+
         {/* Left Arrow Button */}
         <button
           type="button"
           onClick={() => handleScroll('left')}
-          aria-label="Previous categories"
-          className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-[#1A1A1A] text-[#1A1A1A] hover:text-[#E5B869] shadow-md hover:shadow-xl border border-[#E5DFD5] flex items-center justify-center transition-all duration-300 backdrop-blur-sm -translate-x-1 sm:-translate-x-3 ${
-            canScrollLeft ? 'opacity-100 visible cursor-pointer' : 'opacity-0 invisible pointer-events-none'
+          aria-label="Scroll left"
+          className={`absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-[#1A1A1A] text-[#1A1A1A] hover:text-[#E5B869] shadow-md hover:shadow-xl border border-[#E5DFD5] flex items-center justify-center transition-all duration-300 backdrop-blur-sm cursor-pointer ${
+            canScrollLeft ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-90 pointer-events-none'
           }`}
         >
           <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -131,9 +141,9 @@ const Categories = () => {
         <button
           type="button"
           onClick={() => handleScroll('right')}
-          aria-label="Next categories"
-          className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-[#1A1A1A] text-[#1A1A1A] hover:text-[#E5B869] shadow-md hover:shadow-xl border border-[#E5DFD5] flex items-center justify-center transition-all duration-300 backdrop-blur-sm translate-x-1 sm:translate-x-3 ${
-            canScrollRight ? 'opacity-100 visible cursor-pointer' : 'opacity-0 invisible pointer-events-none'
+          aria-label="Scroll right"
+          className={`absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-[#1A1A1A] text-[#1A1A1A] hover:text-[#E5B869] shadow-md hover:shadow-xl border border-[#E5DFD5] flex items-center justify-center transition-all duration-300 backdrop-blur-sm cursor-pointer ${
+            canScrollRight ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-90 pointer-events-none'
           }`}
         >
           <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -147,7 +157,7 @@ const Categories = () => {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
-          className={`flex items-center gap-4 sm:gap-6 md:gap-8 overflow-x-auto scroll-smooth py-4 px-2 select-none touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+          className={`flex items-start gap-4 sm:gap-6 md:gap-8 overflow-x-auto scroll-smooth py-4 px-2 select-none touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           } ${isOverflowing ? 'justify-start' : 'justify-start md:justify-center'}`}
           style={{
@@ -167,7 +177,7 @@ const Categories = () => {
                     e.preventDefault();
                   }
                 }}
-                className="group/item shrink-0 flex flex-col items-center cursor-pointer transition-transform duration-300 hover:-translate-y-1.5 w-24 sm:w-32 md:w-36 text-center"
+                className="group/item shrink-0 flex flex-col items-center cursor-pointer transition-transform duration-300 hover:-translate-y-1.5 w-24 sm:w-32 md:w-36 lg:w-40 text-center"
               >
                 {/* Circular Thumbnail with Polished Gold Border */}
                 <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden p-0.5 sm:p-1 bg-gradient-to-b from-[#E5B869] to-[#C49444] shadow-md group-hover/item:shadow-2xl group-hover/item:shadow-amber-900/25 transition-all duration-300">
@@ -184,8 +194,8 @@ const Categories = () => {
                   </div>
                 </div>
 
-                {/* Label */}
-                <span className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-serif font-medium text-[#1A1A1A] group-hover/item:text-[#B86526] transition-colors tracking-wide text-center line-clamp-1 w-full px-1">
+                {/* Label (gracefully wraps up to 2 lines without truncating awkwardly) */}
+                <span className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-serif font-medium text-[#1A1A1A] group-hover/item:text-[#B86526] transition-colors tracking-wide text-center leading-snug w-full px-1 min-h-[2.5em] flex items-center justify-center">
                   {item.name}
                 </span>
               </Link>

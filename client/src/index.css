@@ -301,3 +301,8 @@ input:-webkit-autofill:active {
   box-shadow: 0 0 0 50px white inset !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Hide mobile floating bottom navigation bar when navigation drawer is open */
+body.mobile-menu-open nav[aria-label="Mobile Navigation"] {
+  display: none !important;
+}

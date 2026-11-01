@@ -95,11 +95,14 @@ const Navbar = () => {
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('mobile-menu-open');
     } else {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('mobile-menu-open');
     }
     return () => {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('mobile-menu-open');
     };
   }, [isMenuOpen]);
 
@@ -638,13 +641,11 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
                 className="flex items-center gap-2.5 cursor-pointer group"
               >
-                <div className="w-8 h-8 rounded-full bg-black/95 p-1 flex items-center justify-center border border-[#E5B869]/40 shadow-xs shrink-0 group-hover:scale-105 transition-transform">
-                  <img 
-                    src="/favicon.png" 
-                    alt="ROVE & AMBER" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+                <img 
+                  src="/favicon.png" 
+                  alt="ROVE & AMBER" 
+                  className="w-8 h-8 rounded-full object-contain shrink-0 group-hover:scale-105 transition-transform shadow-xs"
+                />
                 <div className="flex flex-col items-start text-left">
                   <span className="font-serif text-[15px] sm:text-base font-semibold tracking-[0.22em] text-[#C49A45] uppercase leading-tight">
                     ROVE & AMBER
