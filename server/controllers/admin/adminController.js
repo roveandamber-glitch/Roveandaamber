@@ -1240,7 +1240,7 @@ export const getAdminGiftOrders = async (req, res) => {
       _id: o._id.toString(),
       id: o._id.toString(),
       orderId: o.orderId || `#ORD-${o._id.toString().slice(-4).toUpperCase()}`,
-      senderName: o.customer_name || (o.user_id ? o.user_id.name : 'Valued Client'),
+      senderName: o.customer_name || (o.user_id ? o.user_id.name : 'Valued User'),
       senderEmail: o.email || (o.user_id ? o.user_id.email : ''),
       senderPhone: o.phone || '',
       isGift: true,

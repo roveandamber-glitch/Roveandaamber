@@ -94,7 +94,7 @@ export default function LegalPageLayout({
           <div className="space-y-1.5 text-center sm:text-left">
             <h3 className="font-serif text-lg text-[#ECC880]">Have Inquiries or Need Guidance?</h3>
             <p className="text-xs text-white/70 max-w-md font-light">
-              Our client concierge is devoted to assisting you with order tracking, 2 ml sample protocols, or return authorization requests.
+              Our user concierge is devoted to assisting you with order tracking, 2 ml sample protocols, or return authorization requests.
             </p>
           </div>
           <Link

@@ -81,7 +81,7 @@ export const createOrder = async (req, res) => {
     }
 
     const userId = req.user ? (req.user.id || req.user._id) : null;
-    const finalCustomerName = customerName || name || (req.user ? req.user.name : 'Valued Client');
+    const finalCustomerName = customerName || name || (req.user ? req.user.name : 'Valued User');
     const finalPhone = phone || (req.user ? req.user.phone : '');
     const finalEmail = email || (req.user ? req.user.email : '');
     const finalAddress = address || (req.user ? req.user.address : 'Standard Delivery');
@@ -520,7 +520,7 @@ export const getAllInvoices = async (req, res) => {
         orderId: ordId,
         invoiceNumber: o.invoice?.invoiceNumber || `INV-${ordId.replace('#', '')}`,
         invoiceDate: o.invoice?.invoiceDate || o.createdAt,
-        customerName: o.customer_name || 'Valued Client',
+        customerName: o.customer_name || 'Valued User',
         customerEmail: o.email || o.user_email || 'N/A',
         totalAmount: o.total_amount,
         paymentStatus: o.paymentStatus || 'Pending',
@@ -611,7 +611,7 @@ export const getAllOrders = async (req, res) => {
         _id: String(o.id || o._id),
         orderId: ordId,
         invoiceNumber: o.invoice?.invoiceNumber || `INV-${ordId.replace('#', '')}`,
-        customerName: o.customer_name || o.user_name || 'Valued Client',
+        customerName: o.customer_name || o.user_name || 'Valued User',
         phone: o.phone || o.user_email || 'N/A',
         address: o.address || 'Standard Delivery',
         productName: firstItem

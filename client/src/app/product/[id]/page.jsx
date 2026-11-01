@@ -823,7 +823,7 @@ const ProductDetails = () => {
                           ))}
                         </div>
                         <p className="text-xs text-gray-600">
-                          Based on {product.reviewsCount || 1} verified client reviews
+                          Based on {product.reviewsCount || 1} verified user reviews
                         </p>
                       </div>
                     </div>

@@ -321,7 +321,7 @@ export const forgotPassword = async (req, res) => {
       return res.status(404).json({
         success: false,
         field: 'email',
-        message: 'No client account found with this email address.'
+        message: 'No user account found with this email address.'
       });
     }
 

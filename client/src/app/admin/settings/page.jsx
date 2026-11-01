@@ -109,7 +109,7 @@ export default function AdminSettingsPage() {
 
             <Form.Item
               name="supportPhone"
-              label={<span className="text-xs font-semibold text-gray-700">Client Support Hotline</span>}
+              label={<span className="text-xs font-semibold text-gray-700">User Support Hotline</span>}
             >
               <Input className="rounded-xl py-1.5 text-xs" />
             </Form.Item>

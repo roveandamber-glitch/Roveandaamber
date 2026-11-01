@@ -229,7 +229,7 @@ export default function MyOrdersPage() {
             <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] text-[#8C7A6B] mb-2 font-medium">
               <Link href="/" className="hover:text-black transition-colors">Home</Link>
               <span>/</span>
-              <span className="text-[#2C1810] font-semibold">Client Portal</span>
+              <span className="text-[#2C1810] font-semibold">User Portal</span>
               <span>/</span>
               <span className="text-[#A47E3B] font-semibold">Orders</span>
             </nav>
@@ -290,12 +290,12 @@ export default function MyOrdersPage() {
             <div>
               <h3 className="text-2xl font-serif font-normal text-[#1C1714] mb-1.5">Sign In to View Orders</h3>
               <p className="text-xs sm:text-sm text-[#7D7063] font-light leading-relaxed max-w-sm mx-auto">
-                Sign in to your ROVE & AMBER client account to view live dispatch milestones, certificate serials, and orders history.
+                Sign in to your ROVE & AMBER user account to view live dispatch milestones, certificate serials, and orders history.
               </p>
             </div>
             <Link href="/login?redirect=/orders" className="inline-block pt-2">
               <button className="bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-95 px-8 py-3.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-md shadow-amber-950/15 transition-all cursor-pointer">
-                Client Sign In
+                User Sign In
               </button>
             </Link>
           </div>

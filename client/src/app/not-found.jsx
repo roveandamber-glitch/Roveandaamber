@@ -85,7 +85,7 @@ export default function NotFound() {
             </Link>
             <span className="text-white/20">•</span>
             <Link href="/contact" className="hover:text-[#ECC880] transition-colors">
-              Client Concierge
+              User Concierge
             </Link>
           </div>
         </div>
