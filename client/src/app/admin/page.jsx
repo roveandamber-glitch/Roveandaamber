@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Dropdown } from 'antd';
 import adminService from '@/services/adminService';
+import { CustomDatePicker } from '@/components/common';
 import { getImageUrl } from '@/utils/imageHelper';
 
 const TIME_RANGES = [
@@ -40,6 +41,7 @@ const AdminDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState(null);
   const [timeRange, setTimeRange] = useState('All Time');
+  const [customDateFilter, setCustomDateFilter] = useState('');
 
   useEffect(() => {
     loadDashboardData(timeRange);
@@ -180,6 +182,19 @@ const AdminDashboard = () => {
               <ChevronDown size={13} className="text-gray-400 ml-0.5" />
             </button>
           </Dropdown>
+
+          <div className="w-44">
+            <CustomDatePicker
+              value={customDateFilter}
+              onChange={(d) => {
+                setCustomDateFilter(d);
+                if (d) setTimeRange(d);
+                else setTimeRange('All Time');
+              }}
+              placeholder="Pick Custom Date"
+              showPresets={true}
+            />
+          </div>
 
           <Link
             href="/admin/orders"

@@ -39,6 +39,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import adminService from '@/services/adminService';
+import { CustomDatePicker } from '@/components/common';
 import { getImageUrl } from '@/utils/imageHelper';
 
 const { Option } = Select;
@@ -59,6 +60,7 @@ export default function AdminOrdersPage() {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [paymentFilter, setPaymentFilter] = useState('ALL');
+  const [dateFilter, setDateFilter] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -66,6 +68,7 @@ export default function AdminOrdersPage() {
   // Tracking edit form states inside Drawer
   const [courierInput, setCourierInput] = useState('');
   const [trackingNumberInput, setTrackingNumberInput] = useState('');
+  const [estimatedDeliveryInput, setEstimatedDeliveryInput] = useState('');
   const [locationInput, setLocationInput] = useState('');
   const [statusNoteInput, setStatusNoteInput] = useState('');
 
@@ -94,6 +97,11 @@ export default function AdminOrdersPage() {
     setCourierInput(order.tracking?.courierName || 'BlueDart Luxury Express');
     setTrackingNumberInput(order.tracking?.trackingNumber || order.trackingNumber || '');
     setLocationInput(order.tracking?.currentLocation || 'Maison Fulfillment Center, Mumbai');
+    setEstimatedDeliveryInput(
+      order.tracking?.estimatedDelivery 
+        ? new Date(order.tracking.estimatedDelivery).toISOString().slice(0, 10) 
+        : ''
+    );
     setStatusNoteInput('');
     setDrawerOpen(true);
   };
@@ -108,6 +116,7 @@ export default function AdminOrdersPage() {
         courierName: courierInput || selectedOrder.tracking?.courierName,
         trackingNumber: trackingNumberInput || selectedOrder.tracking?.trackingNumber,
         currentLocation: locationInput || selectedOrder.tracking?.currentLocation,
+        estimatedDelivery: estimatedDeliveryInput || selectedOrder.tracking?.estimatedDelivery,
         statusNote: statusNoteInput || `Status updated to ${newStatus} by atelier fulfillment.`
       };
 
@@ -169,6 +178,7 @@ export default function AdminOrdersPage() {
         courierName: courierInput.trim(),
         trackingNumber: trackingNumberInput.trim(),
         currentLocation: locationInput.trim(),
+        estimatedDelivery: estimatedDeliveryInput,
         statusNote: statusNoteInput.trim() || 'Fulfillment tracking details updated.'
       };
       const res = await adminService.updateOrderStatus(targetId, payload);
@@ -220,7 +230,16 @@ export default function AdminOrdersPage() {
     const matchesPayment = paymentFilter === 'ALL' || 
       (paymentFilter === 'COD' ? (pStatus.includes('cod') || pStatus.includes('delivery')) : pStatus === paymentFilter.toLowerCase());
 
-    return matchesSearch && matchesStatus && matchesPayment;
+    let matchesDate = true;
+    if (dateFilter) {
+      const rawDate = o.createdAt || o.date;
+      if (rawDate) {
+        const dStr = new Date(rawDate).toISOString().slice(0, 10);
+        matchesDate = dStr === dateFilter;
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesPayment && matchesDate;
   });
 
   const columns = [
@@ -478,12 +497,22 @@ export default function AdminOrdersPage() {
             <Option value="COD">Cash on Del.</Option>
           </Select>
 
-          {(searchText || statusFilter !== 'ALL' || paymentFilter !== 'ALL') && (
+          <div className="w-48">
+            <CustomDatePicker 
+              value={dateFilter}
+              onChange={setDateFilter}
+              placeholder="Filter by Order Date"
+              showPresets={true}
+            />
+          </div>
+
+          {(searchText || statusFilter !== 'ALL' || paymentFilter !== 'ALL' || dateFilter) && (
             <button
               onClick={() => {
                 setSearchText('');
                 setStatusFilter('ALL');
                 setPaymentFilter('ALL');
+                setDateFilter('');
               }}
               className="text-xs text-[#B8860B] hover:underline cursor-pointer font-medium ml-1"
             >
@@ -611,14 +640,26 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Current Checkpoint / Location Note</label>
-                  <Input
-                    value={locationInput}
-                    onChange={(e) => setLocationInput(e.target.value)}
-                    placeholder="e.g. Dispatched from Mumbai Atelier"
-                    className="rounded-lg text-xs"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Estimated Delivery Date</label>
+                    <CustomDatePicker
+                      value={estimatedDeliveryInput}
+                      onChange={setEstimatedDeliveryInput}
+                      placeholder="Select delivery date"
+                      disablePast={true}
+                      showPresets={true}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Current Checkpoint / Location</label>
+                    <Input
+                      value={locationInput}
+                      onChange={(e) => setLocationInput(e.target.value)}
+                      placeholder="e.g. Mumbai Fulfillment Hub"
+                      className="rounded-xl text-xs py-2 bg-white"
+                    />
+                  </div>
                 </div>
 
                 <button

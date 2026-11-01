@@ -18,6 +18,7 @@ import {
   Sparkles 
 } from 'lucide-react';
 import adminService from '@/services/adminService';
+import { CustomDatePicker } from '@/components/common';
 
 const { Option } = Select;
 
@@ -25,10 +26,11 @@ export default function AdminReportsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
+  const [customDate, setCustomDate] = useState('');
 
   useEffect(() => {
     fetchReport();
-  }, [timeRange]);
+  }, [timeRange, customDate]);
 
   const fetchReport = async () => {
     setLoading(true);
@@ -78,17 +80,32 @@ export default function AdminReportsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <Select
             value={timeRange}
-            onChange={setTimeRange}
+            onChange={(val) => {
+              setTimeRange(val);
+              if (val !== 'custom') setCustomDate('');
+            }}
             className="w-36 text-xs"
           >
             <Option value="7d">Last 7 Days</Option>
             <Option value="30d">Last 30 Days</Option>
             <Option value="90d">Last 90 Days</Option>
             <Option value="1y">Year to Date</Option>
+            <Option value="custom">Custom Date</Option>
           </Select>
+
+          {timeRange === 'custom' && (
+            <div className="w-48">
+              <CustomDatePicker 
+                value={customDate}
+                onChange={setCustomDate}
+                placeholder="Choose Report Date"
+                showPresets={true}
+              />
+            </div>
+          )}
 
           <button
             onClick={handleExportCSV}

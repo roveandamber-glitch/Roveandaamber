@@ -23,9 +23,11 @@ import {
   CheckCircle2, 
   XCircle, 
   Search,
-  Copy
+  Copy,
+  Filter
 } from 'lucide-react';
 import adminService from '@/services/adminService';
+import { CustomDatePicker } from '@/components/common';
 
 const { Option } = Select;
 
@@ -33,6 +35,7 @@ export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
+  const [filterDate, setFilterDate] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm();
 
@@ -76,7 +79,9 @@ export default function AdminCouponsPage() {
       message.success(`Coupon ${newCoupon.code} created successfully`);
       form.resetFields();
       setModalOpen(false);
-    } catch (err) {}
+    } catch (err) {
+      console.error('Coupon validation error:', err);
+    }
   };
 
   const handleToggleStatus = (id, checked) => {
@@ -93,13 +98,15 @@ export default function AdminCouponsPage() {
 
   const handleCopyCode = (code) => {
     navigator.clipboard.writeText(code);
-    message.success(`Copied code "${code}" to clipboard`);
+    message.success(`Code ${code} copied to clipboard!`);
   };
 
-  const filteredCoupons = coupons.filter(c => 
-    c.code?.toLowerCase().includes(searchText.toLowerCase()) ||
-    c.description?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredCoupons = coupons.filter(c => {
+    const matchesSearch = c.code?.toLowerCase().includes(searchText.toLowerCase()) ||
+      c.description?.toLowerCase().includes(searchText.toLowerCase());
+    const matchesDate = !filterDate || c.expiryDate === filterDate;
+    return matchesSearch && matchesDate;
+  });
 
   const columns = [
     {
@@ -107,15 +114,15 @@ export default function AdminCouponsPage() {
       dataIndex: 'code',
       key: 'code',
       width: 170,
-      render: (code) => (
+      render: (code, record) => (
         <div className="flex items-center gap-2">
-          <span className="font-mono font-bold text-xs bg-[#FAF7F2] text-[#D4A64A] px-2.5 py-1 rounded-lg border border-[#E8DFC8] tracking-wider whitespace-nowrap">
+          <span className="font-mono font-bold text-xs text-[#1B100A] bg-[#FAF7F2] px-2.5 py-1 rounded-lg border border-[#E8DFC8] tracking-wider">
             {code}
           </span>
           <Tooltip title="Copy code">
             <button 
-              onClick={() => handleCopyCode(code)} 
-              className="text-gray-400 hover:text-[#D4A64A] transition-colors cursor-pointer"
+              onClick={() => handleCopyCode(code)}
+              className="p-1 text-gray-400 hover:text-[#D4A64A] transition-colors cursor-pointer"
             >
               <Copy size={13} />
             </button>
@@ -124,78 +131,111 @@ export default function AdminCouponsPage() {
       )
     },
     {
-      title: 'Privilege Offer',
-      key: 'discount',
-      width: 200,
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+      render: (text) => (
+        <span className="text-xs text-gray-700 truncate max-w-[200px] inline-block font-medium">
+          {text}
+        </span>
+      )
+    },
+    {
+      title: 'Privilege Benefit',
+      key: 'benefit',
+      width: 150,
       render: (_, record) => (
-        <div>
-          <span className="text-xs font-semibold text-[#1B100A]">
-            {record.discountType === 'percentage' ? `${record.discountValue}% OFF` : `₹${record.discountValue} FLAT OFF`}
-          </span>
-          <div className="text-[11px] text-gray-500 truncate max-w-[180px] mt-0.5">
-            {record.description}
-          </div>
+        <div className="flex items-center gap-1.5 text-xs font-bold text-[#B8860B]">
+          {record.discountType === 'percentage' ? (
+            <>
+              <Percent size={13} className="text-[#D4A64A]" />
+              <span>{record.discountValue}% OFF</span>
+            </>
+          ) : (
+            <>
+              <Coins size={13} className="text-[#D4A64A]" />
+              <span>₹{record.discountValue.toLocaleString('en-IN')} OFF</span>
+            </>
+          )}
         </div>
       )
     },
     {
-      title: 'Min. Order Spend',
+      title: 'Min. Spend',
       dataIndex: 'minOrderAmount',
       key: 'minOrderAmount',
-      width: 140,
-      render: (val) => <span className="text-xs text-gray-700">₹{(val || 0).toLocaleString('en-IN')}</span>
+      width: 120,
+      render: (val) => (
+        <span className="text-xs font-semibold text-gray-600">
+          ₹{(val || 0).toLocaleString('en-IN')}
+        </span>
+      )
     },
     {
-      title: 'Usage Ratio',
-      key: 'usage',
+      title: 'Redemptions',
+      key: 'redemptions',
       width: 130,
-      render: (_, record) => (
-        <div className="text-xs">
-          <span className="font-bold text-[#1B100A]">{record.usedCount || 0}</span>
-          <span className="text-gray-400"> / {record.usageLimit || '∞'} used</span>
-        </div>
-      )
+      render: (_, record) => {
+        const used = record.usedCount || 0;
+        const total = record.usageLimit || 100;
+        const pct = Math.min(100, Math.round((used / total) * 100));
+        return (
+          <div className="w-full max-w-[100px]">
+            <div className="flex justify-between text-[11px] mb-1 font-mono">
+              <span className="font-semibold text-gray-700">{used}</span>
+              <span className="text-gray-400">/ {total}</span>
+            </div>
+            <div className="w-full bg-[#FAF7F2] border border-[#E8DFC8] h-1.5 rounded-full overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-[#D4A64A] to-[#B38728] h-full rounded-full transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      }
     },
     {
       title: 'Expiry Date',
       dataIndex: 'expiryDate',
       key: 'expiryDate',
-      width: 120,
-      render: (val) => <span className="text-[11px] text-gray-500 font-mono whitespace-nowrap">{val || '31 Dec 2026'}</span>
+      width: 140,
+      render: (val) => (
+        <span className="text-xs font-mono font-medium text-gray-600 flex items-center gap-1.5 whitespace-nowrap">
+          <Calendar size={13} className="text-[#D4A64A]" />
+          {val || '31 Dec 2026'}
+        </span>
+      )
     },
     {
       title: 'Status',
-      key: 'status',
+      dataIndex: 'isActive',
+      key: 'isActive',
       width: 120,
-      render: (_, record) => (
-        <div className="flex items-center gap-2">
-          <Switch 
-            size="small" 
-            checked={record.isActive}
-            onChange={(checked) => handleToggleStatus(record.id, checked)}
-            className={record.isActive ? '!bg-[#D4A64A]' : ''}
-          />
-          <span className={`text-[11px] font-medium whitespace-nowrap ${record.isActive ? 'text-emerald-700' : 'text-gray-400'}`}>
-            {record.isActive ? 'Active' : 'Inactive'}
-          </span>
-        </div>
+      render: (active, record) => (
+        <Switch 
+          checked={active}
+          onChange={(checked) => handleToggleStatus(record.id, checked)}
+          className="!bg-[#B8860B]"
+          size="small"
+        />
       )
     },
     {
       title: 'Action',
       key: 'action',
-      width: 80,
+      width: 90,
       align: 'right',
       render: (_, record) => (
         <Popconfirm
-          title="Delete Coupon"
-          description="Are you sure you want to delete this promotional coupon?"
-          okText="Delete"
+          title="Remove Coupon"
+          description="Are you sure you want to deactivate and remove this privilege code?"
+          onConfirm={() => handleDelete(record.id)}
+          okText="Remove"
           cancelText="Cancel"
           okButtonProps={{ danger: true }}
-          onConfirm={() => handleDelete(record.id)}
         >
-          <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
+          <button className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer">
             <Trash2 size={15} />
           </button>
         </Popconfirm>
@@ -222,7 +262,17 @@ export default function AdminCouponsPage() {
         </div>
 
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            form.resetFields();
+            form.setFieldsValue({
+              discountType: 'percentage',
+              isActive: true,
+              usageLimit: 500,
+              minOrderAmount: 3000,
+              expiryDate: '2026-12-31'
+            });
+            setModalOpen(true);
+          }}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
         >
           <Plus size={16} />
@@ -230,9 +280,9 @@ export default function AdminCouponsPage() {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between">
-        <div className="relative w-full max-w-sm">
+      {/* Search and Custom Date Filter Bar */}
+      <div className="bg-white rounded-2xl p-4 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="relative w-full md:max-w-sm">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -242,21 +292,44 @@ export default function AdminCouponsPage() {
             className="w-full pl-9 pr-4 py-2 text-xs bg-[#FAF7F2] border border-[#E8DFC8] rounded-xl focus:outline-none focus:border-[#D4A64A] transition-colors"
           />
         </div>
+
+        <div className="flex items-center gap-2.5 w-full md:w-auto">
+          <div className="w-full md:w-56">
+            <CustomDatePicker 
+              value={filterDate}
+              onChange={setFilterDate}
+              placeholder="Filter by Expiry Date"
+              showPresets={true}
+            />
+          </div>
+          {filterDate && (
+            <button
+              onClick={() => setFilterDate('')}
+              className="text-xs text-rose-600 hover:text-rose-800 bg-rose-50 px-3 py-2 rounded-xl border border-rose-200 font-medium whitespace-nowrap cursor-pointer transition-colors"
+            >
+              Clear Filter
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
         <Table 
           columns={columns}
-          dataSource={filteredCoupons.map((c, idx) => ({ ...c, key: c.id || idx }))}
+          dataSource={filteredCoupons.map(c => ({ ...c, key: c.id }))}
           loading={loading}
-          scroll={{ x: 750 }}
-          pagination={{ pageSize: 8, className: "!px-4 !mb-4 text-xs" }}
+          scroll={{ x: 920 }}
+          pagination={{ 
+            pageSize: 7, 
+            showSizeChanger: false,
+            className: "!px-4 !mb-4 text-xs"
+          }}
           className="admin-luxury-table"
         />
       </div>
 
-      {/* Create Coupon Modal */}
+      {/* Create Coupon Modal with Custom Date Picker */}
       <Modal
         title={
           <div className="flex items-center gap-2 font-serif text-base text-[#1A1A1A] pb-2 border-b border-[#EAE3D6]">
@@ -271,7 +344,18 @@ export default function AdminCouponsPage() {
         okButtonProps={{ className: "!bg-[#B8860B] hover:!bg-[#996515] !text-white !border-none" }}
         centered
       >
-        <Form form={form} layout="vertical" className="pt-4" initialValues={{ discountType: 'percentage', isActive: true, usageLimit: 500, minOrderAmount: 3000 }}>
+        <Form 
+          form={form} 
+          layout="vertical" 
+          className="pt-4" 
+          initialValues={{ 
+            discountType: 'percentage', 
+            isActive: true, 
+            usageLimit: 500, 
+            minOrderAmount: 3000,
+            expiryDate: '2026-12-31'
+          }}
+        >
           <Form.Item
             name="code"
             label={<span className="text-xs font-semibold text-gray-700">Coupon Code</span>}
@@ -324,11 +408,16 @@ export default function AdminCouponsPage() {
             </Form.Item>
           </div>
 
+          {/* Custom Date Picker Calendar */}
           <Form.Item
             name="expiryDate"
-            label={<span className="text-xs font-semibold text-gray-700">Expiry Date (YYYY-MM-DD)</span>}
+            label={<span className="text-xs font-semibold text-gray-700">Expiry Date</span>}
+            rules={[{ required: true, message: 'Please select coupon expiry date' }]}
           >
-            <Input placeholder="2026-12-31" className="rounded-xl py-1.5 text-xs font-mono" />
+            <CustomDatePicker 
+              placeholder="Select expiry date" 
+              disablePast={true} 
+            />
           </Form.Item>
 
           <Form.Item
@@ -343,4 +432,3 @@ export default function AdminCouponsPage() {
     </div>
   );
 }
-
