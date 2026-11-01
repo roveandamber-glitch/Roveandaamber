@@ -36,6 +36,7 @@ import {
 import categoryRoutes from '../user/categoryRoutes.js';
 import inventoryRoutes from './inventoryRoutes.js';
 import reportRoutes from './reportRoutes.js';
+import couponRoutes from './couponRoutes.js';
 
 const router = express.Router();
 
@@ -103,5 +104,10 @@ router.use('/inventory', inventoryRoutes);
    11. MONTHLY SALES REPORTS AND ANALYTICS
    -------------------------------------------------------------------------- */
 router.use('/reports', reportRoutes);
+
+/* --------------------------------------------------------------------------
+   12. PROMOTIONAL COUPONS & PRIVILEGE CODES
+   -------------------------------------------------------------------------- */
+router.use('/coupons', couponRoutes);
 
 export default router;

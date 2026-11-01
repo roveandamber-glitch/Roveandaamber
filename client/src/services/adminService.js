@@ -308,6 +308,16 @@ const adminService = {
     return response.data;
   },
 
+  updateCoupon: async (id, couponData) => {
+    const response = await api.put(`/admin/coupons/${id}`, couponData);
+    return response.data;
+  },
+
+  deleteCoupon: async (id) => {
+    const response = await api.delete(`/admin/coupons/${id}`);
+    return response.data;
+  },
+
   /* --------------------------------------------------------------------------
      9. REVIEWS & RATINGS
      -------------------------------------------------------------------------- */

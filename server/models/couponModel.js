@@ -48,7 +48,16 @@ const couponSchema = new mongoose.Schema(
     usedCount: {
       type: Number,
       default: 0
-    }
+    },
+    // Track each customer who has redeemed this coupon for single-use enforcement
+    usedBy: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        email: { type: String, lowercase: true, trim: true },
+        orderId: { type: String },
+        usedAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   {
     timestamps: true,
@@ -70,33 +79,81 @@ export const CouponModel = {
     return Coupon.findOne({ code: code.toUpperCase().trim() });
   },
 
-  validateAndCalculate: async (code, subtotal) => {
+  validateAndCalculate: async (code, subtotal, { userId = null, email = null } = {}) => {
     if (!code) {
       throw new Error('Please enter a coupon code.');
     }
 
-    const coupon = await Coupon.findOne({ code: code.toUpperCase().trim() });
+    const cleanCode = code.toUpperCase().trim();
+    const coupon = await Coupon.findOne({ code: cleanCode });
 
     if (!coupon) {
-      throw new Error(`Promotional code "${code.toUpperCase()}" is invalid.`);
+      throw new Error(`Promotional code "${cleanCode}" is invalid.`);
     }
 
     if (!coupon.isActive) {
-      throw new Error(`Promotional code "${coupon.code}" is no longer active.`);
+      throw new Error(`Promotional code "${coupon.code}" is currently deactivated.`);
     }
 
-    if (coupon.expiryDate && new Date() > new Date(coupon.expiryDate)) {
-      throw new Error(`Promotional code "${coupon.code}" has expired.`);
+    if (coupon.expiryDate) {
+      const expDate = new Date(coupon.expiryDate);
+      // Give leeway until end of the expiry day
+      expDate.setHours(23, 59, 59, 999);
+      if (new Date() > expDate) {
+        throw new Error(`Promotional code "${coupon.code}" has expired.`);
+      }
     }
 
     if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-      throw new Error(`Promotional code "${coupon.code}" usage limit reached.`);
+      throw new Error(`Promotional code "${coupon.code}" has reached its maximum total usage limit.`);
     }
 
     if (subtotal < coupon.minOrderAmount) {
       throw new Error(
-        `Code "${coupon.code}" requires a minimum order amount of Rs ${coupon.minOrderAmount}. Current subtotal: Rs ${subtotal}`
+        `Code "${coupon.code}" requires a minimum spend of ₹${coupon.minOrderAmount}. Current subtotal: ₹${subtotal}`
       );
+    }
+
+    // Single-use per customer rule: User cannot use same coupon multiple times across orders
+    if (userId || email) {
+      const normalizedEmail = email ? email.trim().toLowerCase() : null;
+
+      // 1. Check coupon.usedBy array
+      const alreadyInUsedBy = coupon.usedBy && coupon.usedBy.some(u => {
+        const matchUser = userId && u.userId && u.userId.toString() === userId.toString();
+        const matchEmail = normalizedEmail && u.email && u.email.toLowerCase() === normalizedEmail;
+        return matchUser || matchEmail;
+      });
+
+      // 2. Cross-check completed or non-cancelled orders in Order collection
+      let alreadyInOrders = false;
+      try {
+        const Order = mongoose.models.Order;
+        if (Order) {
+          const orConditions = [];
+          if (userId) orConditions.push({ user_id: userId });
+          if (normalizedEmail) orConditions.push({ email: normalizedEmail });
+
+          if (orConditions.length > 0) {
+            const pastOrder = await Order.findOne({
+              $or: orConditions,
+              couponCode: new RegExp(`^${cleanCode}$`, 'i'),
+              status: { $ne: 'Cancelled' }
+            });
+            if (pastOrder) {
+              alreadyInOrders = true;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Past order lookup warning for coupon verification:', err.message);
+      }
+
+      if (alreadyInUsedBy || alreadyInOrders) {
+        throw new Error(
+          `You have already redeemed coupon "${coupon.code}". Each customer is limited to one use per promotional coupon.`
+        );
+      }
     }
 
     let discount = 0;
@@ -119,13 +176,34 @@ export const CouponModel = {
     };
   },
 
+  recordUsage: async (code, { userId = null, email = null, orderId = null } = {}) => {
+    if (!code) return null;
+    const cleanCode = code.toUpperCase().trim();
+    const coupon = await Coupon.findOne({ code: cleanCode });
+    if (!coupon) return null;
+
+    coupon.usedCount = (coupon.usedCount || 0) + 1;
+    if (!coupon.usedBy) coupon.usedBy = [];
+
+    const normalizedEmail = email ? email.trim().toLowerCase() : null;
+    coupon.usedBy.push({
+      userId: userId || null,
+      email: normalizedEmail,
+      orderId: orderId || null,
+      usedAt: new Date()
+    });
+
+    await coupon.save();
+    return coupon;
+  },
+
   seedDefaultCoupons: async () => {
     const count = await Coupon.countDocuments();
     if (count === 0) {
       const defaultCoupons = [
         {
           code: 'ROVE10',
-          description: '10% off on your luxury fragrance purchase',
+          description: '10% privilege on your luxury fragrance purchase',
           discountType: 'percentage',
           discountValue: 10,
           minOrderAmount: 1999,
@@ -134,7 +212,7 @@ export const CouponModel = {
         },
         {
           code: 'AMBER20',
-          description: '20% off on orders above Rs 4,000',
+          description: '20% off on orders above ₹4,000',
           discountType: 'percentage',
           discountValue: 20,
           minOrderAmount: 4000,
@@ -143,7 +221,7 @@ export const CouponModel = {
         },
         {
           code: 'LUXURY500',
-          description: 'Flat Rs 500 off on orders above Rs 3,000',
+          description: 'Flat ₹500 privilege on orders above ₹3,000',
           discountType: 'fixed',
           discountValue: 500,
           minOrderAmount: 3000,

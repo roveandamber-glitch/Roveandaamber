@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { ProductModel, Product } from './productModel.js';
 import { User } from './userModel.js';
 import { InventoryModel } from './inventoryModel.js';
+import { CouponModel } from './couponModel.js';
 
 const orderItemSchema = new mongoose.Schema(
   {
@@ -386,6 +387,14 @@ export const OrderModel = {
       });
     }
 
+    // Step 2.5: Verify coupon single-use per customer if coupon is applied
+    if (couponCode) {
+      await CouponModel.validateAndCalculate(couponCode, calculatedSubtotal, {
+        userId: effectiveUserId,
+        email: email
+      });
+    }
+
     // Step 3: Create order document
     const order = await Order.create({
       orderId: displayOrderId,
@@ -434,6 +443,19 @@ export const OrderModel = {
       },
       items: verifiedItems
     });
+
+    // Record coupon usage for this customer to enforce single-use rule
+    if (couponCode) {
+      try {
+        await CouponModel.recordUsage(couponCode, {
+          userId: effectiveUserId,
+          email: email,
+          orderId: displayOrderId
+        });
+      } catch (cErr) {
+        console.warn('⚠️ [Coupon Warning]: Failed to record coupon usage:', cErr.message);
+      }
+    }
 
     // If order is paid upfront (e.g. COD or instant paid), decrement stock and record movement
     if (paymentStatus === 'Paid' || paymentMethod === 'Cash on Delivery') {

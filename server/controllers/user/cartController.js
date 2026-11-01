@@ -120,10 +120,12 @@ export const applyCoupon = async (req, res) => {
     }
 
     const { userId, guestId } = getIdentity(req);
+    const userEmail = req.user ? req.user.email : null;
     const updatedCart = await CartModel.applyCoupon({
       userId,
       guestId,
-      couponCode: code
+      couponCode: code,
+      userEmail
     });
 
     return res.json({

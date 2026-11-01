@@ -101,8 +101,18 @@ export default function CustomDatePicker({
     };
   }, [isOpen]);
 
+  const today = new Date();
+  const todayStr = formatDateToISO(today);
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+
+  const isPrevMonthDisabled = disablePast && (
+    viewYear < currentYear || (viewYear === currentYear && viewMonth <= currentMonth)
+  );
+
   const handlePrevMonth = (e) => {
     e.stopPropagation();
+    if (isPrevMonthDisabled) return;
     if (viewMonth === 0) {
       setViewMonth(11);
       setViewYear(prev => prev - 1);
@@ -125,6 +135,7 @@ export default function CustomDatePicker({
     if (!isCurrentMonth) return;
     const selected = new Date(viewYear, viewMonth, dayNum);
     const isoString = formatDateToISO(selected);
+    if (disablePast && isoString < todayStr) return;
     if (onChange) {
       onChange(isoString);
     }
@@ -166,8 +177,6 @@ export default function CustomDatePicker({
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
 
-  const today = new Date();
-  const todayStr = formatDateToISO(today);
   const selectedStr = value ? formatDateToISO(new Date(value)) : '';
 
   // Generate day cells
@@ -209,10 +218,10 @@ export default function CustomDatePicker({
     });
   }
 
-  // Year options for dropdown: past 5 years to next 10 years
-  const currentYear = new Date().getFullYear();
+  // Year options for dropdown: if disablePast, start from currentYear, else past 5 years
+  const startYear = disablePast ? currentYear : currentYear - 5;
   const yearOptions = [];
-  for (let y = currentYear - 5; y <= currentYear + 10; y++) {
+  for (let y = startYear; y <= currentYear + 10; y++) {
     yearOptions.push(y);
   }
 
@@ -274,8 +283,13 @@ export default function CustomDatePicker({
           <div className="flex items-center justify-between pb-3 border-b border-[#F0EAE1]">
             <button
               type="button"
+              disabled={isPrevMonthDisabled}
               onClick={handlePrevMonth}
-              className="p-1.5 rounded-lg text-gray-600 hover:text-[#B8860B] hover:bg-[#FAF7F2] transition-colors"
+              className={`p-1.5 rounded-lg transition-colors ${
+                isPrevMonthDisabled 
+                  ? 'text-gray-300 opacity-40 cursor-not-allowed' 
+                  : 'text-gray-600 hover:text-[#B8860B] hover:bg-[#FAF7F2] cursor-pointer'
+              }`}
               title="Previous Month"
             >
               <ChevronLeft size={16} />
@@ -287,11 +301,14 @@ export default function CustomDatePicker({
                 onChange={(e) => setViewMonth(parseInt(e.target.value, 10))}
                 className="bg-transparent font-serif font-bold text-sm text-[#18110D] focus:outline-none cursor-pointer hover:text-[#B8860B]"
               >
-                {MONTH_NAMES.map((m, idx) => (
-                  <option key={m} value={idx} className="font-sans text-xs">
-                    {m}
-                  </option>
-                ))}
+                {MONTH_NAMES.map((m, idx) => {
+                  const isMonthPast = disablePast && viewYear === currentYear && idx < currentMonth;
+                  return (
+                    <option key={m} value={idx} disabled={isMonthPast} className="font-sans text-xs">
+                      {m}
+                    </option>
+                  );
+                })}
               </select>
 
               <select

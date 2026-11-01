@@ -155,7 +155,11 @@ const calculateCartSummary = async (cartDoc) => {
 
   if (cartDoc.appliedCoupon && cartDoc.appliedCoupon.code && subtotal > 0) {
     try {
-      const couponResult = await CouponModel.validateAndCalculate(cartDoc.appliedCoupon.code, subtotal);
+      const couponResult = await CouponModel.validateAndCalculate(
+        cartDoc.appliedCoupon.code, 
+        subtotal, 
+        { userId: cartDoc.userId }
+      );
       discountAmount = couponResult.discountAmount;
       couponInfo = {
         code: couponResult.code,
@@ -284,7 +288,7 @@ export const CartModel = {
     return calculateCartSummary(populated);
   },
 
-  applyCoupon: async ({ userId, guestId, couponCode }) => {
+  applyCoupon: async ({ userId, guestId, couponCode, userEmail = null }) => {
     const cart = await findOrCreateCart({ userId, guestId });
     const currentSummary = await calculateCartSummary(cart);
 
@@ -292,7 +296,22 @@ export const CartModel = {
       throw new Error('Your cart is empty. Add products before applying a coupon.');
     }
 
-    const couponResult = await CouponModel.validateAndCalculate(couponCode, currentSummary.subtotal);
+    let resolvedEmail = userEmail;
+    if (!resolvedEmail && userId) {
+      try {
+        const User = mongoose.models.User;
+        if (User) {
+          const userDoc = await User.findById(userId);
+          if (userDoc) resolvedEmail = userDoc.email;
+        }
+      } catch (err) {}
+    }
+
+    const couponResult = await CouponModel.validateAndCalculate(
+      couponCode, 
+      currentSummary.subtotal,
+      { userId, email: resolvedEmail }
+    );
 
     cart.appliedCoupon = {
       code: couponResult.code,
