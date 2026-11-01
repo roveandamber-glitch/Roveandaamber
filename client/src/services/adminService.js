@@ -349,6 +349,11 @@ const adminService = {
     };
   },
 
+  updateGiftFulfillment: async (id, data) => {
+    const response = await api.put(`/admin/gifts/${id}/fulfillment`, data);
+    return response.data;
+  },
+
   /* --------------------------------------------------------------------------
      11. REPORTS & ANALYTICS
      -------------------------------------------------------------------------- */
