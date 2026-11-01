@@ -48,7 +48,7 @@ const AdminLayout = ({ children }) => {
   // Authentication Verification Guard
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      if (pathname === '/admin/login') {
+      if (pathname === '/admin/login' || pathname === '/login') {
         return;
       }
 
@@ -63,7 +63,8 @@ const AdminLayout = ({ children }) => {
 
       // If unauthenticated or not an admin, redirect to dedicated admin login
       if (!token || userRole !== 'admin') {
-        router.replace('/admin/login');
+        const loginTarget = window.location.hostname.startsWith('admin.') ? '/login' : '/admin/login';
+        router.replace(loginTarget);
         return;
       }
 
@@ -86,7 +87,8 @@ const AdminLayout = ({ children }) => {
       localStorage.removeItem('adminUser');
       window.dispatchEvent(new Event('authChange'));
     }
-    router.push('/admin/login');
+    const loginTarget = (typeof window !== 'undefined' && window.location.hostname.startsWith('admin.')) ? '/login' : '/admin/login';
+    router.push(loginTarget);
   };
 
   const toggleSubmenu = (menu) => {
@@ -175,11 +177,16 @@ const AdminLayout = ({ children }) => {
       {
         key: 'store',
         label: (
-          <Link href="/" target="_blank" className="flex items-center gap-2 text-xs py-1 text-gray-700 hover:text-[#D4A64A]">
+          <a 
+            href={typeof window !== 'undefined' && window.location.hostname.includes('admin.') ? 'https://www.roveandamber.com' : '/'} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-xs py-1 text-gray-700 hover:text-[#D4A64A]"
+          >
             <Store size={14} className="text-[#D4A64A]" />
             <span>View Public Storefront</span>
             <ExternalLink size={12} className="ml-auto text-gray-400" />
-          </Link>
+          </a>
         )
       },
       {
@@ -383,7 +390,7 @@ const AdminLayout = ({ children }) => {
   );
 
   // Completely bypass admin chrome on the admin login page
-  if (pathname === '/admin/login') {
+  if (pathname === '/admin/login' || pathname === '/login') {
     return <>{children}</>;
   }
 
@@ -458,14 +465,15 @@ const AdminLayout = ({ children }) => {
             </Tooltip>
 
             {/* Storefront Link */}
-            <Link
-              href="/"
+            <a
+              href={typeof window !== 'undefined' && window.location.hostname.includes('admin.') ? 'https://www.roveandamber.com' : '/'}
               target="_blank"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-[#1B100A] bg-white border border-[#E8DFC8] hover:border-[#D4A64A] shadow-2xs transition-all"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-[#1B100A] bg-white border border-[#E8DFC8] hover:border-[#D4A64A] shadow-2xs transition-all cursor-pointer"
             >
               <Store size={13} className="text-[#D4A64A]" />
               <span>Storefront</span>
-            </Link>
+            </a>
 
             {/* Notification Bell */}
             <div className="relative cursor-pointer">

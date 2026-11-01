@@ -37,7 +37,7 @@ const api = axios.create({ baseURL: API_URL });
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const inAdminPage = window.location.pathname.startsWith('/admin');
+    const inAdminPage = window.location.pathname.startsWith('/admin') || window.location.hostname.startsWith('admin.');
     const isAdminEndpoint = config.url && (config.url.startsWith('/admin') || config.url.includes('admin'));
 
     // When inside the admin portal or calling an admin endpoint, strictly prioritize adminToken:
@@ -84,14 +84,17 @@ api.interceptors.response.use(
   (error) => {
     if (typeof window !== 'undefined') {
       const isAuthError = error.response?.status === 401 || error.response?.status === 403;
-      const inAdminPage = window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login';
+      const inAdminPage = (window.location.pathname.startsWith('/admin') || window.location.hostname.startsWith('admin.')) 
+        && window.location.pathname !== '/admin/login' 
+        && window.location.pathname !== '/login';
 
       if (isAuthError && inAdminPage) {
         console.warn('Admin authorization expired or invalid. Redirecting to admin authentication portal.');
         localStorage.removeItem('adminToken');
         localStorage.removeItem('adminKey');
         localStorage.removeItem('adminUser');
-        window.location.href = '/admin/login?reason=unauthorized';
+        const loginPath = window.location.hostname.startsWith('admin.') ? '/login?reason=unauthorized' : '/admin/login?reason=unauthorized';
+        window.location.href = loginPath;
       }
     }
     return Promise.reject(error);

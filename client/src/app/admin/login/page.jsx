@@ -145,8 +145,8 @@ export default function AdminLoginPage() {
 
       {/* Top Header: Navigation back to Storefront & Security Badge */}
       <header className="w-full max-w-5xl flex items-center justify-between relative z-20 py-2">
-        <Link 
-          href="/"
+        <a 
+          href={typeof window !== 'undefined' && window.location.hostname.includes('admin.') ? 'https://www.roveandamber.com' : '/'}
           className="inline-flex items-center gap-2 text-xs font-medium text-stone-600 hover:text-[#B3874B] transition-colors group cursor-pointer"
         >
           <span className="w-8 h-8 rounded-full bg-white border border-[#E8DFC8] flex items-center justify-center group-hover:border-[#B3874B] shadow-2xs transition-all text-stone-700">
@@ -155,7 +155,7 @@ export default function AdminLoginPage() {
           <span className="tracking-wider uppercase text-[11px] font-semibold">
             Return to Boutique
           </span>
-        </Link>
+        </a>
 
         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-[#E8DFC8] shadow-2xs text-[10px] font-semibold text-stone-600 tracking-wider uppercase">
           <ShieldCheck size={13} className="text-[#B3874B]" />
