@@ -5,54 +5,12 @@ import { Star, ChevronLeft, ChevronRight, ShieldCheck, ArrowUpRight } from 'luci
 import productService from '@/services/productService';
 import { getImageUrl } from '@/utils/imageHelper';
 
-// Curated luxury fallback reviews with actual catalogue product links
-const FALLBACK_REVIEWS = [
-  {
-    id: 'fb-1',
-    rating: 5,
-    quote: "Absolutely in love with the rich and long-lasting fragrance. The magnetic cap and velvet presentation make this feel completely bespoke.",
-    author: "Aisha K.",
-    isVerified: true,
-    product: {
-      id: 'amber-oud',
-      slug: 'amber-oud',
-      name: 'Amber Oud Eau de Parfum',
-      image: '/images/perfumes/amber_oud_flacon.jpg',
-      price: 4950
-    }
-  },
-  {
-    id: 'fb-2',
-    rating: 5,
-    quote: "The Cambodian oud formulation is simply exceptional. The smoky wood notes settle into sweet amber on skin for over 14 hours.",
-    author: "Mohammed R.",
-    isVerified: true,
-    product: {
-      id: 'oud-royale',
-      slug: 'oud-royale',
-      name: 'Oud Royale — The Royal Edition',
-      image: '/images/perfumes/citrus_bloom_hero.jpg',
-      price: 7499
-    }
-  },
-  {
-    id: 'fb-3',
-    rating: 5,
-    quote: "Golden sunlight in a flacon. Kashmiri saffron and ambergris create an aura that draws compliments everywhere I walk. My signature scent.",
-    author: "Sneha P.",
-    isVerified: true,
-    product: {
-      id: 'golden-saffron',
-      slug: 'golden-saffron',
-      name: 'Golden Saffron Extrait',
-      image: '/images/perfumes/golden_saffron_flacon.jpg',
-      price: 5999
-    }
-  }
-];
+// Verified luxury common fallback flacon image (guaranteed in client public assets)
+const COMMON_PRODUCT_IMAGE = '/images/perfumes/gemini_amber_royal.jpg';
 
 const Testimonials = () => {
-  const [reviews, setReviews] = useState(FALLBACK_REVIEWS);
+  const [reviews, setReviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [scrollIndex, setScrollIndex] = useState(0);
 
   useEffect(() => {
@@ -60,30 +18,39 @@ const Testimonials = () => {
       try {
         const res = await productService.getPublicReviews();
         if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
-          // Merge dynamic database reviews with fallback product info if product details are populated
-          const dynamicList = res.data.map(r => ({
+          const dynamicList = res.data.map((r) => ({
             id: r.id || r._id,
             rating: r.rating || 5,
-            quote: r.quote || r.comment || "An extraordinary olfactory composition. True haute perfumerie.",
-            author: r.author || r.customerName || "Fragrance Enthusiast",
+            quote: r.quote || r.comment || r.title || 'An extraordinary olfactory composition. True haute perfumerie.',
+            author: r.author || r.customerName || 'Fragrance Connoisseur',
             isVerified: r.isVerified ?? true,
             product: r.product || {
               id: 'amber-oud',
               slug: 'amber-oud',
               name: 'Amber Oud Eau de Parfum',
-              image: '/images/perfumes/amber_oud_flacon.jpg'
+              image: COMMON_PRODUCT_IMAGE
             }
           }));
           setReviews(dynamicList);
+        } else {
+          setReviews([]);
         }
       } catch (err) {
-        console.warn('Using luxury fallback reviews:', err);
+        console.warn('Failed to load database reviews:', err);
+        setReviews([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadReviews();
   }, []);
 
   const totalReviews = reviews.length;
+
+  // Do not render section if there are no verified reviews in database
+  if (!isLoading && totalReviews === 0) {
+    return null;
+  }
 
   const prev = () => {
     setScrollIndex((p) => (p === 0 ? Math.max(0, totalReviews - 3) : Math.max(0, p - 1)));
@@ -93,12 +60,16 @@ const Testimonials = () => {
     setScrollIndex((p) => (p + 3 >= totalReviews ? 0 : p + 1));
   };
 
-  // Get currently visible window of 3 reviews (or wrap around)
-  const visibleReviews = [];
-  for (let i = 0; i < Math.min(3, totalReviews); i++) {
-    const idx = (scrollIndex + i) % totalReviews;
-    visibleReviews.push(reviews[idx]);
-  }
+  // Determine reviews to show
+  const visibleReviews = totalReviews <= 3 
+    ? reviews 
+    : (() => {
+        const list = [];
+        for (let i = 0; i < 3; i++) {
+          list.push(reviews[(scrollIndex + i) % totalReviews]);
+        }
+        return list;
+      })();
 
   return (
     <section className="py-10 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -115,34 +86,37 @@ const Testimonials = () => {
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={prev}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-[#D5C9B8] bg-white text-[#1A1A1A] flex items-center justify-center hover:bg-[#1A1A1A] hover:text-white transition-all cursor-pointer shadow-xs active:scale-95"
-            aria-label="Previous review"
-            title="Previous Reviews"
-          >
-            <ChevronLeft size={16} className="sm:w-5 sm:h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={next}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-[#D5C9B8] bg-white text-[#1A1A1A] flex items-center justify-center hover:bg-[#1A1A1A] hover:text-white transition-all cursor-pointer shadow-xs active:scale-95"
-            aria-label="Next review"
-            title="Next Reviews"
-          >
-            <ChevronRight size={16} className="sm:w-5 sm:h-5" />
-          </button>
-        </div>
+        {totalReviews > 3 && (
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={prev}
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-[#D5C9B8] bg-white text-[#1A1A1A] flex items-center justify-center hover:bg-[#1A1A1A] hover:text-white transition-all cursor-pointer shadow-xs active:scale-95"
+              aria-label="Previous review"
+              title="Previous Reviews"
+            >
+              <ChevronLeft size={16} className="sm:w-5 sm:h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={next}
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-[#D5C9B8] bg-white text-[#1A1A1A] flex items-center justify-center hover:bg-[#1A1A1A] hover:text-white transition-all cursor-pointer shadow-xs active:scale-95"
+              aria-label="Next review"
+              title="Next Reviews"
+            >
+              <ChevronRight size={16} className="sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* 3 Review Cards Side-by-Side with Product Mini-Card & Click Redirection */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+      {/* Review Cards with Dynamic Product Mini-Card & Click Redirection */}
+      <div className={`grid grid-cols-1 ${totalReviews === 1 ? 'max-w-md mx-auto' : totalReviews === 2 ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'md:grid-cols-3'} gap-4 sm:gap-6 lg:gap-8`}>
         {visibleReviews.map((review, idx) => {
           const productTarget = review.product?.slug || review.product?.id || review.product?._id || 'amber-oud';
           const productHref = `/product/${productTarget}#reviews`;
-          const productImage = getImageUrl(review.product?.image);
+          const rawImg = review.product?.image;
+          const productImage = rawImg ? getImageUrl(rawImg, COMMON_PRODUCT_IMAGE) : COMMON_PRODUCT_IMAGE;
           const productName = review.product?.name || 'Artisan Perfume';
 
           return (
@@ -167,7 +141,7 @@ const Testimonials = () => {
                   )}
                 </div>
 
-                {/* Poetic Review Quote */}
+                {/* Review Quote */}
                 <p className="text-xs sm:text-sm lg:text-base text-[#2A2421] font-serif leading-relaxed mb-4 line-clamp-3 sm:line-clamp-4">
                   &ldquo;{review.quote}&rdquo;
                 </p>
@@ -191,7 +165,8 @@ const Testimonials = () => {
                       alt={productName}
                       className="w-full h-full object-contain group-hover/prod:scale-105 transition-transform"
                       onError={(e) => {
-                        e.currentTarget.src = '/images/perfumes/amber_oud_flacon.jpg';
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = COMMON_PRODUCT_IMAGE;
                       }}
                     />
                   </div>
