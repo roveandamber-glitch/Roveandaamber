@@ -4,17 +4,17 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Lock, 
-  ShieldCheck, 
-  Truck, 
-  CheckCircle2, 
-  Gift, 
-  CreditCard, 
-  Smartphone, 
-  Building2, 
-  Banknote, 
-  ArrowLeft, 
+import {
+  Lock,
+  ShieldCheck,
+  Truck,
+  CheckCircle2,
+  Gift,
+  CreditCard,
+  Smartphone,
+  Building2,
+  Banknote,
+  ArrowLeft,
   ArrowRight,
   AlertCircle,
   Package,
@@ -47,14 +47,14 @@ const loadRazorpayScript = () => {
 export default function CheckoutPage() {
   const router = useRouter();
   const [form] = Form.useForm();
-  
+
   const [cartItems, setCartItems] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [giftOptions, setGiftOptions] = useState(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
-  
+
   const [paymentMethod, setPaymentMethod] = useState('Razorpay');
   const [upiId, setUpiId] = useState('');
   const [cardDetails, setCardDetails] = useState({
@@ -64,7 +64,7 @@ export default function CheckoutPage() {
     cvv: ''
   });
   const [selectedBank, setSelectedBank] = useState('HDFC Bank');
-  
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [orderConfirmed, setOrderConfirmed] = useState(null);
@@ -84,7 +84,7 @@ export default function CheckoutPage() {
     }
 
     setIsCheckingAuth(false);
-    loadRazorpayScript().catch(() => {});
+    loadRazorpayScript().catch(() => { });
 
     // Load cart items
     const items = cartService.getCart();
@@ -118,7 +118,7 @@ export default function CheckoutPage() {
           pincode: user.pincode || ''
         });
       }
-    } catch (e) {}
+    } catch (e) { }
   }, [form]);
 
   // Calculations
@@ -149,7 +149,7 @@ export default function CheckoutPage() {
             address: user.address || ''
           });
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -256,7 +256,7 @@ export default function CheckoutPage() {
               cartService.clearCart();
               try {
                 localStorage.removeItem('rove_amber_gift_options');
-              } catch (e) {}
+              } catch (e) { }
               message.success('Payment verified! Your luxury order has been confirmed.');
             } else {
               message.error(verifyRes?.message || 'Payment signature verification failed.');
@@ -285,7 +285,7 @@ export default function CheckoutPage() {
           razorpay_order_id: razorpayOrderId,
           orderId: orderId,
           error: failResp.error
-        }).catch(() => {});
+        }).catch(() => { });
         setLoading(false);
       });
 
@@ -321,7 +321,7 @@ export default function CheckoutPage() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-20 w-full flex-1">
-        
+
         {/* Navigation Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-6 uppercase tracking-widest">
           <Link href="/" className="hover:text-black transition-colors">Home</Link>
@@ -419,10 +419,10 @@ export default function CheckoutPage() {
         ) : (
           /* ================= CHECKOUT MAIN LAYOUT ================= */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
+
             {/* LEFT COLUMN: ADDRESS & PAYMENT (7 Cols) */}
             <div className="lg:col-span-7 space-y-6">
-              
+
               {/* Server Error Alert */}
               {errorMessage && (
                 <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5">
@@ -471,7 +471,7 @@ export default function CheckoutPage() {
                         setGiftOptions(null);
                         try {
                           localStorage.removeItem('rove_amber_gift_options');
-                        } catch (e) {}
+                        } catch (e) { }
                         message.info('Gift option removed');
                       }}
                       className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
