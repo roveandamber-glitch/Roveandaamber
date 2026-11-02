@@ -61,6 +61,7 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isCheckingCart, setIsCheckingCart] = useState(true);
   const [giftOptions, setGiftOptions] = useState(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
@@ -99,6 +100,7 @@ export default function CheckoutPage() {
     // Load cart items
     const items = cartService.getCart();
     setCartItems(items);
+    setIsCheckingCart(false);
 
     // Read saved gift options
     try {
@@ -113,22 +115,24 @@ export default function CheckoutPage() {
       console.warn('Error reading gift options', e);
     }
 
-    // Prefill form from user account if logged in
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        form.setFieldsValue({
-          customerName: user.name || '',
-          email: user.email || '',
-          phone: user.phone || '',
-          address: user.address || '',
-          city: user.city || '',
-          state: user.state || '',
-          pincode: user.pincode || ''
-        });
-      }
-    } catch (e) { }
+    // Prefill form safely after Form connects to DOM
+    setTimeout(() => {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          form.setFieldsValue({
+            customerName: user.name || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            address: user.address || '',
+            city: user.city || '',
+            state: user.state || '',
+            pincode: user.pincode || ''
+          });
+        }
+      } catch (e) { }
+    }, 0);
   }, [form]);
 
   // Calculations
@@ -311,7 +315,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!isClient || isCheckingAuth) {
+  if (!isClient || isCheckingAuth || isCheckingCart) {
     return (
       <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
         <Navbar />
@@ -433,6 +437,26 @@ export default function CheckoutPage() {
             layout="vertical"
             onFinish={handlePlaceOrder}
             requiredMark={false}
+            initialValues={(() => {
+              try {
+                if (typeof window !== 'undefined') {
+                  const uStr = localStorage.getItem('user');
+                  if (uStr) {
+                    const u = JSON.parse(uStr);
+                    return {
+                      customerName: u.name || '',
+                      email: u.email || '',
+                      phone: u.phone || '',
+                      address: u.address || '',
+                      city: u.city || '',
+                      state: u.state || '',
+                      pincode: u.pincode || ''
+                    };
+                  }
+                }
+              } catch (e) {}
+              return {};
+            })()}
           >
             <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-start">
 
