@@ -597,7 +597,7 @@ export default function CheckoutPage() {
                   </Form.Item>
                 </div>
 
-                {/* 2. PAYMENT METHOD (Minimal Razorpay Option) */}
+                {/* 2. PAYMENT METHOD (Real Payment Gateway Theme - Razorpay) */}
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between pb-2.5 border-b border-[#ECE7DE]">
                     <div className="flex items-center gap-2.5">
@@ -608,32 +608,47 @@ export default function CheckoutPage() {
                         Payment Method
                       </h2>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      <ShieldCheck size={13} className="text-emerald-600" />
-                      100% Secure
+                    <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      100% Encrypted
                     </span>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#FAF9F7] border border-[#E2D8C3] flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-black text-[#DEB368] flex items-center justify-center shrink-0 shadow-sm">
-                        <CreditCard size={20} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-stone-900">Razorpay</span>
-                          <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-stone-900 text-[#DEB368]">
-                            Instant
-                          </span>
+                  {/* Real Payment Gateway Card (Zero Icons, Authentic Gateway Styling) */}
+                  <div className="rounded-2xl border-2 border-[#0C2340] bg-gradient-to-b from-[#F8FAFC] to-white p-4 sm:p-5 shadow-xs transition-all">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3.5">
+                        {/* Radio Selection Dot */}
+                        <div className="mt-0.5 w-4 h-4 rounded-full border-2 border-[#0C2340] flex items-center justify-center shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-[#0C2340]" />
                         </div>
-                        <p className="text-xs text-stone-500 font-light mt-0.5 m-0">
-                          UPI, Cards, Net Banking & Wallets
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="w-5 h-5 rounded-full border-2 border-black flex items-center justify-center shrink-0">
-                      <div className="w-2.5 h-2.5 rounded-full bg-black" />
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-base tracking-tight text-[#0C2340] font-sans">
+                              Razorpay
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#0C2340] text-white">
+                              Official
+                            </span>
+                            <span className="text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-[#EBF5FF] text-[#0C83FD] border border-[#B9E0FE]">
+                              Instant &amp; Zero Fees
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-gray-600 mt-1 m-0 font-normal">
+                            UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, Net Banking &amp; Wallets
+                          </p>
+
+                          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-3 text-[11px] text-gray-500">
+                            <span>Redirects safely to official Razorpay gateway</span>
+                            <span className="font-semibold text-slate-700">256-Bit SSL</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <span className="text-[11px] font-bold text-[#0C2340] uppercase tracking-wider shrink-0 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 hidden sm:inline-block">
+                        Preferred
+                      </span>
                     </div>
                   </div>
                 </div>
