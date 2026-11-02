@@ -379,8 +379,8 @@ export default function CartPage() {
             {/* LEFT COLUMN: ITEMS & GIFT OPTIONS (8 Cols) */}
             <div className="lg:col-span-8 space-y-6">
               
-              {/* Product Cards List */}
-              <div className="space-y-3.5">
+              {/* Product Single Card Container */}
+              <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-xs overflow-hidden divide-y divide-[#ECE7DE]">
                 {cartItems.map((item) => {
                   const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
                   const price = Number(item.price) || 0;
@@ -391,13 +391,13 @@ export default function CartPage() {
                   return (
                     <div
                       key={itemKey}
-                      className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E8DFC9] shadow-xs flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between transition-all hover:border-[#D4AF37]/60 hover:shadow-md"
+                      className="p-5 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between transition-colors hover:bg-[#FAF9F6]/60"
                     >
                       {/* Fixed Size Thumbnail & Title */}
                       <div className="flex items-center gap-4 flex-1 min-w-0 w-full sm:w-auto">
                         <Link 
                           href={`/product/${item.productId || item.id}`}
-                          className="relative w-20 h-24 sm:w-24 sm:h-28 rounded-xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-2 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group"
+                          className="relative w-20 h-24 sm:w-24 sm:h-28 rounded-2xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-2 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group"
                         >
                           <img
                             src={getImageUrl(item.image)}
