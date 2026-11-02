@@ -44,6 +44,16 @@ const loadRazorpayScript = () => {
   });
 };
 
+const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
+  'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+  'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Chandigarh',
+  'Jammu and Kashmir', 'Ladakh', 'Puducherry'
+];
+
 export default function CheckoutPage() {
   const router = useRouter();
   const [form] = Form.useForm();
@@ -418,87 +428,85 @@ export default function CheckoutPage() {
           </div>
         ) : (
           /* ================= SINGLE WINDOW CHECKOUT CONTAINER ================= */
-          <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch">
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handlePlaceOrder}
+            requiredMark={false}
+          >
+            <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-start">
 
-            {/* LEFT PANE: CHECKOUT FORM & PAYMENT (7 Cols) */}
-            <div className="lg:col-span-7 p-6 sm:p-8 lg:p-9 border-b lg:border-b-0 lg:border-r border-[#ECE7DE] space-y-6">
+              {/* LEFT PANE: DISPATCH & DELIVERY ADDRESS FORM (7 Cols) */}
+              <div className="lg:col-span-7 p-6 sm:p-8 lg:p-9 border-b lg:border-b-0 lg:border-r border-[#ECE7DE] space-y-6">
 
-              {/* Server Error Alert */}
-              {errorMessage && (
-                <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5">
-                  <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-600" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
-
-              {/* Gift Options Row (Simple & Compact) */}
-              <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
-                    <Gift size={16} />
+                {/* Server Error Alert */}
+                {errorMessage && (
+                  <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-600" />
+                    <span>{errorMessage}</span>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-serif text-xs sm:text-sm font-bold text-gray-900 m-0">
-                        {giftOptions?.isGift ? `Gift for ${giftOptions.recipientName}` : 'Sending as a gift?'}
-                      </h4>
-                      {giftOptions?.occasion && (
-                        <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
-                          {giftOptions.occasion}
-                        </span>
-                      )}
+                )}
+
+                {/* Gift Options Row (Simple & Compact) */}
+                <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
+                      <Gift size={16} />
                     </div>
-                    <p className="text-[11px] text-gray-500 font-light mt-0.5 m-0">
-                      {giftOptions?.isGift
-                        ? 'Free luxury gift packaging and personal message card added.'
-                        : 'Add complimentary gift packaging and a personal note card.'}
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-serif text-xs sm:text-sm font-bold text-gray-900 m-0">
+                          {giftOptions?.isGift ? `Gift for ${giftOptions.recipientName}` : 'Sending as a gift?'}
+                        </h4>
+                        {giftOptions?.occasion && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
+                            {giftOptions.occasion}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-500 font-light mt-0.5 m-0">
+                        {giftOptions?.isGift
+                          ? 'Signature box with hand-tied ribbon and customized handwritten note card.'
+                          : 'Add complimentary gift packaging and your personal note card.'}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setIsGiftModalOpen(true)}
-                    className="px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#D5C9B8] text-xs font-semibold tracking-wide transition-all shadow-2xs cursor-pointer"
-                  >
-                    {giftOptions?.isGift ? 'Edit Message' : 'Add Gift Details'}
-                  </button>
-                  {giftOptions?.isGift && (
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                     <button
                       type="button"
-                      onClick={() => {
-                        setGiftOptions(null);
-                        try {
-                          localStorage.removeItem('rove_amber_gift_options');
-                        } catch (e) { }
-                        message.info('Gift option removed');
-                      }}
-                      className="px-2 py-1 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                      onClick={() => setIsGiftModalOpen(true)}
+                      className="px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#D5C9B8] text-xs font-semibold tracking-wide transition-all shadow-2xs cursor-pointer"
                     >
-                      Remove
+                      {giftOptions?.isGift ? 'Edit Message' : 'Add Gift Details'}
                     </button>
-                  )}
+                    {giftOptions?.isGift && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGiftOptions(null);
+                          try {
+                            localStorage.removeItem('rove_amber_gift_options');
+                          } catch (e) { }
+                          message.info('Gift option removed');
+                        }}
+                        className="px-2 py-1 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Form starts */}
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handlePlaceOrder}
-                requiredMark={false}
-                className="space-y-6"
-              >
                 {/* 1. DISPATCH & DELIVERY ADDRESS */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between pb-2.5 border-b border-[#ECE7DE]">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
                     <div className="flex items-center gap-2.5">
                       <span className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
                         1
                       </span>
                       <h2 className="font-serif text-base sm:text-lg font-bold text-black m-0">
-                        Dispatch & Delivery Address
+                        Dispatch &amp; Delivery Address
                       </h2>
                     </div>
 
@@ -515,253 +523,267 @@ export default function CheckoutPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">Full Name *</span>}
-                      name="customerName"
-                      rules={[{ required: true, message: 'Please provide full name' }]}
-                      className="mb-0"
-                    >
-                      <Input placeholder="e.g. Eleanor Vance" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
-                    </Form.Item>
+                  {/* Form Inputs Grid with Elevated Luxury UI */}
+                  <div className="space-y-4 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Form.Item
+                        label={<span className="text-xs font-bold text-stone-800 tracking-wide">Full Name *</span>}
+                        name="customerName"
+                        rules={[{ required: true, message: 'Please provide full name' }]}
+                        className="mb-0"
+                      >
+                        <Input 
+                          placeholder="e.g. Eleanor Vance" 
+                          className="rounded-xl text-xs py-2.5 px-3.5 bg-[#FAF9F7] border-[#E5DDD0] hover:border-[#C49A45] focus:border-[#B8860B] focus:bg-white transition-all shadow-2xs" 
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        label={<span className="text-xs font-bold text-stone-800 tracking-wide">Phone Number (For Courier SMS) *</span>}
+                        name="phone"
+                        rules={[
+                          { required: true, message: 'Please provide phone number' },
+                          { min: 8, message: 'Valid phone required' }
+                        ]}
+                        className="mb-0"
+                      >
+                        <Input 
+                          placeholder="+91 98765 43210" 
+                          className="rounded-xl text-xs py-2.5 px-3.5 bg-[#FAF9F7] border-[#E5DDD0] hover:border-[#C49A45] focus:border-[#B8860B] focus:bg-white transition-all shadow-2xs" 
+                        />
+                      </Form.Item>
+                    </div>
 
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">Phone Number (For Courier SMS) *</span>}
-                      name="phone"
+                      label={<span className="text-xs font-bold text-stone-800 tracking-wide">Email Address (For Invoicing &amp; Dispatch Alerts) *</span>}
+                      name="email"
                       rules={[
-                        { required: true, message: 'Please provide phone number' },
-                        { min: 8, message: 'Valid phone required' }
+                        { required: true, message: 'Please provide email address' },
+                        { type: 'email', message: 'Valid email required' }
                       ]}
                       className="mb-0"
                     >
-                      <Input placeholder="+91 98765 43210" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
-                    </Form.Item>
-                  </div>
-
-                  <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Email Address (For Invoicing & Dispatch Alerts) *</span>}
-                    name="email"
-                    rules={[
-                      { required: true, message: 'Please provide email address' },
-                      { type: 'email', message: 'Valid email required' }
-                    ]}
-                    className="mb-0"
-                  >
-                    <Input placeholder="eleanor.vance@atelier.com" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
-                  </Form.Item>
-
-                  <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Street Address, Apartment / Villa No. *</span>}
-                    name="address"
-                    rules={[{ required: true, message: 'Please provide street address' }]}
-                    className="mb-0"
-                  >
-                    <Input placeholder="Flat / Bungalow No., Building Name, Street" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
-                  </Form.Item>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">City *</span>}
-                      name="city"
-                      rules={[{ required: true, message: 'City is required' }]}
-                      className="mb-0"
-                    >
-                      <Input placeholder="Mumbai" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
+                      <Input 
+                        placeholder="eleanor.vance@atelier.com" 
+                        className="rounded-xl text-xs py-2.5 px-3.5 bg-[#FAF9F7] border-[#E5DDD0] hover:border-[#C49A45] focus:border-[#B8860B] focus:bg-white transition-all shadow-2xs" 
+                      />
                     </Form.Item>
 
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">State *</span>}
-                      name="state"
-                      rules={[{ required: true, message: 'State is required' }]}
+                      label={<span className="text-xs font-bold text-stone-800 tracking-wide">Street Address, Apartment / Villa No. *</span>}
+                      name="address"
+                      rules={[{ required: true, message: 'Please provide street address' }]}
                       className="mb-0"
                     >
-                      <Input placeholder="Maharashtra" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
+                      <Input 
+                        placeholder="Flat / Bungalow No., Building Name, Street" 
+                        className="rounded-xl text-xs py-2.5 px-3.5 bg-[#FAF9F7] border-[#E5DDD0] hover:border-[#C49A45] focus:border-[#B8860B] focus:bg-white transition-all shadow-2xs" 
+                      />
                     </Form.Item>
 
-                    <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">PIN Code *</span>}
-                      name="pincode"
-                      rules={[{ required: true, message: 'PIN Code is required' }]}
-                      className="mb-0"
-                    >
-                      <Input placeholder="400001" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
-                    </Form.Item>
-                  </div>
-
-                  <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Landmark / Delivery Instructions (Optional)</span>}
-                    name="landmark"
-                    className="mb-0"
-                  >
-                    <Input placeholder="Near Royal Heritage Circle, Gate #2" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
-                  </Form.Item>
-                </div>
-
-                {/* 2. PAYMENT METHOD (Real Payment Gateway Theme - Razorpay) */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between pb-2.5 border-b border-[#ECE7DE]">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
-                        2
-                      </span>
-                      <h2 className="text-base sm:text-lg font-serif font-bold text-black m-0">
-                        Payment Method
-                      </h2>
-                    </div>
-                    <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      100% Encrypted
-                    </span>
-                  </div>
-
-                  {/* Real Payment Gateway Card (Zero Icons, Authentic Gateway Styling) */}
-                  <div className="rounded-2xl border-2 border-[#0C2340] bg-gradient-to-b from-[#F8FAFC] to-white p-4 sm:p-5 shadow-xs transition-all">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3.5">
-                        {/* Radio Selection Dot */}
-                        <div className="mt-0.5 w-4 h-4 rounded-full border-2 border-[#0C2340] flex items-center justify-center shrink-0">
-                          <div className="w-2 h-2 rounded-full bg-[#0C2340]" />
-                        </div>
-
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-base tracking-tight text-[#0C2340] font-sans">
-                              Razorpay
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#0C2340] text-white">
-                              Official
-                            </span>
-                            <span className="text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-[#EBF5FF] text-[#0C83FD] border border-[#B9E0FE]">
-                              Instant &amp; Zero Fees
-                            </span>
-                          </div>
-
-                          <p className="text-xs text-gray-600 mt-1 m-0 font-normal">
-                            UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, Net Banking &amp; Wallets
-                          </p>
-
-                          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-3 text-[11px] text-gray-500">
-                            <span>Redirects safely to official Razorpay gateway</span>
-                            <span className="font-semibold text-slate-700">256-Bit SSL</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <span className="text-[11px] font-bold text-[#0C2340] uppercase tracking-wider shrink-0 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 hidden sm:inline-block">
-                        Preferred
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Primary Submit CTA */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-4 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-amber-950/15 transition-all cursor-pointer"
-                >
-                  <Lock size={14} strokeWidth={2.4} />
-                  <span>
-                    {loading
-                      ? 'Opening Razorpay Gateway...'
-                      : `Pay with Razorpay • ₹${finalTotal.toLocaleString('en-IN')}`}
-                  </span>
-                </button>
-              </Form>
-            </div>
-
-            {/* RIGHT PANE: ORDER SUMMARY & FLACONS (5 Cols) */}
-            <div className="lg:col-span-5 p-6 sm:p-8 lg:p-9 bg-[#FAF9F6] space-y-6 flex flex-col justify-between">
-              <div className="space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
-                  <h3 className="text-base font-serif font-bold text-black m-0">
-                    Fragrance Flacons ({cartItems.length})
-                  </h3>
-                  <Link href="/cart" className="text-xs text-[#8C6D1F] hover:underline font-semibold">
-                    Edit Bag
-                  </Link>
-                </div>
-
-                {/* Fragrance List Items */}
-                <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                  {cartItems.map((item, idx) => (
-                    <div key={`${item.productId || item.id}-${item.size || idx}`} className="flex items-center gap-3 pb-3 border-b border-[#ECE7DE]/60 last:border-0 last:pb-0">
-                      <div className="w-12 h-14 rounded-xl bg-white p-1 border border-[#E8DFC8] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                        <img
-                          src={getImageUrl(item.image, '/images/no-image.jpg')}
-                          alt={item.name}
-                          className="w-full h-full object-contain"
-                          onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Form.Item
+                        label={<span className="text-xs font-bold text-stone-800 tracking-wide">City *</span>}
+                        name="city"
+                        rules={[{ required: true, message: 'City is required' }]}
+                        className="mb-0"
+                      >
+                        <Input 
+                          placeholder="Mumbai" 
+                          className="rounded-xl text-xs py-2.5 px-3.5 bg-[#FAF9F7] border-[#E5DDD0] hover:border-[#C49A45] focus:border-[#B8860B] focus:bg-white transition-all shadow-2xs" 
                         />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-serif font-semibold text-xs text-black truncate m-0">{item.name}</h4>
-                        <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
-                          <span className="font-mono">{item.size || '50ML'}</span>
-                          <span>•</span>
-                          <span>Qty: {item.quantity}</span>
+                      </Form.Item>
+
+                      <Form.Item
+                        label={<span className="text-xs font-bold text-stone-800 tracking-wide">State *</span>}
+                        name="state"
+                        rules={[{ required: true, message: 'State is required' }]}
+                        className="mb-0"
+                      >
+                        <Select
+                          placeholder="Select State"
+                          className="w-full text-xs h-[42px] luxury-state-select"
+                          showSearch
+                          filterOption={(input, option) =>
+                            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                          }
+                          options={INDIAN_STATES.map(s => ({ value: s, label: s }))}
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        label={<span className="text-xs font-bold text-stone-800 tracking-wide">PIN Code *</span>}
+                        name="pincode"
+                        rules={[{ required: true, message: 'PIN Code is required' }]}
+                        className="mb-0"
+                      >
+                        <Input 
+                          placeholder="400001" 
+                          className="rounded-xl text-xs py-2.5 px-3.5 bg-[#FAF9F7] border-[#E5DDD0] hover:border-[#C49A45] focus:border-[#B8860B] focus:bg-white transition-all shadow-2xs" 
+                        />
+                      </Form.Item>
+                    </div>
+
+                    <Form.Item
+                      label={<span className="text-xs font-bold text-stone-800 tracking-wide">Landmark / Delivery Instructions (Optional)</span>}
+                      name="landmark"
+                      className="mb-0"
+                    >
+                      <Input 
+                        placeholder="Near Royal Heritage Circle, Gate #2" 
+                        className="rounded-xl text-xs py-2.5 px-3.5 bg-[#FAF9F7] border-[#E5DDD0] hover:border-[#C49A45] focus:border-[#B8860B] focus:bg-white transition-all shadow-2xs" 
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* RIGHT PANE: ORDER SUMMARY & PAYMENT SECTION (5 Cols) */}
+              <div className="lg:col-span-5 p-6 sm:p-8 lg:p-9 bg-[#FAF9F6] space-y-6 flex flex-col justify-between">
+                <div className="space-y-6">
+
+                  {/* Order Summary Header & Flacons */}
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
+                      <h3 className="text-base font-serif font-bold text-black m-0">
+                        Order Summary
+                      </h3>
+                      <Link href="/cart" className="text-xs text-[#8C6D1F] hover:underline font-semibold">
+                        Edit Bag ({cartItems.length})
+                      </Link>
+                    </div>
+
+                    {/* Fragrance List Items */}
+                    <div className="space-y-3 max-h-56 overflow-y-auto pr-1 py-3">
+                      {cartItems.map((item, idx) => (
+                        <div key={`${item.productId || item.id}-${item.size || idx}`} className="flex items-center gap-3 pb-3 border-b border-[#ECE7DE]/60 last:border-0 last:pb-0">
+                          <div className="w-11 h-13 rounded-xl bg-white p-1 border border-[#E8DFC8] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                            <img
+                              src={getImageUrl(item.image, '/images/no-image.jpg')}
+                              alt={item.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-serif font-semibold text-xs text-black truncate m-0">{item.name}</h4>
+                            <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
+                              <span className="font-mono">{item.size || '50ML'}</span>
+                              <span>•</span>
+                              <span>Qty: {item.quantity}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-bold text-xs text-black font-sans">
+                              ₹{((Number(item.price) || 0) * (parseInt(item.quantity, 10) || 1)).toLocaleString('en-IN')}
+                            </span>
+                          </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Pricing Breakdown */}
+                    <div className="space-y-2.5 pt-3 border-t border-[#ECE7DE] text-xs">
+                      <div className="flex justify-between text-gray-600">
+                        <span>White-Glove Courier Delivery</span>
+                        <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
                       </div>
-                      <div className="text-right">
-                        <span className="font-bold text-xs text-black font-sans">
-                          ₹{((Number(item.price) || 0) * (parseInt(item.quantity, 10) || 1)).toLocaleString('en-IN')}
+
+                      <div className="flex justify-between text-gray-600">
+                        <span>Signature Coffret &amp; Samples</span>
+                        <span className="text-emerald-700 font-bold uppercase text-[10px]">INCLUDED</span>
+                      </div>
+
+                      {giftOptions?.isGift && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>Bespoke Gift Wrapping &amp; Note Card</span>
+                          <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-baseline pt-3 border-t border-[#ECE7DE] font-serif">
+                        <span className="font-bold text-sm text-black">Total Investment</span>
+                        <span className="font-sans text-2xl font-bold text-black">
+                          ₹{finalTotal.toLocaleString('en-IN')}
                         </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {/* Pricing Breakdown */}
-                <div className="space-y-2.5 pt-3 border-t border-[#ECE7DE] text-xs">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal</span>
-                    <span className="font-bold text-black font-sans">₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
 
-                  <div className="flex justify-between text-gray-600">
-                    <span>White-Glove Courier Delivery</span>
-                    <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
-                  </div>
-
-                  <div className="flex justify-between text-gray-600">
-                    <span>Signature Coffret & Samples</span>
-                    <span className="text-emerald-700 font-bold uppercase text-[10px]">INCLUDED</span>
-                  </div>
-
-                  {giftOptions?.isGift && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>Bespoke Gift Wrapping & Wax Seal</span>
-                      <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
+                  {/* 2. PAYMENT METHOD SECTION (Located in Right Column) */}
+                  <div className="pt-2 border-t border-[#ECE7DE] space-y-3">
+                    <div>
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-6 h-6 rounded-full bg-[#B8860B] text-white flex items-center justify-center text-xs font-serif font-bold">
+                          2
+                        </span>
+                        <h3 className="text-base font-serif font-bold text-black m-0">
+                          Payment Method
+                        </h3>
+                      </div>
+                      <p className="text-xs text-gray-500 font-light mt-0.5 m-0 ml-8">
+                        Choose a secure payment option to complete your order.
+                      </p>
                     </div>
-                  )}
 
-                  <div className="flex justify-between items-baseline pt-3 border-t border-[#ECE7DE] font-serif">
-                    <span className="font-bold text-sm text-black">Total Investment</span>
-                    <span className="font-sans text-xl font-bold text-black">
-                      ₹{finalTotal.toLocaleString('en-IN')}
-                    </span>
+                    {/* Gold-Bordered Luxury Razorpay Card */}
+                    <div className="p-4 rounded-2xl bg-white border-2 border-[#D4AF37] shadow-xs flex items-center gap-3.5 transition-all">
+                      {/* Active Gold Radio Button */}
+                      <div className="w-5 h-5 rounded-full border-2 border-[#B8860B] flex items-center justify-center shrink-0">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[#0C83FD] font-black italic text-base leading-none">/</span>
+                          <span className="font-sans font-extrabold text-base tracking-tight text-[#0C2340]">
+                            Razorpay
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 font-light mt-0.5 m-0">
+                          Pay using UPI, Cards, Net Banking &amp; Wallets
+                        </p>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Primary Submit CTA */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-4 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-amber-950/15 transition-all cursor-pointer"
+                  >
+                    <Lock size={14} strokeWidth={2.4} />
+                    <span>
+                      {loading
+                        ? 'Opening Razorpay Gateway...'
+                        : `Pay with Razorpay • ₹${finalTotal.toLocaleString('en-IN')}`}
+                    </span>
+                    <ArrowRight size={14} strokeWidth={2.4} />
+                  </button>
+
+                  {/* Trust Badges */}
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#ECE7DE] text-[10px] text-gray-500 text-center">
+                    <div className="p-2.5 rounded-xl bg-white border border-[#ECE7DE] flex items-center justify-center gap-1.5 shadow-2xs">
+                      <Truck size={13} className="text-[#B8860B]" />
+                      <span className="font-medium text-stone-700">Insured Transit</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white border border-[#ECE7DE] flex items-center justify-center gap-1.5 shadow-2xs">
+                      <ShieldCheck size={13} className="text-[#B8860B]" />
+                      <span className="font-medium text-stone-700">Atelier Guarantee</span>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
-              {/* Trust Badges */}
-              <div className="grid grid-cols-2 gap-2 pt-4 border-t border-[#ECE7DE] text-[10px] text-gray-500 text-center">
-                <div className="p-2.5 rounded-xl bg-white border border-[#ECE7DE] flex items-center justify-center gap-1.5 shadow-2xs">
-                  <Truck size={13} className="text-[#B8860B]" />
-                  <span className="font-medium">Insured Transit</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-white border border-[#ECE7DE] flex items-center justify-center gap-1.5 shadow-2xs">
-                  <ShieldCheck size={13} className="text-[#B8860B]" />
-                  <span className="font-medium">Atelier Guarantee</span>
-                </div>
-              </div>
             </div>
-
-          </div>
+          </Form>
         )}
       </main>
 
       <Footer />
-
 {/* Gift Customization Modal Re-usable */}
       <GiftPersonalizeModal
         open={isGiftModalOpen}
