@@ -6,24 +6,10 @@ import cartService from '@/services/cartService';
 
 const PACKAGING_OPTIONS = [
   {
-    id: 'imperial_gold',
-    name: 'Signature Gold Box',
-    tagline: 'Classic gold gift box with an elegant ribbon',
-    badge: 'Popular',
-    fee: 'FREE'
-  },
-  {
-    id: 'royal_velvet',
-    name: 'Royal Velvet Box',
-    tagline: 'Warm amber gift box lined with soft velvet',
-    badge: 'Luxury',
-    fee: 'FREE'
-  },
-  {
-    id: 'atelier_noir',
-    name: 'Classic Black Box',
-    tagline: 'Elegant black gift box with gold logo',
-    badge: 'Minimalist',
+    id: 'signature_amber',
+    name: 'Signature Luxury Amber Box & Handwritten Card',
+    tagline: 'Official gold-embossed amber box with hand-tied satin ribbon and your customized handwritten note card',
+    badge: 'Signature',
     fee: 'FREE'
   }
 ];
@@ -273,49 +259,35 @@ export default function GiftPersonalizeModal({
             </div>
           </div>
 
-          {/* 3. Packaging Style */}
-          <div className="space-y-3 pt-2 border-t border-[#ECE7DE]">
+          {/* 3. Signature Packaging & Handwritten Card (Single Premium Option) */}
+          <div className="space-y-2.5 pt-2 border-t border-[#ECE7DE]">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
-              3. Choose Gift Box (Free)
+              3. Signature Packaging &amp; Handwritten Card (Free)
             </label>
 
-            <div className="grid grid-cols-1 gap-2.5">
-              {PACKAGING_OPTIONS.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  onClick={() => setSelectedPackaging(pkg.id)}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                    selectedPackaging === pkg.id
-                      ? 'bg-white border-[#B8860B] ring-1 ring-[#B8860B] shadow-xs'
-                      : 'bg-white/70 hover:bg-white border-[#E0D8CA]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
-                      selectedPackaging === pkg.id
-                        ? 'border-[#B8860B] bg-[#B8860B] text-white'
-                        : 'border-stone-300 bg-white'
-                    }`}>
-                      {selectedPackaging === pkg.id && <Check size={12} strokeWidth={3} />}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-serif font-bold text-xs text-[#1B100A]">{pkg.name}</span>
-                        <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5]">
-                          {pkg.badge}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-stone-500 font-light mt-0.5">
-                        {pkg.tagline}
-                      </p>
-                    </div>
-                  </div>
-
-                  <span className="text-[10px] font-bold text-emerald-700 tracking-wider shrink-0">
-                    {pkg.fee}
-                  </span>
+            <div className="p-4 rounded-2xl bg-white border-2 border-[#B8860B] shadow-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full border border-[#B8860B] bg-[#B8860B] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <Check size={12} strokeWidth={3} />
                 </div>
-              ))}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-serif font-bold text-xs text-[#1B100A]">
+                      Signature Luxury Amber Box &amp; Handwritten Card
+                    </span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5]">
+                      Signature
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-stone-500 font-light mt-0.5 m-0">
+                    Official gold-embossed box with hand-tied satin ribbon and your customized handwritten note card.
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-[10px] font-bold text-emerald-700 tracking-wider shrink-0 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                100% FREE
+              </span>
             </div>
           </div>
 
