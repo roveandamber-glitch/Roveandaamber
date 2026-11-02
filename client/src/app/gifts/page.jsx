@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   Gift, 
   Sparkles, 
@@ -21,6 +22,7 @@ import { message, Modal } from 'antd';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { cartService } from '@/services/cartService';
+import authService from '@/services/authService';
 import productService from '@/services/productService';
 import { getImageUrl } from '@/utils/imageHelper';
 
@@ -82,6 +84,7 @@ const CUSTOMER_REVIEWS = [
 ];
 
 export default function GiftsPage() {
+  const router = useRouter();
   const [giftSets, setGiftSets] = useState([]);
   const [loadingGifts, setLoadingGifts] = useState(true);
   const [wishlist, setWishlist] = useState([]);
@@ -130,6 +133,11 @@ export default function GiftsPage() {
   const handleAddToCart = (e, product) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to add gifts to your shopping bag.');
+      router.push('/login?redirect=/cart');
+      return;
+    }
     setAddingId(product.id);
     try {
       cartService.addToCart({

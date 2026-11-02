@@ -5,6 +5,7 @@ import { X, ShoppingBag, ArrowRight, ShieldCheck, Truck, Droplets } from 'lucide
 import { getImageUrl } from '../../utils/imageHelper';
 import orderService from '../../services/orderService';
 import cartService from '../../services/cartService';
+import authService from '../../services/authService';
 import { message } from 'antd';
 
 const QuickViewModal = ({ product, isOpen, onClose }) => {
@@ -80,6 +81,12 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
 
   const handleAddToCart = () => {
     if (currentSizeStock <= 0 || quantity <= 0) return;
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to add fragrances to your shopping bag.');
+      onClose();
+      router.push('/login?redirect=/cart');
+      return;
+    }
     cartService.addToCart({
       productId: product._id || product.id,
       name: product.name,

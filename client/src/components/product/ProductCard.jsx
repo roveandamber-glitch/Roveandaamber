@@ -1,12 +1,15 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { message } from 'antd';
 import { Heart, Star, ShoppingBag } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageHelper';
 import { cartService } from '../../services/cartService';
+import authService from '../../services/authService';
 
 const ProductCard = ({ product, onQuickView }) => {
+  const router = useRouter();
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
@@ -85,6 +88,12 @@ const ProductCard = ({ product, onQuickView }) => {
     e.stopPropagation();
 
     if (isOutOfStock) return;
+
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to add fragrances to your shopping bag.');
+      router.push('/login?redirect=/cart');
+      return;
+    };
 
     setIsAdding(true);
     try {

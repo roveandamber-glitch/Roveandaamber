@@ -25,6 +25,7 @@ import { message } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import productService from '../../services/productService';
 import cartService from '../../services/cartService';
+import authService from '../../services/authService';
 import { getImageUrl } from '../../utils/imageHelper';
 
 const TRENDING_SEARCHES = [
@@ -60,6 +61,10 @@ const Navbar = () => {
   const isDarkHero = hasDarkHero && !isScrolled;
 
   const updateCartCount = () => {
+    if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+      setCartCount(0);
+      return;
+    }
     setCartCount(cartService.getCartCount());
   };
 
@@ -590,11 +595,13 @@ const Navbar = () => {
                 aria-label="Shopping Cart"
               >
                 <ShoppingBag size={18} strokeWidth={1.8} />
+                {cartCount > 0 && (
                 <span className={`absolute -top-0.5 -right-0.5 text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs ${
                   (!isDarkHero) ? 'bg-[#B8860B] text-white' : 'bg-[#E5B869] text-[#18110D]'
                 }`}>
                   {cartCount}
                 </span>
+              )}
               </Link>
 
               {/* Desktop Customer Account Button */}

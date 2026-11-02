@@ -23,6 +23,7 @@ import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/product/ProductCard';
 import productService from '@/services/productService';
 import cartService from '@/services/cartService';
+import authService from '@/services/authService';
 import { getImageUrl } from '@/utils/imageHelper';
 
 
@@ -289,6 +290,12 @@ const ProductDetails = () => {
   // Add to cart handler
   const handleAddToCart = async (redirectToCart = false) => {
     if (!product || isOutOfStock || isAddingToCart) return;
+
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to add fragrances to your shopping bag.');
+      router.push(`/login?redirect=${encodeURIComponent(redirectToCart ? '/cart' : window.location.pathname)}`);
+      return;
+    }
 
     setIsAddingToCart(true);
     try {

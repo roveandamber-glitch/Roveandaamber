@@ -64,6 +64,8 @@ export default function CartPage() {
   const [promoLoading, setPromoLoading] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [orderSuccessData, setOrderSuccessData] = useState(null);
   const [checkoutError, setCheckoutError] = useState(null);
@@ -88,6 +90,24 @@ export default function CartPage() {
   useEffect(() => {
     setIsClient(true);
     document.title = 'Shopping Bag | ROVE & AMBER Fine Fragrance';
+
+    const verifyAuth = () => {
+      if (!authService.isAuthenticated()) {
+        setIsAuthenticated(false);
+        setIsCheckingAuth(false);
+        setIsAuthPromptOpen(true);
+        return false;
+      }
+      setIsAuthenticated(true);
+      setIsCheckingAuth(false);
+      setIsAuthPromptOpen(false);
+      return true;
+    };
+
+    if (!verifyAuth()) {
+      return;
+    }
+
     cartService.fetchCart().then(() => {
       loadCart();
     });
@@ -105,10 +125,16 @@ export default function CartPage() {
     }
 
     window.addEventListener('cartChange', loadCart);
-    window.addEventListener('authChange', loadCart);
+    const onAuthChange = () => {
+      if (verifyAuth()) {
+        cartService.fetchCart().then(() => loadCart());
+      }
+    };
+
+    window.addEventListener('authChange', onAuthChange);
     return () => {
       window.removeEventListener('cartChange', loadCart);
-      window.removeEventListener('authChange', loadCart);
+      window.removeEventListener('authChange', onAuthChange);
     };
   }, [loadCart]);
 
@@ -296,6 +322,53 @@ export default function CartPage() {
         </div>
         <Footer />
       </div>
+    );
+  }
+
+  // Strict Authentication Gate for Private Cart Route
+  if (isCheckingAuth || !isAuthenticated) {
+    return (
+      <ConfigProvider theme={cartTheme}>
+        <div className="min-h-screen bg-[#FAF9F7] font-sans flex flex-col justify-between selection:bg-[#E5D7C0]">
+          <Navbar />
+          <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-[#1C120C] border border-[#D4AF37]/40 text-[#ECC880] flex items-center justify-center mx-auto mb-4 shadow-md">
+              <Lock size={26} strokeWidth={2.2} className="text-[#DEB368]" />
+            </div>
+            <span className="text-[10px] uppercase font-bold tracking-[0.22em] text-[#8C6D1F] block mb-2">
+              Private Patron Suite
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl font-normal text-stone-900 mb-2">
+              Private Shopping Bag
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-500 font-light max-w-md mx-auto leading-relaxed mb-6">
+              Access to your shopping bag, preserved artisanal flacons, and atelier checkout is reserved for registered patrons. Please sign in to access your bag.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsAuthPromptOpen(true)}
+              className="inline-flex items-center gap-2 bg-[#1C120C] text-[#ECC880] px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:brightness-110 transition-all cursor-pointer shadow-sm"
+            >
+              <span>Sign In to Access Bag</span>
+              <ArrowRight size={14} />
+            </button>
+          </main>
+          <Footer />
+
+          {/* Strict Authentication Gate Modal */}
+          <AuthGateModal
+            open={isAuthPromptOpen}
+            onClose={() => router.replace('/')}
+            onCancelAction={() => router.replace('/')}
+            redirectPath="/cart"
+            title="Sign In to Access Your Bag"
+            subtitle="Atelier Customer Privilege"
+            description="Your shopping bag, preserved fragrance flacons, and white-glove delivery options are private to your customer account. Please sign in or register to access your shopping bag."
+            confirmText="Sign In / Register"
+            cancelText="Return to Boutique"
+          />
+        </div>
+      </ConfigProvider>
     );
   }
 

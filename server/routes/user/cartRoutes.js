@@ -10,12 +10,13 @@ import {
   getCheckoutSummary,
   clearCart
 } from '../../controllers/user/cartController.js';
-import { optionalAuth } from '../../middlewares/authMiddleware.js';
+import { protect } from '../../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 // Support both logged-in and guest customers via optionalAuth
-router.use(optionalAuth);
+// Strictly require authenticated customer account for all cart operations (Private Route)
+router.use(protect);
 
 // 3.1: Shopping Cart Management
 router.get('/', getCart);

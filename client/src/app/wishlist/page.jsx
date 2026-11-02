@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   Heart, 
   ShoppingBag, 
@@ -18,10 +19,12 @@ import ProductCard from '@/components/product/ProductCard';
 import QuickViewModal from '@/components/common/QuickViewModal';
 import productService from '@/services/productService';
 import { cartService } from '@/services/cartService';
+import authService from '@/services/authService';
 import { showLuxuryDeleteModal } from '@/components/common';
 
 
 export default function WishlistPage() {
+  const router = useRouter();
   const [savedIds, setSavedIds] = useState([]);
   const [wishlistProducts, setWishlistProducts] = useState([]);
   const [unavailableCount, setUnavailableCount] = useState(0);
@@ -139,6 +142,11 @@ export default function WishlistPage() {
 
   // Add all in-stock wishlist items to shopping cart
   const handleAddAllToCart = () => {
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to move fragrances to your shopping bag.');
+      router.push('/login?redirect=/cart');
+      return;
+    }
     const inStockItems = wishlistProducts.filter((p) => {
       const stock = p.stock !== undefined ? p.stock : (p.countInStock !== undefined ? p.countInStock : 99);
       return stock > 0 && p.inStock !== false && p.status !== 'Out of Stock';

@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 import { message } from 'antd';
 import { cartService } from '../../services/cartService';
+import authService from '../../services/authService';
 import productService from '../../services/productService';
 import { getImageUrl } from '../../utils/imageHelper';
 
@@ -15,6 +17,7 @@ const BADGE_STYLES = {
 };
 
 const FeaturedProducts = () => {
+  const router = useRouter();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState([]);
@@ -75,6 +78,11 @@ const FeaturedProducts = () => {
   const handleAddToCart = (e, product) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to add fragrances to your shopping bag.');
+      router.push('/login?redirect=/cart');
+      return;
+    }
     const prodId = product._id || product.id;
     setAddingId(prodId);
     try {

@@ -1,4 +1,5 @@
 import api from './api';
+import authService from './authService';
 
 /**
  * ROVE & AMBER — Luxury Fragrance Cart State Manager
@@ -73,6 +74,13 @@ export const cartService = {
    */
   fetchCart: async () => {
     if (typeof window === 'undefined') return [];
+    if (!authService.isAuthenticated()) {
+      inMemoryCart = [];
+      inMemorySummary = null;
+      hasInitialFetch = true;
+      window.dispatchEvent(new Event('cartChange'));
+      return [];
+    }
     if (isFetching) return inMemoryCart;
     isFetching = true;
 
@@ -102,6 +110,9 @@ export const cartService = {
    * Initiates background database sync if not yet loaded
    */
   getCart: () => {
+    if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+      return [];
+    }
     if (typeof window !== 'undefined' && !hasInitialFetch && !isFetching) {
       cartService.fetchCart();
     }
@@ -112,6 +123,9 @@ export const cartService = {
    * Add a product flacon to the database cart
    */
   addToCart: async (item) => {
+    if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+      return [];
+    }
     const pId = item.productId || item.id;
     const pSize = item.size || '50ml';
     const pQty = parseInt(item.quantity, 10) || 1;
@@ -260,6 +274,9 @@ export const cartService = {
    * Total item count
    */
   getCartCount: () => {
+    if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+      return 0;
+    }
     return inMemoryCart.reduce((acc, item) => acc + (parseInt(item.quantity, 10) || 1), 0);
   },
 
@@ -325,6 +342,9 @@ export const cartService = {
    * Authoritative cart summary containing coupon, discounts, and item metrics
    */
   getCartSummary: () => {
+    if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+      return null;
+    }
     return inMemorySummary;
   },
 
