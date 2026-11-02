@@ -320,10 +320,10 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-20 w-full flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-16 w-full flex-1">
 
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-6 uppercase tracking-widest">
+        <div className="flex items-center gap-2 text-xs text-gray-400 mb-4 uppercase tracking-widest">
           <Link href="/" className="hover:text-black transition-colors">Home</Link>
           <span>/</span>
           <Link href="/cart" className="hover:text-black transition-colors">Shopping Bag</Link>
@@ -417,41 +417,41 @@ export default function CheckoutPage() {
             </Link>
           </div>
         ) : (
-          /* ================= CHECKOUT MAIN LAYOUT ================= */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          /* ================= SINGLE WINDOW CHECKOUT CONTAINER ================= */
+          <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch">
 
-            {/* LEFT COLUMN: ADDRESS & PAYMENT (7 Cols) */}
-            <div className="lg:col-span-7 space-y-6">
+            {/* LEFT PANE: CHECKOUT FORM & PAYMENT (7 Cols) */}
+            <div className="lg:col-span-7 p-6 sm:p-8 lg:p-9 border-b lg:border-b-0 lg:border-r border-[#ECE7DE] space-y-6">
 
               {/* Server Error Alert */}
               {errorMessage && (
-                <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5">
+                <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5">
                   <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-600" />
                   <span>{errorMessage}</span>
                 </div>
               )}
 
-              {/* Gift Options Section (Simple English) */}
-              <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-                <div className="flex items-start sm:items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-                    <Gift size={18} />
+              {/* Gift Options Row (Simple & Compact) */}
+              <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
+                    <Gift size={16} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-serif text-sm font-bold text-gray-900">
+                      <h4 className="font-serif text-xs sm:text-sm font-bold text-gray-900 m-0">
                         {giftOptions?.isGift ? `Gift for ${giftOptions.recipientName}` : 'Sending as a gift?'}
                       </h4>
                       {giftOptions?.occasion && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
+                        <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
                           {giftOptions.occasion}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-600 font-light mt-0.5">
+                    <p className="text-[11px] text-gray-500 font-light mt-0.5 m-0">
                       {giftOptions?.isGift
-                        ? 'Free gift box and personal message card added.'
-                        : 'Add free gift packaging and a personal message card.'}
+                        ? 'Free luxury gift packaging and personal message card added.'
+                        : 'Add complimentary gift packaging and a personal note card.'}
                     </p>
                   </div>
                 </div>
@@ -460,7 +460,7 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setIsGiftModalOpen(true)}
-                    className="px-4 py-2 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#D5C9B8] text-xs font-semibold tracking-wide transition-all shadow-xs cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#D5C9B8] text-xs font-semibold tracking-wide transition-all shadow-2xs cursor-pointer"
                   >
                     {giftOptions?.isGift ? 'Edit Message' : 'Add Gift Details'}
                   </button>
@@ -474,7 +474,7 @@ export default function CheckoutPage() {
                         } catch (e) { }
                         message.info('Gift option removed');
                       }}
-                      className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                      className="px-2 py-1 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
                     >
                       Remove
                     </button>
@@ -490,14 +490,14 @@ export default function CheckoutPage() {
                 requiredMark={false}
                 className="space-y-6"
               >
-                {/* 1. SHIPPING & DISPATCH ADDRESS CARD */}
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E8DFC9] shadow-xs space-y-5">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
+                {/* 1. DISPATCH & DELIVERY ADDRESS */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-[#ECE7DE]">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
+                      <span className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
                         1
                       </span>
-                      <h2 className="font-serif text-lg font-bold text-black m-0">
+                      <h2 className="font-serif text-base sm:text-lg font-bold text-black m-0">
                         Dispatch & Delivery Address
                       </h2>
                     </div>
@@ -515,14 +515,14 @@ export default function CheckoutPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <Form.Item
                       label={<span className="text-xs font-semibold text-gray-700">Full Name *</span>}
                       name="customerName"
                       rules={[{ required: true, message: 'Please provide full name' }]}
                       className="mb-0"
                     >
-                      <Input placeholder="e.g. Eleanor Vance" className="rounded-xl text-xs py-2.5 bg-[#FAF9F7]" />
+                      <Input placeholder="e.g. Eleanor Vance" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
                     </Form.Item>
 
                     <Form.Item
@@ -534,7 +534,7 @@ export default function CheckoutPage() {
                       ]}
                       className="mb-0"
                     >
-                      <Input placeholder="+91 98765 43210" className="rounded-xl text-xs py-2.5 bg-[#FAF9F7]" />
+                      <Input placeholder="+91 98765 43210" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
                     </Form.Item>
                   </div>
 
@@ -547,7 +547,7 @@ export default function CheckoutPage() {
                     ]}
                     className="mb-0"
                   >
-                    <Input placeholder="eleanor.vance@atelier.com" className="rounded-xl text-xs py-2.5 bg-[#FAF9F7]" />
+                    <Input placeholder="eleanor.vance@atelier.com" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
                   </Form.Item>
 
                   <Form.Item
@@ -556,7 +556,7 @@ export default function CheckoutPage() {
                     rules={[{ required: true, message: 'Please provide street address' }]}
                     className="mb-0"
                   >
-                    <Input placeholder="Flat / Bungalow No., Building Name, Street" className="rounded-xl text-xs py-2.5 bg-[#FAF9F7]" />
+                    <Input placeholder="Flat / Bungalow No., Building Name, Street" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
                   </Form.Item>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -597,25 +597,24 @@ export default function CheckoutPage() {
                   </Form.Item>
                 </div>
 
-                {/* 2. PAYMENT METHOD CARD (Razorpay Online Gateway) */}
-                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DFC9] shadow-xs space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
+                {/* 2. PAYMENT METHOD (Minimal Razorpay Option) */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-[#ECE7DE]">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
+                      <span className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
                         2
                       </span>
                       <h2 className="text-base sm:text-lg font-serif font-bold text-black m-0">
                         Payment Method
                       </h2>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
                       <ShieldCheck size={13} className="text-emerald-600" />
                       100% Secure
                     </span>
                   </div>
 
-                  {/* Clean Minimal Razorpay Option */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9F7] border border-[#E2D8C3] flex items-center justify-between gap-4">
+                  <div className="p-4 rounded-2xl bg-[#FAF9F7] border border-[#E2D8C3] flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-xl bg-black text-[#DEB368] flex items-center justify-center shrink-0 shadow-sm">
                         <CreditCard size={20} />
@@ -627,7 +626,7 @@ export default function CheckoutPage() {
                             Instant
                           </span>
                         </div>
-                        <p className="text-xs text-stone-500 font-light mt-0.5">
+                        <p className="text-xs text-stone-500 font-light mt-0.5 m-0">
                           UPI, Cards, Net Banking & Wallets
                         </p>
                       </div>
@@ -655,9 +654,9 @@ export default function CheckoutPage() {
               </Form>
             </div>
 
-            {/* RIGHT COLUMN: ORDER SUMMARY (5 Cols) */}
-            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-28">
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DFC9] shadow-xs space-y-5">
+            {/* RIGHT PANE: ORDER SUMMARY & FLACONS (5 Cols) */}
+            <div className="lg:col-span-5 p-6 sm:p-8 lg:p-9 bg-[#FAF9F6] space-y-6 flex flex-col justify-between">
+              <div className="space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
                   <h3 className="text-base font-serif font-bold text-black m-0">
                     Fragrance Flacons ({cartItems.length})
@@ -670,8 +669,8 @@ export default function CheckoutPage() {
                 {/* Fragrance List Items */}
                 <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
                   {cartItems.map((item, idx) => (
-                    <div key={`${item.productId || item.id}-${item.size || idx}`} className="flex items-center gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                      <div className="w-12 h-14 rounded-xl bg-[#FAF7F2] p-1 border border-[#E8DFC8] flex items-center justify-center shrink-0 overflow-hidden">
+                    <div key={`${item.productId || item.id}-${item.size || idx}`} className="flex items-center gap-3 pb-3 border-b border-[#ECE7DE]/60 last:border-0 last:pb-0">
+                      <div className="w-12 h-14 rounded-xl bg-white p-1 border border-[#E8DFC8] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                         <img
                           src={getImageUrl(item.image, '/images/no-image.jpg')}
                           alt={item.name}
@@ -680,7 +679,7 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-serif font-semibold text-xs text-black truncate">{item.name}</h4>
+                        <h4 className="font-serif font-semibold text-xs text-black truncate m-0">{item.name}</h4>
                         <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
                           <span className="font-mono">{item.size || '50ML'}</span>
                           <span>•</span>
@@ -700,7 +699,7 @@ export default function CheckoutPage() {
                 <div className="space-y-2.5 pt-3 border-t border-[#ECE7DE] text-xs">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
-                    <span className="font-bold text-black">₹{subtotal.toLocaleString('en-IN')}</span>
+                    <span className="font-bold text-black font-sans">₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
 
                   <div className="flex justify-between text-gray-600">
@@ -727,17 +726,17 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 </div>
+              </div>
 
-                {/* Trust Badges */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#ECE7DE] text-[10px] text-gray-500 text-center">
-                  <div className="p-2 rounded-xl bg-[#FAF9F7] flex items-center justify-center gap-1.5">
-                    <Truck size={12} className="text-[#B8860B]" />
-                    <span>Insured Transit</span>
-                  </div>
-                  <div className="p-2 rounded-xl bg-[#FAF9F7] flex items-center justify-center gap-1.5">
-                    <ShieldCheck size={12} className="text-[#B8860B]" />
-                    <span>Atelier Guarantee</span>
-                  </div>
+              {/* Trust Badges */}
+              <div className="grid grid-cols-2 gap-2 pt-4 border-t border-[#ECE7DE] text-[10px] text-gray-500 text-center">
+                <div className="p-2.5 rounded-xl bg-white border border-[#ECE7DE] flex items-center justify-center gap-1.5 shadow-2xs">
+                  <Truck size={13} className="text-[#B8860B]" />
+                  <span className="font-medium">Insured Transit</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white border border-[#ECE7DE] flex items-center justify-center gap-1.5 shadow-2xs">
+                  <ShieldCheck size={13} className="text-[#B8860B]" />
+                  <span className="font-medium">Atelier Guarantee</span>
                 </div>
               </div>
             </div>
@@ -748,7 +747,7 @@ export default function CheckoutPage() {
 
       <Footer />
 
-      {/* Gift Customization Modal Re-usable */}
+{/* Gift Customization Modal Re-usable */}
       <GiftPersonalizeModal
         open={isGiftModalOpen}
         onClose={() => setIsGiftModalOpen(false)}
