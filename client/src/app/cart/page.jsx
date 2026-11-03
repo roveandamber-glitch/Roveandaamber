@@ -651,17 +651,21 @@ export default function CartPage() {
                     );
                   })}
                 </div>
-              </div>
 
-              {/* Bottom Return Action */}
-              <div className="pt-2 flex items-center justify-between">
-                <Link 
-                  href="/shop"
-                  className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-black hover:text-[#B8860B] transition-colors"
-                >
-                  <ArrowLeft size={13} />
-                  <span>Continue Exploring Collections</span>
-                </Link>
+                {/* Card Footer: Continue Exploring Collections inside the card */}
+                <div className="p-4 sm:p-5 bg-[#FAF9F7]/80 border-t border-[#ECE7DE] flex items-center justify-between">
+                  <Link 
+                    href="/shop"
+                    className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-black hover:text-[#B8860B] transition-colors group cursor-pointer"
+                  >
+                    <ArrowLeft size={13} className="group-hover:-translate-x-1 transition-transform" />
+                    <span>Continue Exploring Collections</span>
+                  </Link>
+
+                  <span className="text-[11px] text-[#8C7A6B] font-medium hidden sm:inline-block">
+                    {cartItems.length} {cartItems.length === 1 ? 'fragrance flacon' : 'fragrance flacons'} in bag
+                  </span>
+                </div>
               </div>
 
             </div>
