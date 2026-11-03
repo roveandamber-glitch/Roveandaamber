@@ -113,6 +113,7 @@ const apiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/health',
   message: {
     success: false,
     message: 'Rate limit exceeded. Please wait 15 minutes before retrying.'
@@ -200,21 +201,13 @@ app.use('/reports', reportRoutes);
 
 
 // ==========================================
-// 9. Health & Diagnostics Telemetry
+// 9. Health & Diagnostics Telemetry (Uptime & Monitoring)
 // ==========================================
-app.get(['/api/health', '/health'], (req, res) => {
-  res.json({
-    status: 'online',
-    uptime: `${Math.floor(process.uptime())}s`,
-    database: 'MongoDB Atlas',
-    security: {
-      helmet: 'active',
-      cors: 'enforced',
-      rateLimiting: 'active',
-      noSqlSanitizer: 'active',
-      hsts: 'enabled'
-    },
-    timestamp: new Date().toISOString()
+app.get(['/health', '/api/health'], (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    message: "Rove & Amber API is running",
+    timestamp: new Date()
   });
 });
 
