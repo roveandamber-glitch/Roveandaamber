@@ -93,9 +93,9 @@ export default function AdminOrdersPage() {
 
   const handleOpenOrder = (order) => {
     setSelectedOrder(order);
-    setCourierInput(order.tracking?.courierName || 'BlueDart Luxury Express');
+    setCourierInput(order.tracking?.courierName && order.tracking.courierName !== 'BlueDart Luxury Express' ? order.tracking.courierName : 'Delhivery');
     setTrackingNumberInput(order.tracking?.trackingNumber || order.trackingNumber || '');
-    setLocationInput(order.tracking?.currentLocation || 'Maison Fulfillment Center, Mumbai');
+    setLocationInput(order.tracking?.currentLocation || 'Delhivery Hub, Mumbai');
     setEstimatedDeliveryInput(
       order.tracking?.estimatedDelivery 
         ? new Date(order.tracking.estimatedDelivery).toISOString().slice(0, 10) 
@@ -110,13 +110,16 @@ export default function AdminOrdersPage() {
     setUpdatingStatus(true);
     try {
       const targetId = selectedOrder.id || selectedOrder._id;
+      const trimmedTracking = trackingNumberInput.trim();
       const payload = {
         status: newStatus,
-        courierName: courierInput || selectedOrder.tracking?.courierName,
-        trackingNumber: trackingNumberInput || selectedOrder.tracking?.trackingNumber,
-        currentLocation: locationInput || selectedOrder.tracking?.currentLocation,
+        courierName: courierInput.trim() || 'Delhivery',
+        trackingNumber: trimmedTracking || selectedOrder.tracking?.trackingNumber || '',
+        trackingUrl: 'https://www.delhivery.com/',
+        currentLocation: locationInput || selectedOrder.tracking?.currentLocation || 'Delhivery Hub, Mumbai',
         estimatedDelivery: estimatedDeliveryInput || selectedOrder.tracking?.estimatedDelivery,
-        statusNote: statusNoteInput || `Status updated to ${newStatus} by atelier fulfillment.`
+        statusNote: statusNoteInput || `Status updated to ${newStatus} with Delhivery consignment.`,
+        notifyPatron: true
       };
 
       const res = await adminService.updateOrderStatus(targetId, payload);
@@ -127,6 +130,7 @@ export default function AdminOrdersPage() {
           ...selectedOrder.tracking,
           courierName: payload.courierName,
           trackingNumber: payload.trackingNumber,
+          trackingUrl: payload.trackingUrl,
           currentLocation: payload.currentLocation
         }
       };
@@ -135,7 +139,11 @@ export default function AdminOrdersPage() {
         (o.id === targetId || o._id === targetId) ? { ...o, ...updatedOrder, status: newStatus } : o
       ));
       setSelectedOrder(prev => ({ ...prev, ...updatedOrder, status: newStatus }));
-      message.success(`Order ${selectedOrder.orderNumber || selectedOrder.orderId} updated to ${newStatus}`);
+      message.success(
+        payload.trackingNumber 
+          ? `Order ${selectedOrder.orderNumber || selectedOrder.orderId} updated to ${newStatus} & Delhivery Track ID sent to customer.`
+          : `Order ${selectedOrder.orderNumber || selectedOrder.orderId} updated to ${newStatus}.`
+      );
     } catch (err) {
       console.error('Status update failed:', err);
       message.error(err.response?.data?.message || 'Failed to update status');
@@ -170,24 +178,42 @@ export default function AdminOrdersPage() {
 
   const handleSaveTrackingDetails = async () => {
     if (!selectedOrder) return;
+    const trimmedTracking = trackingNumberInput.trim();
     setUpdatingStatus(true);
     try {
       const targetId = selectedOrder.id || selectedOrder._id;
+      const targetStatus = selectedOrder.status === 'Pending' ? 'Dispatch' : selectedOrder.status;
       const payload = {
-        courierName: courierInput.trim(),
-        trackingNumber: trackingNumberInput.trim(),
-        currentLocation: locationInput.trim(),
+        status: targetStatus,
+        courierName: courierInput.trim() || 'Delhivery',
+        trackingNumber: trimmedTracking,
+        trackingUrl: 'https://www.delhivery.com/',
+        currentLocation: locationInput.trim() || 'Delhivery Hub, Mumbai',
         estimatedDelivery: estimatedDeliveryInput,
-        statusNote: statusNoteInput.trim() || 'Fulfillment tracking details updated.'
+        statusNote: statusNoteInput.trim() || (trimmedTracking ? `Dispatched via Delhivery (Track ID: ${trimmedTracking}). Track at https://www.delhivery.com/` : 'Fulfillment tracking details updated via Delhivery.'),
+        notifyPatron: true
       };
       const res = await adminService.updateOrderStatus(targetId, payload);
-      const updated = res?.data || selectedOrder;
+      const updated = res?.data || {
+        ...selectedOrder,
+        status: targetStatus,
+        tracking: {
+          ...selectedOrder.tracking,
+          ...payload
+        }
+      };
       
       setOrders(prev => prev.map(o => 
-        (o.id === targetId || o._id === targetId) ? { ...o, ...updated } : o
+        (o.id === targetId || o._id === targetId) ? { ...o, ...updated, status: targetStatus } : o
       ));
-      setSelectedOrder(prev => ({ ...prev, ...updated }));
-      message.success('Tracking details synchronized with customer order.');
+      setSelectedOrder(prev => ({ ...prev, ...updated, status: targetStatus }));
+      message.success('Delhivery Track ID saved and dispatch notification sent to customer via email & profile.');
+    } catch (err) {
+      message.error('Failed to update tracking details');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
     } catch (err) {
       message.error('Failed to update tracking details');
     } finally {
@@ -613,10 +639,37 @@ export default function AdminOrdersPage() {
 
               {/* Courier & Tracking Inputs */}
               <div className="pt-3 border-t border-[#EAE3D6] space-y-2.5">
-                <span className="text-[11px] font-semibold text-gray-700 flex items-center gap-1.5">
-                  <Truck size={13} className="text-[#B8860B]" />
-                  <span>Courier & AWB Tracking Details</span>
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-gray-800 flex items-center gap-1.5">
+                    <Truck size={13} className="text-[#B8860B]" />
+                    <span>Delhivery Courier & AWB Tracking Details</span>
+                  </span>
+                  <a 
+                    href="https://www.delhivery.com/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-[#B8860B] hover:text-[#7A5807] font-semibold flex items-center gap-1 hover:underline"
+                  >
+                    <span>delhivery.com</span>
+                    <ExternalLink size={10} />
+                  </a>
+                </div>
+
+                <div className="bg-[#FAF5ED] border border-[#ECDCC4] p-2.5 rounded-xl text-xs space-y-1">
+                  <div className="flex items-center justify-between font-semibold text-[#8C6228]">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles size={12} className="text-[#B8860B]" />
+                      <span>Patron Notification & Delhivery Portal</span>
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-600 leading-relaxed">
+                    When status changes or tracking is saved, the patron receives an email containing this Track ID and direct link to{' '}
+                    <a href="https://www.delhivery.com/" target="_blank" rel="noopener noreferrer" className="text-[#8C6228] font-bold underline">
+                      https://www.delhivery.com/
+                    </a>{' '}
+                    to track their order live.
+                  </p>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
@@ -624,17 +677,32 @@ export default function AdminOrdersPage() {
                     <Input
                       value={courierInput}
                       onChange={(e) => setCourierInput(e.target.value)}
-                      placeholder="e.g. BlueDart Luxury Express"
-                      className="rounded-lg text-xs"
+                      placeholder="Delhivery"
+                      className="rounded-lg text-xs font-semibold"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-gray-500 font-medium block mb-0.5">AWB Tracking #</label>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <label className="text-[10px] text-gray-700 font-bold block">
+                        Delhivery Track ID / AWB #
+                      </label>
+                      {trackingNumberInput && (
+                        <a 
+                          href="https://www.delhivery.com/" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[9px] text-[#B8860B] hover:underline flex items-center gap-0.5 font-medium"
+                        >
+                          <span>delhivery.com</span>
+                          <ExternalLink size={9} />
+                        </a>
+                      )}
+                    </div>
                     <Input
                       value={trackingNumberInput}
                       onChange={(e) => setTrackingNumberInput(e.target.value)}
-                      placeholder="e.g. BD-8492048"
-                      className="rounded-lg text-xs font-mono font-bold"
+                      placeholder="e.g. 128492019482"
+                      className="rounded-lg text-xs font-mono font-bold border-[#C49A45] focus:border-[#8C6228]"
                     />
                   </div>
                 </div>
@@ -655,7 +723,7 @@ export default function AdminOrdersPage() {
                     <Input
                       value={locationInput}
                       onChange={(e) => setLocationInput(e.target.value)}
-                      placeholder="e.g. Mumbai Fulfillment Hub"
+                      placeholder="e.g. Delhivery Hub, Mumbai"
                       className="rounded-xl text-xs py-2 bg-white"
                     />
                   </div>
@@ -665,10 +733,10 @@ export default function AdminOrdersPage() {
                   type="button"
                   onClick={handleSaveTrackingDetails}
                   disabled={updatingStatus}
-                  className="w-full mt-1 bg-[#18110D] hover:bg-black text-[#ECC880] py-2 rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full mt-1 bg-[#18110D] hover:bg-black text-[#ECC880] py-2.5 rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <CheckCircle2 size={13} className="text-[#DEB368]" />
-                  <span>Save Tracking & Notify Patron</span>
+                  <span>Save Tracking & Notify Patron via Email</span>
                 </button>
               </div>
             </div>

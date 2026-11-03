@@ -283,7 +283,7 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
 export const emailService = {
   // 1. Order Confirmation Email
   sendOrderConfirmation: async (order) => {
-    const recipientEmail = order.email || (order.user_id && order.user_id.email);
+    const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;
     if (!recipientEmail) {
       console.warn('⚠️ [Email Service]: No customer email found for order confirmation.');
       return { success: false, message: 'Customer email missing.' };
@@ -315,7 +315,7 @@ export const emailService = {
       : '';
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued User'},</p>
+      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
       <p>Thank you for choosing <strong>ROVE & AMBER</strong>. We are pleased to confirm that your order <strong>${orderId}</strong> has been received and logged in our atelier.</p>
       
       <div class="card">
@@ -352,14 +352,14 @@ export const emailService = {
 
   // 2. Payment Confirmation Email
   sendPaymentConfirmation: async (order) => {
-    const recipientEmail = order.email || (order.user_id && order.user_id.email);
+    const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;
     if (!recipientEmail) return { success: false, message: 'Customer email missing.' };
 
     const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
     const transactionId = order.razorpayPaymentId || order.paymentDetails?.transactionId || 'Verified';
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued User'},</p>
+      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
       <p>We are delighted to confirm that your payment of <strong>Rs ${(order.total_amount || 0).toLocaleString()}</strong> has been successfully verified.</p>
       
       <div class="card" style="border-left: 3px solid #1E7E34;">
@@ -391,27 +391,33 @@ export const emailService = {
 
   // 3. Shipping Notification Email (Dispatched with Courier)
   sendShippingNotification: async (order) => {
-    const recipientEmail = order.email || (order.user_id && order.user_id.email);
+    const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;
     if (!recipientEmail) return { success: false, message: 'Customer email missing.' };
 
     const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
-    const courier = order.tracking?.courierName || 'BlueDart Luxury Express';
+    const courier = order.tracking?.courierName || 'Delhivery';
     const trackingNumber = order.tracking?.trackingNumber || 'Available shortly';
-    const trackingUrl = order.tracking?.trackingUrl || 'https://www.bluedart.com';
+    const trackingUrl = 'https://www.delhivery.com/';
     const estDate = order.tracking?.estimatedDelivery
       ? new Date(order.tracking.estimatedDelivery).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       : 'In 2-3 business days';
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued User'},</p>
-      <p>Your artisanal flacons have been hand-packaged and dispatched for delivery.</p>
+      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
+      <p>Your artisanal fragrance flacons have been hand-inspected, sealed, and dispatched for delivery via <strong>${courier}</strong>.</p>
 
       <div class="card" style="border-left: 3px solid #C49A45;">
-        <div style="color:#C49A45; font-size:12px; font-weight:bold; text-transform:uppercase;">Courier Dispatch Information</div>
+        <div style="color:#C49A45; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:1.5px;">Delhivery Dispatch & Consignment Tracking</div>
         <div style="font-size:13px; margin-top:8px;">Courier Partner: <strong>${courier}</strong></div>
         <div style="font-size:13px; margin-top:4px;">Airway Bill / Tracking #: <strong style="color:#FFFFFF;">${trackingNumber}</strong></div>
         <div style="font-size:13px; margin-top:4px;">Estimated Arrival: <strong style="color:#C49A45;">${estDate}</strong></div>
-        <div style="font-size:13px; margin-top:4px;">Current Hub: ${order.tracking?.currentLocation || 'Express Transit Facility, Mumbai'}</div>
+        <div style="font-size:13px; margin-top:4px;">Current Hub: ${order.tracking?.currentLocation || 'Delhivery Hub, Mumbai'}</div>
+        <div style="font-size:13px; margin-top:8px; padding-top:8px; border-top:1px solid #332F2A;">
+          Tracking Portal: <a href="https://www.delhivery.com/" target="_blank" style="color:#C49A45; font-weight:bold; text-decoration:underline;">https://www.delhivery.com/</a>
+        </div>
+        <div style="margin-top:10px; padding:10px; background:rgba(196,154,69,0.08); border-radius:4px; font-size:12px; color:#D1CEC7; line-height:1.5;">
+          <strong style="color:#C49A45;">How to track:</strong> Open <a href="https://www.delhivery.com/" target="_blank" style="color:#C49A45;">https://www.delhivery.com/</a> and enter your tracking number <strong style="color:#FFFFFF;">${trackingNumber}</strong> in the search box.
+        </div>
       </div>
 
       <p style="font-size:13px; color:#9E9B95;">
@@ -424,26 +430,26 @@ export const emailService = {
       subtitle: `Your fragrances are traveling via ${courier}`,
       contentHtml,
       orderId,
-      actionText: 'Track Delivery Live',
-      actionUrl: trackingUrl.startsWith('http') ? trackingUrl : `${process.env.CLIENT_URL || 'http://localhost:3000'}/track/${orderId.replace('#', '')}`
+      actionText: 'Track on Delhivery.com',
+      actionUrl: 'https://www.delhivery.com/'
     });
 
     return sendEmail({
       to: recipientEmail,
-      subject: `Your Fragrance Has Shipped: ${orderId} | ROVE & AMBER`,
+      subject: `Your Fragrance Has Dispatched: ${orderId} | Delhivery AWB: ${trackingNumber}`,
       html
     });
   },
 
   // 4. Delivery Completed Notification Email
   sendDeliveryNotification: async (order) => {
-    const recipientEmail = order.email || (order.user_id && order.user_id.email);
+    const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;
     if (!recipientEmail) return { success: false, message: 'Customer email missing.' };
 
     const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued User'},</p>
+      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
       <p>Your package for order <strong>${orderId}</strong> has been safely delivered.</p>
 
       <div class="card" style="border-left: 3px solid #1E7E34;">
@@ -492,7 +498,7 @@ export const emailService = {
     }
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued User'},</p>
+      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
       <p>Please find attached your official tax invoice <strong>${invNumber}</strong> for order <strong>${orderId}</strong>.</p>
 
       <div class="card">
@@ -536,13 +542,13 @@ export const emailService = {
 
   // 6. Generic Transactional Status Update
   sendTransactionalUpdate: async (order, { subject, stage, message }) => {
-    const recipientEmail = order.email || (order.user_id && order.user_id.email);
+    const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;
     if (!recipientEmail) return { success: false, message: 'Customer email missing.' };
 
     const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued User'},</p>
+      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
       <p>We are writing to inform you of an update regarding your order <strong>${orderId}</strong>.</p>
 
       <div class="card" style="border-left: 3px solid #C49A45;">

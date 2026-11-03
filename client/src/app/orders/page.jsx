@@ -496,7 +496,7 @@ export default function MyOrdersPage() {
                           <span>
                             {currentStep === 0 && 'Your bespoke fragrance order has been logged into the maison atelier queue.'}
                             {currentStep === 1 && 'Our perfumers are blending, bottling, and preparing the gold-embossed presentation coffret.'}
-                            {currentStep === 2 && `Consignment is in transit with ${order.tracking?.courierName || 'Maison White-Glove Logistics'}.`}
+                            {currentStep === 2 && `Consignment is in transit with ${order.tracking?.courierName || 'Delhivery'}.`}
                             {currentStep === 3 && 'Order delivered successfully. Enjoy your signature olfactory impression.'}
                           </span>
                         </div>
@@ -510,6 +510,53 @@ export default function MyOrdersPage() {
                           <ChevronRight size={13} />
                         </button>
                       </div>
+
+                      {/* Prominent Delhivery Consignment Tracking Box when Track ID is available */}
+                      {order.tracking?.trackingNumber && (
+                        <div className="mt-3 p-3.5 rounded-2xl bg-[#1C1714] text-[#FBF9F5] border border-[#3A2D25] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#ECC880]/15 flex items-center justify-center shrink-0 border border-[#ECC880]/20">
+                              <Truck size={17} className="text-[#ECC880]" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] uppercase font-bold tracking-widest text-[#ECC880]">
+                                  {order.tracking?.courierName || 'Delhivery'} Express Delivery
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-xs text-[#A89F91]">Track ID:</span>
+                                <span className="font-mono text-sm font-bold text-white tracking-wider">
+                                  {order.tracking.trackingNumber}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard?.writeText(order.tracking.trackingNumber);
+                                    message.success('Delhivery Track ID copied');
+                                  }}
+                                  title="Copy Tracking ID"
+                                  className="text-gray-400 hover:text-white p-1 rounded transition-colors cursor-pointer"
+                                >
+                                  <Copy size={13} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <a
+                              href="https://www.delhivery.com/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#ECC880] hover:bg-[#DEB368] text-[#1C1714] transition-all cursor-pointer shadow-xs"
+                            >
+                              <span>Track on Delhivery.com</span>
+                              <ExternalLink size={12} />
+                            </a>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -721,18 +768,54 @@ export default function MyOrdersPage() {
             </div>
 
             {/* Courier Meta */}
-            <div className="bg-[#FAF8F5] p-4 rounded-2xl border border-[#ECE5D8] grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <p className="text-[#8C7A6B] text-[10px] uppercase tracking-wider">Courier Partner</p>
-                <p className="font-bold text-[#1C1714] mt-0.5">
-                  {activeTrackingOrder.tracking?.courierName || 'Maison White-Glove Logistics'}
-                </p>
+            <div className="bg-[#FAF8F5] p-4 rounded-2xl border border-[#ECE5D8] space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[#8C7A6B] text-[10px] uppercase tracking-wider">Courier Partner</p>
+                  <p className="font-bold text-[#1C1714] mt-0.5">
+                    {activeTrackingOrder.tracking?.courierName || 'Delhivery'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[#8C7A6B] text-[10px] uppercase tracking-wider">Delhivery Track ID / AWB</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="font-mono font-bold text-[#1C1714]">
+                      {activeTrackingOrder.tracking?.trackingNumber || 'Available upon dispatch'}
+                    </span>
+                    {activeTrackingOrder.tracking?.trackingNumber && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(activeTrackingOrder.tracking.trackingNumber);
+                          message.success('Delhivery Track ID copied');
+                        }}
+                        className="text-gray-400 hover:text-black cursor-pointer p-0.5"
+                        title="Copy Tracking ID"
+                      >
+                        <Copy size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-[#8C7A6B] text-[10px] uppercase tracking-wider">Tracking Waybill #</p>
-                <p className="font-mono font-bold text-[#1C1714] mt-0.5">
-                  {activeTrackingOrder.tracking?.trackingNumber || `RW-${Date.now().toString().slice(-8)}`}
-                </p>
+
+              {/* Delhivery Live Link Card */}
+              <div className="pt-3 border-t border-[#ECE5D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-3 rounded-xl">
+                <div>
+                  <p className="text-[11px] font-bold text-[#1C1714]">Live Delhivery Tracking</p>
+                  <p className="text-[10px] text-[#8C7A6B]">
+                    Visit <strong className="text-[#1C1714]">https://www.delhivery.com/</strong> and enter this Track ID to monitor transit milestones.
+                  </p>
+                </div>
+                <a
+                  href="https://www.delhivery.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1C1714] text-[#ECC880] text-xs font-semibold hover:bg-black transition-colors shrink-0 cursor-pointer"
+                >
+                  <span>Open Delhivery</span>
+                  <ExternalLink size={12} />
+                </a>
               </div>
             </div>
 

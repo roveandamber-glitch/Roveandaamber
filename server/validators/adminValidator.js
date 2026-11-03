@@ -202,6 +202,7 @@ export const validateOrderStatusUpdate = (req, res, next) => {
     'Pending',
     'Processing',
     'Confirmed',
+    'Shipped',
         'Dispatch',
     'Dispatched',
     'Delivered',

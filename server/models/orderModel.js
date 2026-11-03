@@ -216,9 +216,9 @@ const orderSchema = new mongoose.Schema(
     },
     // 4.2 Delivery & Courier Tracking Details
     tracking: {
-      courierName: { type: String, default: 'BlueDart Luxury Express' },
+      courierName: { type: String, default: 'Delhivery' },
       trackingNumber: { type: String, default: '' },
-      trackingUrl: { type: String, default: '' },
+      trackingUrl: { type: String, default: 'https://www.delhivery.com/' },
       estimatedDelivery: { type: Date, default: null },
       dispatchedAt: { type: Date, default: null },
       deliveredAt: { type: Date, default: null },

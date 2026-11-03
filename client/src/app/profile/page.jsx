@@ -16,7 +16,9 @@ import {
   Sparkles, 
   Save, 
   KeyRound, 
-  ExternalLink, 
+  ExternalLink,
+  Copy,
+  Truck, 
   ChevronRight, 
   CheckCircle2, 
   AlertCircle, 
@@ -722,6 +724,36 @@ const ProfilePage = () => {
                           <p className="text-sm font-bold text-black font-sans">
                             Total: ₹{(order.total_amount || 0).toLocaleString('en-IN')}
                           </p>
+                          {order.tracking?.trackingNumber && (
+                            <div className="pt-2 flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] font-bold text-[#8C6228] bg-[#F9F4EB] px-2 py-0.5 rounded-md border border-[#E8DEC8]">
+                                {order.tracking.courierName || 'Delhivery'}:
+                              </span>
+                              <span className="font-mono text-xs font-bold text-black bg-stone-100 px-2 py-0.5 rounded-md">
+                                {order.tracking.trackingNumber}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard?.writeText(order.tracking.trackingNumber);
+                                  message.success('Delhivery Track ID copied');
+                                }}
+                                className="text-gray-400 hover:text-black text-[11px] p-0.5 cursor-pointer"
+                                title="Copy Track ID"
+                              >
+                                <Copy size={12} />
+                              </button>
+                              <a
+                                href="https://www.delhivery.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-[#8C6228] hover:underline flex items-center gap-1 font-semibold ml-1"
+                              >
+                                <span>Track on delhivery.com</span>
+                                <ExternalLink size={10} />
+                              </a>
+                            </div>
+                          )}
                         </div>
 
                         <Link href="/orders">

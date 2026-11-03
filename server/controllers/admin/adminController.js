@@ -1183,7 +1183,8 @@ export const updateOrderStatus = async (req, res) => {
       trackingUrl,
       currentLocation,
       estimatedDelivery,
-      statusNote
+      statusNote,
+      notifyPatron
     } = req.body;
 
     let order = null;
@@ -1199,6 +1200,7 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     const previousStatus = order.status;
+    const previousTrackingNumber = order.tracking?.trackingNumber || '';
 
     if (status) {
       order.status = status;
@@ -1212,9 +1214,14 @@ export const updateOrderStatus = async (req, res) => {
       order.tracking = { history: [] };
     }
 
-    if (courierName) order.tracking.courierName = courierName;
-    if (trackingNumber) order.tracking.trackingNumber = trackingNumber;
-    if (trackingUrl) order.tracking.trackingUrl = trackingUrl;
+    order.tracking.courierName = courierName || order.tracking.courierName || 'Delhivery';
+    if (order.tracking.courierName === 'BlueDart Luxury Express') {
+      order.tracking.courierName = 'Delhivery';
+    }
+    order.tracking.trackingUrl = trackingUrl || order.tracking.trackingUrl || 'https://www.delhivery.com/';
+    if (trackingNumber !== undefined && trackingNumber !== null) {
+      order.tracking.trackingNumber = String(trackingNumber).trim();
+    }
     if (currentLocation) order.tracking.currentLocation = currentLocation;
     if (estimatedDelivery) order.tracking.estimatedDelivery = new Date(estimatedDelivery);
 
@@ -1225,19 +1232,24 @@ export const updateOrderStatus = async (req, res) => {
       order.tracking.deliveredAt = new Date();
     }
 
+    const currentTrackingNumber = order.tracking.trackingNumber || '';
+
     // Append history checkpoint
     order.tracking.history.push({
       stage: status || previousStatus,
       title: `Order ${status || previousStatus}`,
-      description: statusNote || `Status updated to ${status || previousStatus} by atelier fulfillment.`,
-      location: currentLocation || order.tracking.currentLocation || 'Maison Fulfillment Center, Mumbai',
+      description: statusNote || (currentTrackingNumber ? `Dispatched via Delhivery (Track ID: ${currentTrackingNumber}). Track live at https://www.delhivery.com/` : `Status updated to ${status || previousStatus} by atelier fulfillment.`),
+      location: currentLocation || order.tracking.currentLocation || 'Delhivery Hub, Mumbai',
       timestamp: new Date()
     });
 
     await order.save();
 
-    // Trigger automated email notifications on major fulfillment milestones
-    if ((status === 'Shipped' || status === 'Dispatch' || status === 'Dispatched') && previousStatus !== 'Shipped' && previousStatus !== 'Dispatch' && previousStatus !== 'Dispatched') {
+    // Trigger automated email notifications on shipping/dispatch milestones or when tracking number is updated
+    const isNewTrackingNumber = currentTrackingNumber && currentTrackingNumber !== previousTrackingNumber;
+    const isDispatchedStatus = ['Shipped', 'Dispatch', 'Dispatched'].includes(status) && !['Shipped', 'Dispatch', 'Dispatched'].includes(previousStatus);
+
+    if (notifyPatron || isNewTrackingNumber || isDispatchedStatus) {
       emailService.sendShippingNotification(order).catch(err => {
         console.warn('⚠️ Auto shipping email dispatch failed:', err.message);
       });
@@ -1249,7 +1261,7 @@ export const updateOrderStatus = async (req, res) => {
 
     return res.json({
       success: true,
-      message: `Order status updated to ${order.status} successfully.`,
+      message: `Order status updated to ${order.status} successfully.${currentTrackingNumber ? ` Delhivery Track ID: ${currentTrackingNumber}` : ''}`,
       data: order
     });
   } catch (error) {
