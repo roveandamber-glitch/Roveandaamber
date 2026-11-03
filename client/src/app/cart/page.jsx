@@ -68,7 +68,6 @@ export default function CartPage() {
   const [rewardDiscountAmount, setRewardDiscountAmount] = useState(0);
   const [availableRewardPoints, setAvailableRewardPoints] = useState(0);
   const [rewardRate, setRewardRate] = useState(100);
-  const [rewardPointsInput, setRewardPointsInput] = useState('');
   const [rewardLoading, setRewardLoading] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
@@ -260,30 +259,37 @@ export default function CartPage() {
     }
   };
 
-  // Patron Privilege Points Apply & Remove handlers
-  const handleApplyRewards = async () => {
-    const rawVal = rewardPointsInput ? parseInt(rewardPointsInput, 10) : availableRewardPoints;
-    if (!rawVal || rawVal <= 0) {
-      message.warning('Please enter points to redeem.');
-      return;
-    }
-    if (rawVal > availableRewardPoints) {
-      message.error(`You have only ${availableRewardPoints.toLocaleString()} points available.`);
-      return;
-    }
-    setRewardLoading(true);
-    try {
-      await cartService.applyRewards(rawVal);
-      message.success(`${rawVal.toLocaleString()} loyalty privilege points applied successfully!`);
-      setRewardPointsInput('');
-      loadCart();
-    } catch (err) {
-      message.error(err.message || 'Failed to apply reward points.');
-    } finally {
-      setRewardLoading(false);
+  // Patron Privilege Points Toggle handler
+  const handleToggleRewards = async () => {
+    if (rewardLoading) return;
+    if (rewardPointsUsed > 0) {
+      await handleRemoveRewards();
+    } else {
+      if (availableRewardPoints <= 0) {
+        message.info('You have 0 privilege points available. Earn points on this order!');
+        return;
+      }
+      const maxPtsBySubtotal = Math.floor(subtotal / (rewardRate / 100));
+      const pointsToApply = Math.min(availableRewardPoints, maxPtsBySubtotal);
+      if (pointsToApply <= 0) {
+        message.warning('Subtotal is too low to redeem privilege points.');
+        return;
+      }
+
+      setRewardLoading(true);
+      try {
+        await cartService.applyRewards(pointsToApply);
+        message.success(`${pointsToApply.toLocaleString()} privilege points applied! (Saved ₹${Math.floor(pointsToApply * (rewardRate / 100)).toLocaleString('en-IN')})`);
+        loadCart();
+      } catch (err) {
+        message.error(err.message || 'Failed to apply reward points.');
+      } finally {
+        setRewardLoading(false);
+      }
     }
   };
 
+  // Patron Privilege Points Remove handler
   const handleRemoveRewards = async () => {
     setRewardLoading(true);
     try {
@@ -671,11 +677,16 @@ export default function CartPage() {
             </div>
 
             {/* RIGHT COLUMN: STICKY ORDER SUMMARY (4 Cols) */}
-            <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-28">
-              <div className="bg-white rounded-2xl p-6 border border-[#E8DFC9] shadow-xs space-y-5">
-                <h3 className="text-lg font-serif font-bold text-black border-b border-[#ECE7DE] pb-3">
-                  Order Summary
-                </h3>
+            <div className="lg:col-span-4 lg:sticky lg:top-28">
+              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DFC9] shadow-sm space-y-5">
+                <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-4">
+                  <h3 className="text-xl font-serif font-bold text-black tracking-tight">
+                    Order Summary
+                  </h3>
+                  <span className="text-[11px] font-semibold text-[#8C6D1F] bg-[#FAF3E0] px-3 py-1 rounded-full border border-[#E8DEC8]">
+                    {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
+                  </span>
+                </div>
 
                 <div className="space-y-3 text-xs">
                   <div className="flex justify-between text-gray-600">
@@ -694,7 +705,7 @@ export default function CartPage() {
                   </div>
 
                   {discountAmount > 0 && appliedCoupon && (
-                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
+                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-3.5 py-2.5 rounded-xl border border-emerald-200">
                       <div className="flex items-center gap-1.5">
                         <Tag size={13} className="text-emerald-700" />
                         <span className="font-bold uppercase tracking-wider text-[11px]">
@@ -716,11 +727,11 @@ export default function CartPage() {
                   )}
 
                   {rewardDiscountAmount > 0 && (
-                    <div className="flex justify-between items-center text-[#8C6D1F] bg-[#FAF3E0] px-3 py-2 rounded-xl border border-[#E0D0A5]">
+                    <div className="flex justify-between items-center text-[#8C6D1F] bg-[#FAF3E0] px-3.5 py-2.5 rounded-xl border border-[#E0D0A5]">
                       <div className="flex items-center gap-1.5">
                         <Sparkles size={13} className="text-[#B8860B]" />
                         <span className="font-bold text-[11px] tracking-wide">
-                          Privilege Points ({rewardPointsUsed} pts)
+                          Privilege Points ({rewardPointsUsed.toLocaleString()} pts)
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -739,8 +750,8 @@ export default function CartPage() {
                   )}
 
                   <div className="flex justify-between items-baseline text-sm font-bold text-black pt-3 border-t border-[#ECE7DE] font-serif">
-                    <span>Estimated Total</span>
-                    <span className="font-sans text-xl font-bold text-black">
+                    <span className="text-base text-gray-800">Estimated Total</span>
+                    <span className="font-sans text-2xl font-bold text-black tracking-tight">
                       ₹{finalTotal.toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -748,18 +759,18 @@ export default function CartPage() {
 
                 {/* Promo Code Input Form or Active Coupon Card */}
                 {appliedCoupon ? (
-                  <div className="pt-1">
-                    <label className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">
+                  <div className="pt-2">
+                    <label className="text-[10px] uppercase font-bold tracking-[0.18em] text-[#8C7A6B] block mb-1.5">
                       Applied Promotional Voucher
                     </label>
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF6ED] border border-[#E8DFC9]">
+                    <div className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF6ED] border border-[#E8DFC9]">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-[#8C6D1F]/15 text-[#8C6D1F] flex items-center justify-center font-bold text-xs">
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
                           <Check size={14} />
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-bold text-xs text-[#8C6D1F] tracking-wider uppercase">
+                            <span className="font-mono font-bold text-xs text-[#8C6D1F] uppercase tracking-wider">
                               {appliedCoupon.code}
                             </span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
@@ -767,7 +778,7 @@ export default function CartPage() {
                             </span>
                           </div>
                           <p className="text-[10px] text-gray-500 m-0">
-                            {appliedCoupon.description || 'Promotional coupon discount activated'}
+                            {appliedCoupon.description || 'Promotional coupon active'}
                           </p>
                         </div>
                       </div>
@@ -775,30 +786,30 @@ export default function CartPage() {
                         type="button"
                         onClick={handleRemoveCoupon}
                         disabled={promoLoading}
-                        className="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline px-2 py-1 cursor-pointer"
+                        className="text-xs font-bold text-red-600 hover:text-red-700 hover:underline px-2 py-1 cursor-pointer"
                       >
                         Remove
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleApplyPromo} className="pt-1">
-                    <label className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">
+                  <div className="pt-2">
+                    <label className="text-[10px] uppercase font-bold tracking-[0.18em] text-[#8C7A6B] block mb-1.5">
                       Promotional Voucher / Patron Code
                     </label>
-                    <div className="flex gap-2">
+                    <form onSubmit={handleApplyPromo} className="flex gap-2">
                       <input
                         type="text"
                         placeholder="e.g. ROVE101"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
                         disabled={promoLoading}
-                        className="flex-1 px-3 py-2 rounded-xl text-xs bg-[#FAF9F7] border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-gray-400 disabled:opacity-50"
+                        className="flex-1 px-3.5 py-2.5 rounded-xl text-xs bg-[#FAF9F7] border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-gray-400 font-mono"
                       />
                       <button
                         type="submit"
                         disabled={promoLoading || !promoCode.trim()}
-                        className="bg-black hover:bg-[#262626] text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 min-w-[70px]"
+                        className="bg-[#1C1714] hover:bg-black text-[#ECC880] px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center shrink-0 shadow-xs"
                       >
                         {promoLoading ? (
                           <Loader2 size={13} className="animate-spin" />
@@ -806,90 +817,82 @@ export default function CartPage() {
                           'Apply'
                         )}
                       </button>
-                    </div>
-                  </form>
+                    </form>
+                  </div>
                 )}
 
-                {/* Patron Privilege Points Redemption Card */}
-                <div className="pt-2 border-t border-[#ECE7DE]">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <Coins size={14} className="text-[#B8860B]" />
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
-                        Patron Privilege Points
-                      </span>
-                    </div>
-                    <span className="text-[11px] font-mono font-bold text-[#8C6D1F]">
-                      {availableRewardPoints.toLocaleString()} pts
-                    </span>
-                  </div>
-
-                  {rewardPointsUsed > 0 ? (
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF5E8] border border-[#E0D0A5]">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-[#B8860B]/15 text-[#8C6D1F] flex items-center justify-center font-bold text-xs shrink-0">
-                          <Sparkles size={13} />
+                {/* Patron Privilege Points with Clean Toggle Switch */}
+                <div className="pt-3 border-t border-[#ECE7DE]">
+                  <div className={`p-3.5 rounded-2xl border transition-all ${
+                    rewardPointsUsed > 0 
+                      ? 'bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border-[#D4AF37]/50 shadow-xs' 
+                      : 'bg-[#FAF9F7] border-[#E8DFC9]'
+                  }`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                          rewardPointsUsed > 0 
+                            ? 'bg-[#B8860B] text-white border-[#8C6D1F]' 
+                            : 'bg-white text-[#B8860B] border-[#E0D8CA]'
+                        }`}>
+                          <Coins size={17} />
                         </div>
-                        <div>
-                          <span className="text-xs font-bold text-[#1A1A1A] block">
-                            {rewardPointsUsed.toLocaleString()} Points Applied (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
-                          </span>
-                          <span className="text-[10px] text-gray-500 block">
-                            Remaining: {Math.max(0, availableRewardPoints - rewardPointsUsed).toLocaleString()} pts
-                          </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-[#1A1A1A] truncate">
+                              Patron Privilege Points
+                            </span>
+                            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                              rewardPointsUsed > 0 
+                                ? 'bg-[#B8860B] text-white' 
+                                : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
+                            }`}>
+                              {availableRewardPoints.toLocaleString()} pts
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#7A6B5D] mt-0.5 font-light truncate">
+                            {rewardPointsUsed > 0 ? (
+                              <span className="text-emerald-700 font-semibold">
+                                ✓ {rewardPointsUsed.toLocaleString()} pts applied (Saving ₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                              </span>
+                            ) : availableRewardPoints > 0 ? (
+                              <span>
+                                Toggle to redeem {availableRewardPoints.toLocaleString()} pts (Save ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})
+                              </span>
+                            ) : (
+                              <span>Earn points on this acquisition for future orders</span>
+                            )}
+                          </p>
                         </div>
                       </div>
+
+                      {/* Toggle Switch */}
                       <button
                         type="button"
-                        onClick={handleRemoveRewards}
-                        disabled={rewardLoading}
-                        className="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline px-2 py-1 cursor-pointer disabled:opacity-50"
+                        role="switch"
+                        aria-checked={rewardPointsUsed > 0}
+                        onClick={handleToggleRewards}
+                        disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+                          rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2]'
+                        }`}
+                        title={rewardPointsUsed > 0 ? 'Click to remove points' : 'Click to apply privilege points'}
                       >
-                        Remove
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            rewardPointsUsed > 0 ? 'translate-x-5 bg-[#ECC880]' : 'translate-x-0 bg-white'
+                          }`}
+                        />
                       </button>
                     </div>
-                  ) : (
-                    <div className="p-3 rounded-xl bg-[#FAF9F7] border border-[#E0D8CA] space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[11px] text-gray-600">
-                          Available: <strong className="text-black font-semibold">{availableRewardPoints.toLocaleString()} pts</strong> {availableRewardPoints > 0 ? `(Worth ₹${Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})` : ''}
-                        </span>
-                      </div>
-                      {availableRewardPoints > 0 ? (
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            min={1}
-                            max={Math.min(availableRewardPoints, Math.floor(subtotal / (rewardRate / 100)))}
-                            placeholder={`Points to redeem (e.g. ${Math.min(availableRewardPoints, 500)})`}
-                            value={rewardPointsInput}
-                            onChange={(e) => setRewardPointsInput(e.target.value)}
-                            disabled={rewardLoading}
-                            className="flex-1 px-3 py-2 rounded-xl text-xs bg-white border border-[#D5C9B8] focus:outline-none focus:border-[#B8860B] text-black placeholder-gray-400 font-mono disabled:opacity-50"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleApplyRewards}
-                            disabled={rewardLoading || availableRewardPoints <= 0}
-                            className="px-4 py-2 bg-gradient-to-r from-[#D4A64A] to-[#B38728] hover:from-[#C89B3F] hover:to-[#A3791F] text-[#1B100A] text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                          >
-                            {rewardLoading ? 'Applying...' : 'Apply Points'}
-                          </button>
-                        </div>
-                      ) : (
-                        <p className="text-[10px] text-gray-500 m-0">
-                          Earn points on this acquisition to redeem on future boutique fragrance collections.
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Primary Proceed to Checkout CTA */}
                 <button
                   type="button"
                   onClick={handleStartCheckout}
-                  className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3.5 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-amber-950/15 transition-all cursor-pointer group"
+                  className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3.5 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-md shadow-amber-950/10 transition-all cursor-pointer group"
                 >
                   <Lock size={13} strokeWidth={2.2} />
                   <span>Proceed to Checkout</span>
@@ -897,14 +900,21 @@ export default function CartPage() {
                 </button>
 
                 {/* Trust and Payment Security Badges */}
-                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#ECE7DE] text-[10px] text-gray-500 text-center">
-                  <div className="flex items-center justify-center gap-1.5 p-1.5 rounded-lg bg-[#FAF9F7]">
-                    <Truck size={12} className="text-[#B8860B]" />
-                    <span>Insured Transit</span>
+                <div className="pt-3 border-t border-[#ECE7DE] grid grid-cols-3 gap-2 text-[10px] text-gray-500 text-center">
+                  <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7] border border-[#F0EAE0]">
+                    <ShieldCheck size={14} className="text-[#B8860B] mb-1" />
+                    <span className="font-semibold text-gray-700 text-[10px]">100% Authentic</span>
+                    <span className="text-[9px] text-gray-400">Atelier Perfume</span>
                   </div>
-                  <div className="flex items-center justify-center gap-1.5 p-1.5 rounded-lg bg-[#FAF9F7]">
-                    <ShieldCheck size={12} className="text-[#B8860B]" />
-                    <span>Atelier Guarantee</span>
+                  <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7] border border-[#F0EAE0]">
+                    <Sparkles size={14} className="text-[#B8860B] mb-1" />
+                    <span className="font-semibold text-gray-700 text-[10px]">2ml Guarantee</span>
+                    <span className="text-[9px] text-gray-400">Complimentary</span>
+                  </div>
+                  <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7] border border-[#F0EAE0]">
+                    <Lock size={14} className="text-[#B8860B] mb-1" />
+                    <span className="font-semibold text-gray-700 text-[10px]">256-Bit SSL</span>
+                    <span className="text-[9px] text-gray-400">Encrypted</span>
                   </div>
                 </div>
               </div>
