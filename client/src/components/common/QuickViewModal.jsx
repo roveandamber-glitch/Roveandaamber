@@ -13,7 +13,25 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState('50ml');
   const [quantity, setQuantity] = useState(1);
+  const [isInCart, setIsInCart] = useState(false);
   const [ordering, setOrdering] = useState(false);
+
+  // Check if item is in cart
+  useEffect(() => {
+    const prodId = product?._id || product?.id;
+    if (!prodId) return;
+    const checkCartState = () => {
+      setIsInCart(cartService.isInCart(prodId));
+    };
+
+    checkCartState();
+    window.addEventListener('cartChange', checkCartState);
+    window.addEventListener('authChange', checkCartState);
+    return () => {
+      window.removeEventListener('cartChange', checkCartState);
+      window.removeEventListener('authChange', checkCartState);
+    };
+  }, [product]);
 
   useEffect(() => {
     if (product) {
@@ -248,15 +266,29 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    disabled={currentSizeStock <= 0 || quantity <= 0}
-                    className="w-full bg-[#1A1A1A] text-white hover:bg-black disabled:bg-gray-300 py-3 px-4 rounded-xl text-xs uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-                  >
-                    <ShoppingBag size={14} />
-                    <span>Add to Cart</span>
-                  </button>
+                  {isInCart ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        router.push('/cart');
+                      }}
+                      className="w-full bg-[#18110D] text-[#ECC880] hover:bg-black py-3 px-4 rounded-xl text-xs uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <ShoppingBag size={14} className="text-[#ECC880]" />
+                      <span>View Cart</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleAddToCart}
+                      disabled={currentSizeStock <= 0 || quantity <= 0}
+                      className="w-full bg-[#1A1A1A] text-white hover:bg-black disabled:bg-gray-300 py-3 px-4 rounded-xl text-xs uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <ShoppingBag size={14} />
+                      <span>Add to Cart</span>
+                    </button>
+                  )}
 
                   <button
                     type="button"

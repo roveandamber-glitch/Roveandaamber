@@ -47,6 +47,7 @@ const ProductDetails = () => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [includeSampleBottle, setIncludeSampleBottle] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isInCart, setIsInCart] = useState(false);
 
   // Related Products State
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -71,6 +72,23 @@ const ProductDetails = () => {
       return () => window.removeEventListener('hashchange', checkHash);
     }
   }, [id]);
+
+  // Track if this item or size is in cart
+  useEffect(() => {
+    const prodId = product?._id || product?.id || id;
+    if (!prodId) return;
+    const checkCartState = () => {
+      setIsInCart(cartService.isInCart(prodId));
+    };
+
+    checkCartState();
+    window.addEventListener('cartChange', checkCartState);
+    window.addEventListener('authChange', checkCartState);
+    return () => {
+      window.removeEventListener('cartChange', checkCartState);
+      window.removeEventListener('authChange', checkCartState);
+    };
+  }, [product, id, selectedSize]);
 
   // Fetch product strictly by ID from live backend database
   const fetchProductData = useCallback(async () => {
@@ -327,6 +345,7 @@ const ProductDetails = () => {
         });
       }
 
+      setIsInCart(true);
       message.success(`Added ${product.name}${selectedSize ? ` (${selectedSize})` : ''}${hasGuaranteeSample ? ' with 2 ml sample guarantee' : ''} to cart`);
 
       if (redirectToCart) {
@@ -684,15 +703,26 @@ const ProductDetails = () => {
 
             {/* Action Buttons: Add to Cart and Buy Now */}
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                onClick={() => handleAddToCart(false)}
-                disabled={isOutOfStock || isAddingToCart}
-                className="flex-1 bg-black hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white py-3.5 px-5 rounded-full flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer font-serif uppercase tracking-widest text-xs"
-              >
-                <ShoppingBag size={14} />
-                <span>{isAddingToCart ? 'Adding to Cart...' : 'Add to Cart'}</span>
-              </button>
+              {isInCart ? (
+                <button
+                  type="button"
+                  onClick={() => router.push('/cart')}
+                  className="flex-1 bg-[#18110D] hover:bg-black text-[#ECC880] border border-[#18110D] py-3.5 px-5 rounded-full flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer font-serif uppercase tracking-widest text-xs"
+                >
+                  <ShoppingBag size={14} className="text-[#ECC880]" />
+                  <span>View Cart</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleAddToCart(false)}
+                  disabled={isOutOfStock || isAddingToCart}
+                  className="flex-1 bg-black hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white py-3.5 px-5 rounded-full flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer font-serif uppercase tracking-widest text-xs"
+                >
+                  <ShoppingBag size={14} />
+                  <span>{isAddingToCart ? 'Adding to Cart...' : 'Add to Cart'}</span>
+                </button>
+              )}
 
               <button
                 type="button"

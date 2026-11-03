@@ -120,6 +120,30 @@ export const cartService = {
   },
 
   /**
+   * Check if a product is currently in the database cart
+   */
+  isInCart: (productIdOrId, size) => {
+    if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+      return false;
+    }
+    if (typeof window !== 'undefined' && !hasInitialFetch && !isFetching) {
+      cartService.fetchCart();
+    }
+    if (!productIdOrId) return false;
+    const target = String(productIdOrId).trim();
+    return inMemoryCart.some((item) => {
+      const pId = String(item.productId?._id || item.productId || item.id || '').trim();
+      const iId = String(item.id || item.itemId || '').trim();
+      const idMatch = pId === target || iId === target;
+      if (!idMatch) return false;
+      if (size) {
+        return (item.size || '').toLowerCase() === String(size).toLowerCase();
+      }
+      return true;
+    });
+  },
+
+  /**
    * Add a product flacon to the database cart
    */
   addToCart: async (item) => {
@@ -276,6 +300,9 @@ export const cartService = {
   getCartCount: () => {
     if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
       return 0;
+    }
+    if (typeof window !== 'undefined' && !hasInitialFetch && !isFetching) {
+      cartService.fetchCart();
     }
     return inMemoryCart.reduce((acc, item) => acc + (parseInt(item.quantity, 10) || 1), 0);
   },

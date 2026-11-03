@@ -22,6 +22,7 @@ const FeaturedProducts = () => {
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState([]);
   const [addingId, setAddingId] = useState(null);
+  const [cartTick, setCartTick] = useState(0);
 
   useEffect(() => {
     try {
@@ -231,16 +232,31 @@ const FeaturedProducts = () => {
                 </div>
               </div>
 
-              {/* Add to Bag Button */}
-              <button
-                type="button"
-                onClick={(e) => handleAddToCart(e, product)}
-                disabled={addingId === prodId}
-                className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-[#1E120A] hover:bg-[#DEB368] text-white hover:text-[#1E120A] text-xs sm:text-sm font-medium tracking-wide flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md cursor-pointer group/btn"
-              >
-                <ShoppingBag size={14} strokeWidth={2} className="group-hover/btn:scale-110 transition-transform" />
-                <span>{addingId === prodId ? 'Adding to Bag...' : 'Add to Bag'}</span>
-              </button>
+              {/* Add to Bag or View Cart Button */}
+              {cartService.isInCart(prodId) ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push('/cart');
+                  }}
+                  className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-[#DEB368] hover:bg-[#c99f56] text-[#1E120A] text-xs sm:text-sm font-semibold tracking-wide flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md cursor-pointer group/btn"
+                >
+                  <ShoppingBag size={14} strokeWidth={2} />
+                  <span>View Cart</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => handleAddToCart(e, product)}
+                  disabled={addingId === prodId}
+                  className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-[#1E120A] hover:bg-[#DEB368] text-white hover:text-[#1E120A] text-xs sm:text-sm font-medium tracking-wide flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md cursor-pointer group/btn"
+                >
+                  <ShoppingBag size={14} strokeWidth={2} className="group-hover/btn:scale-110 transition-transform" />
+                  <span>{addingId === prodId ? 'Adding to Bag...' : 'Add to Bag'}</span>
+                </button>
+              )}
             </div>
           );
         })}

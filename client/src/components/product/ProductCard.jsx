@@ -12,6 +12,7 @@ const ProductCard = ({ product, onQuickView }) => {
   const router = useRouter();
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isInCart, setIsInCart] = useState(false);
 
   const productId = product ? (product._id || product.id) : null;
 
@@ -35,6 +36,22 @@ const ProductCard = ({ product, onQuickView }) => {
     checkWishlist();
     window.addEventListener('wishlistChange', checkWishlist);
     return () => window.removeEventListener('wishlistChange', checkWishlist);
+  }, [productId]);
+
+  // Check if item is in cart and listen to cartChange and authChange
+  useEffect(() => {
+    if (!productId) return;
+    const checkCartState = () => {
+      setIsInCart(cartService.isInCart(productId));
+    };
+
+    checkCartState();
+    window.addEventListener('cartChange', checkCartState);
+    window.addEventListener('authChange', checkCartState);
+    return () => {
+      window.removeEventListener('cartChange', checkCartState);
+      window.removeEventListener('authChange', checkCartState);
+    };
   }, [productId]);
 
   if (!product) return null;
@@ -107,6 +124,7 @@ const ProductCard = ({ product, onQuickView }) => {
         quantity: 1,
         maxStock: stock !== null ? stock : 99
       });
+      setIsInCart(true);
       message.success(`${displayName} added to your shopping bag`);
     } catch (err) {
       console.error('Add to cart error:', err);
@@ -215,6 +233,19 @@ const ProductCard = ({ product, onQuickView }) => {
             className="w-full py-2 sm:py-2.5 px-2 text-[10px] sm:text-xs font-serif uppercase tracking-widest text-gray-400 border border-gray-200 bg-gray-50 cursor-not-allowed rounded-none"
           >
             Out of Stock
+          </button>
+        ) : isInCart ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push('/cart');
+            }}
+            className="w-full py-2 sm:py-2.5 px-2 text-[10px] sm:text-xs font-serif uppercase tracking-widest text-[#ECC880] border border-[#18110D] bg-[#18110D] hover:bg-black hover:border-black active:scale-[0.98] transition-all cursor-pointer rounded-none flex items-center justify-center gap-1.5 shadow-xs"
+          >
+            <ShoppingBag size={13} className="text-[#ECC880]" />
+            <span>View Cart</span>
           </button>
         ) : (
           <button

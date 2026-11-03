@@ -89,6 +89,7 @@ export default function GiftsPage() {
   const [loadingGifts, setLoadingGifts] = useState(true);
   const [wishlist, setWishlist] = useState([]);
   const [addingId, setAddingId] = useState(null);
+  const [cartTick, setCartTick] = useState(0);
   const [isPersonalizeOpen, setIsPersonalizeOpen] = useState(false);
   const [customNote, setCustomNote] = useState({
     to: '',
@@ -402,16 +403,31 @@ export default function GiftsPage() {
                   </p>
                 </div>
 
-                {/* Add to Cart Button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleAddToCart(e, item)}
-                  disabled={addingId === itemId}
-                  className="w-full py-2 sm:py-2.5 px-3 rounded-xl bg-[#1E120A] hover:bg-[#DEB368] text-white hover:text-[#1E120A] text-xs font-medium tracking-wide flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 shadow-sm cursor-pointer"
-                >
-                  <ShoppingBag size={13} strokeWidth={2} />
-                  <span>{addingId === itemId ? 'Adding...' : 'Add to Cart'}</span>
-                </button>
+                {/* Add to Cart or View Cart Button */}
+                {cartService.isInCart(itemId) ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      router.push('/cart');
+                    }}
+                    className="w-full py-2 sm:py-2.5 px-3 rounded-xl bg-[#DEB368] hover:bg-[#c99f56] text-[#1E120A] text-xs font-semibold tracking-wide flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 shadow-sm cursor-pointer"
+                  >
+                    <ShoppingBag size={13} strokeWidth={2} />
+                    <span>View Cart</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => handleAddToCart(e, item)}
+                    disabled={addingId === itemId}
+                    className="w-full py-2 sm:py-2.5 px-3 rounded-xl bg-[#1E120A] hover:bg-[#DEB368] text-white hover:text-[#1E120A] text-xs font-medium tracking-wide flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 shadow-sm cursor-pointer"
+                  >
+                    <ShoppingBag size={13} strokeWidth={2} />
+                    <span>{addingId === itemId ? 'Adding...' : 'Add to Cart'}</span>
+                  </button>
+                )}
               </div>
             );
           })}
