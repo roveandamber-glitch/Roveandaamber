@@ -214,12 +214,6 @@ export default function AdminOrdersPage() {
       setUpdatingStatus(false);
     }
   };
-    } catch (err) {
-      message.error('Failed to update tracking details');
-    } finally {
-      setUpdatingStatus(false);
-    }
-  };
 
   // Dynamic Status Metrics
   const statusCounts = useMemo(() => {
