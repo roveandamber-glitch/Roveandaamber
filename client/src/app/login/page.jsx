@@ -68,11 +68,16 @@ const LoginContent = () => {
         setErrorMessage(res?.message || 'Google authentication failed.');
       }
     } catch (err) {
-      console.error('Google sign in error:', err);
+      console.warn('Google sign in error:', err?.message || err);
       const isBlocked = err.response?.status === 403 || err.response?.data?.isBlocked;
       if (isBlocked) {
         setIsAccountBlocked(true);
         setErrorMessage(err.response?.data?.message || 'Your account has been blocked. Please contact admin for support.');
+        return;
+      }
+      if (err.message === 'Network Error' || !err.response) {
+        setErrorMessage('Unable to reach the boutique authentication server. Please ensure the backend server is running on port 5000.');
+        message.error('Unable to reach backend server.');
         return;
       }
       setErrorMessage(err.response?.data?.message || 'Google authentication failed. Please try again.');
@@ -82,7 +87,7 @@ const LoginContent = () => {
   };
 
   const handleGoogleError = (error) => {
-    console.error('Google Login Error:', error);
+    console.warn('Google Login Error:', error?.message || error);
     setErrorMessage('Failed to connect to Google authentication.');
   };
 
