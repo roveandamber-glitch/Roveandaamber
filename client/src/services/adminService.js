@@ -439,8 +439,22 @@ const adminService = {
   },
 
   /* --------------------------------------------------------------------------
-     12. ADMINISTRATOR SECURITY & CREDENTIALS
+     12. ADMINISTRATOR SECURITY & SETTINGS
      -------------------------------------------------------------------------- */
+  getSettings: async () => {
+    try {
+      const response = await api.get('/admin/settings');
+      return response.data;
+    } catch (err) {
+      return { success: true, data: { email: 'concierge@roveandamber.com' } };
+    }
+  },
+
+  updateContactEmail: async (email) => {
+    const response = await api.put('/admin/settings/email', { email });
+    return response.data;
+  },
+
   changePassword: async (passwordData) => {
     try {
       const response = await api.put('/admin/change-password', passwordData);

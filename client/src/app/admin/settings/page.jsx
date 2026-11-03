@@ -1,46 +1,58 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, message } from 'antd';
 import { 
-  Form, 
-  Input, 
-  Button, 
-  InputNumber, 
-  Switch, 
-  Select, 
-  message, 
-  Divider,
-  Card 
-} from 'antd';
-import { 
-  Settings, 
-  Store, 
-  Truck, 
-  ShieldCheck, 
   Mail, 
-  Bell, 
-  Coins, 
-  Save,
-  Lock,
-  Key,
-  CheckCircle2
+  Lock, 
+  Key, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Sparkles 
 } from 'lucide-react';
 import adminService from '@/services/adminService';
 
-const { Option } = Select;
-
 export default function AdminSettingsPage() {
-  const [form] = Form.useForm();
+  const [emailForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
-  const [saving, setSaving] = useState(false);
+  const [emailSaving, setEmailSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleSaveSettings = async () => {
-    setSaving(true);
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
     try {
-      const values = await form.validateFields();
-      message.success('Store settings saved successfully');
-    } catch (err) {}
-    setSaving(false);
+      const res = await adminService.getSettings();
+      if (res?.data?.email || res?.data?.contactEmail) {
+        emailForm.setFieldsValue({
+          contactEmail: res.data.email || res.data.contactEmail
+        });
+      }
+    } catch (err) {
+      console.warn('Could not load admin settings:', err);
+      emailForm.setFieldsValue({
+        contactEmail: 'concierge@roveandamber.com'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateEmail = async (values) => {
+    setEmailSaving(true);
+    try {
+      const res = await adminService.updateContactEmail(values.contactEmail);
+      message.success(res?.message || 'Contact email updated successfully.');
+      emailForm.setFieldsValue({ contactEmail: values.contactEmail });
+    } catch (err) {
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to update contact email.';
+      message.error(errMsg);
+    } finally {
+      setEmailSaving(false);
+    }
   };
 
   const handleChangePassword = async (values) => {
@@ -67,177 +79,80 @@ export default function AdminSettingsPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl lg:text-3xl font-serif font-normal text-[#1B100A] tracking-tight">
-              Store Profile & Atelier Settings
+              Store & Security Settings
             </h1>
             <span className="text-xs bg-[#FAF7F2] text-[#1B100A] px-2.5 py-0.5 rounded-full font-medium border border-[#E8DFC8]">
-              Store Configuration
+              Atelier Control
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Configure contact information, free shipping rules, tax calculations, and administrator notifications.
+            Manage concierge contact email and secure master administrator credentials.
           </p>
         </div>
-
-        <button
-          onClick={handleSaveSettings}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all w-fit cursor-pointer"
-        >
-          <Save size={15} />
-          <span>Save Settings</span>
-        </button>
       </div>
 
-      <Form 
-        form={form} 
-        layout="vertical"
-        initialValues={{
-          storeName: 'ROVE & AMBER — Fine Fragrance',
-          supportEmail: 'concierge@roveandamber.com',
-          supportPhone: '+91 98765 43210',
-          currency: 'INR',
-          freeShippingThreshold: 4000,
-          standardShippingFee: 250,
-          enableGst: true,
-          gstPercentage: 18,
-          emailNewOrder: true,
-          emailLowStock: true
-        }}
-      >
-        {/* Section 1: Store Information */}
-        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#E8DFC8]">
-            <Store size={18} className="text-[#D4A64A]" />
-            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
-              Brand & Concierge Identity
-            </h3>
-          </div>
-
-          <Form.Item
-            name="storeName"
-            label={<span className="text-xs font-semibold text-gray-700">Official Brand Title</span>}
-            rules={[{ required: true }]}
-          >
-            <Input className="rounded-xl py-1.5 text-xs font-serif" />
-          </Form.Item>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Form.Item
-              name="supportEmail"
-              label={<span className="text-xs font-semibold text-gray-700">Concierge Email</span>}
-              rules={[{ required: true, type: 'email' }]}
-            >
-              <Input className="rounded-xl py-1.5 text-xs" />
-            </Form.Item>
-
-            <Form.Item
-              name="supportPhone"
-              label={<span className="text-xs font-semibold text-gray-700">User Support Hotline</span>}
-            >
-              <Input className="rounded-xl py-1.5 text-xs" />
-            </Form.Item>
-          </div>
-        </div>
-
-        {/* Section 2: Shipping & Delivery Rules */}
-        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#E8DFC8]">
-            <Truck size={18} className="text-[#D4A64A]" />
-            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
-              Shipping & Delivery Thresholds
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Form.Item
-              name="freeShippingThreshold"
-              label={<span className="text-xs font-semibold text-gray-700">Complimentary Shipping Threshold (₹)</span>}
-              tooltip="Orders equal or exceeding this total qualify for complimentary insured courier delivery."
-            >
-              <InputNumber min={0} max={50000} className="w-full rounded-xl py-1" />
-            </Form.Item>
-
-            <Form.Item
-              name="standardShippingFee"
-              label={<span className="text-xs font-semibold text-gray-700">Standard Express Courier Rate (₹)</span>}
-            >
-              <InputNumber min={0} max={2000} className="w-full rounded-xl py-1" />
-            </Form.Item>
-          </div>
-        </div>
-
-        {/* Section 3: Taxes & Currency */}
-        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#E8DFC8]">
-            <Coins size={18} className="text-[#D4A64A]" />
-            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
-              Currency & Tax Preferences
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Form.Item
-              name="currency"
-              label={<span className="text-xs font-semibold text-gray-700">Operating Currency</span>}
-            >
-              <Select className="text-xs">
-                <Option value="INR">Indian Rupee (₹ INR)</Option>
-                <Option value="AED">UAE Dirham (AED)</Option>
-                <Option value="USD">US Dollar ($ USD)</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="gstPercentage"
-              label={<span className="text-xs font-semibold text-gray-700">Fragrance GST Rate (%)</span>}
-            >
-              <InputNumber min={0} max={28} className="w-full rounded-xl py-1" />
-            </Form.Item>
-          </div>
-
-          <Form.Item
-            name="enableGst"
-            label={<span className="text-xs font-semibold text-gray-700">Display All Prices Inclusive of GST</span>}
-            valuePropName="checked"
-          >
-            <Switch className="!bg-[#D4A64A]" />
-          </Form.Item>
-        </div>
-
-        {/* Section 4: Email Notifications */}
-        <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 mt-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#E8DFC8]">
-            <Bell size={18} className="text-[#D4A64A]" />
-            <h3 className="font-serif font-medium text-sm text-[#1B100A]">
-              Administrator Notifications
-            </h3>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <div>
-                <div className="text-xs font-semibold text-gray-800">New Order Alerts</div>
-                <div className="text-[11px] text-gray-400">Receive email notification when an order is confirmed</div>
-              </div>
-              <Form.Item name="emailNewOrder" valuePropName="checked" noStyle>
-                <Switch className="!bg-[#D4A64A]" />
-              </Form.Item>
+      {/* Feature 1: Contact Email Update */}
+      <div className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-[#E8DFC8]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#FAF3E0] border border-[#E0D0A5] text-[#B8860B] flex items-center justify-center">
+              <Mail size={18} />
             </div>
-
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <div className="text-xs font-semibold text-gray-800">Low Inventory Warnings</div>
-                <div className="text-[11px] text-gray-400">Alert administrators when perfume stock drops below 5 units</div>
-              </div>
-              <Form.Item name="emailLowStock" valuePropName="checked" noStyle>
-                <Switch className="!bg-[#D4A64A]" />
-              </Form.Item>
+            <div>
+              <h3 className="font-serif font-medium text-sm text-[#1B100A]">
+                Concierge Contact Email
+              </h3>
+              <p className="text-[11px] text-gray-500">
+                Official contact email for boutique customer communications, inquiries, and notifications.
+              </p>
             </div>
           </div>
+          <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold shrink-0">
+            Verified Contact
+          </span>
         </div>
-      </Form>
 
-      {/* Section 5: Administrator Security & Password Management */}
+        <Form
+          form={emailForm}
+          layout="vertical"
+          onFinish={handleUpdateEmail}
+          className="space-y-4"
+        >
+          <div className="max-w-xl">
+            <Form.Item
+              name="contactEmail"
+              label={<span className="text-xs font-semibold text-gray-700">Concierge Email Address</span>}
+              rules={[
+                { required: true, message: 'Please enter a contact email' },
+                { type: 'email', message: 'Please enter a valid email address' }
+              ]}
+              className="!mb-2"
+            >
+              <Input
+                type="email"
+                placeholder="concierge@roveandamber.com"
+                className="rounded-xl py-2 text-xs"
+              />
+            </Form.Item>
+            <p className="text-[11px] text-gray-400 m-0">
+              This address receives boutique patron inquiries, order notices, and atelier dispatches.
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={emailSaving}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] hover:from-[#C89B3F] hover:to-[#A3791F] text-[#1B100A] text-xs font-bold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Mail size={14} />
+              <span>{emailSaving ? 'Updating Email...' : 'Update Contact Email'}</span>
+            </button>
+          </div>
+        </Form>
+      </div>
+
+      {/* Feature 2: Administrator Password Update */}
       <div id="security" className="bg-white rounded-2xl p-6 border border-[#E8DFC8] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-5">
         <div className="flex items-center justify-between pb-3 border-b border-[#E8DFC8]">
           <div className="flex items-center gap-2.5">
@@ -249,7 +164,7 @@ export default function AdminSettingsPage() {
                 Administrator Security & Password
               </h3>
               <p className="text-[11px] text-gray-500">
-                Update master administrator password to protect atelier configuration and customer records.
+                Update master administrator password to safeguard the boutique management atelier.
               </p>
             </div>
           </div>
@@ -331,4 +246,3 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
-

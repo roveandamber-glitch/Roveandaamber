@@ -1748,3 +1748,94 @@ export const changeAdminPassword = async (req, res) => {
     });
   }
 };
+
+// ==========================================
+// 14. Administrator Settings (Contact Email)
+// ==========================================
+export const getAdminSettings = async (req, res) => {
+  try {
+    const adminId = req.user?.id || req.user?._id;
+    let admin = null;
+    if (adminId && mongoose.Types.ObjectId.isValid(adminId)) {
+      admin = await User.findById(adminId);
+    }
+    if (!admin) {
+      admin = await User.findOne({ role: 'admin' });
+    }
+
+    const email = admin?.email || 'concierge@roveandamber.com';
+
+    return res.json({
+      success: true,
+      data: {
+        email,
+        contactEmail: email,
+        name: admin?.name || 'Administrator'
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching admin settings:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve settings'
+    });
+  }
+};
+
+// 15. Update Contact Email
+export const updateAdminEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid contact email address is required.'
+      });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    const adminId = req.user?.id || req.user?._id;
+    let admin = null;
+    if (adminId && mongoose.Types.ObjectId.isValid(adminId)) {
+      admin = await User.findById(adminId);
+    }
+    if (!admin) {
+      admin = await User.findOne({ role: 'admin' });
+    }
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Administrator account not found in database.'
+      });
+    }
+
+    // Check if another account is already using this email
+    const existing = await User.findOne({ email: cleanEmail, _id: { $ne: admin._id } });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: 'This email is already in use by another account.'
+      });
+    }
+
+    admin.email = cleanEmail;
+    await admin.save();
+
+    return res.json({
+      success: true,
+      message: 'Contact email updated successfully.',
+      data: {
+        email: cleanEmail,
+        contactEmail: cleanEmail
+      }
+    });
+  } catch (error) {
+    console.error('Error updating admin contact email:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to update contact email.'
+    });
+  }
+};
