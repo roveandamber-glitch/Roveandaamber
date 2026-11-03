@@ -37,9 +37,7 @@ export default function AdminRewardsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [rulesModalOpen, setRulesModalOpen] = useState(false);
-  const [bonusModalOpen, setBonusModalOpen] = useState(false);
   const [rulesForm] = Form.useForm();
-  const [bonusForm] = Form.useForm();
 
   useEffect(() => {
     fetchRewards();
@@ -79,30 +77,6 @@ export default function AdminRewardsPage() {
       await adminService.updateRewardRules(values);
       message.success('Loyalty program rules updated successfully');
       setRulesModalOpen(false);
-    } catch (err) {}
-  };
-
-  const handleAwardBonus = async () => {
-    try {
-      const values = await bonusForm.validateFields();
-      message.success(`Awarded ${values.points} reward points to ${values.customer}`);
-      if (data?.transactions) {
-        const newTx = {
-          id: `tx-${Date.now()}`,
-          customer: values.customer,
-          type: `Bonus (${values.reason || 'Admin Award'})`,
-          points: `+${values.points}`,
-          orderId: 'Manual Privilege',
-          date: 'Just now',
-          status: 'Credited'
-        };
-        setData(prev => ({
-          ...prev,
-          transactions: [newTx, ...prev.transactions]
-        }));
-      }
-      bonusForm.resetFields();
-      setBonusModalOpen(false);
     } catch (err) {}
   };
 
@@ -196,14 +170,6 @@ export default function AdminRewardsPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => setBonusModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-[#1B100A] border border-[#E8DFC8] text-xs font-semibold hover:bg-[#FAF7F2] transition-colors cursor-pointer"
-          >
-            <Plus size={14} className="text-[#D4A64A]" />
-            <span>Award Bonus Points</span>
-          </button>
-
           <button
             onClick={handleOpenRules}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4A64A] to-[#B38728] text-[#1B100A] text-xs font-semibold shadow-sm hover:brightness-105 transition-all cursor-pointer"
@@ -390,52 +356,6 @@ export default function AdminRewardsPage() {
             label={<span className="text-xs font-semibold text-gray-700">Points Validity Period (Months)</span>}
           >
             <InputNumber min={1} max={60} className="w-full rounded-xl py-1" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Award Bonus Modal */}
-      <Modal
-        title={
-          <div className="flex items-center gap-2 font-serif text-base text-[#1A1A1A] pb-2 border-b border-[#EAE3D6]">
-            <Plus size={18} className="text-[#B8860B]" />
-            <span>Award Privilege Bonus Points</span>
-          </div>
-        }
-        open={bonusModalOpen}
-        onOk={handleAwardBonus}
-        onCancel={() => setBonusModalOpen(false)}
-        okText="Credit Points"
-        okButtonProps={{ className: "!bg-[#B8860B] hover:!bg-[#996515] !text-white !border-none" }}
-        centered
-      >
-        <Form form={bonusForm} layout="vertical" className="pt-4">
-          <Form.Item
-            name="customer"
-            label={<span className="text-xs font-semibold text-gray-700">Customer Name</span>}
-            rules={[{ required: true, message: 'Select or type customer name' }]}
-          >
-            <Input placeholder="e.g. Anjali Nair" className="rounded-xl py-1.5 text-xs" />
-          </Form.Item>
-
-          <Form.Item
-            name="points"
-            label={<span className="text-xs font-semibold text-gray-700">Points to Award</span>}
-            rules={[{ required: true, message: 'Enter points amount' }]}
-          >
-            <InputNumber min={10} max={10000} className="w-full rounded-xl py-1" placeholder="e.g. 500" />
-          </Form.Item>
-
-          <Form.Item
-            name="reason"
-            label={<span className="text-xs font-semibold text-gray-700">Reason / Privilege</span>}
-          >
-            <Select className="w-full text-xs" placeholder="Select reason">
-              <Option value="VIP Privilege">VIP Privilege</Option>
-              <Option value="Appreciation Gift">Appreciation Gift</Option>
-              <Option value="Service Recovery">Service Recovery</Option>
-              <Option value="Special Occasion">Special Occasion</Option>
-            </Select>
           </Form.Item>
         </Form>
       </Modal>
