@@ -75,9 +75,13 @@ const LoginContent = () => {
         setErrorMessage(err.response?.data?.message || 'Your account has been blocked. Please contact admin for support.');
         return;
       }
-      if (err.message === 'Network Error' || !err.response) {
-        setErrorMessage('Unable to reach the boutique authentication server. Please ensure the backend server is running on port 5000.');
-        message.error('Unable to reach backend server.');
+      const isNetworkError = err.code === 'ERR_NETWORK' || err.message === 'Network Error' || !err.response;
+      if (isNetworkError) {
+        const errorText = process.env.NODE_ENV === 'development'
+          ? 'Unable to connect to the local authentication server. Please verify your backend server is running.'
+          : 'Unable to connect to the boutique authentication server. Please check your network connection and try again.';
+        setErrorMessage(errorText);
+        message.error('Unable to reach authentication server.');
         return;
       }
       setErrorMessage(err.response?.data?.message || 'Google authentication failed. Please try again.');
