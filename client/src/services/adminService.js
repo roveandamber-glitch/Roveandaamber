@@ -436,6 +436,19 @@ const adminService = {
         topProducts: []
       }
     };
+  },
+
+  /* --------------------------------------------------------------------------
+     12. ADMINISTRATOR SECURITY & CREDENTIALS
+     -------------------------------------------------------------------------- */
+  changePassword: async (passwordData) => {
+    try {
+      const response = await api.put('/admin/change-password', passwordData);
+      return response.data;
+    } catch (err) {
+      const response = await api.put('/auth/change-password', passwordData);
+      return response.data;
+    }
   }
 };
 

@@ -21,7 +21,8 @@ import {
   getAdminReviews,
   moderateReview,
   deleteAdminReview,
-  getReviewStats
+  getReviewStats,
+  changeAdminPassword
 } from '../../controllers/admin/adminController.js';
 import { protect, adminOnly } from '../../middlewares/authMiddleware.js';
 import { upload } from '../../middlewares/uploadMiddleware.js';
@@ -109,5 +110,10 @@ router.use('/reports', reportRoutes);
    12. PROMOTIONAL COUPONS & PRIVILEGE CODES
    -------------------------------------------------------------------------- */
 router.use('/coupons', couponRoutes);
+
+/* --------------------------------------------------------------------------
+   13. ADMINISTRATOR SECURITY & PASSWORD MANAGEMENT
+   -------------------------------------------------------------------------- */
+router.put('/change-password', changeAdminPassword);
 
 export default router;

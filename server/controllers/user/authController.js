@@ -308,7 +308,15 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    const user = await UserModel.findWithPasswordById(req.user.id);
+    const userId = req.user?.id || req.user?._id;
+    let user = await UserModel.findWithPasswordById(userId);
+    if (!user && req.user?.role === 'admin') {
+      const adminDoc = await UserModel.findAdmin();
+      if (adminDoc) {
+        user = await UserModel.findWithPasswordById(adminDoc.id || adminDoc._id);
+      }
+    }
+
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
@@ -322,7 +330,7 @@ export const changePassword = async (req, res) => {
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-    await UserModel.updatePassword(req.user.id, hashedNewPassword);
+    await UserModel.updatePassword(user.id || user._id, hashedNewPassword);
 
     return res.json({
       success: true,

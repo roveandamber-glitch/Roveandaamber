@@ -27,7 +27,8 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Lock
 } from 'lucide-react';
 import { Dropdown, Badge, Tooltip } from 'antd';
 import adminService from '@/services/adminService';
@@ -189,6 +190,15 @@ const AdminLayout = ({ children }) => {
           <Link href="/admin/settings" className="flex items-center gap-2 text-xs py-1 text-gray-700 hover:text-[#D4A64A]">
             <Settings size={14} className="text-gray-500" />
             <span>Store Settings</span>
+          </Link>
+        )
+      },
+      {
+        key: 'password',
+        label: (
+          <Link href="/admin/settings#security" className="flex items-center gap-2 text-xs py-1 text-gray-700 hover:text-[#D4A64A]">
+            <Lock size={14} className="text-gray-500" />
+            <span>Change Password</span>
           </Link>
         )
       },

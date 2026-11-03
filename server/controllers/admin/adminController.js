@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { ProductModel, Product } from '../../models/productModel.js';
 import { OrderModel, Order } from '../../models/orderModel.js';
 import { BannerModel, Banner } from '../../models/bannerModel.js';
@@ -1683,5 +1684,67 @@ export const submitProductReview = async (req, res) => {
   } catch (error) {
     console.error('Submit review error:', error);
     return res.status(500).json({ success: false, message: 'Failed to submit review.' });
+  }
+};
+
+// ==========================================
+// 13. Administrator Security & Password Management
+// ==========================================
+export const changeAdminPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password and new password are required.'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long.'
+      });
+    }
+
+    const adminId = req.user?.id || req.user?._id;
+    let admin = null;
+    if (adminId && mongoose.Types.ObjectId.isValid(adminId)) {
+      admin = await User.findById(adminId);
+    }
+    if (!admin) {
+      admin = await User.findOne({ role: 'admin' });
+    }
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Administrator account not found in database.'
+      });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, admin.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: 'Incorrect current master password.'
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    admin.password = hashedPassword;
+    await admin.save();
+
+    return res.json({
+      success: true,
+      message: 'Administrator password updated successfully.'
+    });
+  } catch (error) {
+    console.error('Error changing admin password:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update administrator password.'
+    });
   }
 };
