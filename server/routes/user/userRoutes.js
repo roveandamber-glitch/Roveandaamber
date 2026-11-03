@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   getAccountOverview,
+  getUserRewards,
   getAccountOrders,
   getAccountOrderDetails,
   getSavedAddresses,
@@ -27,10 +28,11 @@ const router = express.Router();
 router.use(protect);
 
 // ==========================================
-// 8.1 Customer Account Overview
+// 8.1 Customer Account Overview & Rewards
 // ==========================================
 router.get('/account', getAccountOverview);
 router.get('/overview', getAccountOverview);
+router.get('/rewards', getUserRewards);
 
 // ==========================================
 // 8.2 Current & Previous Orders, Tracking, Invoices

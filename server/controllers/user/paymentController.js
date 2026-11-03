@@ -45,6 +45,8 @@ export const createPaymentOrder = async (req, res) => {
       let orderItems = items;
       let calculatedDiscount = 0;
       let appliedCode = couponCode || '';
+      let rewardPointsUsed = req.body.rewardPointsUsed ? Number(req.body.rewardPointsUsed) : 0;
+      let rewardDiscountAmount = req.body.rewardDiscountAmount ? Number(req.body.rewardDiscountAmount) : 0;
 
       if (!orderItems || orderItems.length === 0) {
         const cart = await CartModel.getCart({ userId, guestId });
@@ -61,6 +63,8 @@ export const createPaymentOrder = async (req, res) => {
         }));
         calculatedDiscount = cart.discountAmount || 0;
         appliedCode = cart.coupon ? cart.coupon.code : '';
+        if (!rewardPointsUsed) rewardPointsUsed = cart.rewardPointsUsed || 0;
+        if (!rewardDiscountAmount) rewardDiscountAmount = cart.rewardDiscountAmount || 0;
         if (isGift === undefined) isGift = cart.isGift;
         if (occasion === undefined) occasion = cart.occasion;
         if (giftMessage === undefined) giftMessage = cart.giftMessage;
@@ -85,6 +89,8 @@ export const createPaymentOrder = async (req, res) => {
         items: orderItems,
         discountAmount: calculatedDiscount,
         couponCode: appliedCode,
+        rewardPointsUsed,
+        rewardDiscountAmount,
         giftWrapFee,
         isGift: !!isGift,
         occasion: occasion || '',

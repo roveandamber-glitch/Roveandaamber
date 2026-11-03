@@ -156,6 +156,50 @@ export const removeCoupon = async (req, res) => {
   }
 };
 
+// 6.5 Apply Patron Privilege Reward Points
+export const applyRewardPoints = async (req, res) => {
+  try {
+    const { points } = req.body;
+    const { userId, guestId } = getIdentity(req);
+
+    if (!points || Number(points) <= 0) {
+      return res.status(400).json({ success: false, message: 'Please specify the number of points to redeem.' });
+    }
+
+    const updatedCart = await CartModel.applyRewardPoints({
+      userId,
+      guestId,
+      points: Number(points)
+    });
+
+    return res.json({
+      success: true,
+      message: `${points} loyalty privilege points applied successfully!`,
+      data: updatedCart
+    });
+  } catch (error) {
+    console.error('Apply rewards error:', error);
+    return res.status(400).json({ success: false, message: error.message || 'Failed to apply reward points.' });
+  }
+};
+
+// 6.6 Remove Applied Patron Privilege Reward Points
+export const removeRewardPoints = async (req, res) => {
+  try {
+    const { userId, guestId } = getIdentity(req);
+    const updatedCart = await CartModel.removeRewardPoints({ userId, guestId });
+
+    return res.json({
+      success: true,
+      message: 'Reward points discount removed.',
+      data: updatedCart
+    });
+  } catch (error) {
+    console.error('Remove rewards error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to remove reward points.' });
+  }
+};
+
 // 7. Update Gift Packaging & Personalized Message Options
 export const updateGiftOptions = async (req, res) => {
   try {

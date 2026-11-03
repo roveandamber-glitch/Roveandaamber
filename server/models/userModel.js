@@ -105,6 +105,11 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
+    rewardPoints: {
+      type: Number,
+      default: 100,
+      min: [0, 'Reward points cannot be negative']
+    },
     addresses: [addressSchema]
   },
   {
@@ -245,7 +250,7 @@ export const UserModel = {
           ordersCount: ordersCount,
           total_spent: totalSpent,
           totalSpent: totalSpent,
-          rewardPoints: Math.floor(totalSpent * 0.1),
+          rewardPoints: u.rewardPoints !== undefined ? u.rewardPoints : Math.floor(totalSpent * 0.1),
           isBlocked: Boolean(u.isBlocked),
           blockedReason: u.blockedReason || '',
           blockedAt: u.blockedAt || null,

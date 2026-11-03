@@ -97,6 +97,18 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    rewardPointsUsed: {
+      type: Number,
+      default: 0
+    },
+    rewardDiscountAmount: {
+      type: Number,
+      default: 0
+    },
+    rewardPointsEarned: {
+      type: Number,
+      default: 0
+    },
     total_amount: {
       type: Number,
       required: true
@@ -265,6 +277,8 @@ export const OrderModel = {
     items,
     discountAmount = 0,
     couponCode = '',
+    rewardPointsUsed = 0,
+    rewardDiscountAmount = 0,
     shippingFee = 0,
     giftWrapFee = 0,
     paymentMethod = 'Razorpay',
@@ -350,7 +364,15 @@ export const OrderModel = {
 
     const orderHasSample = verifiedItems.some(i => i.hasSample) || Boolean(items.some(i => i.hasSample));
 
-    const calculatedTotal = Math.max(0, calculatedSubtotal - discountAmount + shippingFee + giftWrapFee);
+    const calculatedTotal = Math.max(0, calculatedSubtotal - discountAmount - rewardDiscountAmount + shippingFee + giftWrapFee);
+
+    let pointsEarned = 0;
+    try {
+      const { RewardRule } = await import('./rewardModel.js');
+      const rules = await RewardRule.getRules();
+      const pointsPerHundred = rules.pointsPerHundred || 10;
+      pointsEarned = Math.floor((calculatedTotal / 100) * pointsPerHundred);
+    } catch (e) {}
 
     // Step 2: Ensure valid user ID or fallback
     let effectiveUserId = userId;
@@ -406,6 +428,9 @@ export const OrderModel = {
       subtotal: calculatedSubtotal,
       discountAmount,
       couponCode,
+      rewardPointsUsed,
+      rewardDiscountAmount,
+      rewardPointsEarned: pointsEarned,
       shippingFee,
       giftWrapFee,
       total_amount: calculatedTotal,
@@ -530,6 +555,41 @@ export const OrderModel = {
     if (order.paymentStatus !== 'Paid') {
       for (const item of order.items) {
         await ProductModel.decrementStock(item.productId, item.size, item.quantity);
+      }
+
+      // Process reward points redemption & accrual upon payment confirmation
+      if (order.user_id) {
+        try {
+          const { RewardTransaction } = await import('./rewardModel.js');
+          // If customer redeemed points on this order, deduct from balance
+          if (order.rewardPointsUsed > 0) {
+            await User.findByIdAndUpdate(order.user_id, { $inc: { rewardPoints: -order.rewardPointsUsed } });
+            await RewardTransaction.record({
+              userId: order.user_id,
+              customerName: order.customer_name || 'Valued Patron',
+              customerEmail: order.email || '',
+              type: 'Points Redeemed',
+              points: -order.rewardPointsUsed,
+              orderId: order.orderId,
+              description: `Redeemed ${order.rewardPointsUsed} points for ₹${order.rewardDiscountAmount} discount`
+            });
+          }
+          // Award points earned for flacon acquisition
+          if (order.rewardPointsEarned > 0) {
+            await User.findByIdAndUpdate(order.user_id, { $inc: { rewardPoints: order.rewardPointsEarned } });
+            await RewardTransaction.record({
+              userId: order.user_id,
+              customerName: order.customer_name || 'Valued Patron',
+              customerEmail: order.email || '',
+              type: 'Order Earned',
+              points: order.rewardPointsEarned,
+              orderId: order.orderId,
+              description: `Earned ${order.rewardPointsEarned} points on order ${order.orderId}`
+            });
+          }
+        } catch (rwErr) {
+          console.warn('⚠️ [Reward Processing Warning]:', rwErr.message);
+        }
       }
     }
 

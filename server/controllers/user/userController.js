@@ -61,6 +61,7 @@ export const getAccountOverview = async (req, res) => {
           email: user.email,
           phone: user.phone || '',
           address: user.address || '',
+          rewardPoints: user.rewardPoints || 0,
           memberSince: user.createdAt
         },
         metrics: {
@@ -84,6 +85,36 @@ export const getAccountOverview = async (req, res) => {
   } catch (error) {
     console.error('Account overview error:', error);
     return res.status(500).json({ success: false, message: 'Failed to retrieve account overview.' });
+  }
+};
+
+// 8.15 Patron Privilege Rewards & Points
+export const getUserRewards = async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    const user = await User.findById(userId).select('rewardPoints name email');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Customer account not found.' });
+    }
+    const { RewardRule } = await import('../../models/rewardModel.js');
+    const rules = await RewardRule.getRules();
+    const points = user.rewardPoints || 0;
+    const redemptionRate = rules.redemptionRate || 100;
+    const worthInRupees = Math.floor(points * (redemptionRate / 100));
+
+    return res.json({
+      success: true,
+      data: {
+        points,
+        worthInRupees,
+        redemptionRate,
+        pointsPerHundred: rules.pointsPerHundred,
+        welcomeBonus: rules.welcomeBonus
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user rewards:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve rewards data' });
   }
 };
 

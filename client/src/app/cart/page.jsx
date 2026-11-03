@@ -22,7 +22,9 @@ import {
   ExternalLink,
   Edit3,
   Tag,
-  Loader2
+  Loader2,
+  Coins,
+  Sparkles
 } from 'lucide-react';
 import { Modal, Form, Input, message, ConfigProvider } from 'antd';
 import cartService from '@/services/cartService';
@@ -62,6 +64,12 @@ export default function CartPage() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [rewardPointsUsed, setRewardPointsUsed] = useState(0);
+  const [rewardDiscountAmount, setRewardDiscountAmount] = useState(0);
+  const [availableRewardPoints, setAvailableRewardPoints] = useState(0);
+  const [rewardRate, setRewardRate] = useState(100);
+  const [rewardPointsInput, setRewardPointsInput] = useState('');
+  const [rewardLoading, setRewardLoading] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -84,6 +92,22 @@ export default function CartPage() {
     } else {
       setAppliedCoupon(null);
       setDiscountAmount(0);
+    }
+
+    if (summary) {
+      setRewardPointsUsed(Number(summary.rewardPointsUsed) || 0);
+      setRewardDiscountAmount(Number(summary.rewardDiscountAmount) || 0);
+      if (summary.availableRewardPoints !== undefined) {
+        setAvailableRewardPoints(Number(summary.availableRewardPoints) || 0);
+      }
+      if (summary.rewardRate) {
+        setRewardRate(Number(summary.rewardRate) || 100);
+      }
+    } else {
+      const user = authService.getUser();
+      if (user && user.rewardPoints !== undefined) {
+        setAvailableRewardPoints(Number(user.rewardPoints) || 0);
+      }
     }
   }, []);
 
@@ -149,8 +173,8 @@ export default function CartPage() {
     0
   );
 
-  // Final Total calculates subtotal minus verified promotional discount
-  const finalTotal = Math.max(0, subtotal - discountAmount);
+  // Final Total calculates subtotal minus verified promotional and reward points discounts
+  const finalTotal = Math.max(0, subtotal - discountAmount - rewardDiscountAmount);
 
   // Quantity updates with min (1) and maxStock validation
   const handleUpdateQty = (productId, size, currentQty, delta, maxStock) => {
@@ -233,6 +257,43 @@ export default function CartPage() {
       message.error(err.message || 'Failed to remove promotional coupon.');
     } finally {
       setPromoLoading(false);
+    }
+  };
+
+  // Patron Privilege Points Apply & Remove handlers
+  const handleApplyRewards = async () => {
+    const rawVal = rewardPointsInput ? parseInt(rewardPointsInput, 10) : availableRewardPoints;
+    if (!rawVal || rawVal <= 0) {
+      message.warning('Please enter points to redeem.');
+      return;
+    }
+    if (rawVal > availableRewardPoints) {
+      message.error(`You have only ${availableRewardPoints.toLocaleString()} points available.`);
+      return;
+    }
+    setRewardLoading(true);
+    try {
+      await cartService.applyRewards(rawVal);
+      message.success(`${rawVal.toLocaleString()} loyalty privilege points applied successfully!`);
+      setRewardPointsInput('');
+      loadCart();
+    } catch (err) {
+      message.error(err.message || 'Failed to apply reward points.');
+    } finally {
+      setRewardLoading(false);
+    }
+  };
+
+  const handleRemoveRewards = async () => {
+    setRewardLoading(true);
+    try {
+      await cartService.removeRewards();
+      message.info('Loyalty privilege points discount removed.');
+      loadCart();
+    } catch (err) {
+      message.error(err.message || 'Failed to remove reward points.');
+    } finally {
+      setRewardLoading(false);
     }
   };
 
@@ -476,117 +537,120 @@ export default function CartPage() {
           /* ACTIVE 2-COLUMN LUXURY CART GRID */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* LEFT COLUMN: ITEMS & GIFT OPTIONS (8 Cols) */}
-            <div className="lg:col-span-8 space-y-6">
+            {/* LEFT COLUMN: SINGLE PRODUCT CARD (8 Cols) */}
+            <div className="lg:col-span-8 space-y-5">
               
-              {/* Product Cards List */}
-              <div className="space-y-3.5">
-                {cartItems.map((item) => {
-                  const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
-                  const price = Number(item.price) || 0;
-                  const itemTotal = price * (parseInt(item.quantity, 10) || 1);
-                  const maxStock = item.maxStock !== undefined ? item.maxStock : 99;
-                  const isMaxReached = item.quantity >= maxStock;
+              {/* Single Luxury Product Card containing all cart items */}
+              <div className="bg-white rounded-2xl border border-[#E8DFC9] shadow-xs overflow-hidden">
+                {/* Products List inside single card with dividers */}
+                <div className="divide-y divide-[#ECE7DE]">
+                  {cartItems.map((item) => {
+                    const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
+                    const price = Number(item.price) || 0;
+                    const itemTotal = price * (parseInt(item.quantity, 10) || 1);
+                    const maxStock = item.maxStock !== undefined ? item.maxStock : 99;
+                    const isMaxReached = item.quantity >= maxStock;
 
-                  return (
-                    <div
-                      key={itemKey}
-                      className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E8DFC9] shadow-xs flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between transition-all hover:border-[#D4AF37]/60 hover:shadow-md"
-                    >
-                      {/* Fixed Size Thumbnail & Title */}
-                      <div className="flex items-center gap-4 flex-1 min-w-0 w-full sm:w-auto">
-                        <Link 
-                          href={`/product/${item.productId || item.id}`}
-                          className="relative w-20 h-24 sm:w-24 sm:h-28 rounded-xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-2 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group"
-                        >
-                          <img
-                            src={getImageUrl(item.image)}
-                            alt={item.name}
-                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => { e.target.src = '/images/perfumes/gemini_amber_royal.jpg'; }}
-                          />
-                        </Link>
+                    return (
+                      <div
+                        key={itemKey}
+                        className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between transition-colors hover:bg-[#FAF9F7]/40"
+                      >
+                        {/* Fixed Size Thumbnail & Title */}
+                        <div className="flex items-center gap-4 flex-1 min-w-0 w-full sm:w-auto">
+                          <Link 
+                            href={`/product/${item.productId || item.id}`}
+                            className="relative w-20 h-24 sm:w-24 sm:h-28 rounded-xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-2 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group"
+                          >
+                            <img
+                              src={getImageUrl(item.image)}
+                              alt={item.name}
+                              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => { e.target.src = '/images/perfumes/gemini_amber_royal.jpg'; }}
+                            />
+                          </Link>
 
-                        <div className="space-y-1.5 min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9.5px] tracking-[0.2em] uppercase font-semibold text-[#B86526]">
-                              Fine Fragrance
+                          <div className="space-y-1.5 min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9.5px] tracking-[0.2em] uppercase font-semibold text-[#B86526]">
+                                Fine Fragrance
+                              </span>
+                              <span className="w-1 h-1 rounded-full bg-[#D5C9B8]" />
+                              <span className="text-[10px] text-gray-500 font-medium">
+                                {item.size || '50ML'}
+                              </span>
+                            </div>
+
+                            <Link 
+                              href={`/product/${item.productId || item.id}`}
+                              className="text-base sm:text-lg font-serif font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors block truncate"
+                            >
+                              {item.name}
+                            </Link>
+                            
+                            <p className="text-xs sm:text-sm font-semibold text-[#1A1A1A] font-sans">
+                              ₹{price.toLocaleString('en-IN')}
+                              <span className="text-[11px] font-normal text-gray-400 ml-1">/ unit</span>
+                            </p>
+
+                            {isMaxReached && (
+                              <span className="text-[10px] text-amber-700 font-medium block">
+                                Max available atelier inventory ({maxStock})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Quantity Controls & Line Total */}
+                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-[#F0EBE0]">
+                          
+                          {/* Quantity Counter */}
+                          <div className="inline-flex items-center bg-[#FAF7F2] border border-[#E0D8CA] rounded-full p-1 shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, -1, maxStock)}
+                              disabled={item.quantity <= 1}
+                              className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus size={12} strokeWidth={2} />
+                            </button>
+                            <span className="w-8 text-center text-xs font-bold text-[#1A1A1A] font-sans">
+                              {item.quantity}
                             </span>
-                            <span className="w-1 h-1 rounded-full bg-[#D5C9B8]" />
-                            <span className="text-[10px] text-gray-500 font-medium">
-                              {item.size || '50ML'}
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, 1, maxStock)}
+                              disabled={isMaxReached}
+                              className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus size={12} strokeWidth={2} />
+                            </button>
+                          </div>
+
+                          {/* Line Total */}
+                          <div className="text-right min-w-[85px]">
+                            <span className="text-base sm:text-lg font-bold text-[#1A1A1A] font-sans block">
+                              ₹{itemTotal.toLocaleString('en-IN')}
                             </span>
                           </div>
 
-                          <Link 
-                            href={`/product/${item.productId || item.id}`}
-                            className="text-base sm:text-lg font-serif font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors block truncate"
-                          >
-                            {item.name}
-                          </Link>
-                          
-                          <p className="text-xs sm:text-sm font-semibold text-[#1A1A1A] font-sans">
-                            ₹{price.toLocaleString('en-IN')}
-                            <span className="text-[11px] font-normal text-gray-400 ml-1">/ unit</span>
-                          </p>
-
-                          {isMaxReached && (
-                            <span className="text-[10px] text-amber-700 font-medium block">
-                              Max available atelier inventory ({maxStock})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Quantity Controls & Line Total */}
-                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-[#F0EBE0]">
-                        
-                        {/* Quantity Counter */}
-                        <div className="inline-flex items-center bg-[#FAF7F2] border border-[#E0D8CA] rounded-full p-1 shadow-2xs">
+                          {/* Remove Action */}
                           <button
                             type="button"
-                            onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, -1, maxStock)}
-                            disabled={item.quantity <= 1}
-                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-                            aria-label="Decrease quantity"
+                            onClick={() => handleRemoveItem(item.productId || item.id, item.size, item.name)}
+                            className="w-9 h-9 rounded-full bg-[#FAF7F2] hover:bg-red-50 text-gray-400 hover:text-red-600 border border-[#E8DFC9] hover:border-red-200 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+                            title="Remove fragrance"
+                            aria-label={`Remove ${item.name} from bag`}
                           >
-                            <Minus size={12} strokeWidth={2} />
-                          </button>
-                          <span className="w-8 text-center text-xs font-bold text-[#1A1A1A] font-sans">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, 1, maxStock)}
-                            disabled={isMaxReached}
-                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-                            aria-label="Increase quantity"
-                          >
-                            <Plus size={12} strokeWidth={2} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
-
-                        {/* Line Total */}
-                        <div className="text-right min-w-[85px]">
-                          <span className="text-base sm:text-lg font-bold text-[#1A1A1A] font-sans block">
-                            ₹{itemTotal.toLocaleString('en-IN')}
-                          </span>
-                        </div>
-
-                        {/* Remove Action */}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(item.productId || item.id, item.size, item.name)}
-                          className="w-9 h-9 rounded-full bg-[#FAF7F2] hover:bg-red-50 text-gray-400 hover:text-red-600 border border-[#E8DFC9] hover:border-red-200 transition-colors flex items-center justify-center cursor-pointer shrink-0"
-                          title="Remove fragrance"
-                          aria-label={`Remove ${item.name} from bag`}
-                        >
-                          <Trash2 size={14} />
-                        </button>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Bottom Return Action */}
@@ -599,7 +663,6 @@ export default function CartPage() {
                   <span>Continue Exploring Collections</span>
                 </Link>
               </div>
-
 
             </div>
 
@@ -641,6 +704,29 @@ export default function CartPage() {
                           onClick={handleRemoveCoupon}
                           className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
                           title="Remove coupon"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {rewardDiscountAmount > 0 && (
+                    <div className="flex justify-between items-center text-[#8C6D1F] bg-[#FAF3E0] px-3 py-2 rounded-xl border border-[#E0D0A5]">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-[#B8860B]" />
+                        <span className="font-bold text-[11px] tracking-wide">
+                          Privilege Points ({rewardPointsUsed} pts)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-sans font-bold text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveRewards}
+                          disabled={rewardLoading}
+                          className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
+                          title="Remove reward points"
                         >
                           ✕
                         </button>
@@ -719,6 +805,81 @@ export default function CartPage() {
                     </div>
                   </form>
                 )}
+
+                {/* Patron Privilege Points Redemption Card */}
+                <div className="pt-2 border-t border-[#ECE7DE]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Coins size={14} className="text-[#B8860B]" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+                        Patron Privilege Points
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono font-bold text-[#8C6D1F]">
+                      {availableRewardPoints.toLocaleString()} pts
+                    </span>
+                  </div>
+
+                  {rewardPointsUsed > 0 ? (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF5E8] border border-[#E0D0A5]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-[#B8860B]/15 text-[#8C6D1F] flex items-center justify-center font-bold text-xs shrink-0">
+                          <Sparkles size={13} />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-[#1A1A1A] block">
+                            {rewardPointsUsed.toLocaleString()} Points Applied (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                          </span>
+                          <span className="text-[10px] text-gray-500 block">
+                            Remaining: {Math.max(0, availableRewardPoints - rewardPointsUsed).toLocaleString()} pts
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveRewards}
+                        disabled={rewardLoading}
+                        className="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline px-2 py-1 cursor-pointer disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-[#FAF9F7] border border-[#E0D8CA] space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[11px] text-gray-600">
+                          Available: <strong className="text-black font-semibold">{availableRewardPoints.toLocaleString()} pts</strong> {availableRewardPoints > 0 ? `(Worth ₹${Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})` : ''}
+                        </span>
+                      </div>
+                      {availableRewardPoints > 0 ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            min={1}
+                            max={Math.min(availableRewardPoints, Math.floor(subtotal / (rewardRate / 100)))}
+                            placeholder={`Points to redeem (e.g. ${Math.min(availableRewardPoints, 500)})`}
+                            value={rewardPointsInput}
+                            onChange={(e) => setRewardPointsInput(e.target.value)}
+                            disabled={rewardLoading}
+                            className="flex-1 px-3 py-2 rounded-xl text-xs bg-white border border-[#D5C9B8] focus:outline-none focus:border-[#B8860B] text-black placeholder-gray-400 font-mono disabled:opacity-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyRewards}
+                            disabled={rewardLoading || availableRewardPoints <= 0}
+                            className="px-4 py-2 bg-gradient-to-r from-[#D4A64A] to-[#B38728] hover:from-[#C89B3F] hover:to-[#A3791F] text-[#1B100A] text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {rewardLoading ? 'Applying...' : 'Apply Points'}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-gray-500 m-0">
+                          Earn points on this acquisition to redeem on future boutique fragrance collections.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Primary Proceed to Checkout CTA */}
                 <button

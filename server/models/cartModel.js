@@ -44,6 +44,14 @@ const cartSchema = new mongoose.Schema(
       discountValue: { type: Number, default: 0 },
       discountAmount: { type: Number, default: 0 }
     },
+    rewardPointsUsed: {
+      type: Number,
+      default: 0
+    },
+    rewardDiscountAmount: {
+      type: Number,
+      default: 0
+    },
     isGift: {
       type: Boolean,
       default: false
@@ -175,13 +183,49 @@ const calculateCartSummary = async (cartDoc) => {
     }
   }
 
+  // Reward points calculation
+  let rewardDiscountAmount = 0;
+  let availableRewardPoints = 0;
+  let rewardRate = 100;
+  let pointsPerHundred = 10;
+
+  try {
+    const { RewardRule } = await import('./rewardModel.js');
+    const rules = await RewardRule.getRules();
+    rewardRate = rules.redemptionRate || 100;
+    pointsPerHundred = rules.pointsPerHundred || 10;
+
+    const resolvedUserId = cartDoc.user_id || cartDoc.userId;
+    if (resolvedUserId) {
+      const { User } = await import('./userModel.js');
+      const user = await User.findById(resolvedUserId).select('rewardPoints');
+      if (user) {
+        availableRewardPoints = user.rewardPoints || 0;
+      }
+    }
+
+    if (cartDoc.rewardPointsUsed > 0 && subtotal > 0) {
+      const pointsToUse = Math.min(cartDoc.rewardPointsUsed, availableRewardPoints);
+      const pointVal = rewardRate / 100;
+      const calculatedRewardDiscount = Math.floor(pointsToUse * pointVal);
+      const maxRewardDiscount = Math.max(0, subtotal - discountAmount);
+      rewardDiscountAmount = Math.min(calculatedRewardDiscount, maxRewardDiscount);
+      cartDoc.rewardDiscountAmount = rewardDiscountAmount;
+    } else {
+      cartDoc.rewardPointsUsed = 0;
+      cartDoc.rewardDiscountAmount = 0;
+    }
+  } catch (rwErr) {
+    console.warn('Reward calculation warning:', rwErr.message);
+  }
+
   // Gift wrap charge: Rs 150 if gift wrap is requested
   const giftWrapFee = cartDoc.giftWrap ? 150 : 0;
 
   // Free shipping above Rs 1999, else standard flat Rs 150
-  const shippingFee = (subtotal - discountAmount >= 1999 || subtotal === 0) ? 0 : 150;
+  const shippingFee = (subtotal - discountAmount - rewardDiscountAmount >= 1999 || subtotal === 0) ? 0 : 150;
 
-  const finalTotal = Math.max(0, subtotal - discountAmount + giftWrapFee + shippingFee);
+  const finalTotal = Math.max(0, subtotal - discountAmount - rewardDiscountAmount + giftWrapFee + shippingFee);
 
   return {
     id: cartDoc._id.toString(),
@@ -192,6 +236,11 @@ const calculateCartSummary = async (cartDoc) => {
     subtotal,
     discountAmount,
     coupon: couponInfo,
+    rewardPointsUsed: cartDoc.rewardPointsUsed || 0,
+    rewardDiscountAmount,
+    availableRewardPoints,
+    rewardRate,
+    pointsPerHundred,
     giftWrapFee,
     shippingFee,
     total: finalTotal,
@@ -332,6 +381,55 @@ export const CartModel = {
     const cart = await findOrCreateCart({ userId, guestId });
     cart.appliedCoupon = { code: null, discountAmount: 0 };
     await cart.save();
+    const populated = await Cart.findById(cart._id).populate({
+      path: 'items.productId',
+      populate: { path: 'category_id' }
+    });
+    return calculateCartSummary(populated);
+  },
+
+  applyRewardPoints: async ({ userId, guestId, points }) => {
+    const cart = await findOrCreateCart({ userId, guestId });
+    const currentSummary = await calculateCartSummary(cart);
+
+    if (currentSummary.subtotal <= 0) {
+      throw new Error('Your bag is empty. Add fragrances before redeeming points.');
+    }
+
+    const { User } = await import('./userModel.js');
+    const resolvedUserId = userId || cart.user_id;
+    if (!resolvedUserId) {
+      throw new Error('Customer sign-in required to redeem loyalty points.');
+    }
+
+    const user = await User.findById(resolvedUserId);
+    if (!user) {
+      throw new Error('Customer account not found.');
+    }
+
+    const patronPoints = user.rewardPoints || 0;
+    const requestedPoints = Math.max(1, parseInt(points, 10) || 0);
+
+    if (requestedPoints > patronPoints) {
+      throw new Error(`Insufficient points balance. You have ${patronPoints} points available.`);
+    }
+
+    cart.rewardPointsUsed = requestedPoints;
+    await cart.save();
+
+    const populated = await Cart.findById(cart._id).populate({
+      path: 'items.productId',
+      populate: { path: 'category_id' }
+    });
+    return calculateCartSummary(populated);
+  },
+
+  removeRewardPoints: async ({ userId, guestId }) => {
+    const cart = await findOrCreateCart({ userId, guestId });
+    cart.rewardPointsUsed = 0;
+    cart.rewardDiscountAmount = 0;
+    await cart.save();
+
     const populated = await Cart.findById(cart._id).populate({
       path: 'items.productId',
       populate: { path: 'category_id' }

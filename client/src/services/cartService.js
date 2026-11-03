@@ -384,6 +384,44 @@ export const cartService = {
       const errMsg = err.response?.data?.message || err.message || 'Failed to remove coupon.';
       throw new Error(errMsg);
     }
+  },
+
+  /**
+   * Apply Patron Privilege Reward Points
+   */
+  applyRewards: async (points) => {
+    try {
+      const res = await api.post('/cart/apply-rewards', { points });
+      if (res?.data?.success && res.data.data) {
+        inMemorySummary = res.data.data;
+        inMemoryCart = (res.data.data.items || []).map(formatItem).filter(Boolean);
+        window.dispatchEvent(new Event('cartChange'));
+        return res.data;
+      }
+      return res?.data;
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || 'Failed to apply reward points.';
+      throw new Error(errMsg);
+    }
+  },
+
+  /**
+   * Remove Patron Privilege Reward Points
+   */
+  removeRewards: async () => {
+    try {
+      const res = await api.delete('/cart/remove-rewards');
+      if (res?.data?.success && res.data.data) {
+        inMemorySummary = res.data.data;
+        inMemoryCart = (res.data.data.items || []).map(formatItem).filter(Boolean);
+        window.dispatchEvent(new Event('cartChange'));
+        return res.data;
+      }
+      return res?.data;
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || 'Failed to remove reward points.';
+      throw new Error(errMsg);
+    }
   }
 };
 

@@ -6,6 +6,8 @@ import {
   removeCartItem,
   applyCoupon,
   removeCoupon,
+  applyRewardPoints,
+  removeRewardPoints,
   updateGiftOptions,
   getCheckoutSummary,
   clearCart
@@ -31,6 +33,12 @@ router.post('/apply-coupon', applyCoupon);
 router.post('/coupon', applyCoupon);
 router.delete('/remove-coupon', removeCoupon);
 router.delete('/coupon', removeCoupon);
+
+// 3.2: Loyalty Privilege Points
+router.post('/apply-rewards', applyRewardPoints);
+router.post('/rewards', applyRewardPoints);
+router.delete('/remove-rewards', removeRewardPoints);
+router.delete('/rewards', removeRewardPoints);
 
 // 3.1: Gift preferences & Checkout Summary
 router.put('/gift-options', updateGiftOptions);

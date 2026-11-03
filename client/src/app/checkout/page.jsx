@@ -19,7 +19,9 @@ import {
   AlertCircle,
   Package,
   Edit3,
-  Tag
+  Tag,
+  Coins,
+  Sparkles
 } from 'lucide-react';
 import { message, Form, Input, Radio, Spin } from 'antd';
 import cartService from '@/services/cartService';
@@ -73,7 +75,47 @@ export default function CheckoutPage() {
   const [orderConfirmed, setOrderConfirmed] = useState(null);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [rewardPointsUsed, setRewardPointsUsed] = useState(0);
+  const [rewardDiscountAmount, setRewardDiscountAmount] = useState(0);
+  const [availableRewardPoints, setAvailableRewardPoints] = useState(0);
+  const [rewardRate, setRewardRate] = useState(100);
+  const [rewardPointsInput, setRewardPointsInput] = useState('');
+  const [rewardLoading, setRewardLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const loadCartState = async () => {
+    try {
+      await cartService.fetchCart();
+      const items = cartService.getCart();
+      setCartItems(items);
+      const summary = cartService.getCartSummary();
+      if (summary && summary.coupon && summary.coupon.code) {
+        setAppliedCoupon(summary.coupon);
+        setDiscountAmount(Number(summary.discountAmount) || Number(summary.coupon.discountAmount) || 0);
+      } else {
+        setAppliedCoupon(null);
+        setDiscountAmount(0);
+      }
+
+      if (summary) {
+        setRewardPointsUsed(Number(summary.rewardPointsUsed) || 0);
+        setRewardDiscountAmount(Number(summary.rewardDiscountAmount) || 0);
+        if (summary.availableRewardPoints !== undefined) {
+          setAvailableRewardPoints(Number(summary.availableRewardPoints) || 0);
+        }
+        if (summary.rewardRate) {
+          setRewardRate(Number(summary.rewardRate) || 100);
+        }
+      } else {
+        const user = authService.getUser();
+        if (user && user.rewardPoints !== undefined) {
+          setAvailableRewardPoints(Number(user.rewardPoints) || 0);
+        }
+      }
+    } catch (e) {
+      console.warn('Error loading checkout cart summary:', e);
+    }
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -89,14 +131,7 @@ export default function CheckoutPage() {
     setIsCheckingAuth(false);
     loadRazorpayScript().catch(() => {});
 
-    // Load cart items & verified summary
-    const items = cartService.getCart();
-    setCartItems(items);
-    const summary = cartService.getCartSummary();
-    if (summary && summary.coupon && summary.coupon.code) {
-      setAppliedCoupon(summary.coupon);
-      setDiscountAmount(Number(summary.discountAmount) || Number(summary.coupon.discountAmount) || 0);
-    }
+    loadCartState();
 
     // Read saved gift options
     try {
@@ -134,7 +169,44 @@ export default function CheckoutPage() {
     (acc, item) => acc + (Number(item.price) || 0) * (parseInt(item.quantity, 10) || 1),
     0
   );
-  const finalTotal = Math.max(0, subtotal - discountAmount);
+  const finalTotal = Math.max(0, subtotal - discountAmount - rewardDiscountAmount);
+
+  // Patron Privilege Points Apply & Remove handlers in checkout
+  const handleApplyRewards = async () => {
+    const rawVal = rewardPointsInput ? parseInt(rewardPointsInput, 10) : availableRewardPoints;
+    if (!rawVal || rawVal <= 0) {
+      message.warning('Please enter points to redeem.');
+      return;
+    }
+    if (rawVal > availableRewardPoints) {
+      message.error(`You have only ${availableRewardPoints.toLocaleString()} points available.`);
+      return;
+    }
+    setRewardLoading(true);
+    try {
+      await cartService.applyRewards(rawVal);
+      message.success(`${rawVal.toLocaleString()} loyalty privilege points applied successfully!`);
+      setRewardPointsInput('');
+      await loadCartState();
+    } catch (err) {
+      message.error(err.message || 'Failed to apply reward points.');
+    } finally {
+      setRewardLoading(false);
+    }
+  };
+
+  const handleRemoveRewards = async () => {
+    setRewardLoading(true);
+    try {
+      await cartService.removeRewards();
+      message.info('Loyalty privilege points discount removed.');
+      await loadCartState();
+    } catch (err) {
+      message.error(err.message || 'Failed to remove reward points.');
+    } finally {
+      setRewardLoading(false);
+    }
+  };
 
   // Toggle delivery address to gift recipient
   const handleToggleGiftAddress = (checked) => {
@@ -196,6 +268,8 @@ export default function CheckoutPage() {
           address: giftOptions.recipientAddress || ''
         } : {},
         couponCode: appliedCoupon?.code || '',
+        rewardPointsUsed: rewardPointsUsed || 0,
+        rewardDiscountAmount: rewardDiscountAmount || 0,
         hasSample: cartItems.some(i => i.hasSample || String(i.size || '').toLowerCase().includes('2ml') || String(i.name || '').toLowerCase().includes('sample')),
         items: cartItems.map((item) => ({
           productId: item.productId || item.id,
@@ -722,6 +796,27 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
+                  {rewardDiscountAmount > 0 && (
+                    <div className="flex justify-between items-center text-[#8C6D1F] bg-[#FAF3E0] px-2.5 py-1.5 rounded-lg border border-[#E0D0A5]">
+                      <span className="font-bold text-[11px] flex items-center gap-1">
+                        <Sparkles size={12} className="text-[#B8860B]" />
+                        Privilege Points ({rewardPointsUsed} pts)
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-sans font-bold text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveRewards}
+                          disabled={rewardLoading}
+                          className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
+                          title="Remove reward points"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-gray-600">
                     <span>White-Glove Courier Delivery</span>
                     <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
@@ -745,6 +840,81 @@ export default function CheckoutPage() {
                       ₹{finalTotal.toLocaleString('en-IN')}
                     </span>
                   </div>
+                </div>
+
+                {/* Patron Privilege Points Redemption Box */}
+                <div className="pt-3 border-t border-[#ECE7DE]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Coins size={14} className="text-[#B8860B]" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+                        Patron Privilege Points
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono font-bold text-[#8C6D1F]">
+                      {availableRewardPoints.toLocaleString()} pts
+                    </span>
+                  </div>
+
+                  {rewardPointsUsed > 0 ? (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF5E8] border border-[#E0D0A5]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-[#B8860B]/15 text-[#8C6D1F] flex items-center justify-center font-bold text-xs shrink-0">
+                          <Sparkles size={13} />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-[#1A1A1A] block">
+                            {rewardPointsUsed.toLocaleString()} Points Applied (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                          </span>
+                          <span className="text-[10px] text-gray-500 block">
+                            Remaining: {Math.max(0, availableRewardPoints - rewardPointsUsed).toLocaleString()} pts
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveRewards}
+                        disabled={rewardLoading}
+                        className="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline px-2 py-1 cursor-pointer disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-[#FAF9F7] border border-[#E0D8CA] space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[11px] text-gray-600">
+                          Available: <strong className="text-black font-semibold">{availableRewardPoints.toLocaleString()} pts</strong> {availableRewardPoints > 0 ? `(Worth ₹${Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})` : ''}
+                        </span>
+                      </div>
+                      {availableRewardPoints > 0 ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            min={1}
+                            max={Math.min(availableRewardPoints, Math.floor(subtotal / (rewardRate / 100)))}
+                            placeholder={`Points to redeem (e.g. ${Math.min(availableRewardPoints, 500)})`}
+                            value={rewardPointsInput}
+                            onChange={(e) => setRewardPointsInput(e.target.value)}
+                            disabled={rewardLoading}
+                            className="flex-1 px-3 py-2 rounded-xl text-xs bg-white border border-[#D5C9B8] focus:outline-none focus:border-[#B8860B] text-black placeholder-gray-400 font-mono disabled:opacity-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyRewards}
+                            disabled={rewardLoading || availableRewardPoints <= 0}
+                            className="px-4 py-2 bg-gradient-to-r from-[#D4A64A] to-[#B38728] hover:from-[#C89B3F] hover:to-[#A3791F] text-[#1B100A] text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {rewardLoading ? 'Applying...' : 'Apply Points'}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-gray-500 m-0">
+                          Earn points on this acquisition to redeem on future boutique fragrance collections.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Trust Badges */}

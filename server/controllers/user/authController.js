@@ -141,12 +141,33 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const assignedRole = role === 'admin' ? 'admin' : 'user';
 
+    let welcomeBonusPoints = 100;
+    try {
+      const { RewardRule } = await import('../../models/rewardModel.js');
+      const rules = await RewardRule.getRules();
+      welcomeBonusPoints = rules.welcomeBonus || 100;
+    } catch (e) {}
+
     const user = await UserModel.create({
       name,
       email,
       password: hashedPassword,
-      role: assignedRole
+      role: assignedRole,
+      rewardPoints: welcomeBonusPoints
     });
+
+    try {
+      const { RewardTransaction } = await import('../../models/rewardModel.js');
+      await RewardTransaction.record({
+        userId: user.id || user._id,
+        customerName: user.name,
+        customerEmail: user.email,
+        type: 'Welcome Bonus',
+        points: welcomeBonusPoints,
+        orderId: 'SIGNUP-WELCOME',
+        description: 'Privilege Welcome Bonus for new patron'
+      });
+    } catch (e) {}
 
     const token = generateToken(user.id, user.role);
 
@@ -158,7 +179,8 @@ export const register = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        rewardPoints: user.rewardPoints || welcomeBonusPoints
       }
     });
   } catch (error) {
@@ -216,6 +238,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        rewardPoints: user.rewardPoints || 0,
         phone: user.phone || null,
         address: user.address || null
       }
@@ -484,17 +507,38 @@ export const googleAuth = async (req, res) => {
     }
 
     if (!user) {
-      // Auto-create new user with secure random password
+      // Auto-create new user with secure random password and welcome bonus points
       const randomPassword = crypto.randomBytes(32).toString('hex');
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      let welcomeBonusPoints = 100;
+      try {
+        const { RewardRule } = await import('../../models/rewardModel.js');
+        const rules = await RewardRule.getRules();
+        welcomeBonusPoints = rules.welcomeBonus || 100;
+      } catch (e) {}
+
       user = await UserModel.create({
         name,
         email,
         password: hashedPassword,
         role: 'user',
         phone: '',
-        address: ''
+        address: '',
+        rewardPoints: welcomeBonusPoints
       });
+
+      try {
+        const { RewardTransaction } = await import('../../models/rewardModel.js');
+        await RewardTransaction.record({
+          userId: user.id || user._id,
+          customerName: user.name,
+          customerEmail: user.email,
+          type: 'Welcome Bonus',
+          points: welcomeBonusPoints,
+          orderId: 'GOOGLE-SIGNUP',
+          description: 'Privilege Welcome Bonus for new patron'
+        });
+      } catch (e) {}
     }
 
     const token = generateToken(user.id || user._id, user.role);
@@ -508,6 +552,7 @@ export const googleAuth = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        rewardPoints: user.rewardPoints || 100,
         avatar: picture || user.avatar || null,
         phone: user.phone || null,
         address: user.address || null
