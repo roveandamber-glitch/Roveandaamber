@@ -1,58 +1,32 @@
 "use client";
 import { useRouter } from 'next/navigation';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
-  Card, 
   Form, 
   Input, 
   Select, 
   Upload, 
   Button, 
-  Row, 
-  Col, 
   message, 
   InputNumber, 
-  Tooltip,
-  Switch
+  Tooltip 
 } from 'antd';
 import { 
   PlusOutlined, 
-  DeleteOutlined, 
   PictureOutlined, 
-  EyeOutlined,
-  CheckOutlined
+  DeleteOutlined, 
+  ArrowLeftOutlined, 
+  CheckOutlined, 
+  SaveOutlined,
+  SafetyCertificateOutlined
 } from '@ant-design/icons';
-import { 
-  Sparkles, 
-  ShieldCheck, 
-  Package, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  Info, 
-  Layers, 
-  UploadCloud, 
-  ArrowLeft,
-  Check,
-  Star
-} from 'lucide-react';
-import { motion } from 'framer-motion';
 import productService from '@/services/productService';
 import categoryService from '@/services/categoryService';
 import adminService from '@/services/adminService';
-import { getImageUrl } from '@/utils/imageHelper';
+import { showLuxuryDeleteModal } from '@/components/common';
 
 const { Option } = Select;
-const { TextArea } = Input;
-
-// Standard luxury perfume flacon presets
-const STANDARD_SIZES = [
-  { key: '50ml', label: '50ml', subtitle: 'Signature Flacon', defaultQty: 15 },
-  { key: '100ml', label: '100ml', subtitle: 'Grand Flacon', defaultQty: 10 },
-  { key: '30ml', label: '30ml', subtitle: 'Travel Flacon', defaultQty: 10 },
-  { key: '2ml Sample', label: '2ml Sample', subtitle: '★ Guarantee Vial', defaultQty: 25, isSample: true },
-  { key: 'Discovery Set', label: 'Discovery Set', subtitle: 'Artisan Coffret', defaultQty: 5 }
-];
 
 const FRAGRANCE_FAMILIES = [
   'Amber & Woods',
@@ -67,16 +41,9 @@ export default function AddProduct() {
   const router = useRouter();
   const [form] = Form.useForm();
   
-  // State
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
-  
-  // Live form preview watch values
-  const [liveName, setLiveName] = useState('');
-  const [livePrice, setLivePrice] = useState(4950);
-  const [liveCategory, setLiveCategory] = useState('');
-  const [liveFamily, setLiveFamily] = useState('Amber & Woods');
 
   // Flacon sizes and stock allocations
   const [sizeStock, setSizeStock] = useState({
@@ -85,14 +52,17 @@ export default function AddProduct() {
     '2ml Sample': 25
   });
 
-  const [customSizeName, setCustomSizeName] = useState('');
-  const [customSizeQty, setCustomSizeQty] = useState(10);
-  const [showGuaranteeInfo, setShowGuaranteeInfo] = useState(false);
+  const [customSizeInput, setCustomSizeInput] = useState('');
+  const [customQtyInput, setCustomQtyInput] = useState(10);
 
-  // Total stock calculated dynamically from sizes
-  const totalStock = useMemo(() => {
-    return Object.values(sizeStock).reduce((sum, qty) => sum + (Number(qty) || 0), 0);
-  }, [sizeStock]);
+  const watchedPrice = Form.useWatch('price', form);
+  const watchedSamplePrice = Form.useWatch('samplePrice', form);
+  const watchedName = Form.useWatch('name', form);
+
+  const totalStock = Object.values(sizeStock).reduce((sum, qty) => sum + (Number(qty) || 0), 0);
+  const hasSampleVariant = Object.keys(sizeStock).some(
+    s => s.toLowerCase().includes('2ml') || s.toLowerCase().includes('sample')
+  );
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -100,113 +70,72 @@ export default function AddProduct() {
         const response = await categoryService.getAllCategories();
         if (response?.success && response.data && response.data.length > 0) {
           setCategories(response.data);
-          setLiveCategory(response.data[0]?.name || '');
+          form.setFieldsValue({
+            category_id: response.data[0]?.id || response.data[0]?._id
+          });
         }
       } catch (error) {
         console.warn('Backend categories offline, using default luxury categories.');
       }
     };
     fetchCategories();
-  }, []);
+  }, [form]);
 
-  // Toggle or add a standard preset size
-  const togglePresetSize = (sizeKey, defaultQty = 10) => {
-    setSizeStock(prev => {
-      const copy = { ...prev };
-      if (copy[sizeKey] !== undefined) {
-        if (Object.keys(copy).length <= 1) {
-          message.warning('At least one flacon size must remain in the catalog.');
-          return prev;
-        }
-        delete copy[sizeKey];
-        message.info(`Removed ${sizeKey}`);
-      } else {
-        copy[sizeKey] = defaultQty;
-        message.success(`Added ${sizeKey} with ${defaultQty} units`);
-      }
-      return copy;
-    });
-  };
-
-  // Adjust quantity for a size
-  const handleStockChange = (size, newQty) => {
-    const validQty = Math.max(0, parseInt(newQty, 10) || 0);
+  const handleSizeStockChange = (size, value) => {
     setSizeStock(prev => ({
       ...prev,
-      [size]: validQty
+      [size]: Math.max(0, Number(value) || 0)
     }));
   };
 
-  // Quick adjust +/- by amount
-  const adjustStockStep = (size, delta) => {
-    setSizeStock(prev => {
-      const current = prev[size] || 0;
-      return {
-        ...prev,
-        [size]: Math.max(0, current + delta)
-      };
-    });
-  };
-
-  // Add custom size
-  const handleAddCustomSize = () => {
-    const trimmed = customSizeName.trim();
+  const handleAddCustomSize = (sizeName, initialQty = 10) => {
+    const trimmed = (sizeName || '').trim();
     if (!trimmed) {
-      message.warning('Please enter a size name (e.g. 200ml, 15ml, Coffret).');
+      message.warning('Please specify variant name (e.g. 30ml, 50ml, 100ml, 2ml Sample).');
       return;
     }
     if (sizeStock[trimmed] !== undefined) {
-      message.info(`Variant "${trimmed}" already exists.`);
+      message.info(`Size "${trimmed}" is already active.`);
       return;
     }
     setSizeStock(prev => ({
       ...prev,
-      [trimmed]: Math.max(0, parseInt(customSizeQty, 10) || 0)
+      [trimmed]: Math.max(0, Number(initialQty) || 0)
     }));
-    setCustomSizeName('');
-    message.success(`Added custom variant "${trimmed}"`);
+    setCustomSizeInput('');
+    message.success(`Added ${trimmed} variant`);
   };
 
-  // Remove a size variant
-  const handleRemoveSize = (sizeKey) => {
+  const handleRemoveSize = (sizeToRemove) => {
     if (Object.keys(sizeStock).length <= 1) {
-      message.warning('A perfume product must have at least one flacon size variant.');
+      message.warning('A perfume flacon must have at least one active size.');
       return;
     }
     setSizeStock(prev => {
       const copy = { ...prev };
-      delete copy[sizeKey];
+      delete copy[sizeToRemove];
       return copy;
     });
-    message.info(`Removed ${sizeKey} variant`);
+    message.info(`Removed ${sizeToRemove} variant`);
   };
 
-  // Image validation
   const beforeUpload = (file) => {
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
-      message.error(`${file.name} is not a valid image file.`);
-      return Upload.LIST_IGNORE;
-    }
-    const isLt5M = file.size / 1024 / 1024 < 5;
-    if (!isLt5M) {
-      message.error('Image must be smaller than 5MB.');
+      message.error(`${file.name} is not an image file.`);
       return Upload.LIST_IGNORE;
     }
     return false;
   };
 
-  const normFile = (e) => {
-    if (Array.isArray(e)) return e;
-    return e?.fileList;
+  const handleUploadChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
   };
 
-  // Form submission
   const onFinish = async (values) => {
     if (fileList.length === 0) {
-      return message.error('Please upload at least one flacon image before publishing.');
+      return message.error('Please upload at least one flacon photograph before publishing.');
     }
-
     if (totalStock <= 0) {
       return message.error('Total product stock across sizes must be greater than 0.');
     }
@@ -216,10 +145,10 @@ export default function AddProduct() {
       const formData = new FormData();
       formData.append('name', values.name.trim());
       formData.append('price', values.price);
+      formData.append('samplePrice', values.samplePrice !== undefined ? values.samplePrice : 199);
       if (values.originalPrice) formData.append('originalPrice', values.originalPrice);
       formData.append('stock', totalStock);
       formData.append('category_id', values.category_id || '');
-      formData.append('categoryName', liveCategory || '');
       formData.append('description', values.description ? values.description.trim() : '');
       formData.append('fragranceFamily', values.fragranceFamily || 'Amber & Woods');
       formData.append('gender', values.gender || 'unisex');
@@ -239,605 +168,467 @@ export default function AddProduct() {
         response = await adminService.createProduct(formData);
       }
 
-      if (response?.success) {
+      if (response?.success || response?.data) {
         message.success(`Perfume "${values.name}" published successfully!`);
         form.resetFields();
         setFileList([]);
         router.push('/admin/products');
       } else {
-        message.error(response?.message || 'Failed to publish perfume');
+        message.error(response?.message || 'Failed to publish perfume.');
       }
     } catch (error) {
-      console.error('Error adding product:', error);
-      message.error(error.response?.data?.message || 'Failed to publish perfume');
+      console.error('Error publishing product:', error);
+      message.error('An error occurred while publishing the product');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ duration: 0.25 }}
-      className="max-w-7xl mx-auto space-y-6 pb-12"
-    >
+    <div className="w-full max-w-7xl mx-auto space-y-3 pb-4">
+      {/* Top Header Bar with Instant Action Buttons - Fits Single Window Screen View */}
+      <div className="bg-white rounded-2xl px-5 py-3 border border-[#EAE3D6] shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/products"
+            className="w-9 h-9 rounded-xl border border-[#E2D6C0] flex items-center justify-center text-stone-600 hover:text-[#B3874B] hover:border-[#B3874B] hover:bg-[#FAF7F2] transition-colors"
+            title="Back to Catalog"
+          >
+            <ArrowLeftOutlined className="text-sm" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-serif font-bold text-[#1B100A] leading-tight m-0">
+                {watchedName || 'Create New Perfume Flacon'}
+              </h1>
+              <span className="text-[10px] font-sans font-bold bg-[#FAF7F2] text-[#8C6D1F] px-2 py-0.5 rounded-full border border-[#E2D6C0]">
+                Haute Parfumerie
+              </span>
+            </div>
+            <p className="text-[11px] text-stone-500 m-0">
+              Publish new artisanal formulation with bottle inventory allocation and 2ml guarantee vial pricing.
+            </p>
+          </div>
+        </div>
+
+        {/* Action Controls right at the top */}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => router.push('/admin/products')}
+            className="!rounded-xl !h-9 px-4 text-xs font-semibold !border-stone-300 text-stone-700 hover:!border-stone-400"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="primary"
+            onClick={() => form.submit()}
+            loading={loading}
+            icon={<SaveOutlined />}
+            className="!bg-[#B3874B] hover:!bg-[#8C6D1F] !text-white !rounded-xl !h-9 px-5 text-xs font-bold !border-none shadow-xs uppercase tracking-wider"
+          >
+            Publish Perfume
+          </Button>
+        </div>
+      </div>
+
       <Form
         form={form}
         layout="vertical"
         onFinish={onFinish}
-        requiredMark={false}
         initialValues={{
           price: 4950,
-          originalPrice: 5950,
+          samplePrice: 199,
           fragranceFamily: 'Amber & Woods',
           gender: 'unisex'
         }}
+        className="w-full"
       >
-        {/* Sticky Luxury Header Action Bar */}
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-4 z-30">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => router.push('/admin/products')}
-              className="p-2 rounded-xl border border-[#E8DFC8] hover:bg-[#FAF7F2] text-gray-600 transition-colors cursor-pointer"
-              title="Back to Catalog"
-            >
-              <ArrowLeft size={16} />
-            </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-serif font-bold text-[#18110D] tracking-tight m-0">
-                  Add New Perfume Formulation
-                </h1>
-                <span className="text-[10px] font-sans font-bold bg-[#FAF7F2] text-[#B8860B] border border-[#E8DFC8] px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Maison Catalog
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 m-0 mt-0.5">
-                Configure formulation title, olfactory profile, bottle sizes, and inventory allocation.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <Button 
-              onClick={() => router.push('/admin/products')} 
-              className="!rounded-xl !h-10 !px-5 !text-xs !font-semibold !border-[#E8DFC8] hover:!border-[#D4A64A]"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
-              loading={loading}
-              className="!bg-gradient-to-r !from-[#D4A64A] !to-[#B38728] hover:!brightness-105 !text-[#18110D] !border-none !rounded-xl !h-10 !px-6 !text-xs !font-bold !shadow-sm flex items-center gap-1.5"
-            >
-              <Sparkles size={14} />
-              <span>Publish Perfume</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* 2-Column Responsive Layout */}
-        <Row gutter={[24, 24]}>
-          
-          {/* Left Column: Essential Details & Modern Size Inventory Matrix */}
-          <Col xs={24} lg={15} className="space-y-6">
-
-            {/* CARD 1: Perfume Essence & Details */}
-            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EAE1]">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#FAF7F2] text-[#B8860B] border border-[#E8DFC8] flex items-center justify-center">
-                    <Sparkles size={14} />
-                  </div>
-                  <h3 className="text-sm font-serif font-bold text-[#18110D] m-0">
-                    Perfume Identity & Story
-                  </h3>
-                </div>
-                <span className="text-[11px] text-gray-400">Step 1 of 3</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
+          {/* Left Column (7 cols): Formulation details, Pricing & Sizes */}
+          <div className="lg:col-span-7 space-y-3">
+            {/* Card 1: General Details & Dedicated Sample Pricing */}
+            <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#F0EBE1]">
+                <h3 className="font-serif font-bold text-xs uppercase tracking-wider text-[#1B100A] m-0 flex items-center gap-2">
+                  <span>Fragrance Details & Pricing</span>
+                </h3>
+                <span className="text-[11px] text-stone-400 font-mono">STEP 1 OF 2</span>
               </div>
 
-              <Row gutter={16}>
-                {/* Perfume Name */}
-                <Col xs={24} sm={15}>
+              {/* Row 1: Perfume Name & Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div className="sm:col-span-7">
                   <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Perfume Title *</span>}
+                    label={<span className="text-[11px] font-bold uppercase tracking-wider text-stone-700">Perfume Name</span>}
                     name="name"
-                    rules={[
-                      { required: true, message: 'Perfume title is required' },
-                      { min: 3, message: 'Must be at least 3 characters' }
-                    ]}
-                    className="mb-3.5"
+                    className="!mb-0"
+                    rules={[{ required: true, message: 'Please enter perfume name' }]}
                   >
                     <Input 
-                      placeholder="e.g. Oud Royale — The Royal Edition" 
-                      onChange={(e) => setLiveName(e.target.value)}
-                      className="rounded-xl h-10 text-xs font-serif" 
+                      placeholder="e.g. Royal Elegance Extrait de Parfum" 
+                      className="rounded-xl py-1.5 text-xs font-serif font-medium border-stone-300" 
                     />
                   </Form.Item>
-                </Col>
-
-                {/* Category / Collection */}
-                <Col xs={24} sm={9}>
+                </div>
+                <div className="sm:col-span-5">
                   <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Collection *</span>}
+                    label={<span className="text-[11px] font-bold uppercase tracking-wider text-stone-700">Collection / Category</span>}
                     name="category_id"
-                    rules={[{ required: true, message: 'Please select a collection' }]}
-                    className="mb-3.5"
+                    className="!mb-0"
+                    rules={[{ required: true, message: 'Select category' }]}
                   >
-                    <Select 
-                      placeholder="Select collection" 
-                      className="h-10 text-xs"
-                      onChange={(val, opt) => setLiveCategory(opt?.children || '')}
-                    >
-                      {categories.map((cat) => (
-                        <Option key={cat.id || cat._id} value={cat.id || cat._id}>
-                          {cat.name}
+                    <Select className="w-full text-xs">
+                      {categories.map((c) => (
+                        <Option key={c.id || c._id} value={c.id || c._id}>
+                          {c.name}
                         </Option>
                       ))}
                     </Select>
                   </Form.Item>
-                </Col>
-
-                {/* Fragrance Family */}
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Olfactory Family</span>}
-                    name="fragranceFamily"
-                    className="mb-3.5"
-                  >
-                    <Select 
-                      className="h-10 text-xs"
-                      onChange={(val) => setLiveFamily(val)}
-                    >
-                      {FRAGRANCE_FAMILIES.map(f => (
-                        <Option key={f} value={f}>{f}</Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-
-                {/* Target Audience / Gender */}
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Gender / Scent Profile</span>}
-                    name="gender"
-                    className="mb-3.5"
-                  >
-                    <Select className="h-10 text-xs">
-                      <Option value="unisex">Unisex / Shared</Option>
-                      <Option value="her">For Her (Feminine)</Option>
-                      <Option value="him">For Him (Masculine)</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-
-                {/* Base Price & Compare Price */}
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Offering Price (₹) *</span>}
-                    name="price"
-                    rules={[
-                      { required: true, message: 'Price is required' },
-                      {
-                        validator: (_, value) => {
-                          if (!value || Number(value) > 0) return Promise.resolve();
-                          return Promise.reject(new Error('Price must be greater than 0'));
-                        }
-                      }
-                    ]}
-                    className="mb-3.5"
-                  >
-                    <InputNumber 
-                      min={1} 
-                      max={1000000} 
-                      placeholder="4950" 
-                      onChange={(val) => setLivePrice(val || 0)}
-                      className="w-full rounded-xl h-10 text-xs font-mono font-bold" 
-                    />
-                  </Form.Item>
-                </Col>
-
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Compare Price (₹)</span>}
-                    name="originalPrice"
-                    className="mb-3.5"
-                  >
-                    <InputNumber 
-                      min={0} 
-                      max={1000000} 
-                      placeholder="5950" 
-                      className="w-full rounded-xl h-10 text-xs font-mono" 
-                    />
-                  </Form.Item>
-                </Col>
-
-                {/* Description */}
-                <Col xs={24}>
-                  <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Artisanal Story & Formulation Description</span>}
-                    name="description"
-                    className="mb-0"
-                  >
-                    <TextArea 
-                      rows={3}
-                      placeholder="Describe the olfactory journey, rare woods, essential oils, and inspiration behind this bespoke perfume..."
-                      className="rounded-xl text-xs py-2"
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </div>
-
-            {/* CARD 2: User-Friendly Flacon Sizes & Inventory Allocation */}
-            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-4">
-              
-              {/* Card Header with Real-Time Total Stock Counter */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F0EAE1]">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-[#FAF7F2] text-[#B8860B] border border-[#E8DFC8] flex items-center justify-center">
-                    <Package size={14} />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-serif font-bold text-[#18110D] m-0 flex items-center gap-2">
-                      <span>Flacon Sizes & Inventory Allocation</span>
-                      <span className="text-[10px] font-sans font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.2 rounded-full">
-                        Live Allocation
-                      </span>
-                    </h3>
-                    <p className="text-xs text-gray-500 m-0 mt-0.5">
-                      Select which bottle volumes are available and allocate inventory per variant.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-start sm:self-auto bg-[#FAF7F2] border border-[#E8DFC8] px-3.5 py-1.5 rounded-xl shrink-0">
-                  <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">
-                    Total Stock:
-                  </span>
-                  <span className="font-mono font-bold text-sm text-[#18110D]">
-                    {totalStock} Units
-                  </span>
                 </div>
               </div>
 
-              {/* 1. Quick Standard Size Selectors (One-Click Toggle) */}
-              <div>
-                <span className="text-xs font-semibold text-gray-700 block mb-2">
-                  Standard Bottle Presets (Click to add / remove):
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                  {STANDARD_SIZES.map((sizeObj) => {
-                    const isAdded = sizeStock[sizeObj.key] !== undefined;
-                    return (
-                      <button
-                        type="button"
-                        key={sizeObj.key}
-                        onClick={() => togglePresetSize(sizeObj.key, sizeObj.defaultQty)}
-                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between select-none relative ${
-                          isAdded
-                            ? 'bg-[#FAF7F2] border-[#D4A64A] shadow-xs ring-1 ring-[#D4A64A]/30'
-                            : 'bg-white border-[#E8DFC8] hover:border-[#D4A64A]/60 text-gray-600'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between w-full mb-1">
-                          <span className="font-mono font-bold text-xs text-[#18110D]">
-                            {sizeObj.label}
+              {/* Row 2: Base Bottle Price + Sample Vial Price */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <Form.Item
+                  label={
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-stone-700 flex items-center justify-between w-full">
+                      <span>Base Bottle Price (₹)</span>
+                      <span className="text-[10px] text-stone-400 font-normal">Full Flacon</span>
+                    </span>
+                  }
+                  name="price"
+                  className="!mb-0"
+                  rules={[{ required: true, message: 'Please enter base price' }]}
+                >
+                  <InputNumber 
+                    min={0} 
+                    step={50}
+                    placeholder="4950"
+                    formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/₹\s?|(,*)/g, '')}
+                    className="w-full rounded-xl py-0.5 text-xs font-mono font-bold border-stone-300" 
+                  />
+                </Form.Item>
+
+                {/* Dedicated Sample Product Price Adding Field */}
+                <Form.Item
+                  label={
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#B3874B] flex items-center justify-between w-full">
+                      <span className="flex items-center gap-1">
+                        <span>Sample Product Price (₹)</span>
+                        <Tooltip title="Price charged to customers for the 2ml trial vial with guarantee return protection.">
+                          <span className="cursor-help opacity-70">ⓘ</span>
+                        </Tooltip>
+                      </span>
+                      <span className="text-[9px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded font-bold uppercase tracking-wider">
+                        ★ 2ml Sample
+                      </span>
+                    </span>
+                  }
+                  name="samplePrice"
+                  className="!mb-0"
+                  rules={[{ required: true, message: 'Please specify 2ml sample vial price' }]}
+                >
+                  <InputNumber 
+                    min={0} 
+                    step={10}
+                    placeholder="199"
+                    formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/₹\s?|(,*)/g, '')}
+                    className="w-full rounded-xl py-0.5 text-xs font-mono font-bold border-amber-300 bg-amber-50/30" 
+                  />
+                </Form.Item>
+              </div>
+
+              {/* Row 3: Fragrance Family & Olfactory Description */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
+                <div className="sm:col-span-5">
+                  <Form.Item
+                    label={<span className="text-[11px] font-bold uppercase tracking-wider text-stone-700">Fragrance Family</span>}
+                    name="fragranceFamily"
+                    className="!mb-0"
+                  >
+                    <Select className="w-full text-xs">
+                      {FRAGRANCE_FAMILIES.map((fam) => (
+                        <Option key={fam} value={fam}>{fam}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </div>
+                <div className="sm:col-span-7">
+                  <Form.Item
+                    label={<span className="text-[11px] font-bold uppercase tracking-wider text-stone-700">Olfactory Description & Notes</span>}
+                    name="description"
+                    className="!mb-0"
+                  >
+                    <Input.TextArea 
+                      rows={2} 
+                      placeholder="Top notes: Bergamot, Pink Pepper. Heart: Damask Rose. Base: Oud, Ambergris." 
+                      className="rounded-xl text-xs border-stone-300" 
+                    />
+                  </Form.Item>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Flacon Sizes & Inventory Allocation (Compact & Single-Screen Ready) */}
+            <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#F0EBE1]">
+                <div>
+                  <h3 className="font-serif font-bold text-xs uppercase tracking-wider text-[#1B100A] m-0 flex items-center gap-2">
+                    <span>Flacon Sizes & Inventory Allocation</span>
+                    <span className="text-[9px] font-sans font-bold bg-[#FAF7F2] text-[#8C6D1F] px-1.5 py-0.2 rounded border border-[#E2D6C0]">
+                      Live
+                    </span>
+                  </h3>
+                </div>
+                <div className="bg-[#1B100A] text-[#FAF7F2] px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold">
+                  {totalStock} Total Units
+                </div>
+              </div>
+
+              {/* Ultra-Slim Guarantee Status Bar */}
+              <div className="bg-amber-50/90 border border-amber-300/80 rounded-xl px-3 py-1.5 flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <SafetyCertificateOutlined className="text-amber-700 text-sm shrink-0" />
+                  <span className="text-[11px] text-amber-950 truncate">
+                    <strong className="font-bold text-amber-900">2ml Sample Guarantee:</strong> Customers ordering 2ml sample receive 7-day return & dispatch cancellation guarantee.
+                  </span>
+                </div>
+                <div className="shrink-0 font-mono text-[11px] font-bold text-[#8C6D1F] bg-amber-200/60 px-2 py-0.5 rounded-md">
+                  Vial Price: ₹{watchedSamplePrice || 199}
+                </div>
+              </div>
+
+              {/* Active Variants in Formulation - Compact 3-col Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {Object.entries(sizeStock).map(([size, qty]) => {
+                  const isSample = size.toLowerCase().includes('2ml') || size.toLowerCase().includes('sample');
+                  return (
+                    <div 
+                      key={size} 
+                      className={`p-2.5 rounded-xl border transition-all flex flex-col justify-between ${
+                        isSample 
+                          ? 'bg-amber-50/50 border-amber-400 ring-1 ring-amber-300/50' 
+                          : 'bg-[#FAF7F2] border-[#E2D6C0]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="font-bold text-xs text-[#1B100A] font-mono">
+                            {size}
                           </span>
-                          <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
-                            isAdded ? 'bg-[#D4A64A] text-white' : 'border border-gray-300 text-gray-300'
-                          }`}>
-                            {isAdded ? <Check size={10} strokeWidth={3} /> : <Plus size={10} />}
+                          {isSample && (
+                            <span className="text-[8px] font-bold bg-amber-200 text-amber-950 px-1 py-0.2 rounded uppercase">
+                              ★ Sample Vial
+                            </span>
+                          )}
+                        </div>
+                        {Object.keys(sizeStock).length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              showLuxuryDeleteModal({
+                                title: 'Remove Size Variant',
+                                itemName: size,
+                                itemType: 'flacon variant',
+                                description: `Remove ${size} from this perfume formulation?`,
+                                confirmText: 'Remove',
+                                onConfirm: () => handleRemoveSize(size)
+                              });
+                            }}
+                            className="text-stone-400 hover:text-rose-600 p-0.5 rounded cursor-pointer"
+                            title={`Remove ${size}`}
+                          >
+                            <DeleteOutlined className="text-xs" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] text-stone-600">
+                          <span>Stock:</span>
+                          <span className={`font-mono font-bold ${qty > 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                            {qty > 0 ? `${qty} units` : 'Out of Stock'}
                           </span>
                         </div>
-                        <span className="text-[10px] text-gray-500 truncate block">
-                          {sizeObj.subtitle}
+                        <InputNumber
+                          min={0}
+                          max={99999}
+                          value={qty}
+                          onChange={(val) => handleSizeStockChange(size, val)}
+                          className="w-full text-center rounded-lg text-xs font-mono font-bold border-stone-300 !h-7"
+                          placeholder="Qty"
+                        />
+                        {isSample && (
+                          <div className="text-[9px] text-amber-800 font-semibold text-center pt-0.5">
+                            Customer Price: ₹{watchedSamplePrice || 199}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Inline Toolbar for Adding Variants & Quick Presets (Zero Vertical Waste) */}
+              <div className="pt-2 border-t border-[#F0EBE1] flex flex-wrap items-center justify-between gap-2">
+                {/* Presets Pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 mr-0.5">Quick Add:</span>
+                  {['2ml Sample', '30ml', '50ml', '100ml', 'Discovery Set'].map((preset) => {
+                    const isAdded = sizeStock[preset] !== undefined;
+                    const isSamplePreset = preset === '2ml Sample';
+
+                    if (isAdded) {
+                      return (
+                        <span
+                          key={preset}
+                          className="bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-[10px] px-2 py-0.5 rounded-lg flex items-center gap-1 select-none"
+                        >
+                          <CheckOutlined className="text-[9px]" /> {preset}
                         </span>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleAddCustomSize(preset, preset === '2ml Sample' ? 25 : 10)}
+                        className={`text-[10px] px-2 py-0.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-0.5 ${
+                          isSamplePreset
+                            ? 'bg-amber-100 text-amber-950 border-amber-400 hover:bg-amber-500 hover:text-white'
+                            : 'bg-white text-stone-700 border-[#E2D6C0] hover:bg-[#B3874B] hover:text-white hover:border-[#B3874B]'
+                        }`}
+                      >
+                        <span>+ {preset}</span>
                       </button>
                     );
                   })}
                 </div>
-              </div>
 
-              {/* 2. Elegant 2ml Sample Guarantee Accordion Note */}
-              <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-3 text-xs text-amber-950 flex items-start gap-2.5">
-                <ShieldCheck size={16} className="text-amber-700 shrink-0 mt-0.5" />
-                <div className="flex-1 text-[11px] leading-relaxed text-amber-900">
-                  <span className="font-bold text-amber-950">2ml Companion Sample Guarantee: </span>
-                  When the <strong>2ml Sample</strong> variant is offered, patrons can test the scent at home before opening their full flacon. Orders with a companion sample qualify for 7-day hassle-free returns.
-                </div>
-              </div>
-
-              {/* 3. Active Formulations Stock Cards */}
-              <div className="pt-2">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-xs font-semibold text-gray-700">
-                    Active Catalog Flacons ({Object.keys(sizeStock).length} active):
-                  </span>
-                  <span className="text-[11px] text-gray-400">
-                    Fine-tune inventory for each variant
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {Object.entries(sizeStock).map(([sizeName, qty]) => {
-                    const isSample = sizeName.toLowerCase().includes('sample') || sizeName.toLowerCase().includes('2ml');
-                    const units = Number(qty) || 0;
-
-                    return (
-                      <div
-                        key={sizeName}
-                        className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between ${
-                          isSample 
-                            ? 'bg-amber-50/40 border-amber-300 shadow-2xs' 
-                            : 'bg-white border-[#E8DFC8] shadow-2xs'
-                        }`}
-                      >
-                        {/* Variant Header */}
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <span className="font-mono font-bold text-xs text-[#18110D]">
-                              {sizeName}
-                            </span>
-                            {isSample && (
-                              <span className="text-[9px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded uppercase tracking-wider">
-                                Sample
-                              </span>
-                            )}
-                          </div>
-                          
-                          {Object.keys(sizeStock).length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSize(sizeName)}
-                              className="text-gray-400 hover:text-rose-600 p-1 rounded-md hover:bg-rose-50 transition-colors cursor-pointer"
-                              title={`Remove ${sizeName}`}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Inventory Controls with +/- Stepper */}
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-xl border border-[#E8DFC8]">
-                            <button
-                              type="button"
-                              onClick={() => adjustStockStep(sizeName, -5)}
-                              className="w-7 h-7 rounded-lg bg-white border border-[#E8DFC8] hover:bg-gray-50 text-gray-700 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95"
-                              title="-5 Units"
-                            >
-                              -5
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => adjustStockStep(sizeName, -1)}
-                              className="w-7 h-7 rounded-lg bg-white border border-[#E8DFC8] hover:bg-gray-50 text-gray-700 flex items-center justify-center cursor-pointer active:scale-95"
-                              title="-1 Unit"
-                            >
-                              <Minus size={12} />
-                            </button>
-                            
-                            <input
-                              type="number"
-                              min={0}
-                              max={9999}
-                              value={units}
-                              onChange={(e) => handleStockChange(sizeName, e.target.value)}
-                              className="flex-1 text-center font-mono font-bold text-xs bg-transparent focus:outline-none w-12"
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => adjustStockStep(sizeName, 1)}
-                              className="w-7 h-7 rounded-lg bg-white border border-[#E8DFC8] hover:bg-gray-50 text-gray-700 flex items-center justify-center cursor-pointer active:scale-95"
-                              title="+1 Unit"
-                            >
-                              <Plus size={12} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => adjustStockStep(sizeName, 5)}
-                              className="w-7 h-7 rounded-lg bg-white border border-[#E8DFC8] hover:bg-gray-50 text-gray-700 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95"
-                              title="+5 Units"
-                            >
-                              +5
-                            </button>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className={units > 0 ? 'text-emerald-700 font-medium' : 'text-rose-600 font-bold'}>
-                              {units > 0 ? `✓ ${units} units ready` : '⚠ Out of stock'}
-                            </span>
-                            <span className="text-gray-400 font-mono">
-                              Allocation
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 4. Add Custom Bottle Volume Inline */}
-              <div className="pt-3 border-t border-[#F0EAE1]">
-                <span className="text-xs font-semibold text-gray-700 block mb-2">
-                  Add Custom Volume or Gift Edition:
-                </span>
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                {/* Inline Custom Size Field */}
+                <div className="flex items-center gap-1.5">
                   <Input
-                    placeholder="e.g. 200ml Flacon or 15ml Travel Spray"
-                    value={customSizeName}
-                    onChange={(e) => setCustomSizeName(e.target.value)}
-                    onPressEnter={handleAddCustomSize}
-                    className="rounded-xl text-xs py-2 flex-1 border-[#E8DFC8]"
+                    placeholder="Custom ML size"
+                    value={customSizeInput}
+                    onChange={(e) => setCustomSizeInput(e.target.value)}
+                    onPressEnter={() => handleAddCustomSize(customSizeInput, customQtyInput)}
+                    className="rounded-lg text-xs py-0.5 w-28 border-stone-300"
                   />
-                  <div className="flex items-center gap-1 bg-[#FAF7F2] border border-[#E8DFC8] px-3 py-1 rounded-xl shrink-0">
-                    <span className="text-xs text-gray-600 font-semibold">Qty:</span>
-                    <InputNumber
-                      min={0}
-                      max={9999}
-                      value={customSizeQty}
-                      onChange={(v) => setCustomSizeQty(v || 0)}
-                      className="w-16 rounded-lg text-xs font-mono font-bold border-none bg-transparent"
-                    />
-                  </div>
+                  <InputNumber
+                    min={0}
+                    max={9999}
+                    value={customQtyInput}
+                    onChange={(v) => setCustomQtyInput(v || 0)}
+                    className="w-14 rounded-lg text-xs font-mono font-bold border-stone-300 !h-7"
+                    title="Initial Units"
+                  />
                   <button
                     type="button"
-                    onClick={handleAddCustomSize}
-                    className="px-4 py-2 bg-[#18110D] hover:bg-[#2A2421] text-white rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
+                    onClick={() => handleAddCustomSize(customSizeInput, customQtyInput)}
+                    className="bg-[#B3874B] hover:bg-[#8C6D1F] text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
                   >
-                    <Plus size={13} />
-                    <span>Add Variant</span>
+                    + Add
                   </button>
                 </div>
               </div>
-
             </div>
-          </Col>
+          </div>
 
-          {/* Right Column: Visual Media & Live Storefront Preview */}
-          <Col xs={24} lg={9} className="space-y-6">
-
-            {/* Visual Media Uploader Card */}
-            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EAE1]">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#FAF7F2] text-[#B8860B] border border-[#E8DFC8] flex items-center justify-center">
-                    <UploadCloud size={14} />
-                  </div>
-                  <h3 className="text-sm font-serif font-bold text-[#18110D] m-0">
-                    Product Imagery
-                  </h3>
-                </div>
-                <span className="text-[10px] text-gray-400">Up to 4 images</span>
+          {/* Right Column (5 cols): Imagery & Live Formulation Summary */}
+          <div className="lg:col-span-5 space-y-3">
+            {/* Card 3: Perfume Imagery (Compact Grid) */}
+            <div className="bg-white rounded-2xl p-4 border border-[#EAE3D6] shadow-xs space-y-2.5">
+              <div className="flex items-center justify-between pb-2 border-b border-[#F0EBE1]">
+                <h3 className="font-serif font-bold text-xs uppercase tracking-wider text-[#1B100A] m-0 flex items-center gap-2">
+                  <PictureOutlined className="text-[#B3874B]" />
+                  <span>Flacon Imagery</span>
+                </h3>
+                <span className="text-[10px] text-stone-400 font-mono">Up to 4 images</span>
               </div>
 
-              <div>
-                <Form.Item
-                  name="images"
-                  valuePropName="fileList"
-                  getValueFromEvent={normFile}
-                  className="m-0"
+              <div className="pt-1">
+                <Upload
+                  listType="picture-card"
+                  fileList={fileList}
+                  beforeUpload={beforeUpload}
+                  onChange={handleUploadChange}
+                  maxCount={4}
+                  className="luxury-admin-uploader"
                 >
-                  <Upload
-                    listType="picture-card"
-                    fileList={fileList}
-                    beforeUpload={beforeUpload}
-                    onChange={({ fileList }) => setFileList(fileList)}
-                    multiple={true}
-                    maxCount={4}
-                    className="compact-uploader"
-                  >
-                    {fileList.length < 4 && (
-                      <div className="p-2 text-center">
-                        <PlusOutlined className="text-base text-gray-400" />
-                        <div className="mt-1 text-[11px] font-semibold text-gray-600">Upload Image</div>
-                      </div>
-                    )}
-                  </Upload>
-                </Form.Item>
-
-                {fileList.length === 0 && (
-                  <div className="mt-2 p-5 rounded-2xl bg-[#FAF9F7] border border-dashed border-[#E8DFC8] text-center">
-                    <PictureOutlined className="text-2xl text-[#D4A64A] mb-1.5" />
-                    <p className="text-xs font-semibold text-[#18110D] m-0">No flacon image uploaded yet</p>
-                    <span className="text-[10px] text-gray-400 block mt-0.5">PNG, JPG, or WEBP under 5MB</span>
-                  </div>
-                )}
+                  {fileList.length < 4 && (
+                    <div className="text-center p-2">
+                      <PlusOutlined className="text-stone-400 text-sm" />
+                      <div className="text-[10px] font-medium text-stone-600 mt-1">Upload</div>
+                    </div>
+                  )}
+                </Upload>
               </div>
-
-              {/* Status Readiness Checklist */}
-              <div className="pt-3 border-t border-[#F0EAE1] space-y-1.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Image Cover:</span>
-                  <span className={fileList.length > 0 ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
-                    {fileList.length > 0 ? `✓ ${fileList.length} Image${fileList.length > 1 ? 's' : ''}` : 'Required'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Total Stock Active:</span>
-                  <span className={totalStock > 0 ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
-                    {totalStock > 0 ? `✓ ${totalStock} Units` : 'Required'}
-                  </span>
-                </div>
-              </div>
+              <p className="text-[10px] text-stone-400 m-0">
+                Recommended: Studio flacon photography on pure neutral backdrop (1000×1200px).
+              </p>
             </div>
 
-            {/* LIVE STOREFRONT CARD PREVIEW */}
-            <div className="bg-white rounded-2xl p-5 border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#F0EAE1]">
-                <div className="flex items-center gap-1.5">
-                  <EyeOutlined className="text-[#B8860B] text-xs" />
-                  <span className="text-xs font-serif font-bold text-[#18110D]">
-                    Storefront Live Preview
-                  </span>
-                </div>
-                <span className="text-[10px] uppercase font-bold text-[#B8860B] tracking-wider">
-                  Patron View
+            {/* Card 4: Formulation Live Snapshot & Primary Action */}
+            <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#E2D6C0] shadow-xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E8DFC8]">
+                <span className="font-serif font-bold text-xs uppercase tracking-wider text-[#1B100A]">
+                  Formulation Snapshot
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                  New Formulation
                 </span>
               </div>
 
-              {/* Mock Perfume Card */}
-              <div className="p-4 rounded-2xl bg-[#FAF9F7] border border-[#E8DFC8] space-y-3">
-                <div className="w-full h-44 rounded-xl bg-white border border-[#E8DFC8] overflow-hidden flex items-center justify-center p-2 relative shadow-2xs">
-                  {fileList.length > 0 && fileList[0]?.thumbUrl ? (
-                    <img 
-                      src={fileList[0].thumbUrl} 
-                      alt="Preview" 
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <div className="text-center text-gray-300">
-                      <PictureOutlined className="text-3xl mb-1 text-gray-300" />
-                      <span className="text-[11px] block text-gray-400">Flacon Image Preview</span>
-                    </div>
-                  )}
-
-                  <span className="absolute top-2.5 left-2.5 text-[9px] font-bold bg-[#18110D] text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
-                    {liveFamily || 'Haute Perfumerie'}
+              {/* 2x2 Metric Grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-white p-2.5 rounded-xl border border-[#EAE3D6]">
+                  <span className="text-[10px] text-stone-500 uppercase tracking-wide block">Base Bottle Price</span>
+                  <span className="font-mono font-bold text-sm text-[#1B100A]">
+                    ₹{Number(watchedPrice || 4950).toLocaleString()}
                   </span>
                 </div>
-
-                <div>
-                  <span className="text-[10px] text-[#B8860B] font-bold uppercase tracking-widest block mb-0.5">
-                    {liveCategory || 'Signature Collection'}
+                <div className="bg-white p-2.5 rounded-xl border border-amber-300 bg-amber-50/30">
+                  <span className="text-[10px] text-amber-900 font-bold uppercase tracking-wide block">
+                    ★ 2ml Sample Price
                   </span>
-                  <h4 className="text-sm font-serif font-bold text-[#18110D] truncate m-0">
-                    {liveName || 'Perfume Title Preview'}
-                  </h4>
-
-                  <div className="mt-2 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm font-bold font-mono text-[#18110D]">
-                        ₹{Number(livePrice || 4950).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      {Object.keys(sizeStock).slice(0, 3).map(sz => (
-                        <span key={sz} className="text-[9px] font-mono bg-white border border-[#E8DFC8] px-1.5 py-0.5 rounded text-gray-600">
-                          {sz}
-                        </span>
-                      ))}
-                      {Object.keys(sizeStock).length > 3 && (
-                        <span className="text-[9px] font-mono text-gray-400">
-                          +{Object.keys(sizeStock).length - 3}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <span className="font-mono font-bold text-sm text-[#B3874B]">
+                    ₹{Number(watchedSamplePrice || 199).toLocaleString()}
+                  </span>
+                </div>
+                <div className="bg-white p-2.5 rounded-xl border border-[#EAE3D6]">
+                  <span className="text-[10px] text-stone-500 uppercase tracking-wide block">Total Stock</span>
+                  <span className="font-mono font-bold text-sm text-stone-900">
+                    {totalStock} Flacons
+                  </span>
+                </div>
+                <div className="bg-white p-2.5 rounded-xl border border-[#EAE3D6]">
+                  <span className="text-[10px] text-stone-500 uppercase tracking-wide block">Sample Guarantee</span>
+                  <span className={`text-[11px] font-bold ${hasSampleVariant ? 'text-emerald-700' : 'text-amber-800'}`}>
+                    {hasSampleVariant ? '✓ 7-Day Return Active' : 'No 2ml Sample Added'}
+                  </span>
                 </div>
               </div>
-            </div>
 
-          </Col>
-        </Row>
+              {/* Primary Action Button */}
+              <div className="pt-1">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  icon={<SaveOutlined />}
+                  className="!w-full !bg-[#B3874B] hover:!bg-[#8C6D1F] !text-white !rounded-xl !h-10 text-xs font-bold uppercase tracking-wider !border-none shadow-sm"
+                >
+                  Publish Perfume Flacon
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </Form>
-    </motion.div>
+    </div>
   );
 }

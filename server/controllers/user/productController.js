@@ -90,6 +90,7 @@ export const formatProduct = (p) => {
     video: doc.video || '',
     sizes_stock: sizeMap,
     sizes: sizeKeys,
+    samplePrice: doc.samplePrice !== undefined ? Number(doc.samplePrice) : 199,
     fragranceFamily: doc.fragranceFamily || 'Amber & Woods',
     gender: doc.gender || 'unisex',
     rating: doc.rating !== undefined ? doc.rating : 4.8,
@@ -321,6 +322,7 @@ export const createProduct = async (req, res) => {
       name,
       slug,
       price,
+      samplePrice,
       originalPrice,
       stock,
       category_id,
@@ -402,6 +404,7 @@ export const createProduct = async (req, res) => {
       name,
       slug,
       price: parseFloat(price),
+      samplePrice: samplePrice !== undefined ? (parseFloat(samplePrice) || 0) : 199,
       originalPrice: originalPrice ? parseFloat(originalPrice) : parseFloat(price),
       stock: calculatedStock,
       image: primaryImage,
@@ -441,6 +444,7 @@ export const updateProduct = async (req, res) => {
       name,
       slug,
       price,
+      samplePrice,
       originalPrice,
       stock,
       category_id,
@@ -483,6 +487,7 @@ export const updateProduct = async (req, res) => {
     if (name !== undefined) updateData.name = name;
     if (slug !== undefined) updateData.slug = slug;
     if (price !== undefined) updateData.price = parseFloat(price);
+    if (samplePrice !== undefined) updateData.samplePrice = parseFloat(samplePrice) || 0;
     if (originalPrice !== undefined) updateData.originalPrice = parseFloat(originalPrice);
     if (calculatedStock !== undefined) updateData.stock = calculatedStock;
     if (category_id !== undefined) updateData.category_id = category_id;

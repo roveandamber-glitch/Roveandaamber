@@ -287,7 +287,9 @@ const ProductDetails = () => {
   const isOutOfStock = maxStockForSize === 0 || product?.inStock === false || product?.status === 'Out of Stock';
 
   // Pricing calculations
-  const price = Number(product?.price) || 0;
+  const isSelectedSizeSample = Boolean(selectedSize && (selectedSize.toLowerCase().includes('2ml') || selectedSize.toLowerCase().includes('sample')));
+  const samplePrice = product?.samplePrice !== undefined && product?.samplePrice !== null ? Number(product.samplePrice) : 199;
+  const price = isSelectedSizeSample ? samplePrice : (Number(product?.price) || 0);
   const originalPrice = product?.originalPrice && Number(product.originalPrice) > price ? Number(product.originalPrice) : null;
   const discountPercent = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : null;
   const totalPrice = price * quantity;
@@ -337,7 +339,7 @@ const ProductDetails = () => {
           id: `${product._id || product.id}_sample_2ml`,
           productId: product._id || product.id,
           name: `${product.name} (2 ml Companion Sample Bottle)`,
-          price: 199,
+          price: samplePrice,
           image: currentMainImage,
           size: '2ML',
           quantity: 1,
@@ -677,7 +679,7 @@ const ProductDetails = () => {
                       </span>
                     </span>
                     <span className="text-xs font-bold text-[#A47E3B] font-sans">
-                      +₹199
+                      +₹{samplePrice.toLocaleString('en-IN')}
                     </span>
                   </div>
                   <div className="text-[11px] leading-snug mt-1.5 font-light">

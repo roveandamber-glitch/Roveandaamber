@@ -207,15 +207,13 @@ function ProductsContent() {
       }
     },
     {
-      title: 'Price',
+      title: 'Pricing',
       key: 'price',
-      width: 140,
+      width: 150,
       render: (_, record) => (
         <div>
-          <span className="text-sm font-semibold text-[#1B100A]">₹{(record.price || 4950).toLocaleString('en-IN')}</span>
-          {record.discountPrice && (
-            <span className="text-xs text-gray-400 line-through ml-2">₹{record.discountPrice.toLocaleString('en-IN')}</span>
-          )}
+          <div className="text-xs font-semibold text-[#1B100A]">₹{(record.price || 4950).toLocaleString('en-IN')}</div>
+          <div className="text-[10px] text-[#B3874B] font-medium">Sample: ₹{(record.samplePrice !== undefined ? record.samplePrice : 199).toLocaleString('en-IN')}</div>
         </div>
       )
     },

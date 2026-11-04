@@ -426,10 +426,19 @@ export const updateDeliveryTracking = async (req, res) => {
       description
     });
 
-    // 7. Automated Email Notification: Dispatch tracking updates
-    if (stage === 'Shipped' || stage === 'Dispatch' || stage === 'Dispatched') {
+    // 7. Automated Email Notification: Dispatch tracking updates (Strictly Deduplicated)
+    if (!updated.emailNotifications) updated.emailNotifications = {};
+    const isDispatchStage = stage === 'Shipped' || stage === 'Dispatch' || stage === 'Dispatched';
+    const hasNewTracking = trackingNumber && trackingNumber !== updated.emailNotifications.lastDispatchedTrackingNumber;
+
+    if (isDispatchStage && (!updated.emailNotifications.dispatchedSent || hasNewTracking)) {
+      updated.emailNotifications.dispatchedSent = true;
+      updated.emailNotifications.lastDispatchedTrackingNumber = trackingNumber || updated.tracking?.trackingNumber || '';
+      try { await updated.save(); } catch (_) {}
       emailService.sendShippingNotification(updated).catch(e => console.warn(e.message));
-    } else if (stage === 'Delivered') {
+    } else if (stage === 'Delivered' && !updated.emailNotifications.deliveredSent) {
+      updated.emailNotifications.deliveredSent = true;
+      try { await updated.save(); } catch (_) {}
       emailService.sendDeliveryNotification(updated).catch(e => console.warn(e.message));
     } else if (stage) {
       emailService.sendTransactionalUpdate(updated, {

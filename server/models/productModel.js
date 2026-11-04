@@ -17,6 +17,11 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Product price is required'],
       min: [0, 'Price must be positive']
     },
+    samplePrice: {
+      type: Number,
+      default: 199,
+      min: [0, 'Sample price must be positive']
+    },
     originalPrice: {
       type: Number,
       min: [0, 'Original price must be positive']
@@ -494,6 +499,7 @@ export const ProductModel = {
       name,
       slug,
       price,
+      samplePrice = 199,
       originalPrice,
       stock = 0,
       image = '',
@@ -540,6 +546,7 @@ export const ProductModel = {
       name: name.trim(),
       slug: calculatedSlug,
       price: Number(price),
+      samplePrice: samplePrice !== undefined ? Number(samplePrice) : 199,
       originalPrice: originalPrice ? Number(originalPrice) : Number(price),
       stock: Number(stock),
       image: image || (finalImages[0] ? finalImages[0].url : ''),
