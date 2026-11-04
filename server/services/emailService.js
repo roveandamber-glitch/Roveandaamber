@@ -7,7 +7,7 @@ dotenv.config();
 
 // Helper to check if SMTP credentials or Gmail credentials are configured
 export const isEmailConfigured = () => {
-  if (process.env.RESEND_API_KEY) return true;
+  if (process.env.RESEND_API_KEY || process.env.BREVO_API_KEY) return true;
   const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER || process.env.SMTP_EMAIL;
   const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
   const host = process.env.SMTP_HOST;
@@ -34,9 +34,12 @@ const getTransporter = () => {
         }
       });
     } else {
-      // Default to Gmail Service (app password support)
+      // Default to Gmail Service (app password support with strict timeout to prevent hangs)
       transporter = nodemailer.createTransport({
         service: 'gmail',
+        connectionTimeout: 4000,
+        greetingTimeout: 4000,
+        socketTimeout: 5000,
         auth: {
           user: emailUser,
           pass: emailPass
@@ -268,7 +271,12 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
 
       const resData = await response.json();
       if (!response.ok) {
-        throw new Error(resData?.message || resData?.error?.message || `HTTP ${response.status}`);
+        const errorMsg = resData?.message || resData?.error?.message || `HTTP ${response.status}`;
+        if (response.status === 403 || errorMsg.includes('testing emails to your own email address')) {
+          console.error(`⚠️ [Resend Domain Verification Required]: ${errorMsg}`);
+          throw new Error(`Resend Sandbox restriction: To send emails to external recipients like ${to}, please add and verify roveandamber.com at resend.com/domains`);
+        }
+        throw new Error(errorMsg);
       }
 
       console.log(`✉️ [Resend HTTPS]: Sent "${subject}" to ${to} (ID: ${resData.id})`);
@@ -281,12 +289,48 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
       };
     } catch (error) {
       console.error(`❌ [Resend HTTPS API Error]: Failed to send email to ${to}:`, error.message);
-      // If SMTP credentials also exist, attempt fallback
-      const hasSmtp = Boolean((process.env.EMAIL_USER && process.env.EMAIL_PASS) || (process.env.SMTP_HOST && process.env.SMTP_USER));
-      if (!hasSmtp) {
-        throw new Error(`Email delivery failed via Resend HTTPS: ${error.message}`);
+      // On cloud environments like Render, never fall back to blocked SMTP ports 465/587
+      if (process.env.RENDER || error.message.includes('Resend Sandbox restriction')) {
+        throw error;
       }
       console.warn('⚠️ Attempting fallback to SMTP transporter...');
+    }
+  }
+
+  // 1.5 Brevo HTTPS API (Zero-DNS setup alternative over port 443)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const brevoSenderEmail = process.env.EMAIL_USER || 'roveandamber@gmail.com';
+      const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': process.env.BREVO_API_KEY.trim(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: 'ROVE & AMBER', email: brevoSenderEmail },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html
+        })
+      });
+
+      const brevoData = await brevoResponse.json();
+      if (!brevoResponse.ok) {
+        throw new Error(brevoData?.message || `HTTP ${brevoResponse.status}`);
+      }
+
+      console.log(`✉️ [Brevo HTTPS]: Sent "${subject}" to ${to} (MessageId: ${brevoData.messageId})`);
+      return {
+        success: true,
+        messageId: brevoData.messageId,
+        recipient: to,
+        provider: 'brevo-https',
+        isSimulated: false
+      };
+    } catch (err) {
+      console.error(`❌ [Brevo HTTPS Error]: Failed to send email to ${to}:`, err.message);
+      if (process.env.RENDER) throw err;
     }
   }
 

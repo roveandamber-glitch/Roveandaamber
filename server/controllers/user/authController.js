@@ -372,6 +372,9 @@ export const forgotPassword = async (req, res) => {
     // Store in Otp collection
     await OtpModel.createOrUpdateOtp(email, otp, 10);
 
+    // High visibility log in Render logs for instant administrative access
+    console.log(`🔑 [RECOVERY CODE GENERATED]: ${otp} for customer: ${email}`);
+
     // Send reset email
     await emailService.sendPasswordResetOtp(email, otp, user.name);
 
@@ -383,7 +386,7 @@ export const forgotPassword = async (req, res) => {
     console.error('Forgot password error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to send password reset code. Please try again.'
+      message: error.message || 'Failed to send password reset code. Please try again.'
     });
   }
 };
