@@ -712,10 +712,10 @@ const ProfilePage = () => {
                             <span className="font-mono text-xs font-bold text-black">{order.orderId || `#ORD-${order.id}`}</span>
                             <span className={`text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider ${
                               order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                              order.status === 'Shipped' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' :
+                              ['Dispatch', 'Dispatched', 'Shipped'].includes(order.status) ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' :
                               order.status === 'Cancelled' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
                             }`}>
-                              {order.status || 'Placed'}
+                              {order.status === 'Shipped' || order.status === 'Dispatch' ? 'Dispatched' : (order.status || 'Placed')}
                             </span>
                           </div>
                           <p className="text-xs text-gray-400">

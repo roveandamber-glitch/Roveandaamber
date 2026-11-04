@@ -421,10 +421,10 @@ export default function MyOrdersPage() {
                           <CheckCircle2 size={13} />
                           <span>Delivered</span>
                         </span>
-                      ) : order.status === 'Shipped' ? (
+                      ) : ['Dispatch', 'Dispatched', 'Shipped'].includes(order.status) ? (
                         <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
                           <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
-                          <span>In Transit</span>
+                          <span>Dispatched</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">

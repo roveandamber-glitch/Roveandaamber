@@ -450,8 +450,8 @@ export const emailService = {
     `;
 
     const html = buildEmailHtml({
-      title: 'Your Order Has Shipped',
-      subtitle: `Your fragrances are traveling via ${courier}`,
+      title: 'Your Order Has Dispatched',
+      subtitle: `Your fragrances have been dispatched via ${courier}`,
       contentHtml,
       orderId,
       actionText: 'Track on Delhivery.com',
