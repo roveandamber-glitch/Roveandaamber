@@ -7,6 +7,7 @@ dotenv.config();
 
 // Helper to check if SMTP credentials or Gmail credentials are configured
 export const isEmailConfigured = () => {
+  if (process.env.RESEND_API_KEY) return true;
   const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER || process.env.SMTP_EMAIL;
   const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
   const host = process.env.SMTP_HOST;
@@ -237,7 +238,59 @@ const buildEmailHtml = ({ preheader, title, subtitle, contentHtml, orderId, acti
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
   const fromAddress = process.env.EMAIL_FROM || (process.env.EMAIL_USER ? `"ROVE & AMBER" <${process.env.EMAIL_USER.trim()}>` : '"ROVE & AMBER Concierge" <concierge@roveandamber.com>');
 
-  // Check if live SMTP is configured
+  // 1. Resend HTTPS API (Recommended for Render / Cloud Hosting: Bypasses SMTP Port Blocking via Port 443)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const formattedAttachments = attachments.map(att => ({
+        filename: att.filename,
+        content: Buffer.isBuffer(att.content) 
+          ? att.content.toString('base64') 
+          : (typeof att.content === 'string' ? Buffer.from(att.content).toString('base64') : undefined)
+      })).filter(a => a.content);
+
+      // Default from address for Resend testing or production custom domain
+      const resendFrom = process.env.EMAIL_FROM || 'ROVE & AMBER <onboarding@resend.dev>';
+
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY.trim()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: resendFrom,
+          to: [to],
+          subject,
+          html,
+          attachments: formattedAttachments.length > 0 ? formattedAttachments : undefined
+        })
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData?.message || resData?.error?.message || `HTTP ${response.status}`);
+      }
+
+      console.log(`✉️ [Resend HTTPS]: Sent "${subject}" to ${to} (ID: ${resData.id})`);
+      return {
+        success: true,
+        messageId: resData.id,
+        recipient: to,
+        provider: 'resend-https',
+        isSimulated: false
+      };
+    } catch (error) {
+      console.error(`❌ [Resend HTTPS API Error]: Failed to send email to ${to}:`, error.message);
+      // If SMTP credentials also exist, attempt fallback
+      const hasSmtp = Boolean((process.env.EMAIL_USER && process.env.EMAIL_PASS) || (process.env.SMTP_HOST && process.env.SMTP_USER));
+      if (!hasSmtp) {
+        throw new Error(`Email delivery failed via Resend HTTPS: ${error.message}`);
+      }
+      console.warn('⚠️ Attempting fallback to SMTP transporter...');
+    }
+  }
+
+  // 2. Standard Nodemailer SMTP Delivery (Fallback or Localhost)
   if (isEmailConfigured()) {
     try {
       const mailer = getTransporter();
