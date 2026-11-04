@@ -11,21 +11,14 @@ import {
   CheckCircle2, 
   Gift, 
   CreditCard, 
-  Smartphone, 
-  Building2, 
-  Banknote, 
-  ArrowLeft, 
   ArrowRight,
   AlertCircle,
-  Package,
-  Edit3,
   Tag,
   Coins,
   Sparkles
 } from 'lucide-react';
-import { message, Form, Input, Radio, Spin } from 'antd';
+import { message, Form, Input, Spin } from 'antd';
 import cartService from '@/services/cartService';
-import orderService from '@/services/orderService';
 import paymentService from '@/services/paymentService';
 import { getImageUrl } from '@/utils/imageHelper';
 import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
@@ -60,15 +53,7 @@ export default function CheckoutPage() {
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
   
-  const [paymentMethod, setPaymentMethod] = useState('Razorpay');
-  const [upiId, setUpiId] = useState('');
-  const [cardDetails, setCardDetails] = useState({
-    number: '',
-    name: '',
-    expiry: '',
-    cvv: ''
-  });
-  const [selectedBank, setSelectedBank] = useState('HDFC Bank');
+  const [paymentMethod] = useState('Razorpay');
   
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -160,7 +145,7 @@ export default function CheckoutPage() {
           pincode: user.pincode || ''
         });
       }
-    } catch (e) {}
+    } catch (e) { console.debug(e); }
   }, [form]);
 
   // Calculations
@@ -235,7 +220,7 @@ export default function CheckoutPage() {
             address: user.address || ''
           });
         }
-      } catch (e) {}
+      } catch (e) { console.debug(e); }
     }
   };
 
@@ -345,7 +330,7 @@ export default function CheckoutPage() {
               cartService.clearCart();
               try {
                 localStorage.removeItem('rove_amber_gift_options');
-              } catch (e) {}
+              } catch (e) { console.debug(e); }
               message.success('Payment verified! Your luxury order has been confirmed.');
             } else {
               message.error(verifyRes?.message || 'Payment signature verification failed.');
@@ -506,116 +491,114 @@ export default function CheckoutPage() {
             </Link>
           </div>
         ) : (
-          /* ================= CHECKOUT MAIN LAYOUT ================= */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* LEFT COLUMN: ADDRESS & PAYMENT (7 Cols) */}
-            <div className="lg:col-span-7 space-y-6">
+          <Form
+            id="checkout-form"
+            form={form}
+            layout="vertical"
+            onFinish={handlePlaceOrder}
+            requiredMark={false}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               
-              {/* Server Error Alert */}
-              {errorMessage && (
-                <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5">
-                  <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-600" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
-
-              {/* Gift Options Section (Simple English) */}
-              <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-                <div className="flex items-start sm:items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-                    <Gift size={18} />
+              {/* LEFT COLUMN: DISPATCH & DELIVERY ADDRESS (7 Cols) */}
+              <div className="lg:col-span-7 space-y-4">
+                
+                {/* Server Error Alert */}
+                {errorMessage && (
+                  <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5">
+                    <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600" />
+                    <span>{errorMessage}</span>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-serif text-sm font-bold text-gray-900">
-                        {giftOptions?.isGift ? `Gift for ${giftOptions.recipientName}` : 'Sending as a gift?'}
-                      </h4>
-                      {giftOptions?.occasion && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
-                          {giftOptions.occasion}
-                        </span>
-                      )}
+                )}
+
+                {/* Compact Gift Studio Banner */}
+                <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
+                      <Gift size={15} />
                     </div>
-                    <p className="text-xs text-gray-600 font-light mt-0.5">
-                      {giftOptions?.isGift
-                        ? 'Free gift box and personal message card added.'
-                        : 'Add free gift packaging and a personal message card.'}
-                    </p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-serif text-xs font-bold text-gray-900 truncate">
+                          {giftOptions?.isGift ? `Gift for ${giftOptions.recipientName}` : 'Sending as an artisanal gift?'}
+                        </span>
+                        {giftOptions?.occasion && (
+                          <span className="text-[9px] font-semibold px-2 py-0.2 rounded-full bg-white text-[#8C6D1F] border border-[#E0D0A5]">
+                            {giftOptions.occasion}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-500 font-light truncate m-0">
+                        {giftOptions?.isGift
+                          ? 'Complimentary gold foil gift box & personal message card included.'
+                          : 'Add complimentary gift presentation & personal message card.'}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setIsGiftModalOpen(true)}
-                    className="px-4 py-2 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#D5C9B8] text-xs font-semibold tracking-wide transition-all shadow-xs cursor-pointer"
-                  >
-                    {giftOptions?.isGift ? 'Edit Message' : 'Add Gift Details'}
-                  </button>
-                  {giftOptions?.isGift && (
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={() => {
-                        setGiftOptions(null);
-                        try {
-                          localStorage.removeItem('rove_amber_gift_options');
-                        } catch (e) {}
-                        message.info('Gift option removed');
-                      }}
-                      className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                      onClick={() => setIsGiftModalOpen(true)}
+                      className="px-3 py-1.5 rounded-full bg-white hover:bg-black hover:text-white text-black border border-[#D5C9B8] text-[11px] font-semibold tracking-wide transition-all shadow-2xs cursor-pointer"
                     >
-                      Remove
+                      {giftOptions?.isGift ? 'Edit Gift' : 'Add Gift Details'}
                     </button>
-                  )}
+                    {giftOptions?.isGift && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGiftOptions(null);
+                          try {
+                            localStorage.removeItem('rove_amber_gift_options');
+                          } catch (e) { console.debug(e); }
+                          message.info('Gift option removed');
+                        }}
+                        className="text-[11px] text-gray-400 hover:text-red-600 transition-colors cursor-pointer px-1"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Form starts */}
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handlePlaceOrder}
-                requiredMark={false}
-                className="space-y-6"
-              >
                 {/* 1. SHIPPING & DISPATCH ADDRESS CARD */}
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E8DFC9] shadow-xs space-y-5">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E8DFC9] shadow-xs space-y-3.5">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-[#ECE7DE]">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-black text-[#ECC880] flex items-center justify-center text-[11px] font-serif font-bold">
                         1
                       </span>
-                      <h2 className="font-serif text-lg font-bold text-black m-0">
+                      <h2 className="font-serif text-base font-bold text-black m-0">
                         Dispatch & Delivery Address
                       </h2>
                     </div>
 
                     {giftOptions?.recipientName && (
-                      <label className="flex items-center gap-2 cursor-pointer text-xs text-stone-600 select-none">
+                      <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-stone-600 select-none">
                         <input
                           type="checkbox"
                           checked={useGiftAddress}
                           onChange={(e) => handleToggleGiftAddress(e.target.checked)}
                           className="w-3.5 h-3.5 accent-black cursor-pointer"
                         />
-                        <span>Deliver directly to recipient</span>
+                        <span>Deliver to recipient</span>
                       </label>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">Full Name *</span>}
+                      label={<span className="text-[11px] font-semibold text-gray-700">Full Name *</span>}
                       name="customerName"
                       rules={[{ required: true, message: 'Please provide full name' }]}
                       className="mb-0"
                     >
-                      <Input placeholder="e.g. Eleanor Vance" className="rounded-xl text-xs py-2.5 bg-[#FAF9F7]" />
+                      <Input placeholder="e.g. Eleanor Vance" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
                     </Form.Item>
 
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">Phone Number (For Courier SMS) *</span>}
+                      label={<span className="text-[11px] font-semibold text-gray-700">Phone Number (For Courier SMS) *</span>}
                       name="phone"
                       rules={[
                         { required: true, message: 'Please provide phone number' },
@@ -623,12 +606,12 @@ export default function CheckoutPage() {
                       ]}
                       className="mb-0"
                     >
-                      <Input placeholder="+91 98765 43210" className="rounded-xl text-xs py-2.5 bg-[#FAF9F7]" />
+                      <Input placeholder="+91 98765 43210" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
                     </Form.Item>
                   </div>
 
                   <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Email Address (For Invoicing & Dispatch Alerts) *</span>}
+                    label={<span className="text-[11px] font-semibold text-gray-700">Email Address (For Invoicing & Dispatch Alerts) *</span>}
                     name="email"
                     rules={[
                       { required: true, message: 'Please provide email address' },
@@ -636,21 +619,21 @@ export default function CheckoutPage() {
                     ]}
                     className="mb-0"
                   >
-                    <Input placeholder="eleanor.vance@atelier.com" className="rounded-xl text-xs py-2.5 bg-[#FAF9F7]" />
+                    <Input placeholder="eleanor.vance@atelier.com" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
                   </Form.Item>
 
                   <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Street Address, Apartment / Villa No. *</span>}
+                    label={<span className="text-[11px] font-semibold text-gray-700">Street Address, Apartment / Villa No. *</span>}
                     name="address"
                     rules={[{ required: true, message: 'Please provide street address' }]}
                     className="mb-0"
                   >
-                    <Input placeholder="Flat / Bungalow No., Building Name, Street" className="rounded-xl text-xs py-2.5 bg-[#FAF9F7]" />
+                    <Input placeholder="Flat / Bungalow No., Building Name, Street" className="rounded-xl text-xs py-2 bg-[#FAF9F7]" />
                   </Form.Item>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">City *</span>}
+                      label={<span className="text-[11px] font-semibold text-gray-700">City *</span>}
                       name="city"
                       rules={[{ required: true, message: 'City is required' }]}
                       className="mb-0"
@@ -659,7 +642,7 @@ export default function CheckoutPage() {
                     </Form.Item>
 
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">State *</span>}
+                      label={<span className="text-[11px] font-semibold text-gray-700">State *</span>}
                       name="state"
                       rules={[{ required: true, message: 'State is required' }]}
                       className="mb-0"
@@ -668,7 +651,7 @@ export default function CheckoutPage() {
                     </Form.Item>
 
                     <Form.Item
-                      label={<span className="text-xs font-semibold text-gray-700">PIN Code *</span>}
+                      label={<span className="text-[11px] font-semibold text-gray-700">PIN Code *</span>}
                       name="pincode"
                       rules={[{ required: true, message: 'PIN Code is required' }]}
                       className="mb-0"
@@ -678,7 +661,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <Form.Item
-                    label={<span className="text-xs font-semibold text-gray-700">Landmark / Delivery Instructions (Optional)</span>}
+                    label={<span className="text-[11px] font-semibold text-gray-700">Landmark / Delivery Instructions (Optional)</span>}
                     name="landmark"
                     className="mb-0"
                   >
@@ -686,250 +669,298 @@ export default function CheckoutPage() {
                   </Form.Item>
                 </div>
 
-                {/* 2. PAYMENT METHOD CARD (Razorpay Online Gateway) */}
-                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DFC9] shadow-xs space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-serif font-bold">
-                        2
+              </div>
+
+              {/* RIGHT COLUMN: ORDER SUMMARY & REALISTIC RAZORPAY PAYMENT (5 Cols) */}
+              <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E8DFC9] shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-[#ECE7DE]">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-serif font-bold text-black m-0">
+                        Fragrance Flacons ({cartItems.length})
+                      </h3>
+                      <span className="text-[10px] font-semibold text-[#8C6D1F] bg-[#FAF3E0] px-2 py-0.5 rounded-full border border-[#E8DEC8]">
+                        Atelier Bag
                       </span>
-                      <h2 className="text-base sm:text-lg font-serif font-bold text-black m-0">
-                        Payment Method
-                      </h2>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      <ShieldCheck size={13} className="text-emerald-600" />
-                      100% Secure
-                    </span>
+                    <Link href="/cart" className="text-xs text-[#8C6D1F] hover:underline font-semibold">
+                      Edit Bag
+                    </Link>
                   </div>
 
-                  {/* Clean Minimal Razorpay Option */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9F7] border border-[#E2D8C3] flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-black text-[#DEB368] flex items-center justify-center shrink-0 shadow-sm">
-                        <CreditCard size={20} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-stone-900">Razorpay</span>
-                          <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-stone-900 text-[#DEB368]">
-                            Instant
+                  {/* Fragrance List Items (Compact with slim scrollbar) */}
+                  <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
+                    {cartItems.map((item, idx) => (
+                      <div key={`${item.productId || item.id}-${item.size || idx}`} className="flex items-center gap-3 pb-2.5 border-b border-gray-100 last:border-0 last:pb-0">
+                        <div className="w-10 h-12 rounded-lg bg-[#FAF7F2] p-1 border border-[#E8DFC8] flex items-center justify-center shrink-0 overflow-hidden">
+                          <img
+                            src={getImageUrl(item.image, '/images/no-image.jpg')}
+                            alt={item.name}
+                            className="w-full h-full object-contain"
+                            onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-serif font-semibold text-xs text-black truncate">{item.name}</h4>
+                          <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+                            <span className="font-mono">{item.size || '50ML'}</span>
+                            <span>•</span>
+                            <span>Qty: {item.quantity}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-xs text-black font-sans">
+                            ₹{((Number(item.price) || 0) * (parseInt(item.quantity, 10) || 1)).toLocaleString('en-IN')}
                           </span>
                         </div>
-                        <p className="text-xs text-stone-500 font-light mt-0.5">
-                          UPI, Cards, Net Banking & Wallets
-                        </p>
                       </div>
-                    </div>
-
-                    <div className="w-5 h-5 rounded-full border-2 border-black flex items-center justify-center shrink-0">
-                      <div className="w-2.5 h-2.5 rounded-full bg-black" />
-                    </div>
+                    ))}
                   </div>
-                </div>
 
-                {/* Primary Submit CTA */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-4 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-amber-950/15 transition-all cursor-pointer"
-                >
-                  <Lock size={14} strokeWidth={2.4} />
-                  <span>
-                    {loading
-                      ? 'Opening Razorpay Gateway...'
-                      : `Pay with Razorpay • ₹${finalTotal.toLocaleString('en-IN')}`}
-                  </span>
-                </button>
-              </Form>
-            </div>
+                  {/* Pricing Breakdown */}
+                  <div className="space-y-2 pt-2.5 border-t border-[#ECE7DE] text-xs">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal</span>
+                      <span className="font-bold text-black">₹{subtotal.toLocaleString('en-IN')}</span>
+                    </div>
 
-            {/* RIGHT COLUMN: ORDER SUMMARY (5 Cols) */}
-            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-28">
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DFC9] shadow-xs space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
-                  <h3 className="text-base font-serif font-bold text-black m-0">
-                    Fragrance Flacons ({cartItems.length})
-                  </h3>
-                  <Link href="/cart" className="text-xs text-[#8C6D1F] hover:underline font-semibold">
-                    Edit Bag
-                  </Link>
-                </div>
-
-                {/* Fragrance List Items */}
-                <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                  {cartItems.map((item, idx) => (
-                    <div key={`${item.productId || item.id}-${item.size || idx}`} className="flex items-center gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                      <div className="w-12 h-14 rounded-xl bg-[#FAF7F2] p-1 border border-[#E8DFC8] flex items-center justify-center shrink-0 overflow-hidden">
-                        <img
-                          src={getImageUrl(item.image, '/images/no-image.jpg')}
-                          alt={item.name}
-                          className="w-full h-full object-contain"
-                          onError={(e) => { e.currentTarget.src = '/images/no-image.jpg'; }}
-                        />
+                    {discountAmount > 0 && appliedCoupon && (
+                      <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+                        <span className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1">
+                          <Tag size={12} className="text-emerald-700" />
+                          Privilege Discount ({appliedCoupon.code})
+                        </span>
+                        <span className="font-sans font-bold text-emerald-700">-₹{discountAmount.toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-serif font-semibold text-xs text-black truncate">{item.name}</h4>
-                        <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
-                          <span className="font-mono">{item.size || '50ML'}</span>
-                          <span>•</span>
-                          <span>Qty: {item.quantity}</span>
+                    )}
+
+                    {rewardDiscountAmount > 0 && (
+                      <div className="flex justify-between items-center text-[#8C6D1F] bg-[#FAF3E0] px-2.5 py-1.5 rounded-lg border border-[#E0D0A5]">
+                        <span className="font-bold text-[11px] flex items-center gap-1">
+                          <Sparkles size={12} className="text-[#B8860B]" />
+                          Privilege Points ({rewardPointsUsed} pts)
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-sans font-bold text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
+                          <button
+                            type="button"
+                            onClick={handleRemoveRewards}
+                            disabled={rewardLoading}
+                            className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
+                            title="Remove reward points"
+                          >
+                            ✕
+                          </button>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="font-bold text-xs text-black font-sans">
-                          ₹{((Number(item.price) || 0) * (parseInt(item.quantity, 10) || 1)).toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    )}
 
-                {/* Pricing Breakdown */}
-                <div className="space-y-2.5 pt-3 border-t border-[#ECE7DE] text-xs">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal</span>
-                    <span className="font-bold text-black">₹{subtotal.toLocaleString('en-IN')}</span>
+                    <div className="flex justify-between text-gray-600">
+                      <span>White-Glove Courier Delivery</span>
+                      <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
+                    </div>
+
+                    <div className="flex justify-between text-gray-600">
+                      <span>Signature Coffret & Samples</span>
+                      <span className="text-emerald-700 font-bold uppercase text-[10px]">INCLUDED</span>
+                    </div>
+
+                    {giftOptions?.isGift && (
+                      <div className="flex justify-between text-gray-600">
+                        <span>Bespoke Gift Wrapping & Wax Seal</span>
+                        <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-baseline pt-2.5 border-t border-[#ECE7DE] font-serif">
+                      <span className="font-bold text-sm text-black">Total Investment</span>
+                      <span className="font-sans text-xl font-bold text-black tracking-tight">
+                        ₹{finalTotal.toLocaleString('en-IN')}
+                      </span>
+                    </div>
                   </div>
 
-                  {discountAmount > 0 && appliedCoupon && (
-                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
-                      <span className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1">
-                        <Tag size={12} className="text-emerald-700" />
-                        Privilege Discount ({appliedCoupon.code})
-                      </span>
-                      <span className="font-sans font-bold text-emerald-700">-₹{discountAmount.toLocaleString('en-IN')}</span>
-                    </div>
-                  )}
+                  {/* Patron Privilege Points with Clean Toggle Switch */}
+                  <div className="pt-2 border-t border-[#ECE7DE]">
+                    <div className={`p-3 rounded-2xl border transition-all ${
+                      rewardPointsUsed > 0 
+                        ? 'bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border-[#D4AF37]/50 shadow-2xs' 
+                        : 'bg-[#FAF9F7] border-[#E8DFC9]'
+                    }`}>
+                      <div className="flex items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+                            rewardPointsUsed > 0 
+                              ? 'bg-[#B8860B] text-white border-[#8C6D1F]' 
+                              : 'bg-white text-[#B8860B] border-[#E0D8CA]'
+                          }`}>
+                            <Coins size={15} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-[#1A1A1A] truncate">
+                                Privilege Points
+                              </span>
+                              <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full shrink-0 ${
+                                rewardPointsUsed > 0 
+                                  ? 'bg-[#B8860B] text-white' 
+                                  : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
+                              }`}>
+                                {availableRewardPoints.toLocaleString()} pts
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-[#7A6B5D] mt-0.2 font-light truncate m-0">
+                              {rewardPointsUsed > 0 ? (
+                                <span className="text-emerald-700 font-semibold">
+                                  ✓ Applied (Saved ₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                                </span>
+                              ) : availableRewardPoints > 0 ? (
+                                <span>
+                                  Toggle to redeem {availableRewardPoints.toLocaleString()} pts (Save ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})
+                                </span>
+                              ) : (
+                                <span>Earn points on this acquisition</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
 
-                  {rewardDiscountAmount > 0 && (
-                    <div className="flex justify-between items-center text-[#8C6D1F] bg-[#FAF3E0] px-2.5 py-1.5 rounded-lg border border-[#E0D0A5]">
-                      <span className="font-bold text-[11px] flex items-center gap-1">
-                        <Sparkles size={12} className="text-[#B8860B]" />
-                        Privilege Points ({rewardPointsUsed} pts)
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-sans font-bold text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
+                        {/* Toggle Switch */}
                         <button
                           type="button"
-                          onClick={handleRemoveRewards}
-                          disabled={rewardLoading}
-                          className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
-                          title="Remove reward points"
+                          role="switch"
+                          aria-checked={rewardPointsUsed > 0}
+                          onClick={handleToggleRewards}
+                          disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
+                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+                            rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2]'
+                          }`}
+                          title={rewardPointsUsed > 0 ? 'Click to remove points' : 'Click to apply privilege points'}
                         >
-                          ✕
+                          <span
+                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                              rewardPointsUsed > 0 ? 'translate-x-4 bg-[#ECC880]' : 'translate-x-0 bg-white'
+                            }`}
+                          />
                         </button>
                       </div>
                     </div>
-                  )}
-
-                  <div className="flex justify-between text-gray-600">
-                    <span>White-Glove Courier Delivery</span>
-                    <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
                   </div>
 
-                  <div className="flex justify-between text-gray-600">
-                    <span>Signature Coffret & Samples</span>
-                    <span className="text-emerald-700 font-bold uppercase text-[10px]">INCLUDED</span>
-                  </div>
-
-                  {giftOptions?.isGift && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>Bespoke Gift Wrapping & Wax Seal</span>
-                      <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
+                  {/* REALISTIC RAZORPAY PAYMENT SELECTION & REAL ICONS */}
+                  <div className="pt-2 border-t border-[#ECE7DE] space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <CreditCard size={13} className="text-[#B8860B]" />
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-black">
+                          Payment Method
+                        </span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <ShieldCheck size={11} className="text-emerald-600" />
+                        100% Encrypted
+                      </span>
                     </div>
-                  )}
 
-                  <div className="flex justify-between items-baseline pt-3 border-t border-[#ECE7DE] font-serif">
-                    <span className="font-bold text-sm text-black">Total Investment</span>
-                    <span className="font-sans text-xl font-bold text-black">
-                      ₹{finalTotal.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Patron Privilege Points with Clean Toggle Switch */}
-                <div className="pt-3 border-t border-[#ECE7DE]">
-                  <div className={`p-3.5 rounded-2xl border transition-all ${
-                    rewardPointsUsed > 0 
-                      ? 'bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border-[#D4AF37]/50 shadow-xs' 
-                      : 'bg-[#FAF9F7] border-[#E8DFC9]'
-                  }`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
-                          rewardPointsUsed > 0 
-                            ? 'bg-[#B8860B] text-white border-[#8C6D1F]' 
-                            : 'bg-white text-[#B8860B] border-[#E0D8CA]'
-                        }`}>
-                          <Coins size={17} />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-[#1A1A1A] truncate">
-                              Patron Privilege Points
-                            </span>
-                            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                              rewardPointsUsed > 0 
-                                ? 'bg-[#B8860B] text-white' 
-                                : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
-                            }`}>
-                              {availableRewardPoints.toLocaleString()} pts
-                            </span>
+                    {/* Realistic Razorpay Container */}
+                    <div className="p-3 rounded-2xl bg-gradient-to-b from-[#FAF9F7] to-[#F5ECE0] border-2 border-[#1C1714] shadow-xs space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-[#1C1714] text-[#ECC880] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                            ₹
                           </div>
-                          <p className="text-[11px] text-[#7A6B5D] mt-0.5 font-light truncate">
-                            {rewardPointsUsed > 0 ? (
-                              <span className="text-emerald-700 font-semibold">
-                                ✓ {rewardPointsUsed.toLocaleString()} pts applied (Saving ₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-black font-sans">Razorpay Online Gateway</span>
+                              <span className="text-[8.5px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded bg-[#1C1714] text-[#ECC880]">
+                                Instant
                               </span>
-                            ) : availableRewardPoints > 0 ? (
-                              <span>
-                                Toggle to redeem {availableRewardPoints.toLocaleString()} pts (Save ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})
-                              </span>
-                            ) : (
-                              <span>Earn points on this acquisition for future orders</span>
-                            )}
-                          </p>
+                            </div>
+                            <p className="text-[10px] text-gray-500 m-0">UPI, Cards, NetBanking & Wallets</p>
+                          </div>
+                        </div>
+
+                        <div className="w-4 h-4 rounded-full border-2 border-black flex items-center justify-center shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-black" />
                         </div>
                       </div>
 
-                      {/* Toggle Switch */}
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={rewardPointsUsed > 0}
-                        onClick={handleToggleRewards}
-                        disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-                          rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2]'
-                        }`}
-                        title={rewardPointsUsed > 0 ? 'Click to remove points' : 'Click to apply privilege points'}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            rewardPointsUsed > 0 ? 'translate-x-5 bg-[#ECC880]' : 'translate-x-0 bg-white'
-                          }`}
-                        />
-                      </button>
+                      {/* Real Payment Method Badges (Google Pay, PhonePe, Paytm, UPI, Cards) */}
+                      <div className="pt-2 border-t border-[#EAE3D6] flex flex-wrap items-center gap-1.5">
+                        {/* Google Pay (GPay) */}
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E0D8CA] shadow-2xs">
+                          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.9c2.28-2.1 3.645-5.2 3.645-9.15z"/>
+                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.9-3.05c-1.08.72-2.45 1.16-4.03 1.16-3.1 0-5.74-2.1-6.68-4.94H1.21v3.15C3.25 21.4 7.31 24 12 24z"/>
+                            <path fill="#FBBC05" d="M5.32 14.26c-.24-.72-.37-1.49-.37-2.26s.13-1.54.37-2.26V6.59H1.21C.44 8.12 0 9.99 0 12s.44 3.88 1.21 5.41l4.11-3.15z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.6 1.21 6.59l4.11 3.15c.94-2.84 3.58-4.99 6.68-4.99z"/>
+                          </svg>
+                          <span className="text-[9.5px] font-bold text-gray-800">GPay</span>
+                        </div>
+
+                        {/* PhonePe */}
+                        <div className="flex items-center gap-1 bg-[#5F259F] text-white px-2 py-1 rounded-md shadow-2xs font-bold text-[9.5px] tracking-tight">
+                          <span className="w-3 h-3 rounded-full bg-white text-[#5F259F] flex items-center justify-center text-[7.5px] font-black leading-none">पे</span>
+                          <span>PhonePe</span>
+                        </div>
+
+                        {/* Paytm */}
+                        <div className="flex items-center gap-0.5 bg-white px-2 py-1 rounded-md border border-[#00BAF2]/40 shadow-2xs font-black text-[9.5px]">
+                          <span className="text-[#002970]">pay</span>
+                          <span className="text-[#00BAF2]">tm</span>
+                        </div>
+
+                        {/* Official UPI Badge */}
+                        <div className="flex items-center gap-0.5 bg-white px-2 py-1 rounded-md border border-[#097939]/30 shadow-2xs text-[9.5px] font-black tracking-wider">
+                          <span className="text-[#097939]">U</span>
+                          <span className="text-[#1A1A1A]">P</span>
+                          <span className="text-[#ED7524]">I</span>
+                        </div>
+
+                        {/* Cards: Visa & Mastercard */}
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E0D8CA] shadow-2xs text-[9px] font-semibold text-gray-700">
+                          <span className="font-bold text-[#1A1F71] italic text-[8.5px]">VISA</span>
+                          <span className="flex items-center -space-x-1">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#EB001B] inline-block" />
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#F79E1B]/90 inline-block" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Primary Submit CTA Button inside right card */}
+                    <button
+                      type="submit"
+                      form="checkout-form"
+                      disabled={loading}
+                      onClick={() => form.submit()}
+                      className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3.5 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-md shadow-amber-950/15 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Lock size={13} strokeWidth={2.4} />
+                      <span>
+                        {loading
+                          ? 'Opening Razorpay Gateway...'
+                          : `Pay with Razorpay • ₹${finalTotal.toLocaleString('en-IN')}`}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Trust Badges */}
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#ECE7DE] text-[10px] text-gray-500 text-center">
+                    <div className="p-2 rounded-xl bg-[#FAF9F7] flex items-center justify-center gap-1.5">
+                      <Truck size={12} className="text-[#B8860B]" />
+                      <span>Insured Transit</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#FAF9F7] flex items-center justify-center gap-1.5">
+                      <ShieldCheck size={12} className="text-[#B8860B]" />
+                      <span>Atelier Guarantee</span>
                     </div>
                   </div>
                 </div>
-
-                {/* Trust Badges */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#ECE7DE] text-[10px] text-gray-500 text-center">
-                  <div className="p-2 rounded-xl bg-[#FAF9F7] flex items-center justify-center gap-1.5">
-                    <Truck size={12} className="text-[#B8860B]" />
-                    <span>Insured Transit</span>
-                  </div>
-                  <div className="p-2 rounded-xl bg-[#FAF9F7] flex items-center justify-center gap-1.5">
-                    <ShieldCheck size={12} className="text-[#B8860B]" />
-                    <span>Atelier Guarantee</span>
-                  </div>
-                </div>
               </div>
-            </div>
 
-          </div>
+            </div>
+          </Form>
         )}
       </main>
 
