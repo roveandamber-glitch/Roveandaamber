@@ -484,25 +484,42 @@ export const googleAuth = async (req, res) => {
       googleId = payload.sub;
       picture = payload.picture || '';
     } else if (accessToken) {
-      const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      if (!userInfoRes.ok) {
+      let info = null;
+      try {
+        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(8000)
+        });
+        if (userInfoRes.ok) {
+          info = await userInfoRes.json();
+        }
+      } catch (err) {
+        console.warn('Google v3 userinfo fetch failed or timed out:', err.message);
+      }
+
+      if (!info || !info.email) {
+        try {
+          const fallbackRes = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            signal: AbortSignal.timeout(8000)
+          });
+          if (fallbackRes.ok) {
+            info = await fallbackRes.json();
+          }
+        } catch (err) {
+          console.warn('Google v2 userinfo fetch failed:', err.message);
+        }
+      }
+
+      if (!info || !info.email) {
         return res.status(401).json({
           success: false,
-          message: 'Failed to verify Google access token.'
-        });
-      }
-      const info = await userInfoRes.json();
-      if (!info || !info.email) {
-        return res.status(400).json({
-          success: false,
-          message: 'Unable to retrieve email from Google user info.'
+          message: 'Failed to verify Google access token. Please re-authenticate.'
         });
       }
       email = info.email.toLowerCase().trim();
       name = info.name || info.given_name || 'Customer';
-      googleId = info.sub;
+      googleId = info.sub || info.id;
       picture = info.picture || '';
     }
 

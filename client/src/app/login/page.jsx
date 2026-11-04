@@ -91,8 +91,14 @@ const LoginContent = () => {
   };
 
   const handleGoogleError = (error) => {
-    console.warn('Google Login Error:', error?.message || error);
-    setErrorMessage('Failed to connect to Google authentication.');
+    console.warn('Google Login Error:', error);
+    if (error?.error === 'popup_closed_by_user') {
+      setErrorMessage('Google sign-in window was closed before completing.');
+    } else if (error?.error === 'access_denied') {
+      setErrorMessage('Google sign-in access was denied.');
+    } else {
+      setErrorMessage('Google authentication could not be completed. Please ensure popups are enabled and Authorized Origins match roveandamber.com in Google Cloud.');
+    }
   };
 
   const triggerGoogleLogin = useGoogleLogin({
