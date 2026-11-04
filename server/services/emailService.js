@@ -406,17 +406,41 @@ export const emailService = {
       <p>Dear ${order.customer_name || 'Valued Patron'},</p>
       <p>Your artisanal fragrance flacons have been hand-inspected, sealed, and dispatched for delivery via <strong>${courier}</strong>.</p>
 
-      <div class="card" style="border-left: 3px solid #C49A45;">
-        <div style="color:#C49A45; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:1.5px;">Delhivery Dispatch & Consignment Tracking</div>
-        <div style="font-size:13px; margin-top:8px;">Courier Partner: <strong>${courier}</strong></div>
-        <div style="font-size:13px; margin-top:4px;">Airway Bill / Tracking #: <strong style="color:#FFFFFF;">${trackingNumber}</strong></div>
-        <div style="font-size:13px; margin-top:4px;">Estimated Arrival: <strong style="color:#C49A45;">${estDate}</strong></div>
-        <div style="font-size:13px; margin-top:4px;">Current Hub: ${order.tracking?.currentLocation || 'Delhivery Hub, Mumbai'}</div>
-        <div style="font-size:13px; margin-top:8px; padding-top:8px; border-top:1px solid #332F2A;">
-          Tracking Portal: <a href="https://www.delhivery.com/" target="_blank" style="color:#C49A45; font-weight:bold; text-decoration:underline;">https://www.delhivery.com/</a>
+      <div class="card" style="border-left: 3px solid #C49A45; background-color: #1A1A1D; padding: 22px 20px; border-radius: 6px; margin: 20px 0;">
+        <div style="color:#C49A45; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:2px; margin-bottom: 12px;">Delhivery Dispatch & Consignment Tracking</div>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+          <tr>
+            <td style="padding: 4px 0; font-size: 13px; color: #9E9B95; width: 140px;">Courier Partner:</td>
+            <td style="padding: 4px 0; font-size: 13px; color: #FFFFFF; font-weight: bold;">${courier}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; font-size: 13px; color: #9E9B95;">Estimated Arrival:</td>
+            <td style="padding: 4px 0; font-size: 13px; color: #C49A45; font-weight: bold;">${estDate}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; font-size: 13px; color: #9E9B95;">Tracking Portal:</td>
+            <td style="padding: 4px 0; font-size: 13px;">
+              <a href="https://www.delhivery.com/" target="_blank" style="color:#C49A45; font-weight:bold; text-decoration:underline;">https://www.delhivery.com/</a>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Prominent Track ID Box with 1-Tap Copy Option -->
+        <div style="background-color: #121214; border: 1px dashed #C49A45; border-radius: 6px; padding: 14px 18px; text-align: center; margin: 16px 0;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #C49A45; font-weight: bold; margin-bottom: 6px;">
+            DELHIVERY TRACK ID (AWB)
+          </div>
+          <div style="font-family: 'Courier New', Courier, monospace; font-size: 22px; font-weight: bold; color: #FFFFFF; letter-spacing: 3px; padding: 6px 0; user-select: all; -webkit-user-select: all; word-break: break-all;">
+            ${trackingNumber}
+          </div>
+          <div style="font-size: 11px; color: #9E9B95; margin-top: 6px;">
+            <span style="color: #C49A45; font-weight: bold;">[Tap or double-click Track ID to copy]</span>
+          </div>
         </div>
-        <div style="margin-top:10px; padding:10px; background:rgba(196,154,69,0.08); border-radius:4px; font-size:12px; color:#D1CEC7; line-height:1.5;">
-          <strong style="color:#C49A45;">How to track:</strong> Open <a href="https://www.delhivery.com/" target="_blank" style="color:#C49A45;">https://www.delhivery.com/</a> and enter your tracking number <strong style="color:#FFFFFF;">${trackingNumber}</strong> in the search box.
+
+        <div style="margin-top:14px; padding:12px; background:rgba(196,154,69,0.08); border: 1px solid rgba(196,154,69,0.2); border-radius:4px; font-size:12px; color:#D1CEC7; line-height:1.6;">
+          <strong style="color:#C49A45;">How to track:</strong> Open <a href="https://www.delhivery.com/" target="_blank" style="color:#C49A45; font-weight: bold; text-decoration: underline;">https://www.delhivery.com/</a>, paste your Track ID <strong style="color:#FFFFFF; font-family: monospace;">${trackingNumber}</strong> in the search box, and click track.
         </div>
       </div>
 

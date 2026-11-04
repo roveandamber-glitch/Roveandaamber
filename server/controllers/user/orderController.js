@@ -254,7 +254,7 @@ export const getMyOrders = async (req, res) => {
         items: o.items,
         tracking: {
           currentStage: o.status,
-          courierName: o.tracking?.courierName || 'Maison White-Glove Express',
+          courierName: o.tracking?.courierName || 'Delhivery',
           trackingNumber: o.tracking?.trackingNumber || `TRK-${String(o.id || o._id).slice(-8).toUpperCase()}`,
           estimatedDelivery: o.tracking?.estimatedDelivery || new Date(new Date(o.createdAt || Date.now()).getTime() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         },
@@ -330,13 +330,13 @@ export const getDeliveryTracking = async (req, res) => {
         status: order.status,
         progressPercent,
         courier: {
-          name: order.tracking?.courierName || 'BlueDart Luxury Express',
-          trackingNumber: order.tracking?.trackingNumber || 'BD-PENDING',
-          trackingUrl: order.tracking?.trackingUrl || 'https://www.bluedart.com',
+          name: order.tracking?.courierName || 'Delhivery',
+          trackingNumber: order.tracking?.trackingNumber || '',
+          trackingUrl: order.tracking?.trackingUrl || 'https://www.delhivery.com/',
           dispatchedAt: order.tracking?.dispatchedAt || null,
           deliveredAt: order.tracking?.deliveredAt || null,
           estimatedDelivery: order.tracking?.estimatedDelivery || null,
-          currentLocation: order.tracking?.currentLocation || 'Maison Fulfillment Hub, Mumbai'
+          currentLocation: order.tracking?.currentLocation || ''
         },
         recipient: {
           name: order.isGift && order.giftRecipient?.name ? order.giftRecipient.name : order.customer_name,

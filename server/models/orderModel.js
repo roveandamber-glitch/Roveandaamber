@@ -222,7 +222,7 @@ const orderSchema = new mongoose.Schema(
       estimatedDelivery: { type: Date, default: null },
       dispatchedAt: { type: Date, default: null },
       deliveredAt: { type: Date, default: null },
-      currentLocation: { type: String, default: 'Maison Central Fulfillment Hub, Mumbai' },
+      currentLocation: { type: String, default: '' },
       history: [
         {
           stage: { type: String, default: 'Order Placed' },
@@ -453,11 +453,11 @@ export const OrderModel = {
         email: giftRecipient?.email || ''
       },
       tracking: {
-        courierName: 'BlueDart Luxury Express',
-        trackingNumber: `BD-${Math.floor(100000000 + Math.random() * 900000000)}`,
-        trackingUrl: 'https://www.bluedart.com',
+        courierName: 'Delhivery',
+        trackingNumber: '',
+        trackingUrl: 'https://www.delhivery.com/',
         estimatedDelivery: estDeliveryDate,
-        currentLocation: 'Maison Fulfillment Hub, Mumbai',
+        currentLocation: '',
         history: initialHistory
       },
       invoice: {
@@ -667,7 +667,7 @@ export const OrderModel = {
     if (status === 'Shipped') {
       order.tracking.dispatchedAt = new Date();
       stageTitle = 'Dispatched with Courier';
-      stageDesc = `Your parcel is in transit via ${order.tracking.courierName || 'BlueDart Luxury Express'}. Tracking: ${order.tracking.trackingNumber || 'Available shortly'}.`;
+      stageDesc = `Your parcel is in transit via ${order.tracking.courierName || 'Delhivery'}. Tracking: ${order.tracking.trackingNumber || 'Available shortly'}.`;
       location = 'Express Transit Hub, Mumbai';
     } else if (status === 'Delivered') {
       order.tracking.deliveredAt = new Date();

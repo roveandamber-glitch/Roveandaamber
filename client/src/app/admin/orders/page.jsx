@@ -32,6 +32,7 @@ import {
   ExternalLink,
   RefreshCw,
   Printer,
+  Copy,
   Sparkles,
   Gift,
   FileText,
@@ -95,7 +96,7 @@ export default function AdminOrdersPage() {
     setSelectedOrder(order);
     setCourierInput(order.tracking?.courierName && order.tracking.courierName !== 'BlueDart Luxury Express' ? order.tracking.courierName : 'Delhivery');
     setTrackingNumberInput(order.tracking?.trackingNumber || order.trackingNumber || '');
-    setLocationInput(order.tracking?.currentLocation || 'Delhivery Hub, Mumbai');
+    setLocationInput(order.tracking?.currentLocation || '');
     setEstimatedDeliveryInput(
       order.tracking?.estimatedDelivery 
         ? new Date(order.tracking.estimatedDelivery).toISOString().slice(0, 10) 
@@ -116,7 +117,7 @@ export default function AdminOrdersPage() {
         courierName: courierInput.trim() || 'Delhivery',
         trackingNumber: trimmedTracking || selectedOrder.tracking?.trackingNumber || '',
         trackingUrl: 'https://www.delhivery.com/',
-        currentLocation: locationInput || selectedOrder.tracking?.currentLocation || 'Delhivery Hub, Mumbai',
+        currentLocation: locationInput || selectedOrder.tracking?.currentLocation || '',
         estimatedDelivery: estimatedDeliveryInput || selectedOrder.tracking?.estimatedDelivery,
         statusNote: statusNoteInput || `Status updated to ${newStatus} with Delhivery consignment.`,
         notifyPatron: true
@@ -188,7 +189,7 @@ export default function AdminOrdersPage() {
         courierName: courierInput.trim() || 'Delhivery',
         trackingNumber: trimmedTracking,
         trackingUrl: 'https://www.delhivery.com/',
-        currentLocation: locationInput.trim() || 'Delhivery Hub, Mumbai',
+        currentLocation: locationInput.trim() || '',
         estimatedDelivery: estimatedDeliveryInput,
         statusNote: statusNoteInput.trim() || (trimmedTracking ? `Dispatched via Delhivery (Track ID: ${trimmedTracking}). Track at https://www.delhivery.com/` : 'Fulfillment tracking details updated via Delhivery.'),
         notifyPatron: true
@@ -665,7 +666,7 @@ export default function AdminOrdersPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Courier Partner</label>
                     <Input
@@ -692,35 +693,39 @@ export default function AdminOrdersPage() {
                         </a>
                       )}
                     </div>
-                    <Input
-                      value={trackingNumberInput}
-                      onChange={(e) => setTrackingNumberInput(e.target.value)}
-                      placeholder="e.g. 128492019482"
-                      className="rounded-lg text-xs font-mono font-bold border-[#C49A45] focus:border-[#8C6228]"
-                    />
+                    <div className="flex gap-1.5">
+                      <Input
+                        value={trackingNumberInput}
+                        onChange={(e) => setTrackingNumberInput(e.target.value)}
+                        placeholder="e.g. 128492019482"
+                        className="rounded-lg text-xs font-mono font-bold border-[#C49A45] focus:border-[#8C6228]"
+                      />
+                      {trackingNumberInput && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(trackingNumberInput.trim());
+                            message.success('Delhivery Track ID copied to clipboard');
+                          }}
+                          title="Copy Delhivery Track ID"
+                          className="px-2.5 py-1.5 rounded-lg bg-[#FAF6ED] hover:bg-[#F0E6D2] border border-[#E0D0A5] text-[#8C6D1F] transition-colors cursor-pointer flex items-center justify-center shrink-0"
+                        >
+                          <Copy size={13} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Estimated Delivery Date</label>
-                    <CustomDatePicker
-                      value={estimatedDeliveryInput}
-                      onChange={setEstimatedDeliveryInput}
-                      placeholder="Select delivery date"
-                      disablePast={true}
-                      showPresets={true}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Current Checkpoint / Location</label>
-                    <Input
-                      value={locationInput}
-                      onChange={(e) => setLocationInput(e.target.value)}
-                      placeholder="e.g. Delhivery Hub, Mumbai"
-                      className="rounded-xl text-xs py-2 bg-white"
-                    />
-                  </div>
+                <div>
+                  <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Estimated Delivery Date</label>
+                  <CustomDatePicker
+                    value={estimatedDeliveryInput}
+                    onChange={setEstimatedDeliveryInput}
+                    placeholder="Select delivery date"
+                    disablePast={true}
+                    showPresets={true}
+                  />
                 </div>
 
                 <button
