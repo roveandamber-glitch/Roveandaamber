@@ -240,6 +240,15 @@ const orderSchema = new mongoose.Schema(
       taxAmount: { type: Number, default: 0 },
       isGenerated: { type: Boolean, default: true }
     },
+    // 4.4 Email Notification Tracking (Strict De-duplication Guard)
+    emailNotifications: {
+      orderPlacedSent: { type: Boolean, default: false },
+      confirmedSent: { type: Boolean, default: false },
+      dispatchedSent: { type: Boolean, default: false },
+      lastDispatchedTrackingNumber: { type: String, default: '' },
+      deliveredSent: { type: Boolean, default: false },
+      cancelledSent: { type: Boolean, default: false }
+    },
     items: [orderItemSchema]
   },
   {

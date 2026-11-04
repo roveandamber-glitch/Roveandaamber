@@ -389,6 +389,76 @@ export const emailService = {
     });
   },
 
+  // 2.5 Order Confirmed & In Preparation Notification Email
+  sendOrderConfirmedNotification: async (order) => {
+    const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;
+    if (!recipientEmail) return { success: false, message: 'Customer email missing.' };
+
+    const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
+
+    const contentHtml = `
+      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
+      <p>Your order <strong>${orderId}</strong> has been confirmed and logged for bespoke atelier preparation.</p>
+
+      <div class="card" style="border-left: 3px solid #C49A45; background-color: #1A1A1D; padding: 20px; border-radius: 6px; margin: 20px 0;">
+        <div style="color:#C49A45; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:2px; margin-bottom: 8px;">Order Confirmed & In Preparation</div>
+        <p style="font-size:13px; color:#D1CEC7; margin:0; line-height:1.6;">Our master perfumers have begun hand-inspecting, bottling, and preparing the presentation coffret for your fragrance selection. You will receive tracking details once your consignment is dispatched via Delhivery.</p>
+      </div>
+
+      <p style="font-size:13px; color:#9E9B95;">
+        Delivery Destination: ${order.isGift && order.giftRecipient?.name ? `<strong>${order.giftRecipient.name}</strong>, ` : ''}${order.address || 'Your address'}
+      </p>
+    `;
+
+    const html = buildEmailHtml({
+      title: 'Order Confirmed',
+      subtitle: 'Your fragrances are being prepared by the atelier',
+      contentHtml,
+      orderId,
+      actionText: 'View Order Status',
+      actionUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/orders/${orderId.replace('#', '')}`
+    });
+
+    return sendEmail({
+      to: recipientEmail,
+      subject: `Order Confirmed: ${orderId} | ROVE & AMBER`,
+      html
+    });
+  },
+
+  // 2.6 Order Cancelled Notification Email
+  sendCancellationNotification: async (order) => {
+    const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;
+    if (!recipientEmail) return { success: false, message: 'Customer email missing.' };
+
+    const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
+
+    const contentHtml = `
+      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
+      <p>Your order <strong>${orderId}</strong> has been cancelled.</p>
+
+      <div class="card" style="border-left: 3px solid #E11D48; background-color: #1A1A1D; padding: 20px; border-radius: 6px; margin: 20px 0;">
+        <div style="color:#F43F5E; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:2px; margin-bottom: 8px;">Order Cancellation Notice</div>
+        <p style="font-size:13px; color:#D1CEC7; margin:0; line-height:1.6;">Your order has been cancelled in accordance with our atelier policies. Any processed charges will be refunded to your source payment method within 3-5 business days.</p>
+      </div>
+    `;
+
+    const html = buildEmailHtml({
+      title: 'Order Cancelled',
+      subtitle: `Notice for order ${orderId}`,
+      contentHtml,
+      orderId,
+      actionText: 'Browse Collections',
+      actionUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/shop`
+    });
+
+    return sendEmail({
+      to: recipientEmail,
+      subject: `Order Cancelled: ${orderId} | ROVE & AMBER`,
+      html
+    });
+  },
+
   // 3. Shipping Notification Email (Dispatched with Courier)
   sendShippingNotification: async (order) => {
     const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;

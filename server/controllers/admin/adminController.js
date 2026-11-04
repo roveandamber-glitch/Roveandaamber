@@ -1203,7 +1203,7 @@ export const updateOrderStatus = async (req, res) => {
     const previousTrackingNumber = order.tracking?.trackingNumber || '';
 
     if (status) {
-      order.status = status;
+      order.status = (status === 'Shipped' || status === 'Dispatched') ? 'Dispatch' : status;
     }
     if (paymentStatus) {
       order.paymentStatus = paymentStatus;
@@ -1245,17 +1245,54 @@ export const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    // Trigger automated email notifications on shipping/dispatch milestones or when tracking number is updated
-    const isNewTrackingNumber = currentTrackingNumber && currentTrackingNumber !== previousTrackingNumber;
-    const isDispatchedStatus = ['Shipped', 'Dispatch', 'Dispatched'].includes(status) && !['Shipped', 'Dispatch', 'Dispatched'].includes(previousStatus);
+    // De-duplicated email notifications:
+    // Only send strictly on:
+    // 1. Order Confirmed (Processing / Confirmed)
+    // 2. Order Dispatched (Dispatch)
+    // 3. Order Delivered (Delivered)
+    // 4. Order Cancelled (Cancelled)
+    if (!order.emailNotifications) {
+      order.emailNotifications = {};
+    }
 
-    if (notifyPatron || isNewTrackingNumber || isDispatchedStatus) {
+    const currentNormalizedStatus = (order.status === 'Shipped' || order.status === 'Dispatched') ? 'Dispatch' : order.status;
+    const previousNormalizedStatus = (previousStatus === 'Shipped' || previousStatus === 'Dispatched') ? 'Dispatch' : previousStatus;
+
+    const isConfirmedTransition = (currentNormalizedStatus === 'Processing' || currentNormalizedStatus === 'Confirmed') && 
+                                  previousNormalizedStatus !== 'Processing' && previousNormalizedStatus !== 'Confirmed';
+
+    const isDispatchedTransition = currentNormalizedStatus === 'Dispatch' && previousNormalizedStatus !== 'Dispatch';
+    const isNewTrackingOnDispatch = currentNormalizedStatus === 'Dispatch' && 
+                                    currentTrackingNumber && 
+                                    currentTrackingNumber !== order.emailNotifications.lastDispatchedTrackingNumber;
+
+    const isDeliveredTransition = currentNormalizedStatus === 'Delivered' && previousNormalizedStatus !== 'Delivered';
+    const isCancelledTransition = currentNormalizedStatus === 'Cancelled' && previousNormalizedStatus !== 'Cancelled';
+
+    if ((isDispatchedTransition && !order.emailNotifications.dispatchedSent) || isNewTrackingOnDispatch) {
+      order.emailNotifications.dispatchedSent = true;
+      order.emailNotifications.lastDispatchedTrackingNumber = currentTrackingNumber;
+      await order.save();
       emailService.sendShippingNotification(order).catch(err => {
-        console.warn('⚠️ Auto shipping email dispatch failed:', err.message);
+        console.warn('⚠️ Dispatch notification email failed:', err.message);
       });
-    } else if (status === 'Delivered' && previousStatus !== 'Delivered') {
+    } else if (isConfirmedTransition && !order.emailNotifications.confirmedSent) {
+      order.emailNotifications.confirmedSent = true;
+      await order.save();
+      emailService.sendOrderConfirmedNotification(order).catch(err => {
+        console.warn('⚠️ Confirmed notification email failed:', err.message);
+      });
+    } else if (isDeliveredTransition && !order.emailNotifications.deliveredSent) {
+      order.emailNotifications.deliveredSent = true;
+      await order.save();
       emailService.sendDeliveryNotification(order).catch(err => {
-        console.warn('⚠️ Auto delivery email dispatch failed:', err.message);
+        console.warn('⚠️ Delivery notification email failed:', err.message);
+      });
+    } else if (isCancelledTransition && !order.emailNotifications.cancelledSent) {
+      order.emailNotifications.cancelledSent = true;
+      await order.save();
+      emailService.sendCancellationNotification(order).catch(err => {
+        console.warn('⚠️ Cancellation notification email failed:', err.message);
       });
     }
 

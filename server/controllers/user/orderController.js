@@ -103,6 +103,7 @@ export const createOrder = async (req, res) => {
     });
 
     // 7. Automated Email Notification: Send order confirmation
+    if (order.emailNotifications) order.emailNotifications.orderPlacedSent = true;
     emailService.sendOrderConfirmation(order).catch((err) => {
       console.warn('⚠️ [Automated Email Notice]: Failed to send order confirmation email:', err.message);
     });
@@ -563,23 +564,29 @@ export const updateOrderStatus = async (req, res) => {
     const updated = await OrderModel.updateStatus(id, status);
     const ordId = updated.orderId || `#ORD-${String(updated.id || updated._id).slice(-4).toUpperCase()}`;
 
-    // 7. Automated Email Notification: Status synchronized updates
-    if (status === 'Shipped' || status === 'Dispatch' || status === 'Dispatched') {
+    // 7. Automated Email Notification: Status synchronized updates (Strictly Deduplicated)
+    const normalizedStatus = (status === 'Shipped' || status === 'Dispatched') ? 'Dispatch' : status;
+    const prevStatus = order.status;
+
+    if (!updated.emailNotifications) updated.emailNotifications = {};
+
+    if (normalizedStatus === 'Dispatch' && prevStatus !== 'Dispatch' && !updated.emailNotifications.dispatchedSent) {
+      updated.emailNotifications.dispatchedSent = true;
+      updated.emailNotifications.lastDispatchedTrackingNumber = updated.tracking?.trackingNumber || '';
+      await updated.save();
       emailService.sendShippingNotification(updated).catch(e => console.warn(e.message));
-    } else if (status === 'Delivered') {
+    } else if ((normalizedStatus === 'Processing' || normalizedStatus === 'Confirmed') && prevStatus !== 'Processing' && prevStatus !== 'Confirmed' && !updated.emailNotifications.confirmedSent) {
+      updated.emailNotifications.confirmedSent = true;
+      await updated.save();
+      emailService.sendOrderConfirmedNotification(updated).catch(e => console.warn(e.message));
+    } else if (normalizedStatus === 'Delivered' && prevStatus !== 'Delivered' && !updated.emailNotifications.deliveredSent) {
+      updated.emailNotifications.deliveredSent = true;
+      await updated.save();
       emailService.sendDeliveryNotification(updated).catch(e => console.warn(e.message));
-    } else if (status === 'Cancelled') {
-      emailService.sendTransactionalUpdate(updated, {
-        subject: 'Order Cancelled',
-        stage: 'Cancelled',
-        message: 'Your order has been cancelled. Any processed charges will be refunded to your source payment method within 3-5 business days.'
-      }).catch(e => console.warn(e.message));
-    } else {
-      emailService.sendTransactionalUpdate(updated, {
-        subject: `Order Update: ${status}`,
-        stage: status,
-        message: `Your order status has progressed to "${status}".`
-      }).catch(e => console.warn(e.message));
+    } else if (normalizedStatus === 'Cancelled' && prevStatus !== 'Cancelled' && !updated.emailNotifications.cancelledSent) {
+      updated.emailNotifications.cancelledSent = true;
+      await updated.save();
+      emailService.sendCancellationNotification(updated).catch(e => console.warn(e.message));
     }
 
     return res.json({
