@@ -413,7 +413,7 @@ export const OrderModel = {
         stage: 'Processing',
         title: 'Payment Confirmed & Artisan Packaging',
         description: 'Payment verified. Our perfumers are packaging your flacons in protective presentation boxes.',
-        location: 'Maison Fulfillment Hub, Mumbai',
+        location: 'Atelier Logistics',
         timestamp: new Date()
       });
     }
@@ -625,7 +625,7 @@ export const OrderModel = {
         stage: 'Processing',
         title: 'Payment Confirmed & Artisan Packaging',
         description: 'Payment verified. Our perfumers are packaging your flacons in protective presentation boxes.',
-        location: 'Maison Fulfillment Hub, Mumbai',
+        location: 'Atelier Logistics',
         timestamp: new Date()
       });
     }

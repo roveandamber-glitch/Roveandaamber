@@ -15,7 +15,8 @@ import {
   AlertCircle,
   Tag,
   Coins,
-  Sparkles
+  Sparkles,
+  Landmark
 } from 'lucide-react';
 import { message, Form, Input, Spin } from 'antd';
 import cartService from '@/services/cartService';
@@ -25,6 +26,28 @@ import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
 import { AuthGateModal } from '@/components/common';
 import authService from '@/services/authService';
 
+
+// Official Razorpay Vector Brand Logo Component
+const RazorpayLogo = ({ className = "h-4.5 w-auto" }) => (
+  <svg
+    viewBox="0 0 1896 401"
+    className={className}
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-label="Razorpay"
+  >
+    <path d="M451.9209,151.4937 C448.9309,162.6497 443.1359,170.8377 434.5349,176.0657 C425.9239,181.2927 413.8469,183.9117 398.2689,183.9117 L348.7769,183.9117 L366.1509,119.0807 L415.6429,119.0807 C431.2089,119.0807 441.8959,121.6947 447.7019,126.9217 C453.4969,132.1547 454.9109,140.3437 451.9209,151.4937 M503.1739,150.0967 C509.4679,126.6377 506.8589,108.6267 495.3509,96.0797 C483.8409,83.5327 463.6739,77.2627 434.8709,77.2627 L324.3909,77.2627 L257.8969,325.4027 L311.5719,325.4027 L338.3809,225.3777 L373.5809,225.3777 C381.4739,225.3777 387.6869,226.6577 392.2309,229.2137 C396.7849,231.7747 399.4509,236.3067 400.2739,242.8037 L409.8479,325.4027 L467.3589,325.4027 L458.0289,248.3847 C456.1279,231.1897 448.2589,221.0827 434.4309,218.0637 C452.0599,212.9577 466.8259,204.4677 478.7179,192.6167 C490.5989,180.7717 498.7579,166.6017 503.1739,150.0967" fill="#072654" />
+    <path d="M633.625,236.533 C629.14,253.258 622.231,266.042 612.901,274.868 C603.56,283.7 592.386,288.111 579.382,288.111 C566.122,288.111 557.128,283.758 552.387,275.042 C547.623,266.332 547.461,253.733 551.889,237.228 C556.305,220.735 563.352,207.841 573.053,198.539 C582.742,189.255 594.09,184.602 607.105,184.602 C620.11,184.602 628.919,189.082 633.485,198.024 C638.053,206.966 638.11,219.802 633.625,236.533 L633.625,236.533 Z M657.153,148.706 L650.431,173.8 C647.521,164.736 641.9,157.538 633.578,152.195 C625.245,146.852 614.918,144.174 602.608,144.174 C587.506,144.174 572.983,148.069 559.052,155.852 C545.12,163.64 532.938,174.617 522.519,188.786 C512.099,202.961 504.461,219.107 499.604,237.228 C494.748,255.356 493.774,271.328 496.695,285.149 C499.616,298.977 505.944,309.605 515.691,317.04 C525.428,324.481 537.969,328.19 553.303,328.19 C565.612,328.19 577.342,325.635 588.469,320.523 C599.595,315.418 609.041,308.325 616.818,299.266 L609.807,325.403 L661.731,325.403 L709.079,148.706 L657.153,148.706 Z" fill="#072654" />
+    <polygon fill="#072654" points="895.79 148.7061 744.882 148.7061 734.334 188.0911 822.155 188.0911 706.042 288.4581 696.132 325.4031 851.92 325.4031 862.478 286.0241 768.388 286.0241 886.263 184.2541" />
+    <path d="M1028.6514,236.1853 C1023.9804,253.6053 1017.0604,266.6273 1007.9044,275.2223 C998.7484,283.8163 987.6674,288.1103 974.6634,288.1103 C947.4714,288.1103 938.5234,270.8113 947.7964,236.1853 C952.4094,218.9903 959.3634,206.0383 968.6594,197.3283 C977.9654,188.6123 989.2324,184.2543 1002.4804,184.2543 C1015.4844,184.2543 1024.2584,188.6123 1028.7794,197.3283 C1033.2984,206.0383 1033.2644,218.9903 1028.6514,236.1853 M1059.0304,155.3243 C1047.0804,147.8943 1031.8154,144.1743 1013.2244,144.1743 C994.4014,144.1743 976.9694,147.8943 960.9174,155.3243 C944.8644,162.7653 931.1984,173.4523 919.9214,187.3893 C908.6314,201.3323 900.4954,217.5943 895.5114,236.1853 C890.5274,254.7763 889.9484,271.0323 893.7734,284.9753 C897.5864,298.9183 905.5144,309.6053 917.5914,317.0403 C929.6574,324.4813 945.0954,328.1903 963.9194,328.1903 C982.5094,328.1903 999.7674,324.4813 1015.7054,317.0403 C1031.6184,309.6053 1045.2374,298.9736 1056.5264,284.9753 C1067.8034,271.0323 1075.9404,254.7763 1080.9244,236.1853 C1085.9084,217.5943 1086.4884,201.3323 1082.6744,187.3893 C1078.8494,173.4523 1070.9674,162.7653 1059.0304,155.3243" fill="#072654" />
+    <path d="M1602.1367,236.533 C1597.6517,253.258 1590.7427,266.042 1581.4127,274.868 C1572.0817,283.7 1560.8857,288.111 1547.8817,288.111 C1534.6457,288.111 1525.6397,283.758 1520.8987,275.042 C1516.1347,266.332 1515.9727,253.733 1520.4007,237.228 C1524.8167,220.735 1531.8637,207.841 1541.5647,198.539 C1551.2537,189.255 1562.6017,184.602 1575.6167,184.602 C1588.6217,184.602 1597.4307,189.082 1601.9967,198.024 C1606.5647,206.966 1606.6217,219.802 1602.1367,236.533 L1602.1367,236.533 Z M1625.6647,148.706 L1618.9427,173.8 C1616.0327,164.736 1610.4117,157.538 1602.0897,152.195 C1593.7567,146.852 1583.4297,144.174 1571.1197,144.174 C1556.0177,144.174 1541.4947,148.069 1527.5637,155.852 C1513.6317,163.64 1501.4497,174.617 1491.0307,188.786 C1480.6107,202.961 1472.9717,219.107 1468.1157,237.228 C1463.2597,255.356 1462.2967,271.328 1465.2067,285.149 C1468.1267,298.977 1474.4447,309.605 1484.2027,317.04 C1493.9397,324.481 1506.4807,328.19 1521.8147,328.19 C1534.1227,328.19 1545.8537,325.635 1556.9797,320.523 C1568.1067,315.418 1577.5527,308.325 1585.3297,299.266 L1578.3187,325.403 L1630.2427,325.403 L1677.5907,148.706 L1625.6647,148.706 Z" fill="#072654" />
+    <path d="M1244.165,196.1055 L1257.401,148.0105 C1252.904,145.6865 1246.946,144.5225 1239.517,144.5225 C1227.66,144.5225 1216.243,147.4835 1205.244,153.4115 C1195.798,158.4975 1187.754,165.6365 1180.962,174.5815 L1187.847,148.6815 L1172.813,148.7065 L1135.938,148.7065 L1088.227,325.4025 L1140.87,325.4025 L1165.616,233.0505 C1169.221,219.5765 1175.688,209.0635 1185.042,201.5125 C1194.372,193.9615 1206.02,190.1825 1219.964,190.1825 C1228.563,190.1825 1236.619,192.1585 1244.165,196.1055" fill="#072654" />
+    <path d="M1390.6973,237.2256 C1386.2693,253.7306 1379.4083,266.3296 1370.1123,275.0396 C1360.7943,283.7556 1349.6433,288.1076 1336.6393,288.1076 C1323.6233,288.1076 1314.7573,283.6976 1310.0393,274.8656 C1305.3103,266.0396 1305.1943,253.2606 1309.6793,236.5296 C1314.1653,219.7996 1321.1423,206.9626 1330.6243,198.0206 C1340.1043,189.0786 1351.3593,184.5986 1364.3753,184.5986 C1377.1473,184.5986 1385.8293,189.2526 1390.4303,198.5426 C1395.0203,207.8376 1395.1133,220.7376 1390.6973,237.2256 M1427.4853,155.8486 C1417.7153,148.0656 1405.2783,144.1776 1390.1873,144.1776 C1376.9393,144.1776 1364.3293,147.1966 1352.3903,153.2356 C1340.4183,159.2856 1330.7173,167.5206 1323.2753,177.9806 L1323.4433,176.8216 L1332.2873,148.6786 L1322.1103,148.6786 L1322.1103,148.7036 L1280.9003,148.7036 L1267.8153,197.5656 C1267.6643,198.1336 1267.5373,198.6636 1267.3853,199.2376 L1213.4093,400.6806 L1266.0423,400.6806 L1293.2213,299.2696 C1295.8863,308.3216 1301.4273,315.4146 1309.8193,320.5206 C1318.2103,325.6316 1328.5603,328.1876 1340.8813,328.1876 C1356.2163,328.1876 1370.7963,324.4786 1384.6463,317.0376 C1398.4863,309.6076 1410.5163,298.9736 1420.7173,285.1466 C1430.9273,271.3306 1438.4623,255.3526 1443.3183,237.2256 C1448.1753,219.1036 1449.1823,202.9586 1446.3663,188.7836 C1443.5503,174.6136 1437.2443,163.6376 1427.4853,155.8486" fill="#072654" />
+    <path d="M1895.5381,148.7554 L1895.5721,148.7064 L1863.6921,148.7064 C1862.6731,148.7064 1861.7741,148.7354 1860.8421,148.7554 L1844.2961,148.7554 L1835.8351,160.5434 C1835.1571,161.4314 1834.4791,162.3254 1833.7491,163.3624 L1832.8271,164.7274 L1765.5851,258.3754 L1751.6421,148.7064 L1696.5641,148.7064 L1724.4561,315.3544 L1662.8591,400.6834 L1664.6151,400.6834 L1696.0651,400.6834 L1717.7341,400.6834 L1732.6621,379.5374 C1733.1021,378.9074 1733.4791,378.3914 1733.9491,377.7254 L1751.3691,353.0284 L1751.8681,352.3214 L1829.8131,241.8274 L1895.4851,148.8284 L1895.5721,148.7554 L1895.5381,148.7554 Z" fill="#072654" />
+    <polygon fill="#3395FF" points="122.6338 105.6902 106.8778 163.6732 197.0338 105.3642 138.0748 325.3482 197.9478 325.4032 285.0458 0.4822" />
+    <path d="M25.5947,232.9246 L0.8077,325.4026 L123.5337,325.4026 C123.5337,325.4026 173.7317,137.3196 173.7457,137.2656 C173.6987,137.2956 25.5947,232.9246 25.5947,232.9246" fill="#072654" />
+  </svg>
+);
 
 // Dynamically load official Razorpay Checkout SDK
 const loadRazorpayScript = () => {
@@ -394,10 +417,10 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-20 w-full flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-22 md:pt-24 pb-12 w-full flex-1">
         
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-6 uppercase tracking-widest">
+        <div className="flex items-center gap-2 text-xs text-gray-400 mb-3 sm:mb-4 uppercase tracking-widest">
           <Link href="/" className="hover:text-black transition-colors">Home</Link>
           <span>/</span>
           <Link href="/cart" className="hover:text-black transition-colors">Shopping Bag</Link>
@@ -512,7 +535,7 @@ export default function CheckoutPage() {
                 )}
 
                 {/* Compact Gift Studio Banner */}
-                <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-2xs">
+                <div className="bg-[#FAF8F5] border border-[#E8DFC9] rounded-2xl p-2.5 sm:p-3 flex items-center justify-between gap-3 shadow-2xs">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
                       <Gift size={15} />
@@ -672,14 +695,14 @@ export default function CheckoutPage() {
               </div>
 
               {/* RIGHT COLUMN: ORDER SUMMARY & REALISTIC RAZORPAY PAYMENT (5 Cols) */}
-              <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
-                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E8DFC9] shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-2.5 border-b border-[#ECE7DE]">
+              <div className="lg:col-span-5 space-y-3 lg:sticky lg:top-20">
+                <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#E8DFC9] shadow-sm space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#ECE7DE]">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-serif font-bold text-black m-0">
+                      <h3 className="text-sm sm:text-base font-serif font-bold text-black m-0">
                         Fragrance Flacons ({cartItems.length})
                       </h3>
-                      <span className="text-[10px] font-semibold text-[#8C6D1F] bg-[#FAF3E0] px-2 py-0.5 rounded-full border border-[#E8DEC8]">
+                      <span className="text-[9.5px] font-semibold text-[#8C6D1F] bg-[#FAF3E0] px-2 py-0.5 rounded-full border border-[#E8DEC8]">
                         Atelier Bag
                       </span>
                     </div>
@@ -689,7 +712,7 @@ export default function CheckoutPage() {
                   </div>
 
                   {/* Fragrance List Items (Compact with slim scrollbar) */}
-                  <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-32 sm:max-h-36 overflow-y-auto pr-1">
                     {cartItems.map((item, idx) => (
                       <div key={`${item.productId || item.id}-${item.size || idx}`} className="flex items-center gap-3 pb-2.5 border-b border-gray-100 last:border-0 last:pb-0">
                         <div className="w-10 h-12 rounded-lg bg-[#FAF7F2] p-1 border border-[#E8DFC8] flex items-center justify-center shrink-0 overflow-hidden">
@@ -782,7 +805,7 @@ export default function CheckoutPage() {
 
                   {/* Patron Privilege Points with Clean Toggle Switch */}
                   <div className="pt-2 border-t border-[#ECE7DE]">
-                    <div className={`p-3 rounded-2xl border transition-all ${
+                    <div className={`p-2.5 sm:p-3 rounded-2xl border transition-all ${
                       rewardPointsUsed > 0 
                         ? 'bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border-[#D4AF37]/50 shadow-2xs' 
                         : 'bg-[#FAF9F7] border-[#E8DFC9]'
@@ -847,101 +870,130 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* REALISTIC RAZORPAY PAYMENT SELECTION & REAL ICONS */}
+                  {/* LUXURY ATELIER PAYMENT GATEWAY SECTION */}
                   <div className="pt-2 border-t border-[#ECE7DE] space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <CreditCard size={13} className="text-[#B8860B]" />
                         <span className="text-[11px] font-bold uppercase tracking-wider text-black">
-                          Payment Method
+                          Payment Gateway
                         </span>
                       </div>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
                         <ShieldCheck size={11} className="text-emerald-600" />
-                        100% Encrypted
+                        PCI-DSS Level 1
                       </span>
                     </div>
 
-                    {/* Realistic Razorpay Container */}
-                    <div className="p-3 rounded-2xl bg-gradient-to-b from-[#FAF9F7] to-[#F5ECE0] border-2 border-[#1C1714] shadow-xs space-y-2.5">
+                    {/* Official Razorpay Luxury Card */}
+                    <div className="p-3 sm:p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#D9CEBA] hover:border-[#B8860B] transition-all shadow-2xs space-y-2.5">
+                      {/* Top Header with Radio, Official Razorpay Logo, and Status */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-[#1C1714] text-[#ECC880] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                            ₹
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {/* Active Atelier Gold Radio */}
+                          <div className="w-4 h-4 rounded-full border-2 border-[#B8860B] flex items-center justify-center bg-white shrink-0 shadow-2xs">
+                            <div className="w-2 h-2 rounded-full bg-[#B8860B]" />
                           </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-black font-sans">Razorpay Online Gateway</span>
-                              <span className="text-[8.5px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded bg-[#1C1714] text-[#ECC880]">
-                                Instant
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-gray-500 m-0">UPI, Cards, NetBanking & Wallets</p>
+                          
+                          {/* Official Razorpay Brand Logo */}
+                          <div className="flex items-center gap-2">
+                            <RazorpayLogo className="h-4.5 sm:h-5 w-auto" />
+                            <span className="text-[10px] text-gray-400 font-light hidden sm:inline">|</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-[#8C6D1F] bg-[#FAF3E0] px-1.5 py-0.2 rounded border border-[#E0D0A5] hidden sm:inline">
+                              Instant
+                            </span>
                           </div>
                         </div>
 
-                        <div className="w-4 h-4 rounded-full border-2 border-black flex items-center justify-center shrink-0">
-                          <div className="w-2 h-2 rounded-full bg-black" />
+                        {/* Safe & Verified Badge */}
+                        <div className="flex items-center gap-1 text-[9.5px] font-medium text-emerald-800 bg-white border border-emerald-200/80 px-2 py-0.5 rounded-md shadow-2xs shrink-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>RBI Regulated</span>
                         </div>
                       </div>
 
-                      {/* Real Payment Method Badges (Google Pay, PhonePe, Paytm, UPI, Cards) */}
-                      <div className="pt-2 border-t border-[#EAE3D6] flex flex-wrap items-center gap-1.5">
+                      {/* Descriptive Supported Instruments */}
+                      <p className="text-[11px] text-[#6B5E51] leading-relaxed m-0 font-light">
+                        Pay securely with UPI, Credit / Debit Cards, NetBanking, or Wallets.
+                      </p>
+
+                      {/* Clean Uniform Payment Method Chips */}
+                      <div className="pt-2 border-t border-[#ECE5D8] flex flex-wrap items-center gap-1.5">
+                        {/* UPI */}
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs">
+                          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none">
+                            <path d="M12.4 2.5L7.2 12.8H2L9.5 2.5H12.4Z" fill="#097939" />
+                            <path d="M22 2.5L16.8 12.8H11.6L19.1 2.5H22Z" fill="#ED7524" />
+                            <path d="M9.5 13.5L4.3 21.5H1.5L8 13.5H9.5Z" fill="#097939" />
+                            <path d="M19.1 13.5L13.9 21.5H11.1L17.6 13.5H19.1Z" fill="#ED7524" />
+                          </svg>
+                          <span className="text-[9.5px] font-bold text-[#1F1915]">UPI</span>
+                        </div>
+
                         {/* Google Pay (GPay) */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E0D8CA] shadow-2xs">
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs">
                           <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.9c2.28-2.1 3.645-5.2 3.645-9.15z"/>
                             <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.9-3.05c-1.08.72-2.45 1.16-4.03 1.16-3.1 0-5.74-2.1-6.68-4.94H1.21v3.15C3.25 21.4 7.31 24 12 24z"/>
                             <path fill="#FBBC05" d="M5.32 14.26c-.24-.72-.37-1.49-.37-2.26s.13-1.54.37-2.26V6.59H1.21C.44 8.12 0 9.99 0 12s.44 3.88 1.21 5.41l4.11-3.15z"/>
                             <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.6 1.21 6.59l4.11 3.15c.94-2.84 3.58-4.99 6.68-4.99z"/>
                           </svg>
-                          <span className="text-[9.5px] font-bold text-gray-800">GPay</span>
+                          <span className="text-[9.5px] font-semibold text-[#3C4043]">GPay</span>
                         </div>
 
                         {/* PhonePe */}
-                        <div className="flex items-center gap-1 bg-[#5F259F] text-white px-2 py-1 rounded-md shadow-2xs font-bold text-[9.5px] tracking-tight">
-                          <span className="w-3 h-3 rounded-full bg-white text-[#5F259F] flex items-center justify-center text-[7.5px] font-black leading-none">पे</span>
-                          <span>PhonePe</span>
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs">
+                          <span className="w-3.5 h-3.5 rounded-full bg-[#5F259F] text-white flex items-center justify-center text-[7.5px] font-black leading-none shrink-0">पे</span>
+                          <span className="text-[9.5px] font-semibold text-[#1F1915]">PhonePe</span>
                         </div>
 
                         {/* Paytm */}
-                        <div className="flex items-center gap-0.5 bg-white px-2 py-1 rounded-md border border-[#00BAF2]/40 shadow-2xs font-black text-[9.5px]">
+                        <div className="flex items-center gap-0.5 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs text-[9.5px] font-black">
                           <span className="text-[#002970]">pay</span>
                           <span className="text-[#00BAF2]">tm</span>
                         </div>
 
-                        {/* Official UPI Badge */}
-                        <div className="flex items-center gap-0.5 bg-white px-2 py-1 rounded-md border border-[#097939]/30 shadow-2xs text-[9.5px] font-black tracking-wider">
-                          <span className="text-[#097939]">U</span>
-                          <span className="text-[#1A1A1A]">P</span>
-                          <span className="text-[#ED7524]">I</span>
-                        </div>
-
                         {/* Cards: Visa & Mastercard */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E0D8CA] shadow-2xs text-[9px] font-semibold text-gray-700">
-                          <span className="font-bold text-[#1A1F71] italic text-[8.5px]">VISA</span>
+                        <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs">
+                          <span className="font-bold text-[#1A1F71] italic text-[9px]">VISA</span>
                           <span className="flex items-center -space-x-1">
                             <span className="w-2.5 h-2.5 rounded-full bg-[#EB001B] inline-block" />
                             <span className="w-2.5 h-2.5 rounded-full bg-[#F79E1B]/90 inline-block" />
                           </span>
                         </div>
+
+                        {/* NetBanking */}
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs text-[9px] font-medium text-[#4A3E31]">
+                          <Landmark size={11} className="text-[#8C6D1F]" />
+                          <span>NetBanking</span>
+                        </div>
+                      </div>
+
+                      {/* Security Encryption Strip */}
+                      <div className="pt-2 border-t border-[#ECE5D8] flex items-center justify-between text-[9.5px] text-[#7A6B5D]">
+                        <div className="flex items-center gap-1">
+                          <Lock size={10} className="text-[#B8860B]" />
+                          <span>256-Bit Bank Grade SSL Encryption</span>
+                        </div>
+                        <span className="text-gray-400 font-mono">Zero Fee</span>
                       </div>
                     </div>
 
-                    {/* Primary Submit CTA Button inside right card */}
+                    {/* Primary Luxury CTA Button */}
                     <button
                       type="submit"
                       form="checkout-form"
                       disabled={loading}
                       onClick={() => form.submit()}
-                      className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3.5 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-md shadow-amber-950/15 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full bg-[#1A1410] hover:bg-[#281F19] active:scale-[0.99] text-[#FAF7F2] py-3.5 rounded-full font-bold uppercase tracking-[0.16em] text-xs flex items-center justify-center gap-2.5 shadow-md shadow-stone-900/10 border border-[#B8860B]/40 transition-all cursor-pointer disabled:opacity-50 group"
                     >
-                      <Lock size={13} strokeWidth={2.4} />
+                      <Lock size={13} className="text-[#ECC880]" />
                       <span>
                         {loading
                           ? 'Opening Razorpay Gateway...'
                           : `Pay with Razorpay • ₹${finalTotal.toLocaleString('en-IN')}`}
                       </span>
+                      <ArrowRight size={13} className="text-[#ECC880] group-hover:translate-x-0.5 transition-transform" />
                     </button>
                   </div>
 
