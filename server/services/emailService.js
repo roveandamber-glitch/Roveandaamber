@@ -251,8 +251,8 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
           : (typeof att.content === 'string' ? Buffer.from(att.content).toString('base64') : undefined)
       })).filter(a => a.content);
 
-      // Default from address for Resend testing or production custom domain
-      const resendFrom = process.env.EMAIL_FROM || 'ROVE & AMBER <onboarding@resend.dev>';
+      // Default from address for verified production custom domain
+      const resendFrom = process.env.EMAIL_FROM || 'ROVE & AMBER <orders@roveandamber.com>';
 
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -263,6 +263,7 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
         body: JSON.stringify({
           from: resendFrom,
           to: [to],
+          reply_to: process.env.EMAIL_REPLY_TO || process.env.EMAIL_USER || 'roveandamber@gmail.com',
           subject,
           html,
           attachments: formattedAttachments.length > 0 ? formattedAttachments : undefined
