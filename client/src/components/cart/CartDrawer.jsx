@@ -8,17 +8,21 @@ import {
   Trash2, 
   ArrowRight, 
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
 import { Modal, message, Form, Input } from 'antd';
 import { useRouter } from 'next/navigation';
 import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
 import { getImageUrl } from '@/utils/imageHelper';
+import ReturnPolicyModal from '@/components/product/ReturnPolicyModal';
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
+  const [showReturnPolicyModal, setShowReturnPolicyModal] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [orderSuccessData, setOrderSuccessData] = useState(null);
@@ -50,6 +54,15 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const handleRemove = (productId, size, name) => {
     cartService.removeFromCart(productId, size);
     message.info(`Removed ${name} from bag`);
+  };
+
+  const handleUpgradeItem = async (item) => {
+    try {
+      await cartService.upgradeToCombo(item.itemId || item.productId || item.id, item.size);
+      message.success('Upgraded to 50ml + 2ml combo');
+    } catch (err) {
+      message.error('Could not upgrade item');
+    }
   };
 
   const handleStartCheckout = () => {
@@ -224,14 +237,48 @@ const CartDrawer = ({ isOpen, onClose }) => {
                           </button>
                         </div>
 
-                        <div className="flex items-center gap-2 mt-1">
+                        {/* Size & Return Policy Tag */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
                           <span className="bg-[#FAF8F5] text-black text-[10px] font-bold px-2 py-0.5 rounded-md border border-[#E8E2D6]">
                             Size: {item.size}
                           </span>
-                          <span className="text-xs font-bold text-black font-sans">
+                          {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) ? (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                              <ShieldCheck size={9} />
+                              <span>7-Day Return</span>
+                            </span>
+                          ) : (item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) ? (
+                            <span className="text-[9px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.2 rounded">
+                              Sample (No Return)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-stone-600 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
+                              <AlertCircle size={8.5} className="text-[#8C6D1F]" />
+                              <span>Final Sale (No Return)</span>
+                            </span>
+                          )}
+                          <span className="text-xs font-bold text-black font-sans ml-auto">
                             ₹{(item.price || 0).toLocaleString('en-IN')}
                           </span>
                         </div>
+
+                        {/* Upgrade option for standalone bottle */}
+                        {!(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && !(item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) && (
+                          <div className="mt-1.5 p-1.5 rounded-lg bg-[#FAF6EE] border border-[#E0D0A5] flex items-center justify-between gap-1.5">
+                            <div className="min-w-0">
+                              <p className="text-[9.5px] font-bold text-[#8C6D1F] m-0 leading-tight">
+                                + 2ml Sample & 7-Day Return (+₹199)
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleUpgradeItem(item)}
+                              className="px-2 py-0.5 rounded-full bg-black text-white hover:bg-stone-800 text-[8.5px] uppercase font-bold tracking-wider transition-all shrink-0 cursor-pointer shadow-2xs"
+                            >
+                              Upgrade
+                            </button>
+                          </div>
+                        )}
 
                         {/* Quantity controls */}
                         <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100">
@@ -419,6 +466,12 @@ const CartDrawer = ({ isOpen, onClose }) => {
           </div>
         )}
       </Modal>
+
+      {/* Luxury Return Policy & Home Trial Guarantee Modal */}
+      <ReturnPolicyModal
+        open={showReturnPolicyModal}
+        onClose={() => setShowReturnPolicyModal(false)}
+      />
     </>
   );
 };

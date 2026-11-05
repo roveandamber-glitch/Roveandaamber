@@ -20,6 +20,10 @@ let isFetching = false;
 // Format backend item to standard client representation
 const formatItem = (item) => {
   if (!item) return null;
+  const sizeUpper = (item.size || '50ML').toUpperCase();
+  const isSampleOnly = sizeUpper === '2ML' || (sizeUpper.includes('SAMPLE') && !sizeUpper.includes('+'));
+  const isCombo = sizeUpper.includes('+') || sizeUpper.includes('COMBO') || item.hasSample === true;
+
   return {
     id: item.itemId || item._id || item.productId,
     itemId: item.itemId || item._id,
@@ -29,7 +33,10 @@ const formatItem = (item) => {
     price: Number(item.price || item.productId?.price || 0),
     originalPrice: Number(item.originalPrice || item.productId?.originalPrice || item.price || 0),
     image: item.image || item.productId?.image || '/images/perfumes/signature_collection.jpg',
-    size: (item.size || '50ML').toUpperCase(),
+    size: sizeUpper,
+    hasSample: Boolean(isCombo || item.hasSample),
+    isSampleOnly: Boolean(isSampleOnly),
+    isCombo: Boolean(isCombo),
     quantity: Math.max(1, parseInt(item.quantity, 10) || 1),
     maxStock: item.maxStock !== undefined ? item.maxStock : (item.productId?.stock ?? 99),
     itemTotal: Number(item.itemTotal || ((item.price || 0) * (item.quantity || 1)))
@@ -155,6 +162,8 @@ export const cartService = {
     const pQty = parseInt(item.quantity, 10) || 1;
     const pName = item.name || '';
 
+    const hasSample = Boolean(item.hasSample || pSize.toLowerCase().includes('+'));
+
     // Optimistic UI update in memory
     const existingIdx = inMemoryCart.findIndex(
       (i) => String(i.productId) === String(pId) && i.size.toLowerCase() === pSize.toLowerCase()
@@ -162,6 +171,10 @@ export const cartService = {
 
     if (existingIdx > -1) {
       inMemoryCart[existingIdx].quantity += pQty;
+      if (hasSample) {
+        inMemoryCart[existingIdx].hasSample = true;
+        inMemoryCart[existingIdx].isCombo = true;
+      }
     } else {
       inMemoryCart.push(formatItem({
         itemId: `temp_${Date.now()}`,
@@ -170,6 +183,7 @@ export const cartService = {
         price: item.price,
         image: item.image,
         size: pSize,
+        hasSample: hasSample,
         quantity: pQty,
         maxStock: item.maxStock || 99
       }));
@@ -183,7 +197,8 @@ export const cartService = {
         id: pId,
         name: pName,
         size: pSize,
-        quantity: pQty
+        quantity: pQty,
+        hasSample: hasSample
       });
 
       if (res?.data?.success && res.data.data) {
@@ -200,6 +215,48 @@ export const cartService = {
       await cartService.fetchCart();
     }
 
+    return inMemoryCart;
+  },
+
+  /**
+   * Upgrade item in cart to 50ml + 2ml combo with 7-Day Return Guarantee
+   */
+  upgradeToCombo: async (productIdOrItemId, currentSize) => {
+    if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+      return inMemoryCart;
+    }
+    // Optimistic UI update in memory
+    const targetIdx = inMemoryCart.findIndex(
+      (i) => (i.itemId === productIdOrItemId || String(i.productId) === String(productIdOrItemId)) &&
+             (!currentSize || i.size.toLowerCase() === String(currentSize).toLowerCase())
+    );
+    if (targetIdx > -1) {
+      const cur = inMemoryCart[targetIdx];
+      const baseSize = cur.size.replace(/ SAMPLE/gi, '').replace(/\+.*$/g, '').trim() || '50ML';
+      cur.size = `${baseSize} + 2ML COMBO`;
+      cur.hasSample = true;
+      cur.isCombo = true;
+      cur.price = cur.price + 199;
+      cur.itemTotal = cur.price * cur.quantity;
+      window.dispatchEvent(new Event('cartChange'));
+    }
+
+    try {
+      const res = await api.post('/cart/upgrade', {
+        itemId: productIdOrItemId,
+        productId: productIdOrItemId
+      });
+      if (res?.data?.success && res.data.data) {
+        const cartData = res.data.data;
+        inMemorySummary = cartData;
+        inMemoryCart = (cartData.items || []).map(formatItem).filter(Boolean);
+        window.dispatchEvent(new Event('cartChange'));
+        return inMemoryCart;
+      }
+    } catch (err) {
+      console.warn('Backend upgrade cart error, re-fetching cart:', err);
+      await cartService.fetchCart();
+    }
     return inMemoryCart;
   },
 

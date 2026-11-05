@@ -3,6 +3,7 @@ import {
   getCart,
   addItemToCart,
   updateCartItem,
+  upgradeCartItem,
   removeCartItem,
   applyCoupon,
   removeCoupon,
@@ -23,6 +24,8 @@ router.use(protect);
 // 3.1: Shopping Cart Management
 router.get('/', getCart);
 router.post('/items', addItemToCart);
+router.post('/upgrade', upgradeCartItem);
+router.patch('/items/:itemId/upgrade', upgradeCartItem);
 router.put('/items/:itemId', updateCartItem);
 router.patch('/items/:itemId', updateCartItem);
 router.delete('/items/:itemId', removeCartItem);

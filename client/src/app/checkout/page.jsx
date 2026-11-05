@@ -24,7 +24,8 @@ import {
   Building,
   Navigation,
   Compass,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { message, Form, Input, Spin } from 'antd';
 import cartService from '@/services/cartService';
@@ -1050,142 +1051,129 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* LUXURY ATELIER PAYMENT GATEWAY SECTION */}
-                  <div className="pt-2 border-t border-[#ECE7DE] space-y-2.5">
+                  {/* CLEAN PROFESSIONAL PAYMENT SECTION */}
+                  <div className="pt-3 border-t border-[#ECE7DE] space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <CreditCard size={13} className="text-[#B8860B]" />
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-black">
-                          Payment Gateway
-                        </span>
-                      </div>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                        <ShieldCheck size={11} className="text-emerald-600" />
-                        PCI-DSS Level 1
+                      <span className="text-xs font-semibold text-gray-900 tracking-tight">
+                        Payment Method
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10.5px] text-gray-500 font-medium">
+                        <Lock size={11} className="text-emerald-600" />
+                        <span>256-Bit SSL Encrypted</span>
                       </span>
                     </div>
 
-                    {/* Official Razorpay Luxury Card */}
-                    <div className="p-3 sm:p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#D9CEBA] hover:border-[#B8860B] transition-all shadow-2xs space-y-2.5">
-                      {/* Top Header with Radio, Official Razorpay Logo, and Status */}
+                    {/* Standard Online Payment Card */}
+                    <div className="p-3.5 rounded-xl bg-white border border-[#E5DFD5] space-y-3 shadow-2xs">
+                      {/* Top Header: Radio + Payment Brand + Instant badge */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {/* Active Atelier Gold Radio */}
-                          <div className="w-4 h-4 rounded-full border-2 border-[#B8860B] flex items-center justify-center bg-white shrink-0 shadow-2xs">
-                            <div className="w-2 h-2 rounded-full bg-[#B8860B]" />
+                        <div className="flex items-center gap-2.5">
+                          {/* Standard Radio Button */}
+                          <div className="w-4 h-4 rounded-full border-2 border-black flex items-center justify-center bg-white shrink-0">
+                            <div className="w-2 h-2 rounded-full bg-black" />
                           </div>
-                          
-                          {/* Official Razorpay Brand Logo */}
+
                           <div className="flex items-center gap-2">
-                            <RazorpayLogo className="h-4.5 sm:h-5 w-auto" />
-                            <span className="text-[10px] text-gray-400 font-light hidden sm:inline">|</span>
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-[#8C6D1F] bg-[#FAF3E0] px-1.5 py-0.2 rounded border border-[#E0D0A5] hidden sm:inline">
-                              Instant
-                            </span>
+                            <span className="text-xs font-semibold text-gray-900">Online Payment</span>
+                            <span className="text-gray-300 text-xs">|</span>
+                            <RazorpayLogo className="h-3.5 sm:h-4 w-auto" />
                           </div>
                         </div>
 
-                        {/* Safe & Verified Badge */}
-                        <div className="flex items-center gap-1 text-[9.5px] font-medium text-emerald-800 bg-white border border-emerald-200/80 px-2 py-0.5 rounded-md shadow-2xs shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>RBI Regulated</span>
-                        </div>
+                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                          Instant
+                        </span>
                       </div>
 
-                      {/* Descriptive Supported Instruments */}
-                      <p className="text-[11px] text-[#6B5E51] leading-relaxed m-0 font-light">
-                        Pay securely with UPI, Credit / Debit Cards, NetBanking, or Wallets.
+                      <p className="text-[11.5px] text-gray-500 m-0 leading-relaxed font-light">
+                        Pay securely with any UPI app, Credit or Debit Card, NetBanking, or Digital Wallets.
                       </p>
 
-                      {/* Clean Uniform Payment Method Chips */}
-                      <div className="pt-2 border-t border-[#ECE5D8] flex flex-wrap items-center gap-1.5">
+                      {/* Clean Supported Payment Methods Chips */}
+                      <div className="pt-2.5 border-t border-gray-100 flex flex-wrap items-center gap-1.5">
                         {/* UPI */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs">
+                        <div className="flex items-center gap-1 bg-[#FAF9F7] px-2 py-1 rounded-md border border-gray-200">
                           <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none">
                             <path d="M12.4 2.5L7.2 12.8H2L9.5 2.5H12.4Z" fill="#097939" />
                             <path d="M22 2.5L16.8 12.8H11.6L19.1 2.5H22Z" fill="#ED7524" />
                             <path d="M9.5 13.5L4.3 21.5H1.5L8 13.5H9.5Z" fill="#097939" />
                             <path d="M19.1 13.5L13.9 21.5H11.1L17.6 13.5H19.1Z" fill="#ED7524" />
                           </svg>
-                          <span className="text-[9.5px] font-bold text-[#1F1915]">UPI</span>
+                          <span className="text-[9.5px] font-bold text-gray-800">UPI</span>
                         </div>
 
-                        {/* Google Pay (GPay) */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs">
+                        {/* GPay */}
+                        <div className="flex items-center gap-1 bg-[#FAF9F7] px-2 py-1 rounded-md border border-gray-200">
                           <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.9c2.28-2.1 3.645-5.2 3.645-9.15z"/>
                             <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.9-3.05c-1.08.72-2.45 1.16-4.03 1.16-3.1 0-5.74-2.1-6.68-4.94H1.21v3.15C3.25 21.4 7.31 24 12 24z"/>
                             <path fill="#FBBC05" d="M5.32 14.26c-.24-.72-.37-1.49-.37-2.26s.13-1.54.37-2.26V6.59H1.21C.44 8.12 0 9.99 0 12s.44 3.88 1.21 5.41l4.11-3.15z"/>
                             <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.6 1.21 6.59l4.11 3.15c.94-2.84 3.58-4.99 6.68-4.99z"/>
                           </svg>
-                          <span className="text-[9.5px] font-semibold text-[#3C4043]">GPay</span>
+                          <span className="text-[9.5px] font-semibold text-gray-700">GPay</span>
                         </div>
 
                         {/* PhonePe */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs">
+                        <div className="flex items-center gap-1 bg-[#FAF9F7] px-2 py-1 rounded-md border border-gray-200">
                           <span className="w-3.5 h-3.5 rounded-full bg-[#5F259F] text-white flex items-center justify-center text-[7.5px] font-black leading-none shrink-0">पे</span>
-                          <span className="text-[9.5px] font-semibold text-[#1F1915]">PhonePe</span>
+                          <span className="text-[9.5px] font-semibold text-gray-700">PhonePe</span>
                         </div>
 
-                        {/* Paytm */}
-                        <div className="flex items-center gap-0.5 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs text-[9.5px] font-black">
-                          <span className="text-[#002970]">pay</span>
-                          <span className="text-[#00BAF2]">tm</span>
-                        </div>
-
-                        {/* Cards: Visa & Mastercard */}
-                        <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs">
+                        {/* Cards: Visa & Mastercard & RuPay */}
+                        <div className="flex items-center gap-1.5 bg-[#FAF9F7] px-2 py-1 rounded-md border border-gray-200">
                           <span className="font-bold text-[#1A1F71] italic text-[9px]">VISA</span>
                           <span className="flex items-center -space-x-1">
                             <span className="w-2.5 h-2.5 rounded-full bg-[#EB001B] inline-block" />
                             <span className="w-2.5 h-2.5 rounded-full bg-[#F79E1B]/90 inline-block" />
                           </span>
+                          <span className="text-[9px] font-bold text-gray-700">RuPay</span>
                         </div>
 
-                        {/* NetBanking */}
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-[#E2DAD0] shadow-2xs text-[9px] font-medium text-[#4A3E31]">
-                          <Landmark size={11} className="text-[#8C6D1F]" />
-                          <span>NetBanking</span>
+                        {/* NetBanking & Wallets */}
+                        <div className="flex items-center gap-1 bg-[#FAF9F7] px-2 py-1 rounded-md border border-gray-200 text-[9.5px] font-medium text-gray-700">
+                          <Landmark size={11} className="text-gray-500" />
+                          <span>NetBanking & Wallets</span>
                         </div>
-                      </div>
-
-                      {/* Security Encryption Strip */}
-                      <div className="pt-2 border-t border-[#ECE5D8] flex items-center justify-between text-[9.5px] text-[#7A6B5D]">
-                        <div className="flex items-center gap-1">
-                          <Lock size={10} className="text-[#B8860B]" />
-                          <span>256-Bit Bank Grade SSL Encryption</span>
-                        </div>
-                        <span className="text-gray-400 font-mono">Zero Fee</span>
                       </div>
                     </div>
 
-                    {/* Primary Luxury CTA Button */}
+                    {/* Standard, Clean, Professional Payment CTA Button */}
                     <button
                       type="submit"
                       form="checkout-form"
                       disabled={loading}
                       onClick={() => form.submit()}
-                      className="w-full bg-[#1A1410] hover:bg-[#281F19] active:scale-[0.99] text-[#FAF7F2] py-3.5 rounded-full font-bold uppercase tracking-[0.16em] text-xs flex items-center justify-center gap-2.5 shadow-md shadow-stone-900/10 border border-[#B8860B]/40 transition-all cursor-pointer disabled:opacity-50 group"
+                      className="w-full bg-[#111111] hover:bg-black active:scale-[0.99] text-white py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
                     >
-                      <Lock size={13} className="text-[#ECC880]" />
-                      <span>
-                        {loading
-                          ? 'Opening Razorpay Gateway...'
-                          : `Pay with Razorpay • ₹${finalTotal.toLocaleString('en-IN')}`}
-                      </span>
-                      <ArrowRight size={13} className="text-[#ECC880] group-hover:translate-x-0.5 transition-transform" />
+                      {loading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin text-white" />
+                          <span>Processing payment...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={14} className="text-gray-300" />
+                          <span>Pay ₹{finalTotal.toLocaleString('en-IN')}</span>
+                        </>
+                      )}
                     </button>
-                  </div>
 
-                  {/* Trust Badges */}
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#ECE7DE] text-[10px] text-gray-500 text-center">
-                    <div className="p-2 rounded-xl bg-[#FAF9F7] flex items-center justify-center gap-1.5">
-                      <Truck size={12} className="text-[#B8860B]" />
-                      <span>Insured Transit</span>
-                    </div>
-                    <div className="p-2 rounded-xl bg-[#FAF9F7] flex items-center justify-center gap-1.5">
-                      <ShieldCheck size={12} className="text-[#B8860B]" />
-                      <span>Atelier Guarantee</span>
+                    {/* Clean Minimal Trust Strip */}
+                    <div className="flex items-center justify-center gap-4 pt-1 text-[11px] text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <ShieldCheck size={12} className="text-emerald-600" />
+                        <span>RBI Compliant</span>
+                      </div>
+                      <span className="text-gray-300">•</span>
+                      <div className="flex items-center gap-1">
+                        <Truck size={12} className="text-emerald-600" />
+                        <span>Insured Delivery</span>
+                      </div>
+                      <span className="text-gray-300">•</span>
+                      <div className="flex items-center gap-1">
+                        <Lock size={11} className="text-gray-400" />
+                        <span>Zero Surcharge</span>
+                      </div>
                     </div>
                   </div>
                 </div>

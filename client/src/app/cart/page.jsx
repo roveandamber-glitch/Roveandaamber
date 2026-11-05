@@ -24,13 +24,16 @@ import {
   Tag,
   Loader2,
   Coins,
-  Sparkles
+  Sparkles,
+  Wallet,
+  CreditCard
 } from 'lucide-react';
 import { Modal, Form, Input, message, ConfigProvider } from 'antd';
 import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
 import { getImageUrl } from '@/utils/imageHelper';
 import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
+import ReturnPolicyModal from '@/components/product/ReturnPolicyModal';
 import { showLuxuryDeleteModal, AuthGateModal } from '@/components/common';
 import authService from '@/services/authService';
 
@@ -79,7 +82,18 @@ export default function CartPage() {
   const [giftOptions, setGiftOptions] = useState(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
+  const [showReturnPolicyModal, setShowReturnPolicyModal] = useState(false);
   const [checkoutForm] = Form.useForm();
+
+  const handleUpgradeToCombo = async (item) => {
+    try {
+      await cartService.upgradeToCombo(item.itemId || item.productId || item.id, item.size);
+      message.success('Upgraded to 50ml + 2ml combo');
+      loadCart();
+    } catch (err) {
+      message.error('Failed to upgrade item');
+    }
+  };
 
   // Initialize and load cart data safely on client
   const loadCart = useCallback(() => {
@@ -577,14 +591,31 @@ export default function CartPage() {
                           </Link>
 
                           <div className="space-y-1.5 min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-[9.5px] tracking-[0.2em] uppercase font-semibold text-[#B86526]">
                                 Fine Fragrance
                               </span>
                               <span className="w-1 h-1 rounded-full bg-[#D5C9B8]" />
-                              <span className="text-[10px] text-gray-500 font-medium">
-                                {item.size || '50ML'}
+                              <span className="text-[10px] text-gray-700 font-bold bg-[#FAF7F2] px-2 py-0.5 rounded border border-[#E8DFC9]">
+                                Size: {item.size || '50ML'}
                               </span>
+
+                              {/* Return Policy Badges */}
+                              {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) ? (
+                                <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                  <ShieldCheck size={11} className="text-emerald-600" />
+                                  <span>7-Day Return Guarantee Included</span>
+                                </span>
+                              ) : (item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) ? (
+                                <span className="text-[9.5px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+                                  Discovery Sample (Non-Returnable)
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[9.5px] font-medium text-[#8C6D1F] bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                  <AlertCircle size={10} className="text-[#8C6D1F]" />
+                                  <span>Non-Returnable (Final Sale)</span>
+                                </span>
+                              )}
                             </div>
 
                             <Link 
@@ -598,6 +629,35 @@ export default function CartPage() {
                               ₹{price.toLocaleString('en-IN')}
                               <span className="text-[11px] font-normal text-gray-400 ml-1">/ unit</span>
                             </p>
+
+                            {/* Upgrade Option for Standalone Bottle */}
+                            {!(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && !(item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) && (
+                              <div className="mt-2 p-2 rounded-xl bg-[#FAF6EE] border border-[#E0D0A5] flex items-center justify-between gap-3 max-w-md">
+                                <div className="min-w-0">
+                                  <p className="text-[10.5px] font-bold text-[#8C6D1F] m-0 flex items-center gap-1">
+                                    <Sparkles size={11} className="text-[#B8860B]" />
+                                    <span>Add 2ml Companion Sample & Return Guarantee (+₹199)</span>
+                                  </p>
+                                  <p className="text-[9.5px] text-gray-500 m-0">
+                                    Test at home first — return sealed 50ml flacon if not satisfied.
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpgradeToCombo(item)}
+                                  className="px-3 py-1 rounded-full bg-black text-white hover:bg-stone-800 text-[9.5px] uppercase font-bold tracking-wider transition-all shrink-0 cursor-pointer shadow-2xs active:scale-95"
+                                >
+                                  + Upgrade
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Note for Combo */}
+                            {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && (
+                              <p className="text-[10px] text-emerald-800 m-0 leading-tight">
+                                ★ <em>Includes 2ml companion sample. Test on skin at home; keep 50ml box sealed for 100% full refund within 7 days.</em>
+                              </p>
+                            )}
 
                             {isMaxReached && (
                               <span className="text-[10px] text-amber-700 font-medium block">
@@ -1141,6 +1201,12 @@ export default function CartPage() {
           )}
         </ConfigProvider>
       </Modal>
+
+      {/* Luxury Return Policy & Home Trial Guarantee Modal */}
+      <ReturnPolicyModal
+        open={showReturnPolicyModal}
+        onClose={() => setShowReturnPolicyModal(false)}
+      />
 
       <Footer />
     </div>

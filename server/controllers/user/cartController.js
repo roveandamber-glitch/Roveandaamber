@@ -26,7 +26,7 @@ export const getCart = async (req, res) => {
 // 2. Add Product to Shopping Cart
 export const addItemToCart = async (req, res) => {
   try {
-    const { productId, id, name, size, quantity } = req.body;
+    const { productId, id, name, size, quantity, hasSample } = req.body;
     const targetId = productId || id;
 
     if (!targetId && !name) {
@@ -40,7 +40,8 @@ export const addItemToCart = async (req, res) => {
       productId: targetId,
       name,
       size: size || '50ml',
-      quantity: parseInt(quantity, 10) || 1
+      quantity: parseInt(quantity, 10) || 1,
+      hasSample: hasSample === true || Boolean(size && String(size).includes('+'))
     });
 
     return res.status(201).json({
@@ -51,6 +52,29 @@ export const addItemToCart = async (req, res) => {
   } catch (error) {
     console.error('Add to cart error:', error);
     return res.status(400).json({ success: false, message: error.message || 'Failed to add product to cart.' });
+  }
+};
+
+// Upgrade item to 50ml + 2ml combo with 7-Day Return Guarantee
+export const upgradeCartItem = async (req, res) => {
+  try {
+    const { itemId, productId } = req.body;
+    const targetItemId = itemId || req.params.itemId;
+    const { userId, guestId } = getIdentity(req);
+    const updatedCart = await CartModel.upgradeToCombo({
+      userId,
+      guestId,
+      itemId: targetItemId,
+      productId
+    });
+    return res.json({
+      success: true,
+      message: 'Item upgraded to 50ml + 2ml combo with 7-Day Return Guarantee.',
+      data: updatedCart
+    });
+  } catch (error) {
+    console.error('Upgrade cart item error:', error);
+    return res.status(400).json({ success: false, message: error.message || 'Failed to upgrade item.' });
   }
 };
 

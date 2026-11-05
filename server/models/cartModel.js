@@ -19,6 +19,10 @@ const cartItemSchema = new mongoose.Schema(
       required: true,
       default: 1,
       min: [1, 'Quantity must be at least 1']
+    },
+    hasSample: {
+      type: Boolean,
+      default: false
     }
   },
   { _id: true }
@@ -135,7 +139,22 @@ const calculateCartSummary = async (cartDoc) => {
       availableStock = formatted.sizes_stock[item.size];
     }
 
-    const price = formatted.price;
+    const samplePrice = formatted.samplePrice !== undefined && formatted.samplePrice !== null 
+      ? Number(formatted.samplePrice) 
+      : 199;
+    const basePrice = Number(formatted.price) || 0;
+
+    const sizeStr = (item.size || '').toLowerCase();
+    const isSampleOnly = sizeStr === '2ml' || sizeStr === '2ml sample' || sizeStr === 'sample';
+    const isCombo = sizeStr.includes('+') || sizeStr.includes('combo') || item.hasSample === true;
+
+    let price = basePrice;
+    if (isSampleOnly) {
+      price = samplePrice;
+    } else if (isCombo) {
+      price = basePrice + samplePrice;
+    }
+
     const qty = Math.min(item.quantity, Math.max(availableStock, 1));
     const itemTotal = price * qty;
     subtotal += itemTotal;
@@ -147,9 +166,12 @@ const calculateCartSummary = async (cartDoc) => {
       name: formatted.name,
       slug: formatted.slug,
       price: price,
-      originalPrice: formatted.originalPrice,
+      originalPrice: isCombo ? (formatted.originalPrice ? formatted.originalPrice + samplePrice : price) : (isSampleOnly ? samplePrice : formatted.originalPrice),
       image: formatted.image,
       size: item.size || '50ml',
+      hasSample: Boolean(isCombo || item.hasSample),
+      isSampleOnly: Boolean(isSampleOnly),
+      isCombo: Boolean(isCombo),
       quantity: qty,
       maxStock: availableStock,
       inStock: availableStock > 0,
@@ -258,7 +280,7 @@ export const CartModel = {
     return calculateCartSummary(cart);
   },
 
-  addItem: async ({ userId, guestId, productId, name, size = '50ml', quantity = 1 }) => {
+  addItem: async ({ userId, guestId, productId, name, size = '50ml', quantity = 1, hasSample = false }) => {
     let product = await ProductModel.findById(productId, name);
     if (!product && name) {
       product = await ProductModel.findById(null, name);
@@ -269,6 +291,7 @@ export const CartModel = {
 
     const cart = await findOrCreateCart({ userId, guestId });
     const targetSize = size || '50ml';
+    const isCombo = targetSize.toLowerCase().includes('+') || hasSample === true;
     const addQty = Math.max(1, parseInt(quantity, 10) || 1);
 
     // Verify stock
@@ -282,14 +305,40 @@ export const CartModel = {
 
     if (existingIndex > -1) {
       cart.items[existingIndex].quantity += addQty;
+      if (isCombo) {
+        cart.items[existingIndex].hasSample = true;
+      }
     } else {
       cart.items.push({
         productId: product._id || product.id,
         size: targetSize,
-        quantity: addQty
+        quantity: addQty,
+        hasSample: isCombo
       });
     }
 
+    await cart.save();
+    const populated = await Cart.findById(cart._id).populate({
+      path: 'items.productId',
+      populate: { path: 'category_id' }
+    });
+    return calculateCartSummary(populated);
+  },
+
+  upgradeToCombo: async ({ userId, guestId, itemId, productId }) => {
+    const cart = await findOrCreateCart({ userId, guestId });
+    const item = cart.items.find(i => 
+      (itemId && String(i._id) === String(itemId)) || 
+      (productId && String(i.productId?._id || i.productId) === String(productId))
+    );
+    if (!item) {
+      throw new Error('Item not found in cart.');
+    }
+    const currentSize = item.size || '50ml';
+    if (!currentSize.toLowerCase().includes('+')) {
+      item.size = `${currentSize.replace(/ sample/gi, '').trim()} + 2ML COMBO`;
+      item.hasSample = true;
+    }
     await cart.save();
     const populated = await Cart.findById(cart._id).populate({
       path: 'items.productId',

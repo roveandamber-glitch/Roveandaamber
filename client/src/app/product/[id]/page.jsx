@@ -15,12 +15,15 @@ import {
   ChevronRight, 
   Check, 
   ArrowLeft,
-  PackageOpen
+  PackageOpen,
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/product/ProductCard';
 import ProductReviews from '@/components/product/ProductReviews';
+import ReturnPolicyModal from '@/components/product/ReturnPolicyModal';
 import productService from '@/services/productService';
 import cartService from '@/services/cartService';
 import authService from '@/services/authService';
@@ -43,9 +46,10 @@ const ProductDetails = () => {
 
   // Variant & Purchase State
   const [selectedSize, setSelectedSize] = useState(null);
+  const [comboSelection, setComboSelection] = useState('combo'); // 'combo' (50ml + 2ml) | 'bottle' (50ml) | 'sample' (2ml)
+  const [showReturnPolicyModal, setShowReturnPolicyModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [includeSampleBottle, setIncludeSampleBottle] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
 
@@ -269,43 +273,59 @@ const ProductDetails = () => {
     return [];
   }, [product, availableSizesMap]);
 
-  // Max available stock for currently selected size
-  const maxStockForSize = useMemo(() => {
+  const baseBottleSize = useMemo(() => {
+    if (!product) return '50ML';
+    const found = supportedSizes.find(s => !s.toLowerCase().includes('sample') && !s.toLowerCase().includes('2ml'));
+    return (found || '50ML').toUpperCase();
+  }, [product, supportedSizes]);
+
+  // Stock for the base bottle
+  const bottleStock = useMemo(() => {
     if (!product) return 0;
-    if (selectedSize && availableSizesMap[selectedSize] !== undefined) {
-      return Number(availableSizesMap[selectedSize]) || 0;
-    }
-    if (product.stock !== undefined) {
-      return Number(product.stock) || 0;
-    }
-    if (product.countInStock !== undefined) {
-      return Number(product.countInStock) || 0;
-    }
+    if (availableSizesMap[baseBottleSize] !== undefined) return Number(availableSizesMap[baseBottleSize]);
+    if (availableSizesMap['50ML'] !== undefined) return Number(availableSizesMap['50ML']);
+    if (product.stock !== undefined) return Number(product.stock);
     return 99;
-  }, [product, selectedSize, availableSizesMap]);
+  }, [product, baseBottleSize, availableSizesMap]);
+
+  // Stock for 2ml sample
+  const sampleStock = useMemo(() => {
+    if (!product) return 0;
+    if (availableSizesMap['2ML'] !== undefined) return Number(availableSizesMap['2ML']);
+    if (availableSizesMap['2ML SAMPLE'] !== undefined) return Number(availableSizesMap['2ML SAMPLE']);
+    return 99;
+  }, [product, availableSizesMap]);
+
+  const maxStockForSize = useMemo(() => {
+    if (comboSelection === 'sample') return sampleStock;
+    return bottleStock;
+  }, [comboSelection, sampleStock, bottleStock]);
 
   const isOutOfStock = maxStockForSize === 0 || product?.inStock === false || product?.status === 'Out of Stock';
 
   // Pricing calculations
-  const isSelectedSizeSample = Boolean(selectedSize && (selectedSize.toLowerCase().includes('2ml') || selectedSize.toLowerCase().includes('sample')));
   const samplePrice = product?.samplePrice !== undefined && product?.samplePrice !== null ? Number(product.samplePrice) : 199;
-  const price = isSelectedSizeSample ? samplePrice : (Number(product?.price) || 0);
-  const originalPrice = product?.originalPrice && Number(product.originalPrice) > price ? Number(product.originalPrice) : null;
-  const discountPercent = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : null;
-  const totalPrice = price * quantity;
+  const basePrice = Number(product?.price) || 0;
 
-  // Size switch handler
-  const handleSizeSelect = (sz) => {
-    const stockForSz = availableSizesMap[sz] !== undefined ? availableSizesMap[sz] : 99;
-    if (stockForSz <= 0) {
-      message.warning(`Size ${sz} is currently out of stock`);
-      return;
-    }
-    setSelectedSize(sz);
-    if (quantity > stockForSz) {
-      setQuantity(Math.max(1, stockForSz));
-    }
-  };
+  const currentUnitPrice = useMemo(() => {
+    if (comboSelection === 'sample') return samplePrice;
+    if (comboSelection === 'combo') return basePrice + samplePrice;
+    return basePrice;
+  }, [comboSelection, basePrice, samplePrice]);
+
+  const originalUnitPrice = useMemo(() => {
+    if (!product?.originalPrice) return null;
+    const orig = Number(product.originalPrice);
+    if (comboSelection === 'sample') return null;
+    if (comboSelection === 'combo') return orig + samplePrice;
+    return orig > basePrice ? orig : null;
+  }, [comboSelection, product, basePrice, samplePrice]);
+
+  const discountPercent = originalUnitPrice && originalUnitPrice > currentUnitPrice
+    ? Math.round(((originalUnitPrice - currentUnitPrice) / originalUnitPrice) * 100)
+    : null;
+
+  const totalPrice = currentUnitPrice * quantity;
 
   // Add to cart handler
   const handleAddToCart = async (redirectToCart = false) => {
@@ -319,36 +339,40 @@ const ProductDetails = () => {
 
     setIsAddingToCart(true);
     try {
-      const isSizeSample = Boolean(selectedSize && (selectedSize.toLowerCase().includes('2ml') || selectedSize.toLowerCase().includes('sample')));
-      const hasGuaranteeSample = includeSampleBottle || isSizeSample;
+      let targetSize = baseBottleSize;
+      let hasGuaranteeSample = false;
+      let itemPrice = basePrice;
+      let itemName = product.name;
 
-      cartService.addToCart({
+      if (comboSelection === 'combo') {
+        targetSize = `${baseBottleSize} + 2ML COMBO`;
+        hasGuaranteeSample = true;
+        itemPrice = basePrice + samplePrice;
+      } else if (comboSelection === 'sample') {
+        targetSize = '2ML SAMPLE';
+        hasGuaranteeSample = false;
+        itemPrice = samplePrice;
+        itemName = `${product.name} (2ml Discovery Sample)`;
+      } else {
+        targetSize = baseBottleSize;
+        hasGuaranteeSample = false;
+        itemPrice = basePrice;
+      }
+
+      await cartService.addToCart({
         id: product._id || product.id,
         productId: product._id || product.id,
-        name: product.name,
-        price: price,
+        name: itemName,
+        price: itemPrice,
         image: currentMainImage,
-        size: selectedSize || '50ml',
+        size: targetSize,
         quantity: quantity,
         maxStock: maxStockForSize,
         hasSample: hasGuaranteeSample
       });
 
-      if (includeSampleBottle && !isSizeSample) {
-        cartService.addToCart({
-          id: `${product._id || product.id}_sample_2ml`,
-          productId: product._id || product.id,
-          name: `${product.name} (2 ml Companion Sample Bottle)`,
-          price: samplePrice,
-          image: currentMainImage,
-          size: '2ML',
-          quantity: 1,
-          hasSample: true
-        });
-      }
-
       setIsInCart(true);
-      message.success(`Added ${product.name}${selectedSize ? ` (${selectedSize})` : ''}${hasGuaranteeSample ? ' with 2 ml sample guarantee' : ''} to cart`);
+      message.success(`${product.name} added to your shopping bag`);
 
       if (redirectToCart) {
         router.push('/cart');
@@ -549,12 +573,12 @@ const ProductDetails = () => {
             <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2.5 border-b border-gray-100">
               <div className="flex items-baseline gap-2.5">
                 <span className="text-xl sm:text-2xl font-bold font-sans text-black">
-                  ₹{price.toLocaleString('en-IN')}
+                  ₹{currentUnitPrice.toLocaleString('en-IN')}
                 </span>
-                {originalPrice && (
+                {originalUnitPrice && (
                   <>
                     <span className="text-xs sm:text-sm font-sans text-gray-400 line-through">
-                      ₹{originalPrice.toLocaleString('en-IN')}
+                      ₹{originalUnitPrice.toLocaleString('en-IN')}
                     </span>
                     <span className="text-[10px] font-bold text-[#B8860B] bg-[#FFF8EB] border border-[#E8DCC0] px-2 py-0.2 rounded-full">
                       Save {discountPercent}%
@@ -584,50 +608,190 @@ const ProductDetails = () => {
               {product.description || 'An artisanal fine fragrance slow-macerated with rare golden amber, precious oud accords, and noble botanicals, crafted for lasting presence and distinguished sillage.'}
             </p>
 
-            {/* Variant Size Selector */}
-            {supportedSizes.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-700">
-                    Select Flacon Size
-                  </label>
-                  {selectedSize && availableSizesMap[selectedSize] !== undefined && (
-                    <span className="text-[9px] text-gray-400">
-                      {availableSizesMap[selectedSize] > 0 ? `${availableSizesMap[selectedSize]} flacons left` : 'Sold out'}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {supportedSizes.map(size => {
-                    const stockForSize = availableSizesMap[size] !== undefined ? availableSizesMap[size] : 99;
-                    const isSoldOut = stockForSize <= 0;
-                    const isSelected = selectedSize === size;
-                    return (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => handleSizeSelect(size)}
-                        disabled={isSoldOut}
-                        className={`h-9 min-w-[58px] px-3 rounded-xl text-xs font-bold uppercase transition-all duration-200 border flex flex-col items-center justify-center cursor-pointer ${
-                          isSelected
-                            ? 'bg-black text-white border-black shadow-xs scale-[1.02]'
-                            : isSoldOut
-                            ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed line-through'
-                            : 'bg-[#FAF9F7] text-gray-800 border-[#E8E2D6] hover:border-black'
-                        }`}
-                      >
-                        <span className="leading-tight">{size}</span>
-                        {availableSizesMap[size] !== undefined && (
-                          <span className={`text-[7px] font-normal leading-none mt-0.5 ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
-                            {isSoldOut ? '0 left' : `${stockForSize} qty`}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Variant Size & Combo Selection: 50ML, 2ML, 50ML + 2ML COMBO */}
+            <div className="space-y-2.5">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-700">
+                  Select Flacon & Trial Pack
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowReturnPolicyModal(true)}
+                  className="text-[10px] text-[#B8860B] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <ShieldCheck size={12} />
+                  <span>Return Policy</span>
+                </button>
               </div>
-            )}
+
+              {/* 3 Main Combo Choices */}
+              <div className="grid grid-cols-3 gap-2">
+                
+                {/* 1. COMBO: 50ml + 2ml (Recommended) */}
+                <button
+                  type="button"
+                  onClick={() => setComboSelection('combo')}
+                  className={`relative p-2.5 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    comboSelection === 'combo'
+                      ? 'bg-[#FBF8F2] border-[#B8860B] shadow-xs ring-1 ring-[#B8860B]/40'
+                      : 'bg-[#FAF9F7] border-[#ECE7DE] hover:border-black'
+                  }`}
+                >
+                  <span className="absolute -top-2 left-2 bg-[#1B120C] text-[#ECC880] text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded-full border border-[#D4AF37]/50 shadow-2xs">
+                    ★ Recommended
+                  </span>
+                  <div>
+                    <span className="text-xs font-serif font-bold text-black block leading-tight">
+                      {baseBottleSize} + 2ML
+                    </span>
+                    <span className="text-[9px] text-gray-500 block leading-tight mt-0.5">
+                      Flacon + Sample
+                    </span>
+                  </div>
+                  <div className="mt-2 pt-1 border-t border-amber-200/60 flex items-baseline justify-between">
+                    <span className="text-xs font-bold text-[#B8860B] font-sans">
+                      ₹{(basePrice + samplePrice).toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[8px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
+                      7-Day Return
+                    </span>
+                  </div>
+                </button>
+
+                {/* 2. Standalone 50ml (Bottle Only) */}
+                <button
+                  type="button"
+                  onClick={() => setComboSelection('bottle')}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    comboSelection === 'bottle'
+                      ? 'bg-white border-2 border-black shadow-xs ring-1 ring-black/20'
+                      : 'bg-[#FAF9F7] border-[#ECE7DE] hover:border-black'
+                  }`}
+                >
+                  <div>
+                    <span className="text-xs font-serif font-bold text-black block leading-tight">
+                      {baseBottleSize}
+                    </span>
+                    <span className="text-[9px] text-gray-500 block leading-tight mt-0.5">
+                      Flacon Only
+                    </span>
+                  </div>
+                  <div className="mt-2 pt-1 border-t border-gray-100 flex items-baseline justify-between">
+                    <span className="text-xs font-bold text-black font-sans">
+                      ₹{basePrice.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[8px] font-medium text-stone-500 bg-stone-100 px-1 rounded">
+                      No Return
+                    </span>
+                  </div>
+                </button>
+
+                {/* 3. 2ml Sample (Sample Only) */}
+                <button
+                  type="button"
+                  onClick={() => setComboSelection('sample')}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    comboSelection === 'sample'
+                      ? 'bg-white border-2 border-black shadow-xs ring-1 ring-black/20'
+                      : 'bg-[#FAF9F7] border-[#ECE7DE] hover:border-black'
+                  }`}
+                >
+                  <div>
+                    <span className="text-xs font-serif font-bold text-black block leading-tight">
+                      2ML
+                    </span>
+                    <span className="text-[9px] text-gray-500 block leading-tight mt-0.5">
+                      Discovery Vial
+                    </span>
+                  </div>
+                  <div className="mt-2 pt-1 border-t border-gray-100 flex items-baseline justify-between">
+                    <span className="text-xs font-bold text-black font-sans">
+                      ₹{samplePrice.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[8px] font-medium text-stone-500 bg-stone-100 px-1 rounded">
+                      No Return
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* DYNAMIC RETURN POLICY NOTIFICATION BANNER */}
+              <div className="pt-0.5">
+                {comboSelection === 'combo' && (
+                  <div className="p-2.5 sm:p-3 rounded-xl bg-[#F0F8F3] border border-[#BDE5CC] transition-all">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                        <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
+                        <span>7-Day Return Guarantee Included</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowReturnPolicyModal(true)}
+                        className="text-[10px] text-emerald-900 underline font-semibold hover:text-black cursor-pointer shrink-0"
+                      >
+                        Policy Details
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-emerald-900 leading-snug font-light m-0 mt-1">
+                      Spray and test the companion <strong>2ml sample</strong> at home first. If it does not suit your skin, return the <strong>sealed 50ml flacon within 7 days for a 100% full refund</strong> (keep the 2ml sample as our gift).
+                    </p>
+                  </div>
+                )}
+
+                {comboSelection === 'bottle' && (
+                  <div className="p-2.5 sm:p-3 rounded-xl bg-[#FAF5EB] border border-[#E8DCC0] transition-all space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-[#8C6D1F] flex items-center gap-1.5">
+                        <AlertCircle size={14} className="text-[#8C6D1F] shrink-0" />
+                        <span>Non-Returnable (Final Sale)</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowReturnPolicyModal(true)}
+                        className="text-[10px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
+                      >
+                        View Return Policy
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-stone-600 leading-snug font-light m-0">
+                      Due to cosmetics hygiene & fragrance safety regulations, standalone 50ml flacons cannot be returned once delivered.
+                    </p>
+                    <div className="pt-1 flex items-center justify-between text-[11px]">
+                      <span className="text-stone-500 font-light">Want to test risk-free at home?</span>
+                      <button
+                        type="button"
+                        onClick={() => setComboSelection('combo')}
+                        className="text-[#B8860B] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                      >
+                        <span>Upgrade to 50ml + 2ml (+₹{samplePrice})</span>
+                        <ArrowRight size={11} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {comboSelection === 'sample' && (
+                  <div className="p-2.5 sm:p-3 rounded-xl bg-[#FAF5EB] border border-[#E8DCC0] transition-all">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-[#8C6D1F] flex items-center gap-1.5">
+                        <AlertCircle size={14} className="text-[#8C6D1F] shrink-0" />
+                        <span>Discovery Sample (Non-Returnable)</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowReturnPolicyModal(true)}
+                        className="text-[10px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
+                      >
+                        View Return Policy
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-stone-600 leading-snug font-light m-0 mt-1">
+                      2ml sample vials are personal discovery formats created for trial wear and are strictly non-returnable.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Quantity Selector & Total Amount */}
             <div className="flex items-center justify-between pt-0.5">
@@ -665,57 +829,6 @@ const ProductDetails = () => {
                 </span>
               </div>
             </div>
-
-            {/* 2 ml Sample Companion Add-on: Compact, Luxury, User-Friendly with Small 2ml Thumbnail */}
-            {!isSelectedSizeSample && (
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                includeSampleBottle 
-                  ? 'bg-[#FAF7F2] border-[#B3874B] ring-1 ring-[#B3874B]/30' 
-                  : 'bg-white border-[#EAE3D6] hover:border-[#D8C7A5]'
-              }`}>
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={includeSampleBottle}
-                    onChange={(e) => setIncludeSampleBottle(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#B3874B] focus:ring-[#B3874B] border-stone-300 cursor-pointer accent-[#B3874B] shrink-0"
-                  />
-                  
-                  {/* Small 2ml Sample Image Thumbnail */}
-                  <div className="relative w-10 h-10 rounded-lg bg-gradient-to-b from-[#FAF7F2] to-[#F2EADB] border border-[#DFCBB0] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                    <img
-                      src={getImageUrl(currentMainImage)}
-                      alt="2ml Sample Vial"
-                      className="w-full h-full object-contain p-0.5"
-                      onError={(e) => { e.currentTarget.src = '/images/perfumes/signature_collection.jpg'; }}
-                    />
-                    <span className="absolute bottom-0 right-0 bg-[#1B100A] text-[#FAF7F2] text-[7px] font-mono font-bold px-1 rounded-tl">
-                      2ml
-                    </span>
-                  </div>
-
-                  {/* Professional & Concise Copy */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                      <span className="text-xs font-serif font-bold text-[#1B100A] flex items-center gap-1.5">
-                        <span>Add Companion 2ml Sample</span>
-                        <span className="text-[11px] font-mono font-bold text-[#B3874B]">
-                          +₹{samplePrice.toLocaleString('en-IN')}
-                        </span>
-                      </span>
-                      <span className="text-[9px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded-full shrink-0">
-                        ★ 7-Day Return Guarantee
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-stone-500 m-0 leading-tight mt-0.5">
-                      {includeSampleBottle 
-                        ? 'Test scent at home first • Keep main bottle sealed for 100% full refund'
-                        : 'Enables 7-day return guarantee & dispatch cancellation'}
-                    </p>
-                  </div>
-                </label>
-              </div>
-            )}
 
             {/* Action Buttons: Add to Cart and Buy Now */}
             <div className="pt-1 flex flex-col sm:flex-row gap-2.5">
@@ -921,6 +1034,12 @@ const ProductDetails = () => {
           </section>
         )}
       </main>
+
+      {/* Luxury Return Policy & Home Trial Guarantee Modal */}
+      <ReturnPolicyModal
+        open={showReturnPolicyModal}
+        onClose={() => setShowReturnPolicyModal(false)}
+      />
 
       <Footer />
     </div>

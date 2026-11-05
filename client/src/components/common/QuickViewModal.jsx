@@ -114,7 +114,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
       quantity: quantity,
       maxStock: currentSizeStock
     });
-    message.success(`Added ${product.name} (${selectedSize}) to bag`);
+    message.success(`${product.name} added to your shopping bag`);
     onClose();
     router.push('/cart');
   };

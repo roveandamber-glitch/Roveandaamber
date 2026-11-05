@@ -340,7 +340,21 @@ export const OrderModel = {
         fallbackRef = await Product.findOne();
       }
 
-      const finalPrice = product ? product.price : (Number(item.price) || 2999);
+      const samplePrice = product?.samplePrice !== undefined && product?.samplePrice !== null 
+        ? Number(product.samplePrice) 
+        : 199;
+      const basePrice = product ? Number(product.price) : (Number(item.price) || 2499);
+      const sizeLower = String(size).toLowerCase();
+      const isSampleOnly = sizeLower === '2ml' || sizeLower === '2ml sample' || sizeLower === 'sample';
+      const isCombo = sizeLower.includes('+') || sizeLower.includes('combo') || item.hasSample === true;
+
+      let finalPrice = basePrice;
+      if (isSampleOnly) {
+        finalPrice = samplePrice;
+      } else if (isCombo) {
+        finalPrice = basePrice + samplePrice;
+      }
+
       const finalName = product ? product.name : (item.name || 'Atelier Fine Fragrance');
       const finalImage = product ? product.image : (item.image || '/images/perfumes/amber_oud_perfume.jpg');
       const finalId = product ? (product._id || product.id) : (fallbackRef ? fallbackRef._id : new mongoose.Types.ObjectId());
