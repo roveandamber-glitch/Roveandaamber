@@ -13,6 +13,22 @@ const productService = {
     } catch (err) {
       return { success: false, data: [] };
     }
+  },
+  getProductReviews: async (productId, params = {}) => {
+    try {
+      const res = await api.get(`/reviews/product/${productId}`, { params });
+      return res.data;
+    } catch (err) {
+      return { success: false, data: [], stats: null, message: err?.response?.data?.message || err.message };
+    }
+  },
+  submitReview: async (reviewData) => {
+    const res = await api.post('/reviews', reviewData);
+    return res.data;
+  },
+  deleteReview: async (reviewId) => {
+    const res = await api.delete(`/reviews/${reviewId}`);
+    return res.data;
   }
 };
 

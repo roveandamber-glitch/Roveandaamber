@@ -6,3 +6,4 @@ export * from './cartController.js';
 export * from './orderController.js';
 export * from './paymentController.js';
 export * from './wishlistController.js';
+export * from './reviewController.js';

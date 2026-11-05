@@ -13,7 +13,6 @@ import {
   Heart, 
   Star, 
   ChevronRight, 
-  Sparkles, 
   Check, 
   ArrowLeft,
   PackageOpen
@@ -21,6 +20,7 @@ import {
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/product/ProductCard';
+import ProductReviews from '@/components/product/ProductReviews';
 import productService from '@/services/productService';
 import cartService from '@/services/cartService';
 import authService from '@/services/authService';
@@ -514,24 +514,34 @@ const ProductDetails = () => {
                 <h1 className="text-xl sm:text-2xl font-serif text-black font-normal leading-tight m-0">
                   {product.name}
                 </h1>
-                {/* Rating and Reviews */}
-                {product.rating !== undefined && product.rating > 0 && (
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <div className="flex items-center text-amber-500">
-                      {[1, 2, 3, 4, 5].map(star => (
-                        <Star 
-                          key={star} 
-                          size={12} 
-                          className={star <= Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'} 
-                        />
-                      ))}
-                    </div>
-                    <span className="font-bold text-gray-800 text-[11px]">{product.rating}</span>
-                    {product.reviewsCount !== undefined && (
-                      <span className="text-gray-400 text-[11px]">({product.reviewsCount})</span>
-                    )}
+                {/* Rating and Reviews clickable shortcut */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('reviews');
+                    setTimeout(() => {
+                      const el = document.getElementById('reviews');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs bg-transparent border-0 p-0 cursor-pointer hover:opacity-85 transition-opacity group"
+                  title="View reviews or write a review"
+                >
+                  <div className="flex items-center text-[#B8860B]">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star 
+                        key={star} 
+                        size={12} 
+                        className={star <= Math.round(product.rating || 5) ? 'fill-[#B8860B] text-[#B8860B]' : 'text-gray-300'} 
+                      />
+                    ))}
                   </div>
-                )}
+                  <span className="font-bold text-gray-800 text-[11px]">{product.rating || 5.0}</span>
+                  <span className="text-gray-400 text-[11px]">({product.reviewsCount || 0})</span>
+                  <span className="text-[10px] text-[#B8860B] underline font-medium ml-0.5 group-hover:text-black transition-colors">
+                    {product.reviewsCount > 0 ? 'See reviews' : 'Write review'}
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -866,54 +876,19 @@ const ProductDetails = () => {
 
             {/* 4. Customer Reviews */}
             {activeTab === 'reviews' && (
-              <div className="space-y-6 max-w-2xl">
-                {product.rating !== undefined && product.rating > 0 ? (
-                  <div>
-                    <div className="flex items-center gap-3 p-4 bg-[#FAF9F7] rounded-xl border border-[#ECE7DE] mb-6">
-                      <div className="text-center pr-4 border-r border-gray-200">
-                        <span className="text-3xl font-serif font-bold text-black">{product.rating}</span>
-                        <span className="text-[10px] text-gray-400 block">out of 5.0</span>
-                      </div>
-                      <div>
-                        <div className="flex items-center text-amber-500 mb-0.5">
-                          {[1, 2, 3, 4, 5].map(s => (
-                            <Star key={s} size={14} className="fill-amber-400 text-amber-400" />
-                          ))}
-                        </div>
-                        <p className="text-xs text-gray-600">
-                          Based on {product.reviewsCount || 1} verified user reviews
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-xl bg-white border border-[#ECE7DE] space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-black">Verified Fragrance Collector</span>
-                          <span className="text-[10px] text-gray-400">Verified Purchase</span>
-                        </div>
-                        <div className="flex text-amber-400">
-                          {[1, 2, 3, 4, 5].map(s => (
-                            <Star key={s} size={11} className="fill-amber-400" />
-                          ))}
-                        </div>
-                        <p className="text-xs text-gray-600 font-light leading-relaxed">
-                          "Exceptional longevity and sillage. The amber dry-down is warm, sophisticated, and lingers gracefully throughout the day."
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-8 text-center text-gray-500">
-                    <p className="text-xs font-serif text-black mb-1">
-                      No reviews yet for this signature creation
-                    </p>
-                    <p className="text-[11px] text-gray-400">
-                      Be among the first to experience and review this flacon upon delivery.
-                    </p>
-                  </div>
-                )}
-              </div>
+              <ProductReviews
+                productId={product._id || product.id || id}
+                productName={product.name}
+                initialRating={product.rating}
+                initialReviewsCount={product.reviewsCount}
+                onRatingUpdate={(newRating, newCount) => {
+                  setProduct(prev => prev ? {
+                    ...prev,
+                    rating: newRating,
+                    reviewsCount: newCount
+                  } : prev);
+                }}
+              />
             )}
           </div>
         </section>

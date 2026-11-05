@@ -1,53 +1,33 @@
 import express from 'express';
-import { Review } from '../../models/reviewModel.js';
+import {
+  getPublicReviews,
+  getProductReviews,
+  createProductReview,
+  deleteUserReview
+} from '../../controllers/user/reviewController.js';
+import { optionalAuth, protect } from '../../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 /**
- * Public: Get approved reviews with product details for customer testimonials
+ * Public: Get approved reviews (testimonial list or product reviews if query ?productId=...)
  */
-router.get('/', async (req, res) => {
-  try {
-    const reviews = await Review.find({ status: 'approved', isVisible: true })
-      .populate('productId', 'name slug image price rating')
-      .sort({ rating: -1, createdAt: -1 })
-      .limit(12);
+router.get('/', getPublicReviews);
 
-    const formatted = reviews.map(r => {
-      const prod = r.productId;
-      return {
-        id: r._id.toString(),
-        _id: r._id.toString(),
-        author: r.customerName || 'Fragrance Enthusiast',
-        rating: r.rating || 5,
-        title: r.title || '',
-        quote: r.comment || '',
-        isVerified: r.isVerifiedPurchase ?? true,
-        date: r.createdAt,
-        product: prod ? {
-          id: prod._id ? prod._id.toString() : prod.toString(),
-          _id: prod._id ? prod._id.toString() : prod.toString(),
-          name: prod.name || 'Artisan Perfume',
-          slug: prod.slug || '',
-          image: prod.image || '',
-          price: prod.price || 0
-        } : null
-      };
-    });
+/**
+ * Public: Get reviews specifically for a product
+ */
+router.get('/product/:productId', getProductReviews);
 
-    return res.json({
-      success: true,
-      count: formatted.length,
-      data: formatted
-    });
-  } catch (error) {
-    console.error('Failed to get public reviews:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve reviews'
-    });
-  }
-});
+/**
+ * Customer / Guest: Submit a review for a product
+ */
+router.post('/product/:productId', optionalAuth, createProductReview);
+router.post('/', optionalAuth, createProductReview);
+
+/**
+ * Authenticated Customer: Delete their own review
+ */
+router.delete('/:id', protect, deleteUserReview);
 
 export default router;
-
