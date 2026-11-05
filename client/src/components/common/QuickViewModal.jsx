@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, ShoppingBag, ArrowRight, ShieldCheck, Truck, Droplets } from 'lucide-react';
+import { X, ShoppingBag, ArrowRight, ShieldCheck, Truck, Droplets, Sparkles } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageHelper';
 import orderService from '../../services/orderService';
 import cartService from '../../services/cartService';
@@ -15,6 +15,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
   const [quantity, setQuantity] = useState(1);
   const [isInCart, setIsInCart] = useState(false);
   const [ordering, setOrdering] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // Check if item is in cart
   useEffect(() => {
@@ -48,8 +49,10 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
   if (!isOpen || !product) return null;
 
   const images = product.images && product.images.length > 0 
-    ? product.images.map(img => getImageUrl(img.url || img))
-    : [getImageUrl(product.image || '/images/perfumes/amber_oud_perfume.jpg')];
+    ? product.images.map(img => getImageUrl(img.url || img)).filter(u => Boolean(u) && !u.includes('no-image'))
+    : (product.image ? [getImageUrl(product.image)] : []);
+
+  const currentImg = images[selectedImage] || images[0] || null;
 
   const availableSizesMap = product.sizes_stock || {};
   const currentSizeStock = availableSizesMap[selectedSize] ?? product.stock ?? 10;
@@ -138,15 +141,27 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
           {/* Media Column */}
           <div className="flex flex-col space-y-4">
             {/* Big Preview */}
-            <div className="relative bg-[#EFE8DC] rounded-2xl aspect-[3/4] p-5 flex items-center justify-center overflow-hidden shadow-inner border border-[#E8E2D6]/60">
-              <img 
-                src={images[selectedImage]} 
-                alt={product.name} 
-                className="w-full h-full object-cover object-center rounded-xl transition-all duration-300"
-                onError={(e) => {
-                  e.target.src = '/images/perfumes/amber_oud_perfume.jpg';
-                }}
-              />
+            <div className="relative bg-[#FAF8F5] rounded-2xl aspect-[3/4] p-5 flex items-center justify-center overflow-hidden shadow-inner border border-[#ECE7DE]">
+              {!imageError && currentImg ? (
+                <img 
+                  src={currentImg} 
+                  alt={product.name} 
+                  className="w-full h-full object-contain object-center rounded-xl transition-all duration-300"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center select-none">
+                  <div className="w-14 h-14 rounded-2xl bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center mb-3">
+                    <Sparkles size={22} className="text-[#B8860B]" />
+                  </div>
+                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#8C6D1F]">
+                    ROVE & AMBER
+                  </span>
+                  <span className="font-serif text-sm text-black font-normal mt-1 line-clamp-1">
+                    {product.name}
+                  </span>
+                </div>
+              )}
               <div className="absolute bottom-3 left-3 bg-[#3B1D11]/90 backdrop-blur-md text-[#D4AF37] text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full border border-[#D4AF37]/30">
                 {product.category || 'Eau de Parfum'}
               </div>

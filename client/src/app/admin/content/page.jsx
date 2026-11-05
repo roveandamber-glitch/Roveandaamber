@@ -58,10 +58,10 @@ export default function AdminContentPage() {
     badge: 'FINE FRAGRANCE & ARTISANAL PERFUMERY',
     title: 'Discover Your Signature Scent',
     description: 'Explore fine fragrances crafted to leave a lasting impression. Sculpted with aged amber, wild oud, and rare botanical essences.',
-    primaryButtonText: 'Shop Now',
-    primaryButtonLink: '/collections',
-    secondaryButtonText: 'Explore Collection',
-    secondaryButtonLink: '/shop?category=Oud'
+    primaryButtonText: 'Explore Collections',
+    primaryButtonLink: '/shop',
+    secondaryButtonText: 'About Us',
+    secondaryButtonLink: '/about'
   });
 
   // Fetch current hero configuration from backend on mount
@@ -86,10 +86,10 @@ export default function AdminContentPage() {
           badge: heroBanner.badge || 'FINE FRAGRANCE & ARTISANAL PERFUMERY',
           title: heroBanner.title || 'Discover Your Signature Scent',
           description: heroBanner.subtitle || 'Explore fine fragrances crafted to leave a lasting impression. Sculpted with aged amber, wild oud, and rare botanical essences.',
-          primaryButtonText: heroBanner.buttonText || 'Shop Now',
-          primaryButtonLink: heroBanner.linkUrl || '/collections',
-          secondaryButtonText: heroBanner.secondaryButtonText || 'Explore Collection',
-          secondaryButtonLink: heroBanner.secondaryButtonLink || '/shop?category=Oud'
+          primaryButtonText: heroBanner.buttonText || 'Explore Collections',
+          primaryButtonLink: heroBanner.linkUrl || '/shop',
+          secondaryButtonText: heroBanner.secondaryButtonText || 'About Us',
+          secondaryButtonLink: heroBanner.secondaryButtonLink || '/about'
         };
 
         heroForm.setFieldsValue(initialData);
@@ -171,9 +171,9 @@ export default function AdminContentPage() {
       formData.append('subtitle', values.description.trim());
       formData.append('badge', (values.badge || '').trim());
       formData.append('buttonText', (values.primaryButtonText || 'Shop Now').trim());
-      formData.append('linkUrl', (values.primaryButtonLink || '/collections').trim());
-      formData.append('secondaryButtonText', (values.secondaryButtonText || 'Explore Collection').trim());
-      formData.append('secondaryButtonLink', (values.secondaryButtonLink || '/shop?category=Oud').trim());
+      formData.append('linkUrl', (values.primaryButtonLink || '/shop').trim());
+      formData.append('secondaryButtonText', (values.secondaryButtonText || 'Atelier Story').trim());
+      formData.append('secondaryButtonLink', (values.secondaryButtonLink || '/about').trim());
       formData.append('highlightType', 'hero');
       formData.append('isActive', 'true');
 
@@ -441,7 +441,7 @@ export default function AdminContentPage() {
                     >
                       <Input 
                         maxLength={LIMITS.secondaryButtonText}
-                        placeholder="e.g. Explore Collection"
+                        placeholder="e.g. Atelier Story"
                         className="rounded-xl py-1.5 text-xs bg-[#FAF7F2] border-[#E8DFC8] focus:border-[#D4A64A]" 
                       />
                     </Form.Item>
@@ -457,7 +457,7 @@ export default function AdminContentPage() {
                     >
                       <Input 
                         maxLength={LIMITS.secondaryButtonLink}
-                        placeholder="e.g. /shop?category=Oud"
+                        placeholder="e.g. /about"
                         className="rounded-xl py-1.5 text-xs font-mono bg-[#FAF7F2] border-[#E8DFC8] focus:border-[#D4A64A]" 
                       />
                     </Form.Item>

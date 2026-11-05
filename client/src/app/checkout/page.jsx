@@ -81,6 +81,7 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(true);
   const [giftOptions, setGiftOptions] = useState(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [useGiftAddress, setUseGiftAddress] = useState(false);
@@ -110,6 +111,13 @@ export default function CheckoutPage() {
 
   const loadCartState = async () => {
     try {
+      // Eagerly check in-memory cart to prevent initial flash if already cached
+      const immediate = cartService.getCart();
+      if (immediate && immediate.length > 0) {
+        setCartItems(immediate);
+        setIsCheckoutLoading(false);
+      }
+
       await cartService.fetchCart();
       const items = cartService.getCart();
       setCartItems(items);
@@ -139,6 +147,8 @@ export default function CheckoutPage() {
       }
     } catch (e) {
       console.warn('Error loading checkout cart summary:', e);
+    } finally {
+      setIsCheckoutLoading(false);
     }
   };
 
@@ -150,6 +160,7 @@ export default function CheckoutPage() {
     if (!authService.isAuthenticated()) {
       setIsCheckingAuth(true);
       setShowAuthModal(true);
+      setIsCheckoutLoading(false);
       return;
     }
 
@@ -557,6 +568,128 @@ export default function CheckoutPage() {
               </button>
             </div>
           </div>
+        ) : isCheckoutLoading ? (
+          /* ================= LUXURY CHECKOUT SKELETON ================= */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-pulse">
+            {/* LEFT COLUMN: SKELETON (7 Cols) */}
+            <div className="lg:col-span-7 space-y-4">
+              {/* Gift Presentation Bar Skeleton */}
+              <div className="rounded-2xl border border-[#E5DAC6] bg-white p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#FAF3E0] border border-[#E0D0A5]" />
+                  <div className="space-y-1.5">
+                    <div className="h-3.5 w-44 bg-[#ECE7DE] rounded" />
+                    <div className="h-2.5 w-60 bg-[#F4EFE6] rounded" />
+                  </div>
+                </div>
+                <div className="h-7 w-20 rounded-full bg-[#F4EFE6]" />
+              </div>
+
+              {/* Delivery Address Card Skeleton */}
+              <div className="bg-white rounded-2xl border border-[#E5DAC6] shadow-2xs p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-[#FAF3E0]" />
+                    <div className="h-4 w-36 bg-[#ECE7DE] rounded" />
+                  </div>
+                  <div className="h-6 w-28 rounded-full bg-[#F4EFE6]" />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-20 bg-[#ECE7DE] rounded" />
+                    <div className="h-10 rounded-xl bg-[#FAF9F7] border border-[#EAE3D2]" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-24 bg-[#ECE7DE] rounded" />
+                    <div className="h-10 rounded-xl bg-[#FAF9F7] border border-[#EAE3D2]" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="h-3 w-28 bg-[#ECE7DE] rounded" />
+                  <div className="h-10 rounded-xl bg-[#FAF9F7] border border-[#EAE3D2]" />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-14 bg-[#ECE7DE] rounded" />
+                    <div className="h-10 rounded-xl bg-[#FAF9F7] border border-[#EAE3D2]" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-16 bg-[#ECE7DE] rounded" />
+                    <div className="h-10 rounded-xl bg-[#FAF9F7] border border-[#EAE3D2]" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-16 bg-[#ECE7DE] rounded" />
+                    <div className="h-10 rounded-xl bg-[#FAF9F7] border border-[#EAE3D2]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Gateway Card Skeleton */}
+              <div className="rounded-2xl border border-[#D4AF37]/50 bg-[#FFFEFC] p-5 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
+                  <div className="h-4 w-32 bg-[#ECE7DE] rounded" />
+                  <div className="h-4 w-24 bg-[#F4EFE6] rounded-full" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-24 bg-[#ECE7DE] rounded" />
+                  <div className="h-4 w-16 bg-[#FAF3E0] rounded" />
+                </div>
+                <div className="h-3 w-64 bg-[#F4EFE6] rounded" />
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="h-6 w-12 rounded bg-[#FAF9F7] border border-[#ECE7DE]" />
+                  ))}
+                </div>
+                <div className="h-12 w-full rounded-full bg-stone-900/15 mt-2" />
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: ORDER SUMMARY SKELETON (5 Cols) */}
+            <div className="lg:col-span-5">
+              <div className="bg-white rounded-2xl border border-[#E8DFC9] shadow-2xs p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
+                  <div className="h-4 w-28 bg-[#ECE7DE] rounded" />
+                  <div className="h-4 w-14 bg-[#F4EFE6] rounded" />
+                </div>
+
+                {/* Items */}
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-12 h-14 rounded-lg bg-[#F4EFE6] border border-[#EAE3D2] shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3.5 w-32 bg-[#ECE7DE] rounded" />
+                        <div className="h-2.5 w-16 bg-[#F4EFE6] rounded" />
+                      </div>
+                      <div className="h-3.5 w-14 bg-[#ECE7DE] rounded" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="h-10 rounded-full bg-[#F4EFE6] border border-[#EAE3D2]" />
+
+                <div className="space-y-2.5 pt-3 border-t border-[#ECE7DE]">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-20 bg-[#F4EFE6] rounded" />
+                    <div className="h-3 w-14 bg-[#F4EFE6] rounded" />
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="h-3 w-24 bg-[#F4EFE6] rounded" />
+                    <div className="h-3 w-16 bg-[#F4EFE6] rounded" />
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-[#ECE7DE]">
+                    <div className="h-4 w-16 bg-[#ECE7DE] rounded" />
+                    <div className="h-5 w-20 bg-[#E0D0A5]/70 rounded" />
+                  </div>
+                </div>
+
+                <div className="h-12 w-full rounded-full bg-stone-900/80" />
+              </div>
+            </div>
+          </div>
         ) : cartItems.length === 0 ? (
           /* ================= EMPTY BAG CHECKOUT GUARD ================= */
           <div className="max-w-md mx-auto py-16 text-center space-y-4">
@@ -939,19 +1072,26 @@ export default function CheckoutPage() {
                     )}
 
                     {rewardDiscountAmount > 0 && (
-                      <div className="flex justify-between items-center text-[#8C6D1F] bg-[#FAF3E0] px-2.5 py-1.5 rounded-lg border border-[#E0D0A5]">
-                        <span className="font-bold text-[11px] flex items-center gap-1">
-                          <Sparkles size={12} className="text-[#B8860B]" />
-                          Privilege Points ({rewardPointsUsed} pts)
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-sans font-bold text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
+                      <div className="flex justify-between items-center text-[#8C6D1F] bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] px-3 py-2 rounded-xl border border-[#D4AF37]/50 shadow-2xs">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="w-4 h-4 rounded-full bg-[#B8860B]/15 flex items-center justify-center shrink-0">
+                            <Sparkles size={10} className="text-[#B8860B]" />
+                          </div>
+                          <span className="font-semibold text-[11px] text-[#6B5115] truncate">
+                            Privilege Points ({rewardPointsUsed.toLocaleString()} pts)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="font-sans font-bold text-xs text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
                           <button
                             type="button"
-                            onClick={handleRemoveRewards}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveRewards();
+                            }}
                             disabled={rewardLoading}
-                            className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
-                            title="Remove reward points"
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-stone-200/60 text-xs transition-colors cursor-pointer"
+                            title="Remove privilege points"
                           >
                             ✕
                           </button>
@@ -984,43 +1124,47 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Patron Privilege Points with Clean Toggle Switch */}
-                  <div className="pt-2 border-t border-[#ECE7DE]">
-                    <div className={`p-2.5 sm:p-3 rounded-2xl border transition-all ${
-                      rewardPointsUsed > 0 
-                        ? 'bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border-[#D4AF37]/50 shadow-2xs' 
-                        : 'bg-[#FAF9F7] border-[#E8DFC9]'
-                    }`}>
-                      <div className="flex items-center justify-between gap-2.5">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+                  {/* Patron Privilege Wallet Card with High-Precision Luxury Toggle */}
+                  <div className="pt-2.5 border-t border-[#ECE7DE]">
+                    <div 
+                      onClick={handleToggleRewards}
+                      className={`p-3 rounded-2xl border transition-all duration-300 cursor-pointer select-none ${
+                        rewardPointsUsed > 0 
+                          ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-xs' 
+                          : 'bg-[#FAF9F7] hover:bg-[#F7F4EC] border-[#E8DFC9] hover:border-[#D5C7A8]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-2xs border ${
                             rewardPointsUsed > 0 
-                              ? 'bg-[#B8860B] text-white border-[#8C6D1F]' 
-                              : 'bg-white text-[#B8860B] border-[#E0D8CA]'
+                              ? 'bg-gradient-to-br from-[#E5B869] to-[#B8860B] text-white border-[#8C6D1F]' 
+                              : 'bg-white text-[#B8860B] border-[#E5DAC6]'
                           }`}>
-                            <Coins size={15} />
+                            <Coins size={16} strokeWidth={1.75} />
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-[#1A1A1A] truncate">
-                                Privilege Points
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-bold text-[#1A1A1A] tracking-tight">
+                                Patron Privilege Wallet
                               </span>
                               <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full shrink-0 ${
                                 rewardPointsUsed > 0 
-                                  ? 'bg-[#B8860B] text-white' 
+                                  ? 'bg-[#B8860B] text-white shadow-2xs' 
                                   : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
                               }`}>
                                 {availableRewardPoints.toLocaleString()} pts
                               </span>
                             </div>
-                            <p className="text-[10px] text-[#7A6B5D] mt-0.2 font-light truncate m-0">
+                            <p className="text-[10px] text-[#7A6B5D] mt-0.5 font-light leading-snug m-0">
                               {rewardPointsUsed > 0 ? (
-                                <span className="text-emerald-700 font-semibold">
-                                  ✓ Applied (Saved ₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                                <span className="text-emerald-800 font-semibold flex items-center gap-1">
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                  {rewardPointsUsed.toLocaleString()} pts applied (Saving ₹{rewardDiscountAmount.toLocaleString('en-IN')})
                                 </span>
                               ) : availableRewardPoints > 0 ? (
                                 <span>
-                                  Toggle to redeem {availableRewardPoints.toLocaleString()} pts (Save ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})
+                                  Tap to redeem up to {availableRewardPoints.toLocaleString()} pts (Save ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})
                                 </span>
                               ) : (
                                 <span>Earn points on this acquisition</span>
@@ -1029,23 +1173,34 @@ export default function CheckoutPage() {
                           </div>
                         </div>
 
-                        {/* Toggle Switch */}
+                        {/* Luxury Toggle Switch */}
                         <button
                           type="button"
                           role="switch"
                           aria-checked={rewardPointsUsed > 0}
-                          onClick={handleToggleRewards}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleRewards();
+                          }}
                           disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-                            rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2]'
+                          className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+                            rewardPointsUsed > 0 
+                              ? 'bg-[#1C1714] shadow-[0_0_8px_rgba(212,175,55,0.35)]' 
+                              : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
                           }`}
-                          title={rewardPointsUsed > 0 ? 'Click to remove points' : 'Click to apply privilege points'}
+                          title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
                         >
                           <span
-                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                              rewardPointsUsed > 0 ? 'translate-x-4 bg-[#ECC880]' : 'translate-x-0 bg-white'
+                            className={`pointer-events-none flex items-center justify-center h-4.5 w-4.5 transform rounded-full shadow-sm ring-0 transition-transform duration-300 ease-in-out ${
+                              rewardPointsUsed > 0 
+                                ? 'translate-x-4.5 bg-gradient-to-br from-[#F6D389] to-[#DEB368]' 
+                                : 'translate-x-0 bg-white'
                             }`}
-                          />
+                          >
+                            {rewardLoading && (
+                              <Loader2 size={9} className="animate-spin text-[#241306]" />
+                            )}
+                          </span>
                         </button>
                       </div>
                     </div>

@@ -8,6 +8,7 @@ import { getImageUrl } from '../../utils/imageHelper';
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [failedCategoryIds, setFailedCategoryIds] = useState({});
   const scrollRef = useRef(null);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -198,16 +199,25 @@ const Categories = () => {
               >
                 {/* Circular Thumbnail with Polished Gold Border */}
                 <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden p-0.5 sm:p-1 bg-gradient-to-b from-[#E5B869] to-[#C49444] shadow-md group-hover/item:shadow-2xl group-hover/item:shadow-amber-900/25 transition-all duration-300">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-[#241710]">
-                    <img
-                      src={img}
-                      alt={item.name}
-                      draggable={false}
-                      className="w-full h-full object-cover group-hover/item:scale-110 transition-transform duration-500 ease-out pointer-events-none"
-                      onError={(e) => {
-                        e.target.src = '/images/perfumes/signature_collection.jpg';
-                      }}
-                    />
+                  <div className="w-full h-full rounded-full overflow-hidden bg-[#241710] flex items-center justify-center">
+                    {!failedCategoryIds[catId] && img && !img.includes('no-image') ? (
+                      <img
+                        src={img}
+                        alt={item.name}
+                        draggable={false}
+                        className="w-full h-full object-cover group-hover/item:scale-110 transition-transform duration-500 ease-out pointer-events-none"
+                        onError={() => setFailedCategoryIds(prev => ({ ...prev, [catId]: true }))}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#2D1B11] via-[#1A0F0A] to-[#120A06] text-[#E5B869] select-none p-2">
+                        <span className="font-serif text-2xl sm:text-3xl font-light tracking-widest text-[#E5B869] drop-shadow-sm">
+                          {item.name ? item.name.charAt(0).toUpperCase() : 'R'}
+                        </span>
+                        <span className="text-[7.5px] uppercase tracking-[0.25em] text-[#E5B869]/70 mt-0.5">
+                          Atelier
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

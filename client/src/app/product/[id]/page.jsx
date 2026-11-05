@@ -17,7 +17,8 @@ import {
   ArrowLeft,
   PackageOpen,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -43,6 +44,12 @@ const ProductDetails = () => {
 
   // Gallery State
   const [selectedImage, setSelectedImage] = useState(null);
+  const [failedImages, setFailedImages] = useState({});
+
+  const handleImageError = useCallback((imgUrl) => {
+    if (!imgUrl) return;
+    setFailedImages(prev => ({ ...prev, [imgUrl]: true }));
+  }, []);
 
   // Variant & Purchase State
   const [selectedSize, setSelectedSize] = useState(null);
@@ -239,19 +246,28 @@ const ProductDetails = () => {
     }
   };
 
-  // Image Gallery Processing
+  // Image Gallery Processing - Strictly no fake/wrong substitute bottles
   const images = useMemo(() => {
     if (!product) return [];
     if (Array.isArray(product.images) && product.images.length > 0) {
-      return product.images.map(img => getImageUrl(img.url || img));
+      return product.images
+        .map(img => getImageUrl(img.url || img))
+        .filter(url => Boolean(url) && !url.includes('no-image'));
     }
     if (product.image) {
-      return [getImageUrl(product.image)];
+      const single = getImageUrl(product.image);
+      return single && !single.includes('no-image') ? [single] : [];
     }
-    return ['/images/perfumes/amber_oud_perfume.jpg'];
+    return [];
   }, [product]);
 
-  const currentMainImage = selectedImage || images[0] || '/images/perfumes/amber_oud_perfume.jpg';
+  const validImages = useMemo(() => {
+    return images.filter(img => !failedImages[img]);
+  }, [images, failedImages]);
+
+  const currentMainImage = (selectedImage && !failedImages[selectedImage])
+    ? selectedImage
+    : (validImages[0] || null);
 
   // Stock and Availability Logic
   const availableSizesMap = useMemo(() => {
@@ -469,14 +485,29 @@ const ProductDetails = () => {
             
             {/* Primary Main Image Container */}
             <div className="relative rounded-2xl bg-white border border-[#ECE7DE] p-4 sm:p-6 max-h-[360px] lg:max-h-[390px] aspect-[4/3] sm:aspect-square flex items-center justify-center overflow-hidden shadow-2xs group">
-              <img
-                src={currentMainImage}
-                alt={product.name}
-                className="w-full h-full object-contain drop-shadow-md transition-transform duration-700 ease-out group-hover:scale-105"
-                onError={(e) => {
-                  e.target.src = '/images/perfumes/amber_oud_perfume.jpg';
-                }}
-              />
+              {currentMainImage ? (
+                <img
+                  src={currentMainImage}
+                  alt={product.name}
+                  className="w-full h-full object-contain drop-shadow-md transition-transform duration-700 ease-out group-hover:scale-105"
+                  onError={() => handleImageError(currentMainImage)}
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-[#FAF8F5] via-[#FFFDF9] to-[#F5ECE0] select-none">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center mb-3 shadow-2xs">
+                    <Sparkles size={28} strokeWidth={1.5} className="text-[#B8860B]" />
+                  </div>
+                  <span className="text-[9px] uppercase font-bold tracking-[0.25em] text-[#8C6D1F] mb-1">
+                    ROVE & AMBER • ATELIER
+                  </span>
+                  <h3 className="font-serif text-base sm:text-lg text-black font-normal max-w-[220px] leading-tight">
+                    {product.name}
+                  </h3>
+                  <span className="text-[10px] text-stone-500 font-light mt-1">
+                    {product.category || product.category_name || 'Fine Fragrance Extrait'}
+                  </span>
+                </div>
+              )}
 
               {/* Category / Concentration Badge */}
               <div className="absolute top-3 left-3 z-10">
@@ -507,10 +538,10 @@ const ProductDetails = () => {
               )}
             </div>
 
-            {/* Thumbnail Navigation Row (Compact) */}
-            {images.length > 1 && (
+            {/* Thumbnail Navigation Row (Only show when 2 or more WORKING images exist) */}
+            {validImages.length > 1 && (
               <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none">
-                {images.map((img, idx) => (
+                {validImages.map((img, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -519,7 +550,12 @@ const ProductDetails = () => {
                       currentMainImage === img ? 'border-black shadow-xs' : 'border-[#ECE7DE] opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
+                    <img 
+                      src={img} 
+                      alt={`${product.name} view ${idx + 1}`} 
+                      className="w-full h-full object-contain"
+                      onError={() => handleImageError(img)}
+                    />
                   </button>
                 ))}
               </div>

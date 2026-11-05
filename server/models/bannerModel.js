@@ -44,12 +44,12 @@ const bannerSchema = new mongoose.Schema(
     },
     secondaryButtonText: {
       type: String,
-      default: 'Explore Collection',
+      default: 'About Us',
       trim: true
     },
     secondaryButtonLink: {
       type: String,
-      default: '/collections',
+      default: '/about',
       trim: true
     },
     titlePart1: {

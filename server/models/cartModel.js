@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import './categoryModel.js';
 import { ProductModel, Product } from './productModel.js';
 import { CouponModel } from './couponModel.js';
 import { formatProduct } from '../controllers/user/productController.js';
@@ -117,6 +118,10 @@ const findOrCreateCart = async ({ userId, guestId }) => {
       guestId: !userId ? (guestId || query.guestId) : null,
       items: []
     });
+  } else if (cart.items && cart.items.some(item => !item || !item.productId)) {
+    // Sanitize any corrupt orphan items
+    cart.items = cart.items.filter(item => item && item.productId);
+    await Cart.updateOne({ _id: cart._id }, { $set: { items: cart.items } });
   }
 
   return cart;
@@ -463,8 +468,10 @@ export const CartModel = {
       throw new Error(`Insufficient points balance. You have ${patronPoints} points available.`);
     }
 
-    cart.rewardPointsUsed = requestedPoints;
-    await cart.save();
+    await Cart.updateOne(
+      { _id: cart._id },
+      { $set: { rewardPointsUsed: requestedPoints } }
+    );
 
     const populated = await Cart.findById(cart._id).populate({
       path: 'items.productId',
@@ -474,16 +481,24 @@ export const CartModel = {
   },
 
   removeRewardPoints: async ({ userId, guestId }) => {
-    const cart = await findOrCreateCart({ userId, guestId });
-    cart.rewardPointsUsed = 0;
-    cart.rewardDiscountAmount = 0;
-    await cart.save();
+    let query = null;
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+      query = { user_id: userId };
+    } else if (guestId) {
+      query = { guestId };
+    }
 
-    const populated = await Cart.findById(cart._id).populate({
-      path: 'items.productId',
-      populate: { path: 'category_id' }
-    });
-    return calculateCartSummary(populated);
+    if (query) {
+      await Cart.updateOne(query, {
+        $set: {
+          rewardPointsUsed: 0,
+          rewardDiscountAmount: 0
+        }
+      });
+    }
+
+    const cart = await findOrCreateCart({ userId, guestId });
+    return calculateCartSummary(cart);
   },
 
   updateGiftOptions: async ({ userId, guestId, isGift, occasion, giftMessage, giftWrap, giftRecipient }) => {

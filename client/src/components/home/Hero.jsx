@@ -12,12 +12,12 @@ const DEFAULT_HERO_SLIDES = [
     titlePart2: 'Signature Scent',
     description: 'Explore fine fragrances crafted to leave a lasting impression. Sculpted with aged amber, wild oud, and rare botanical essences.',
     primaryCta: {
-      text: 'Shop Now',
+      text: 'Explore Collections',
       href: '/shop'
     },
     secondaryCta: {
-      text: 'Explore Collection',
-      href: '/shop?category=Oud'
+      text: 'About Us',
+      href: '/about'
     },
     mobileBg: '/images/perfumes/hero_campaign_ultra_clear_master.jpg',
     desktopBg: '/images/perfumes/hero_campaign_ultra_clear_master.jpg'
@@ -29,11 +29,11 @@ const DEFAULT_HERO_SLIDES = [
     titlePart2: 'The Royal Edition',
     description: 'A transcendent formulation steeped in Cambodian agarwood, taif rose, and crystalline ambergris.',
     primaryCta: {
-      text: 'Discover Oud',
-      href: '/shop?category=Oud'
+      text: 'Explore Collections',
+      href: '/shop'
     },
     secondaryCta: {
-      text: 'Atelier Story',
+      text: 'About Us',
       href: '/about'
     },
     mobileBg: '/images/perfumes/hero_campaign_ultra_clear_master.jpg',
@@ -46,12 +46,12 @@ const DEFAULT_HERO_SLIDES = [
     titlePart2: 'Gift Sets',
     description: 'Presented in hand-lacquered wooden coffrets, enveloped with custom satin ribbons and wax-sealed notes.',
     primaryCta: {
-      text: 'View Gift Sets',
-      href: '/gifts'
+      text: 'Explore Collections',
+      href: '/shop'
     },
     secondaryCta: {
-      text: 'Personalize Gift',
-      href: '/gifts'
+      text: 'About Us',
+      href: '/about'
     },
     mobileBg: '/images/perfumes/hero_campaign_ultra_clear_master.jpg',
     desktopBg: '/images/perfumes/hero_campaign_ultra_clear_master.jpg'
@@ -110,12 +110,12 @@ export default function Hero({
               titlePart2: part2,
               description: b.subtitle || 'Explore fine fragrances crafted to leave a lasting impression. Sculpted with aged amber, wild oud, and rare botanical essences.',
               primaryCta: {
-                text: b.buttonText || 'Shop Now',
-                href: b.linkUrl || '/shop'
+                text: b.buttonText || 'Explore Collections',
+                href: b.linkUrl && b.linkUrl !== '#' ? (b.linkUrl === '/collections' ? '/shop' : b.linkUrl) : '/shop'
               },
               secondaryCta: {
-                text: b.secondaryButtonText || 'Explore Collection',
-                href: b.secondaryButtonLink || '/shop?category=Oud'
+                text: b.secondaryButtonText && b.secondaryButtonText !== 'Explore Collection' && b.secondaryButtonText !== 'Atelier Story' ? b.secondaryButtonText : 'About Us',
+                href: b.secondaryButtonLink && b.secondaryButtonLink !== '#' && !b.secondaryButtonLink.includes('category=Oud') && b.secondaryButtonLink !== '/collections' ? b.secondaryButtonLink : '/about'
               },
               desktopBg: b.image || '/images/perfumes/hero_campaign_ultra_clear_master.jpg',
               mobileBg: b.mobileImage || b.image || '/images/perfumes/hero_campaign_ultra_clear_master.jpg'

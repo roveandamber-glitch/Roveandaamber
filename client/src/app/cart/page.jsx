@@ -63,6 +63,7 @@ export default function CartPage() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
   const [isClient, setIsClient] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(true);
   const [promoCode, setPromoCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -142,12 +143,27 @@ export default function CartPage() {
     };
 
     if (!verifyAuth()) {
+      setIsCartLoading(false);
       return;
     }
 
-    cartService.fetchCart().then(() => {
-      loadCart();
-    });
+    // Immediately load any cached in-memory cart items to eliminate initial empty flash
+    loadCart();
+    const immediateCart = cartService.getCart();
+    if (immediateCart && immediateCart.length > 0) {
+      setIsCartLoading(false);
+    }
+
+    cartService.fetchCart()
+      .then(() => {
+        loadCart();
+      })
+      .catch((err) => {
+        console.warn('Failed to fetch cart:', err);
+      })
+      .finally(() => {
+        setIsCartLoading(false);
+      });
 
     const liveGifts = cartService.getGiftOptions();
     if (liveGifts && (liveGifts.isGift || liveGifts.giftRecipient?.name)) {
@@ -164,7 +180,12 @@ export default function CartPage() {
     window.addEventListener('cartChange', loadCart);
     const onAuthChange = () => {
       if (verifyAuth()) {
-        cartService.fetchCart().then(() => loadCart());
+        setIsCartLoading(true);
+        cartService.fetchCart()
+          .then(() => loadCart())
+          .finally(() => setIsCartLoading(false));
+      } else {
+        setIsCartLoading(false);
       }
     };
 
@@ -476,7 +497,11 @@ export default function CartPage() {
                 Atelier Checkout
               </span>
               <span className="text-xs text-gray-500">
-                {totalItemCount} {totalItemCount === 1 ? 'fragrance flacon' : 'fragrance flacons'}
+                {isCartLoading ? (
+                  <span className="inline-block w-24 h-3 bg-[#EAE3D2] rounded animate-pulse align-middle" />
+                ) : (
+                  `${totalItemCount} ${totalItemCount === 1 ? 'fragrance flacon' : 'fragrance flacons'}`
+                )}
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-black tracking-tight">
@@ -487,7 +512,7 @@ export default function CartPage() {
             </p>
           </div>
 
-          {cartItems.length > 0 && (
+          {!isCartLoading && cartItems.length > 0 && (
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -501,8 +526,86 @@ export default function CartPage() {
           )}
         </div>
 
-        {/* CART CONTENT: EMPTY STATE OR ITEMS */}
-        {cartItems.length === 0 ? (
+        {/* CART CONTENT: SKELETON, EMPTY STATE OR ACTIVE ITEMS */}
+        {isCartLoading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-pulse">
+            {/* Left Column: Product Card Skeleton */}
+            <div className="lg:col-span-8 space-y-5">
+              <div className="bg-white rounded-2xl border border-[#E8DFC9] shadow-xs overflow-hidden">
+                <div className="p-4 sm:p-5 border-b border-[#ECE7DE] flex items-center justify-between">
+                  <div className="h-4 w-36 bg-[#ECE7DE] rounded" />
+                  <div className="h-4 w-20 bg-[#F4EFE6] rounded" />
+                </div>
+                <div className="divide-y divide-[#ECE7DE]">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1 min-w-0 w-full sm:w-auto">
+                        <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl bg-[#F4EFE6] shrink-0 border border-[#EAE3D2]" />
+                        <div className="space-y-2.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className="h-3 w-20 bg-[#ECE7DE] rounded" />
+                            <div className="h-3 w-16 bg-[#F4EFE6] rounded" />
+                          </div>
+                          <div className="h-5 w-44 sm:w-64 bg-[#ECE7DE] rounded" />
+                          <div className="h-3 w-32 bg-[#F4EFE6] rounded" />
+                          <div className="h-5 w-24 bg-[#E0D0A5]/60 rounded mt-1" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 self-end sm:self-center">
+                        <div className="h-9 w-28 rounded-full bg-[#F4EFE6] border border-[#EAE3D2]" />
+                        <div className="h-8 w-8 rounded-full bg-[#F4EFE6]" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Complimentary Gifting Bar Skeleton */}
+              <div className="rounded-2xl border border-[#E8DFC9] bg-white p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#FAF3E0] border border-[#E0D0A5]" />
+                  <div className="space-y-1.5">
+                    <div className="h-3.5 w-40 bg-[#ECE7DE] rounded" />
+                    <div className="h-2.5 w-56 bg-[#F4EFE6] rounded" />
+                  </div>
+                </div>
+                <div className="h-7 w-20 rounded-full bg-[#F4EFE6]" />
+              </div>
+            </div>
+
+            {/* Right Column: Order Summary Skeleton */}
+            <div className="lg:col-span-4">
+              <div className="bg-white rounded-2xl border border-[#E8DFC9] shadow-xs p-6 space-y-5">
+                <div className="flex items-center justify-between pb-4 border-b border-[#ECE7DE]">
+                  <div className="h-5 w-32 bg-[#ECE7DE] rounded" />
+                  <div className="h-4 w-12 bg-[#F4EFE6] rounded" />
+                </div>
+                <div className="h-10 rounded-full bg-[#F4EFE6] border border-[#EAE3D2]" />
+                <div className="h-16 rounded-xl bg-[#FAF9F7] border border-[#ECE7DE]" />
+                <div className="space-y-3 pt-2">
+                  <div className="flex justify-between">
+                    <div className="h-3.5 w-24 bg-[#F4EFE6] rounded" />
+                    <div className="h-3.5 w-16 bg-[#F4EFE6] rounded" />
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="h-3.5 w-28 bg-[#F4EFE6] rounded" />
+                    <div className="h-3.5 w-20 bg-[#F4EFE6] rounded" />
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="h-3.5 w-20 bg-[#F4EFE6] rounded" />
+                    <div className="h-3.5 w-14 bg-[#F4EFE6] rounded" />
+                  </div>
+                  <div className="flex justify-between pt-3 border-t border-[#ECE7DE]">
+                    <div className="h-5 w-20 bg-[#ECE7DE] rounded" />
+                    <div className="h-6 w-24 bg-[#E0D0A5]/70 rounded" />
+                  </div>
+                </div>
+                <div className="h-12 w-full rounded-full bg-[#E8DFC9]" />
+                <div className="h-8 w-full rounded bg-[#FAF9F7]" />
+              </div>
+            </div>
+          </div>
+        ) : cartItems.length === 0 ? (
           /* LUXURY EMPTY STATE */
           <div className="py-16 sm:py-24 text-center max-w-xl mx-auto flex flex-col items-center">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center text-[#B8860B] shadow-sm mb-6">
@@ -787,21 +890,26 @@ export default function CartPage() {
                   )}
 
                   {rewardDiscountAmount > 0 && (
-                    <div className="flex justify-between items-center text-[#8C6D1F] bg-[#FAF3E0] px-3.5 py-2.5 rounded-xl border border-[#E0D0A5]">
-                      <div className="flex items-center gap-1.5">
-                        <Sparkles size={13} className="text-[#B8860B]" />
-                        <span className="font-bold text-[11px] tracking-wide">
+                    <div className="flex justify-between items-center text-[#8C6D1F] bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] px-3.5 py-2.5 rounded-xl border border-[#D4AF37]/50 shadow-2xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-5 h-5 rounded-full bg-[#B8860B]/15 flex items-center justify-center shrink-0">
+                          <Sparkles size={11} className="text-[#B8860B]" />
+                        </div>
+                        <span className="font-semibold text-xs text-[#6B5115] tracking-wide truncate">
                           Privilege Points ({rewardPointsUsed.toLocaleString()} pts)
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-sans font-bold text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-sans font-bold text-xs text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
                         <button
                           type="button"
-                          onClick={handleRemoveRewards}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveRewards();
+                          }}
                           disabled={rewardLoading}
-                          className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
-                          title="Remove reward points"
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-stone-200/60 text-xs transition-colors cursor-pointer"
+                          title="Remove privilege points"
                         >
                           ✕
                         </button>
@@ -881,68 +989,83 @@ export default function CartPage() {
                   </div>
                 )}
 
-                {/* Patron Privilege Points with Clean Toggle Switch */}
+                {/* Patron Privilege Wallet Card with High-Precision Luxury Toggle */}
                 <div className="pt-3 border-t border-[#ECE7DE]">
-                  <div className={`p-3.5 rounded-2xl border transition-all ${
-                    rewardPointsUsed > 0 
-                      ? 'bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border-[#D4AF37]/50 shadow-xs' 
-                      : 'bg-[#FAF9F7] border-[#E8DFC9]'
-                  }`}>
+                  <div 
+                    onClick={handleToggleRewards}
+                    className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 cursor-pointer select-none ${
+                      rewardPointsUsed > 0 
+                        ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-xs' 
+                        : 'bg-[#FAF9F7] hover:bg-[#F7F4EC] border-[#E8DFC9] hover:border-[#D5C7A8]'
+                    }`}
+                  >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-2xs border ${
                           rewardPointsUsed > 0 
-                            ? 'bg-[#B8860B] text-white border-[#8C6D1F]' 
-                            : 'bg-white text-[#B8860B] border-[#E0D8CA]'
+                            ? 'bg-gradient-to-br from-[#E5B869] to-[#B8860B] text-white border-[#8C6D1F]' 
+                            : 'bg-white text-[#B8860B] border-[#E5DAC6]'
                         }`}>
-                          <Coins size={17} />
+                          <Coins size={18} strokeWidth={1.75} />
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-[#1A1A1A] truncate">
-                              Patron Privilege Points
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs sm:text-[13px] font-bold text-[#1A1A1A] tracking-tight">
+                              Patron Privilege Wallet
                             </span>
                             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 ${
                               rewardPointsUsed > 0 
-                                ? 'bg-[#B8860B] text-white' 
+                                ? 'bg-[#B8860B] text-white shadow-2xs' 
                                 : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
                             }`}>
                               {availableRewardPoints.toLocaleString()} pts
                             </span>
                           </div>
-                          <p className="text-[11px] text-[#7A6B5D] mt-0.5 font-light truncate">
+                          <p className="text-[11px] text-[#7A6B5D] mt-0.5 font-light leading-snug">
                             {rewardPointsUsed > 0 ? (
-                              <span className="text-emerald-700 font-semibold">
-                                ✓ {rewardPointsUsed.toLocaleString()} pts applied (Saving ₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                              <span className="text-emerald-800 font-semibold flex items-center gap-1">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                {rewardPointsUsed.toLocaleString()} pts applied (Saving ₹{rewardDiscountAmount.toLocaleString('en-IN')})
                               </span>
                             ) : availableRewardPoints > 0 ? (
                               <span>
-                                Toggle to redeem {availableRewardPoints.toLocaleString()} pts (Save ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})
+                                Tap to redeem up to {availableRewardPoints.toLocaleString()} pts (Save ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})
                               </span>
                             ) : (
-                              <span>Earn points on this acquisition for future orders</span>
+                              <span>Earn privilege points on this order for future acquisitions</span>
                             )}
                           </p>
                         </div>
                       </div>
 
-                      {/* Toggle Switch */}
+                      {/* Luxury Toggle Switch */}
                       <button
                         type="button"
                         role="switch"
                         aria-checked={rewardPointsUsed > 0}
-                        onClick={handleToggleRewards}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleRewards();
+                        }}
                         disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-                          rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2]'
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+                          rewardPointsUsed > 0 
+                            ? 'bg-[#1C1714] shadow-[0_0_8px_rgba(212,175,55,0.35)]' 
+                            : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
                         }`}
-                        title={rewardPointsUsed > 0 ? 'Click to remove points' : 'Click to apply privilege points'}
+                        title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            rewardPointsUsed > 0 ? 'translate-x-5 bg-[#ECC880]' : 'translate-x-0 bg-white'
+                          className={`pointer-events-none flex items-center justify-center h-5 w-5 transform rounded-full shadow-md ring-0 transition-transform duration-300 ease-in-out ${
+                            rewardPointsUsed > 0 
+                              ? 'translate-x-5 bg-gradient-to-br from-[#F6D389] to-[#DEB368]' 
+                              : 'translate-x-0 bg-white'
                           }`}
-                        />
+                        >
+                          {rewardLoading && (
+                            <Loader2 size={10} className="animate-spin text-[#241306]" />
+                          )}
+                        </span>
                       </button>
                     </div>
                   </div>

@@ -1,4 +1,5 @@
 import { ProductModel } from '../../models/productModel.js';
+import { getUploadedFileUrl } from '../../middlewares/uploadMiddleware.js';
 
 // Helper to parse images whether stored as single path, JSON array, or CSV
 const parseImages = (imgField, imagesField, name) => {
@@ -370,9 +371,9 @@ export const createProduct = async (req, res) => {
 
     let imageList = [];
     if (req.files && req.files.length > 0) {
-      imageList = req.files.map(f => ({ url: `/uploads/${f.filename}`, alt: name }));
+      imageList = req.files.map(f => ({ url: getUploadedFileUrl(f), alt: name }));
     } else if (req.file) {
-      imageList = [{ url: `/uploads/${req.file.filename}`, alt: name }];
+      imageList = [{ url: getUploadedFileUrl(req.file), alt: name }];
     } else if (req.body.images) {
       const raw = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
       imageList = raw.map(u => (typeof u === 'string' ? { url: u, alt: name } : u));
@@ -475,9 +476,9 @@ export const updateProduct = async (req, res) => {
 
     let imageList;
     if (req.files && req.files.length > 0) {
-      imageList = req.files.map(f => ({ url: `/uploads/${f.filename}`, alt: name || '' }));
+      imageList = req.files.map(f => ({ url: getUploadedFileUrl(f), alt: name || '' }));
     } else if (req.file) {
-      imageList = [{ url: `/uploads/${req.file.filename}`, alt: name || '' }];
+      imageList = [{ url: getUploadedFileUrl(req.file), alt: name || '' }];
     } else if (req.body.images !== undefined) {
       const raw = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
       imageList = raw.map(u => (typeof u === 'string' ? { url: u, alt: name || '' } : u));

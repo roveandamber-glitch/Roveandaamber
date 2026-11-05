@@ -7,6 +7,7 @@ import { ReviewModel, Review } from '../../models/reviewModel.js';
 import { Category } from '../../models/categoryModel.js';
 import { UserModel, User } from '../../models/userModel.js';
 import { emailService } from '../../services/emailService.js';
+import { getUploadedFileUrl } from '../../middlewares/uploadMiddleware.js';
 
 // Format product for consistent output
 const formatProduct = (p) => {
@@ -529,9 +530,9 @@ export const createAdminProduct = async (req, res) => {
     // Media processing: handle uploaded files or direct URLs
     let imageList = [];
     if (req.files && req.files.length > 0) {
-      imageList = req.files.map(f => ({ url: `/uploads/${f.filename}`, alt: name }));
+      imageList = req.files.map(f => ({ url: getUploadedFileUrl(f), alt: name }));
     } else if (req.file) {
-      imageList = [{ url: `/uploads/${req.file.filename}`, alt: name }];
+      imageList = [{ url: getUploadedFileUrl(req.file), alt: name }];
     } else if (req.body.images) {
       const raw = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
       imageList = raw.map(u => (typeof u === 'string' ? { url: u, alt: name } : u));
@@ -639,9 +640,9 @@ export const updateAdminProduct = async (req, res) => {
 
     let imageList;
     if (req.files && req.files.length > 0) {
-      imageList = req.files.map(f => ({ url: `/uploads/${f.filename}`, alt: name || '' }));
+      imageList = req.files.map(f => ({ url: getUploadedFileUrl(f), alt: name || '' }));
     } else if (req.file) {
-      imageList = [{ url: `/uploads/${req.file.filename}`, alt: name || '' }];
+      imageList = [{ url: getUploadedFileUrl(req.file), alt: name || '' }];
     } else if (req.body.images !== undefined) {
       const raw = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
       imageList = raw.map(u => (typeof u === 'string' ? { url: u, alt: name || '' } : u));
@@ -828,12 +829,12 @@ export const createAdminBanner = async (req, res) => {
     let bannerMobileImageUrl = mobileImage || '';
 
     if (req.files && req.files.length > 0) {
-      bannerImageUrl = `/uploads/${req.files[0].filename}`;
+      bannerImageUrl = getUploadedFileUrl(req.files[0]);
       if (req.files[1]) {
-        bannerMobileImageUrl = `/uploads/${req.files[1].filename}`;
+        bannerMobileImageUrl = getUploadedFileUrl(req.files[1]);
       }
     } else if (req.file) {
-      bannerImageUrl = `/uploads/${req.file.filename}`;
+      bannerImageUrl = getUploadedFileUrl(req.file);
     }
 
     if (!bannerImageUrl) {
@@ -849,8 +850,8 @@ export const createAdminBanner = async (req, res) => {
       mobileImage: bannerMobileImageUrl,
       linkUrl: linkUrl || '/shop',
       buttonText: buttonText || 'EXPLORE COLLECTION',
-      secondaryButtonText: secondaryButtonText || 'Explore Collection',
-      secondaryButtonLink: secondaryButtonLink || '/collections',
+      secondaryButtonText: secondaryButtonText || 'About Us',
+      secondaryButtonLink: secondaryButtonLink || '/about',
       titlePart1: titlePart1 || '',
       titlePart2: titlePart2 || '',
       isActive: isActive === undefined ? true : (isActive === 'true' || isActive === true),
@@ -913,12 +914,12 @@ export const updateAdminBanner = async (req, res) => {
     if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
 
     if (req.files && req.files.length > 0) {
-      updateData.image = `/uploads/${req.files[0].filename}`;
+      updateData.image = getUploadedFileUrl(req.files[0]);
       if (req.files[1]) {
-        updateData.mobileImage = `/uploads/${req.files[1].filename}`;
+        updateData.mobileImage = getUploadedFileUrl(req.files[1]);
       }
     } else if (req.file) {
-      updateData.image = `/uploads/${req.file.filename}`;
+      updateData.image = getUploadedFileUrl(req.file);
     } else {
       if (image !== undefined) updateData.image = image;
       if (mobileImage !== undefined) updateData.mobileImage = mobileImage;

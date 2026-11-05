@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { message } from 'antd';
-import { Heart, Star, ShoppingBag } from 'lucide-react';
+import { Heart, Star, ShoppingBag, Sparkles } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageHelper';
 import { cartService } from '../../services/cartService';
 import authService from '../../services/authService';
@@ -13,6 +13,7 @@ const ProductCard = ({ product, onQuickView }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const productId = product ? (product._id || product.id) : null;
 
@@ -71,10 +72,10 @@ const ProductCard = ({ product, onQuickView }) => {
   const displayCategory = product.category_name || product.category || 'Eau de Parfum';
 
   const images = product.images && product.images.length > 0 
-    ? product.images.map(img => getImageUrl(img.url || img))
-    : [getImageUrl(product.image || '/images/perfumes/amber_oud_perfume.jpg')];
+    ? product.images.map(img => getImageUrl(img.url || img)).filter(u => Boolean(u) && !u.includes('no-image'))
+    : (product.image ? [getImageUrl(product.image)] : []);
 
-  const imageUrl = images[0] || '/images/perfumes/amber_oud_perfume.jpg';
+  const imageUrl = images[0] || null;
 
   const toggleWishlist = (e) => {
     e.preventDefault();
@@ -110,7 +111,7 @@ const ProductCard = ({ product, onQuickView }) => {
       message.info('Please sign in to add fragrances to your shopping bag.');
       router.push('/login?redirect=/cart');
       return;
-    };
+    }
 
     setIsAdding(true);
     try {
@@ -175,14 +176,26 @@ const ProductCard = ({ product, onQuickView }) => {
       >
         {/* Product Image Container */}
         <div className="relative w-full aspect-square bg-[#FAF9F7] flex items-center justify-center p-3 sm:p-6 overflow-hidden transition-all duration-300 group-hover:bg-[#F5F2EB] rounded-xs">
-          <img 
-            src={imageUrl} 
-            alt={displayName} 
-            className="w-full h-full object-contain object-center drop-shadow-md transition-transform duration-500 ease-out group-hover:scale-105"
-            onError={(e) => {
-              e.target.src = '/images/perfumes/amber_oud_perfume.jpg';
-            }}
-          />
+          {!imageError && imageUrl ? (
+            <img 
+              src={imageUrl} 
+              alt={displayName} 
+              className="w-full h-full object-contain object-center drop-shadow-md transition-transform duration-500 ease-out group-hover:scale-105"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-gradient-to-b from-[#FAF8F5] via-[#FFFDF9] to-[#F5ECE0] select-none">
+              <div className="w-12 h-12 rounded-xl bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center mb-2 shadow-2xs">
+                <Sparkles size={18} strokeWidth={1.5} className="text-[#B8860B]" />
+              </div>
+              <span className="text-[8px] uppercase font-bold tracking-[0.2em] text-[#8C6D1F]">
+                ROVE & AMBER
+              </span>
+              <span className="font-serif text-xs text-black font-normal mt-0.5 line-clamp-1">
+                {displayName}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Product Metadata */}

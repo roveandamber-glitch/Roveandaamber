@@ -1,4 +1,5 @@
 import { CategoryModel } from '../../models/categoryModel.js';
+import { getUploadedFileUrl } from '../../middlewares/uploadMiddleware.js';
 
 export const getCategories = async (req, res) => {
   try {
@@ -51,7 +52,7 @@ export const createCategory = async (req, res) => {
     let imagePath = '';
     const uploadedFile = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
     if (uploadedFile) {
-      imagePath = `/uploads/${uploadedFile.filename}`;
+      imagePath = getUploadedFileUrl(uploadedFile);
     } else if (image) {
       imagePath = image;
     }
@@ -92,7 +93,7 @@ export const updateCategory = async (req, res) => {
     let imagePath;
     const uploadedFile = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
     if (uploadedFile) {
-      imagePath = `/uploads/${uploadedFile.filename}`;
+      imagePath = getUploadedFileUrl(uploadedFile);
     } else if (image !== undefined) {
       imagePath = image;
     }
@@ -135,7 +136,7 @@ export const uploadCategoryImage = async (req, res) => {
     if (!uploadedFile) {
       return res.status(400).json({ success: false, message: 'No image file uploaded.' });
     }
-    const fileUrl = `/uploads/${uploadedFile.filename}`;
+    const fileUrl = getUploadedFileUrl(uploadedFile);
     return res.json({
       success: true,
       message: 'Image uploaded successfully.',

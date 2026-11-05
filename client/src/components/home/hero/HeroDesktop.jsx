@@ -67,18 +67,18 @@ export default function HeroDesktop({
               onClick={onShopNow}
               className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#F6D389] via-[#DEB368] to-[#C09048] text-[#241306] text-sm font-semibold tracking-wider shadow-xl shadow-amber-950/40 hover:brightness-110 active:scale-95 transition-all shrink-0 whitespace-nowrap group"
             >
-              <span>{current.primaryCta?.text || 'Shop Now'}</span>
+              <span>{current.primaryCta?.text || 'Explore Collections'}</span>
               <span className="w-5 h-5 rounded-full bg-[#241306]/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
                 <ArrowRight size={12} strokeWidth={2.5} />
               </span>
             </Link>
 
             <Link
-              href={current.secondaryCta?.href || "/shop?category=Oud"}
+              href={current.secondaryCta?.href || "/about"}
               onClick={onExplore}
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-black/30 hover:bg-black/45 backdrop-blur-md border border-white/30 text-white text-sm font-medium tracking-wider shadow-sm hover:border-white/50 transition-all shrink-0 whitespace-nowrap active:scale-95"
             >
-              <span>{current.secondaryCta?.text || 'Explore Collection'}</span>
+              <span>{current.secondaryCta?.text || 'About Us'}</span>
             </Link>
           </div>
         </div>
@@ -108,4 +108,3 @@ export default function HeroDesktop({
     </section>
   );
 }
-
