@@ -4,8 +4,7 @@ import {
   Calendar as CalendarIcon, 
   ChevronLeft, 
   ChevronRight, 
-  X,
-  Clock
+  X
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -61,7 +60,6 @@ export default function CustomDatePicker({
   disabled = false,
   disablePast = false,
   className = '',
-  showPresets = true,
   placement = 'auto', // 'auto' | 'top' | 'bottom'
   id
 }) {
@@ -194,29 +192,6 @@ export default function CustomDatePicker({
     if (onChange) {
       onChange('');
     }
-  };
-
-  const handlePreset = (type) => {
-    const now = new Date();
-    let target = new Date();
-
-    if (type === 'today') {
-      target = now;
-    } else if (type === '1month') {
-      target = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-    } else if (type === '3months') {
-      target = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
-    } else if (type === 'endOfYear') {
-      target = new Date(now.getFullYear(), 11, 31);
-    }
-
-    const iso = formatDateToISO(target);
-    if (onChange) {
-      onChange(iso);
-    }
-    setViewYear(target.getFullYear());
-    setViewMonth(target.getMonth());
-    setIsOpen(false);
   };
 
   // Build Calendar grid
@@ -437,59 +412,19 @@ export default function CustomDatePicker({
             })}
           </div>
 
-          {/* Quick Presets Bar */}
-          {showPresets && (
-            <div className="mt-3 pt-3 border-t border-[#F0EAE1]">
-              <div className="text-[10px] font-medium text-gray-400 mb-1.5 flex items-center gap-1">
-                <Clock size={11} className="text-[#B8860B]" />
-                <span>Quick Selection</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => handlePreset('today')}
-                  className="px-2 py-1 text-[11px] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-gray-700 hover:text-[#B8860B] rounded-lg border border-[#E8DFC8] font-medium transition-colors"
-                >
-                  Today
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePreset('1month')}
-                  className="px-2 py-1 text-[11px] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-gray-700 hover:text-[#B8860B] rounded-lg border border-[#E8DFC8] font-medium transition-colors"
-                >
-                  +1 Month
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePreset('3months')}
-                  className="px-2 py-1 text-[11px] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-gray-700 hover:text-[#B8860B] rounded-lg border border-[#E8DFC8] font-medium transition-colors"
-                >
-                  +3 Months
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePreset('endOfYear')}
-                  className="px-2 py-1 text-[11px] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-gray-700 hover:text-[#B8860B] rounded-lg border border-[#E8DFC8] font-medium transition-colors"
-                >
-                  End of Year
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Footer Buttons */}
           <div className="mt-3 pt-2.5 border-t border-[#F0EAE1] flex items-center justify-between text-xs">
             <button
               type="button"
               onClick={handleClear}
-              className="text-[11px] text-gray-500 hover:text-rose-600 transition-colors"
+              className="text-[11px] text-gray-500 hover:text-rose-600 transition-colors cursor-pointer"
             >
               Reset
             </button>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="px-3 py-1 bg-[#18110D] hover:bg-[#2D231C] text-white rounded-lg text-[11px] font-medium transition-colors"
+              className="px-3 py-1 bg-[#18110D] hover:bg-[#2D231C] text-white rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
             >
               Done
             </button>

@@ -113,7 +113,7 @@ const adminService = {
         };
       }
     } catch (err) {
-      console.error('Error fetching admin products:', err);
+      console.warn('Admin products fetch issue (unauthorized or network):', err.message);
     }
     return {
       success: true,
@@ -420,12 +420,68 @@ const adminService = {
   getReports: async (range = '30d') => {
     try {
       const response = await api.get('/admin/reports/monthly', { params: { range } });
-      if (response?.data?.success) {
-        return response.data;
+      if (response?.data?.success && response.data.data) {
+        const raw = response.data.data;
+        const timeline = raw.timeline || [];
+        const financials = raw.financials || {};
+        const orderStats = raw.orderStats || {};
+
+        let chart = timeline.map((t) => ({
+          day: t.date ? new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : `Day ${t.day}`,
+          date: t.date,
+          sales: Number(t.netSales || t.grossSales || 0),
+          orders: Number(t.ordersCount || 0)
+        }));
+
+        // If the monthly timeline has zero recorded sales, merge with live dashboard chart
+        const totalSalesInTimeline = chart.reduce((acc, c) => acc + c.sales, 0);
+        if (totalSalesInTimeline === 0) {
+          try {
+            const dash = await api.get('/admin/stats');
+            if (dash?.data?.success && dash.data.data?.salesChart?.length > 0) {
+              chart = dash.data.data.salesChart;
+            }
+          } catch (e) {}
+        }
+
+        const totalRev = Number(financials.netSales || financials.grossSales || 0);
+        const totalOrd = Number(orderStats.totalOrders || 0);
+
+        return {
+          success: true,
+          data: {
+            totalRevenue: totalRev,
+            totalOrders: totalOrd,
+            aov: Number(financials.averageOrderValue || (totalOrd > 0 ? Math.round(totalRev / totalOrd) : 0)),
+            chart,
+            topProducts: raw.topProducts || []
+          }
+        };
       }
     } catch (err) {
-      console.error('Error fetching admin reports:', err);
+      console.warn('Backend /admin/reports/monthly notice:', err?.response?.data?.message || err.message);
     }
+
+    // Fallback using live dashboard stats
+    try {
+      const dash = await api.get('/admin/stats');
+      if (dash?.data?.success && dash.data.data) {
+        const st = dash.data.data.stats || {};
+        const totalRev = st.totalRevenue || 0;
+        const totalOrd = st.totalOrders || 0;
+        return {
+          success: true,
+          data: {
+            totalRevenue: totalRev,
+            totalOrders: totalOrd,
+            aov: totalOrd > 0 ? Math.round(totalRev / totalOrd) : 0,
+            chart: dash.data.data.salesChart || [],
+            topProducts: dash.data.data.topProducts || []
+          }
+        };
+      }
+    } catch (e) {}
+
     return {
       success: true,
       data: {
@@ -436,6 +492,29 @@ const adminService = {
         topProducts: []
       }
     };
+  },
+
+  downloadReportPDF: async (params = {}) => {
+    try {
+      const response = await api.get('/admin/reports/export/pdf', {
+        params,
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      link.setAttribute('download', `Rove_Amber_Financial_Report_${dateStr}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return true;
+    } catch (err) {
+      console.error('Failed to download PDF report:', err);
+      throw err;
+    }
   },
 
   /* --------------------------------------------------------------------------

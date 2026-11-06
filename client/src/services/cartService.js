@@ -15,7 +15,7 @@ import authService from './authService';
 let inMemoryCart = [];
 let inMemorySummary = null;
 let hasInitialFetch = false;
-let isFetching = false;
+let activeFetchPromise = null;
 
 // Format backend item to standard client representation
 const formatItem = (item) => {
@@ -85,32 +85,44 @@ export const cartService = {
       inMemoryCart = [];
       inMemorySummary = null;
       hasInitialFetch = true;
+      activeFetchPromise = null;
       window.dispatchEvent(new Event('cartChange'));
       return [];
     }
-    if (isFetching) return inMemoryCart;
-    isFetching = true;
-
-    try {
-      const res = await api.get('/cart');
-      if (res?.data?.success && res.data.data) {
-        const cartData = res.data.data;
-        inMemorySummary = cartData;
-        const rawItems = cartData.items || [];
-        inMemoryCart = rawItems.map(formatItem).filter(Boolean);
-        hasInitialFetch = true;
-
-        window.dispatchEvent(new Event('cartChange'));
-        return inMemoryCart;
-      }
-    } catch (err) {
-      console.warn('Backend /api/cart fetch notice:', err?.response?.data?.message || err.message);
-    } finally {
-      isFetching = false;
+    if (activeFetchPromise) {
+      return activeFetchPromise;
     }
 
-    return inMemoryCart;
+    activeFetchPromise = (async () => {
+      try {
+        const res = await api.get('/cart');
+        if (res?.data?.success && res.data.data) {
+          const cartData = res.data.data;
+          inMemorySummary = cartData;
+          const rawItems = cartData.items || [];
+          inMemoryCart = rawItems.map(formatItem).filter(Boolean);
+          hasInitialFetch = true;
+
+          window.dispatchEvent(new Event('cartChange'));
+          return inMemoryCart;
+        }
+      } catch (err) {
+        console.warn('Backend /api/cart fetch notice:', err?.response?.data?.message || err.message);
+      } finally {
+        hasInitialFetch = true;
+        activeFetchPromise = null;
+      }
+
+      return inMemoryCart;
+    })();
+
+    return activeFetchPromise;
   },
+
+  /**
+   * Status indicator whether authoritative backend fetch has settled
+   */
+  hasInitialFetch: () => hasInitialFetch,
 
   /**
    * Synchronous accessor for fast React rendering
@@ -120,7 +132,7 @@ export const cartService = {
     if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
       return [];
     }
-    if (typeof window !== 'undefined' && !hasInitialFetch && !isFetching) {
+    if (typeof window !== 'undefined' && !hasInitialFetch && !activeFetchPromise) {
       cartService.fetchCart();
     }
     return [...inMemoryCart];
@@ -133,7 +145,7 @@ export const cartService = {
     if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
       return false;
     }
-    if (typeof window !== 'undefined' && !hasInitialFetch && !isFetching) {
+    if (typeof window !== 'undefined' && !hasInitialFetch && !activeFetchPromise) {
       cartService.fetchCart();
     }
     if (!productIdOrId) return false;
@@ -358,7 +370,7 @@ export const cartService = {
     if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
       return 0;
     }
-    if (typeof window !== 'undefined' && !hasInitialFetch && !isFetching) {
+    if (typeof window !== 'undefined' && !hasInitialFetch && !activeFetchPromise) {
       cartService.fetchCart();
     }
     return inMemoryCart.reduce((acc, item) => acc + (parseInt(item.quantity, 10) || 1), 0);

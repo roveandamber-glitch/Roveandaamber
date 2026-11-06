@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Form, Input, message } from 'antd';
 import { 
   Mail, 
@@ -32,16 +32,24 @@ export default function AdminLoginPage() {
     };
   }, []);
 
-  // Redirect if already authenticated as admin
+  const searchParams = useSearchParams();
+
+  // Redirect if already authenticated as admin, or clear if session expired
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      if (searchParams?.get('reason') === 'expired' || searchParams?.get('reason') === 'unauthorized') {
+        authService.clearAdminSession();
+        setErrorMessage('Your administrator session has expired. Please sign in again.');
+        return;
+      }
+
       const user = authService.getAdminUser ? authService.getAdminUser() : authService.getUser();
       const token = authService.getAdminToken ? authService.getAdminToken() : authService.getToken();
       if (user && user.role === 'admin' && token) {
         router.replace('/admin');
       }
     }
-  }, [router]);
+  }, [router, searchParams]);
 
   const handleEmailChange = (e) => {
     const val = e.target.value;

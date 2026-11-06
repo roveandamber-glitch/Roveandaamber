@@ -413,6 +413,8 @@ export default function AdminOrdersPage() {
     ? 'Dispatch' 
     : (selectedOrder?.status || 'Pending');
 
+  const isDispatchedOrDelivered = currentDisplayStatus === 'Dispatch' || currentDisplayStatus === 'Delivered';
+
   return (
     <div className="space-y-6 text-[#1B100A]">
       {/* Header */}
@@ -522,7 +524,6 @@ export default function AdminOrdersPage() {
               value={dateFilter}
               onChange={setDateFilter}
               placeholder="Filter by Order Date"
-              showPresets={true}
             />
           </div>
 
@@ -632,112 +633,130 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              {/* Courier & Tracking Inputs */}
-              <div className="pt-3 border-t border-[#EAE3D6] space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-gray-800 flex items-center gap-1.5">
-                    <Truck size={13} className="text-[#B8860B]" />
-                    <span>Delhivery Courier & AWB Tracking Details</span>
-                  </span>
-                  <a 
-                    href="https://www.delhivery.com/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-[#B8860B] hover:text-[#7A5807] font-semibold flex items-center gap-1 hover:underline"
-                  >
-                    <span>delhivery.com</span>
-                    <ExternalLink size={10} />
-                  </a>
-                </div>
-
-                <div className="bg-[#FAF5ED] border border-[#ECDCC4] p-2.5 rounded-xl text-xs space-y-1">
-                  <div className="flex items-center justify-between font-semibold text-[#8C6228]">
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles size={12} className="text-[#B8860B]" />
-                      <span>Patron Notification & Delhivery Portal</span>
+              {/* Courier & Tracking Inputs - Only shown/enabled when Dispatch or Delivered status is active */}
+              {isDispatchedOrDelivered ? (
+                <div className="pt-3 border-t border-[#EAE3D6] space-y-2.5 animate-fadeIn">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-gray-800 flex items-center gap-1.5">
+                      <Truck size={13} className="text-[#B8860B]" />
+                      <span>Delhivery Courier & AWB Tracking Details</span>
                     </span>
+                    <a 
+                      href="https://www.delhivery.com/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-[#B8860B] hover:text-[#7A5807] font-semibold flex items-center gap-1 hover:underline"
+                    >
+                      <span>delhivery.com</span>
+                      <ExternalLink size={10} />
+                    </a>
                   </div>
-                  <p className="text-[11px] text-gray-600 leading-relaxed">
-                    When status changes or tracking is saved, the patron receives an email containing this Track ID and direct link to{' '}
-                    <a href="https://www.delhivery.com/" target="_blank" rel="noopener noreferrer" className="text-[#8C6228] font-bold underline">
-                      https://www.delhivery.com/
-                    </a>{' '}
-                    to track their order live.
-                  </p>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-[#FAF5ED] border border-[#ECDCC4] p-2.5 rounded-xl text-xs space-y-1">
+                    <div className="flex items-center justify-between font-semibold text-[#8C6228]">
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles size={12} className="text-[#B8860B]" />
+                        <span>Patron Notification & Delhivery Portal</span>
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-600 leading-relaxed">
+                      When status changes or tracking is saved, the patron receives an email containing this Track ID and direct link to{' '}
+                      <a href="https://www.delhivery.com/" target="_blank" rel="noopener noreferrer" className="text-[#8C6228] font-bold underline">
+                        https://www.delhivery.com/
+                      </a>{' '}
+                      to track their order live.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Courier Partner</label>
+                      <Input
+                        value={courierInput}
+                        onChange={(e) => setCourierInput(e.target.value)}
+                        placeholder="Delhivery"
+                        className="rounded-lg text-xs font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <label className="text-[10px] text-gray-700 font-bold block">
+                          Delhivery Track ID / AWB #
+                        </label>
+                        {trackingNumberInput && (
+                          <a 
+                            href="https://www.delhivery.com/" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[9px] text-[#B8860B] hover:underline flex items-center gap-0.5 font-medium"
+                          >
+                            <span>delhivery.com</span>
+                            <ExternalLink size={9} />
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex gap-1.5">
+                        <Input
+                          value={trackingNumberInput}
+                          onChange={(e) => setTrackingNumberInput(e.target.value)}
+                          placeholder="e.g. 128492019482"
+                          className="rounded-lg text-xs font-mono font-bold border-[#C49A45] focus:border-[#8C6228]"
+                        />
+                        {trackingNumberInput && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(trackingNumberInput.trim());
+                              message.success('Delhivery Track ID copied to clipboard');
+                            }}
+                            title="Copy Delhivery Track ID"
+                            className="px-2.5 py-1.5 rounded-lg bg-[#FAF6ED] hover:bg-[#F0E6D2] border border-[#E0D0A5] text-[#8C6D1F] transition-colors cursor-pointer flex items-center justify-center shrink-0"
+                          >
+                            <Copy size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Courier Partner</label>
-                    <Input
-                      value={courierInput}
-                      onChange={(e) => setCourierInput(e.target.value)}
-                      placeholder="Delhivery"
-                      className="rounded-lg text-xs font-semibold"
+                    <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Estimated Delivery Date</label>
+                    <CustomDatePicker
+                      value={estimatedDeliveryInput}
+                      onChange={setEstimatedDeliveryInput}
+                      placeholder="Select delivery date"
+                      disablePast={true}
                     />
                   </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <label className="text-[10px] text-gray-700 font-bold block">
-                        Delhivery Track ID / AWB #
-                      </label>
-                      {trackingNumberInput && (
-                        <a 
-                          href="https://www.delhivery.com/" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-[9px] text-[#B8860B] hover:underline flex items-center gap-0.5 font-medium"
-                        >
-                          <span>delhivery.com</span>
-                          <ExternalLink size={9} />
-                        </a>
-                      )}
+
+                  <button
+                    type="button"
+                    onClick={handleSaveTrackingDetails}
+                    disabled={updatingStatus}
+                    className="w-full mt-1 bg-[#18110D] hover:bg-black text-[#ECC880] py-2.5 rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <CheckCircle2 size={13} className="text-[#DEB368]" />
+                    <span>Save Tracking & Notify Patron via Email</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="pt-3 border-t border-[#EAE3D6]">
+                  <div className="p-3 rounded-xl bg-[#FAF9F7] border border-dashed border-[#E0D8CA] flex items-center justify-between text-xs text-stone-500">
+                    <div className="flex items-center gap-2">
+                      <Truck size={14} className="text-stone-400 shrink-0" />
+                      <span>Delhivery Track ID section is enabled when order status is set to <strong>Dispatch</strong>.</span>
                     </div>
-                    <div className="flex gap-1.5">
-                      <Input
-                        value={trackingNumberInput}
-                        onChange={(e) => setTrackingNumberInput(e.target.value)}
-                        placeholder="e.g. 128492019482"
-                        className="rounded-lg text-xs font-mono font-bold border-[#C49A45] focus:border-[#8C6228]"
-                      />
-                      {trackingNumberInput && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard?.writeText(trackingNumberInput.trim());
-                            message.success('Delhivery Track ID copied to clipboard');
-                          }}
-                          title="Copy Delhivery Track ID"
-                          className="px-2.5 py-1.5 rounded-lg bg-[#FAF6ED] hover:bg-[#F0E6D2] border border-[#E0D0A5] text-[#8C6D1F] transition-colors cursor-pointer flex items-center justify-center shrink-0"
-                        >
-                          <Copy size={13} />
-                        </button>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange('Dispatch')}
+                      disabled={updatingStatus}
+                      className="px-2.5 py-1 rounded-lg bg-[#FAF3E0] hover:bg-[#F3E7C4] text-[#8C6D1F] border border-[#E0D0A5] text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer shrink-0"
+                    >
+                      Set to Dispatch
+                    </button>
                   </div>
                 </div>
-
-                <div>
-                  <label className="text-[10px] text-gray-500 font-medium block mb-0.5">Estimated Delivery Date</label>
-                  <CustomDatePicker
-                    value={estimatedDeliveryInput}
-                    onChange={setEstimatedDeliveryInput}
-                    placeholder="Select delivery date"
-                    disablePast={true}
-                    showPresets={true}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleSaveTrackingDetails}
-                  disabled={updatingStatus}
-                  className="w-full mt-1 bg-[#18110D] hover:bg-black text-[#ECC880] py-2.5 rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  <CheckCircle2 size={13} className="text-[#DEB368]" />
-                  <span>Save Tracking & Notify Patron via Email</span>
-                </button>
-              </div>
+              )}
             </div>
 
             {/* 2. Customer Information Card */}
@@ -777,20 +796,79 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
 
-                {/* Gift Recipient if applicable */}
-                {selectedOrder.isGift && selectedOrder.giftRecipient?.name && (
-                  <div className="p-3 bg-[#FFFBF0] rounded-xl border border-[#F3E7C4] space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-[#B8860B] flex items-center gap-1">
-                      <Gift size={11} />
-                      <span>Gift Recipient</span>
-                    </span>
-                    <p className="font-semibold text-gray-900 text-xs">{selectedOrder.giftRecipient.name} ({selectedOrder.giftRecipient.phone})</p>
-                    <p className="text-[11px] text-gray-600">{selectedOrder.giftRecipient.address}</p>
-                    {selectedOrder.giftMessage && (
-                      <p className="text-[11px] italic font-serif text-gray-800 pt-1 border-t border-[#F3E7C4]">
-                        &ldquo;{selectedOrder.giftMessage}&rdquo;
-                      </p>
-                    )}
+                {/* Comprehensive Atelier Gift Presentation Details */}
+                {(selectedOrder.isGift || selectedOrder.giftRecipient?.name || selectedOrder.giftMessage) && (
+                  <div className="p-4 bg-gradient-to-br from-[#FFFDF9] to-[#FAF5EB] rounded-2xl border border-[#EADBBD] space-y-3 shadow-2xs">
+                    
+                    {/* Header with Title & Badges */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#EADBBD]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-[#FAF0D7] text-[#B8860B] flex items-center justify-center border border-[#E0D0A5]">
+                          <Gift size={13} />
+                        </div>
+                        <span className="text-xs font-serif font-bold text-[#1C120C] uppercase tracking-wider">
+                          Atelier Gift Presentation Details
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {selectedOrder.occasion && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-[#FAF0D7] text-[#8C6D1F] border border-[#E0D0A5]">
+                            Occasion: {selectedOrder.occasion}
+                          </span>
+                        )}
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {selectedOrder.giftWrap !== false ? 'Signature Box & Ribbon Sealed' : 'Complimentary Gift Card'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Recipient Profile & Contact */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">
+                          Gift Recipient
+                        </span>
+                        <p className="font-semibold text-gray-900 text-xs">
+                          {selectedOrder.giftRecipient?.name || selectedOrder.customer?.name || selectedOrder.customerName || 'Valued Recipient'}
+                        </p>
+                        <p className="text-gray-500 text-[11px] font-mono mt-0.5">
+                          {selectedOrder.giftRecipient?.phone || selectedOrder.customer?.phone || selectedOrder.phone || 'Contact not provided'}
+                        </p>
+                        {selectedOrder.giftRecipient?.email && (
+                          <p className="text-gray-500 text-[11px] truncate">
+                            {selectedOrder.giftRecipient.email}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">
+                          Gift Dispatch Address
+                        </span>
+                        <p className="text-gray-700 text-xs leading-relaxed">
+                          {selectedOrder.giftRecipient?.address 
+                            ? `${selectedOrder.giftRecipient.address}${selectedOrder.giftRecipient.city ? `, ${selectedOrder.giftRecipient.city}` : ''}${selectedOrder.giftRecipient.postalCode ? ` - ${selectedOrder.giftRecipient.postalCode}` : ''}`
+                            : (selectedOrder.address || (typeof selectedOrder.shippingAddress === 'string' ? selectedOrder.shippingAddress : (selectedOrder.shippingAddress?.addressLine1 ? `${selectedOrder.shippingAddress.addressLine1}, ${selectedOrder.shippingAddress.city || ''} ${selectedOrder.shippingAddress.postalCode ? `- ${selectedOrder.shippingAddress.postalCode}` : ''}` : 'Dispatch to Primary Order Address')))}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Handwritten Calligraphy Card Note */}
+                    <div className="pt-2 border-t border-[#EADBBD]/70">
+                      <span className="text-[10px] uppercase font-bold text-[#8C6D1F] block mb-1">
+                        Handwritten Gift Card Message
+                      </span>
+                      {selectedOrder.giftMessage ? (
+                        <div className="p-3 bg-white/90 rounded-xl border border-[#EADBBD] text-xs font-serif italic text-[#2D2118] leading-relaxed shadow-2xs">
+                          &ldquo;{selectedOrder.giftMessage}&rdquo;
+                        </div>
+                      ) : (
+                        <div className="p-2.5 bg-white/60 rounded-xl border border-[#EADBBD] text-[11px] font-serif text-gray-500 italic">
+                          Complimentary Blank Atelier Gift Card Included (Prepared for handwritten message).
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -799,7 +877,7 @@ export default function AdminOrdersPage() {
             {/* 3. Ordered Perfumes List */}
             <div className="space-y-3">
               <h4 className="font-serif font-bold text-sm text-[#1A1A1A] flex items-center justify-between">
-                <span>Ordered Flacons & Coffrets</span>
+                <span>Ordered Products & Discovery Sets</span>
                 <span className="text-xs font-mono font-normal text-gray-500">
                   {selectedOrder.items?.length || 1} Item(s)
                 </span>

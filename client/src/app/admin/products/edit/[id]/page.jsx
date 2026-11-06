@@ -191,6 +191,8 @@ const EditProduct = () => {
       fileList.forEach((file) => {
         if (file.originFileObj) {
           formData.append('images', file.originFileObj);
+        } else if (file.url && !file.url.includes('no-image.jpg')) {
+          formData.append('existingImages', file.url);
         }
       });
 

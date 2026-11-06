@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { message } from 'antd';
 
 // Resolve API URL strictly from environment variable NEXT_PUBLIC_API_URL
 const resolveApiUrl = () => {
@@ -50,7 +51,9 @@ api.interceptors.request.use((config) => {
           if (adminUserObj?.role === 'admin') {
             token = localStorage.getItem('token') || localStorage.getItem('userToken');
           }
-        } catch (e) {}
+        } catch (e) {
+          /* ignore */
+        }
       }
     } else {
       // Storefront customer requests should only use customer userToken
@@ -64,7 +67,9 @@ api.interceptors.request.use((config) => {
             if (u?.role !== 'admin') {
               token = legacyToken;
             }
-          } catch (e) {}
+          } catch (e) {
+            /* ignore */
+          }
         }
       }
     }
@@ -89,23 +94,92 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor to handle admin authorization failures
+// Flight lock to ensure single toast & single redirect on batch 401s
+let isAuthRedirecting = false;
+
+// Response interceptor to handle authentication and authorization failures (401 / 403)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (typeof window !== 'undefined') {
-      const isAuthError = error.response?.status === 401 || error.response?.status === 403;
-      const inAdminPage = (window.location.pathname.startsWith('/admin') || window.location.hostname.startsWith('admin.')) 
-        && window.location.pathname !== '/admin/login' 
-        && window.location.pathname !== '/login';
+      const status = error.response?.status;
+      const isAuthError = status === 401 || status === 403;
 
-      if (isAuthError && inAdminPage) {
-        console.warn('Admin authorization expired or invalid. Redirecting to admin authentication portal.');
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminKey');
-        localStorage.removeItem('adminUser');
-        const loginPath = window.location.hostname.startsWith('admin.') ? '/login?reason=unauthorized' : '/admin/login?reason=unauthorized';
-        window.location.href = loginPath;
+      if (isAuthError) {
+        const pathname = window.location.pathname;
+        const hostname = window.location.hostname;
+        const inAdminPage = (pathname.startsWith('/admin') || hostname.startsWith('admin.')) 
+          && pathname !== '/admin/login' 
+          && pathname !== '/login';
+
+        if (inAdminPage) {
+          // --- 1. ADMIN AUTHORIZATION EXPIRY ---
+          console.warn('Admin authorization expired or invalid. Purging admin credentials.');
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('adminKey');
+          localStorage.removeItem('adminUser');
+          window.dispatchEvent(new Event('authChange'));
+
+          if (!isAuthRedirecting && pathname !== '/admin/login' && pathname !== '/login') {
+            isAuthRedirecting = true;
+            try {
+              message.destroy();
+              message.warning({
+                content: 'Admin session expired. Redirecting to admin sign in...',
+                key: 'auth_expired_notice',
+                duration: 2.5
+              });
+            } catch (e) {}
+
+            const loginPath = hostname.startsWith('admin.') 
+              ? `/login?reason=expired&redirect=${encodeURIComponent(pathname + window.location.search)}`
+              : `/admin/login?reason=expired&redirect=${encodeURIComponent(pathname + window.location.search)}`;
+
+            setTimeout(() => {
+              window.location.href = loginPath;
+            }, 400);
+          }
+        } else {
+          // --- 2. STOREFRONT CUSTOMER AUTHORIZATION EXPIRY ---
+          console.warn('Customer session expired or invalid. Purging tokens.');
+          localStorage.removeItem('userToken');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.dispatchEvent(new Event('authChange'));
+
+          if (!isAuthRedirecting) {
+            isAuthRedirecting = true;
+            try {
+              message.destroy();
+              message.warning({
+                content: 'Your session has expired. Redirecting to sign in...',
+                key: 'auth_expired_notice',
+                duration: 2.5
+              });
+            } catch (e) {}
+
+            const isProtectedCustomerRoute = 
+              pathname.startsWith('/cart') ||
+              pathname.startsWith('/checkout') ||
+              pathname.startsWith('/profile') ||
+              pathname.startsWith('/orders') ||
+              pathname.startsWith('/account');
+
+            if (isProtectedCustomerRoute && pathname !== '/login' && pathname !== '/register') {
+              const redirectUrl = `/login?reason=expired&redirect=${encodeURIComponent(pathname + window.location.search)}`;
+              setTimeout(() => {
+                window.location.href = redirectUrl;
+              }, 400);
+            } else {
+              setTimeout(() => {
+                isAuthRedirecting = false;
+              }, 2000);
+            }
+          }
+        }
+
+        // Attach flag so downstream callers can optionally suppress redundant individual toasts
+        error.isHandledAuth = true;
       }
     }
     return Promise.reject(error);

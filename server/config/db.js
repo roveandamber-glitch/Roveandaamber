@@ -7,10 +7,15 @@ dotenv.config();
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Roveandamber';
 const LOCAL_MONGODB_URI = process.env.LOCAL_MONGODB_URI || 'mongodb://127.0.0.1:27017/Roveandamber';
 
-// Set mongoose connection options
+// Resilient Mongoose connection options for MongoDB Atlas
 const mongooseOptions = {
-  serverSelectionTimeoutMS: 5000,
-  maxPoolSize: 20,
+  serverSelectionTimeoutMS: 15000, // 15s to allow cloud DNS SRV lookup and TLS handshake
+  connectTimeoutMS: 20000,
+  socketTimeoutMS: 45000,
+  maxPoolSize: 25,
+  minPoolSize: 2, // Keep connections warm so Atlas doesn't drop idle pool
+  heartbeatFrequencyMS: 10000, // Regular heartbeats prevent socket idling
+  family: 4, // Force IPv4 to prevent IPv6 DNS routing stalls
   autoIndex: true
 };
 
@@ -62,6 +67,10 @@ export const initDB = async () => {
 // Lifecycle Event Listeners
 mongoose.connection.on('disconnected', () => {
   console.warn('⚠️ MongoDB connection lost. Reconnecting...');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB connection successfully re-established.');
 });
 
 mongoose.connection.on('error', (err) => {

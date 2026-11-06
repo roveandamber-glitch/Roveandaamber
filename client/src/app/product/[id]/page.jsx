@@ -332,8 +332,13 @@ const ProductDetails = () => {
   const originalUnitPrice = useMemo(() => {
     if (!product?.originalPrice) return null;
     const orig = Number(product.originalPrice);
+    if (!orig || isNaN(orig)) return null;
     if (comboSelection === 'sample') return null;
-    if (comboSelection === 'combo') return orig + samplePrice;
+    if (comboSelection === 'combo') {
+      const origCombo = orig + samplePrice;
+      const currentCombo = basePrice + samplePrice;
+      return origCombo > currentCombo ? origCombo : null;
+    }
     return orig > basePrice ? orig : null;
   }, [comboSelection, product, basePrice, samplePrice]);
 
@@ -466,52 +471,52 @@ const ProductDetails = () => {
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-[#1A1A1A] pt-20 sm:pt-24 pb-20 md:pb-12 flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10 w-full flex-1">
         
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-[11px] uppercase tracking-widest text-gray-500 mb-3.5">
+        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-[11px] uppercase tracking-widest text-stone-500 mb-6">
           <Link href="/" className="hover:text-black transition-colors">Home</Link>
-          <ChevronRight size={10} className="text-gray-400" />
+          <ChevronRight size={10} className="text-stone-400" />
           <Link href="/shop" className="hover:text-black transition-colors">Collections</Link>
-          <ChevronRight size={10} className="text-gray-400" />
-          <span className="text-black font-semibold truncate max-w-[200px] sm:max-w-xs">{product.name}</span>
+          <ChevronRight size={10} className="text-stone-400" />
+          <span className="text-[#1A120B] font-semibold truncate max-w-[200px] sm:max-w-xs">{product.name}</span>
         </nav>
 
-        {/* Hero Product Showcase Grid - Single Window Screen Viewport Optimized */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-start">
+        {/* Hero Product Showcase Grid - Spacious, Airy, Luxury Boutique Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
           
-          {/* LEFT: Image Gallery Showcase (Compact Portrait Flacon) */}
-          <div className="lg:col-span-5 space-y-2.5">
+          {/* LEFT: Image Gallery Showcase (Spacious Museum-Quality Portrait Canvas) */}
+          <div className="lg:col-span-6 xl:col-span-6 lg:sticky lg:top-28 space-y-4">
             
             {/* Primary Main Image Container */}
-            <div className="relative rounded-2xl bg-white border border-[#ECE7DE] p-4 sm:p-6 max-h-[360px] lg:max-h-[390px] aspect-[4/3] sm:aspect-square flex items-center justify-center overflow-hidden shadow-2xs group">
+            <div className="relative rounded-3xl bg-gradient-to-b from-[#FDFBF9] via-[#FAF7F2] to-[#F5ECE0] border border-[#ECE7DE] p-6 sm:p-10 aspect-[4/5] sm:aspect-square flex items-center justify-center overflow-hidden shadow-xs group">
               {currentMainImage ? (
                 <img
                   src={currentMainImage}
                   alt={product.name}
-                  className="w-full h-full object-contain drop-shadow-md transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="w-full h-full object-contain drop-shadow-xl transition-transform duration-700 ease-out group-hover:scale-105 select-none"
                   onError={() => handleImageError(currentMainImage)}
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-[#FAF8F5] via-[#FFFDF9] to-[#F5ECE0] select-none">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center mb-3 shadow-2xs">
-                    <Sparkles size={28} strokeWidth={1.5} className="text-[#B8860B]" />
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center select-none">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center mb-4 shadow-sm">
+                    <Sparkles size={32} strokeWidth={1.5} className="text-[#B8860B]" />
                   </div>
-                  <span className="text-[9px] uppercase font-bold tracking-[0.25em] text-[#8C6D1F] mb-1">
+                  <span className="text-[10px] uppercase font-bold tracking-[0.28em] text-[#8C6D1F] mb-1.5">
                     ROVE & AMBER • ATELIER
                   </span>
-                  <h3 className="font-serif text-base sm:text-lg text-black font-normal max-w-[220px] leading-tight">
+                  <h3 className="font-serif text-xl sm:text-2xl text-[#1A120B] font-normal max-w-xs leading-tight">
                     {product.name}
                   </h3>
-                  <span className="text-[10px] text-stone-500 font-light mt-1">
+                  <span className="text-xs text-stone-500 font-light mt-1.5">
                     {product.category || product.category_name || 'Fine Fragrance Extrait'}
                   </span>
                 </div>
               )}
 
               {/* Category / Concentration Badge */}
-              <div className="absolute top-3 left-3 z-10">
-                <span className="bg-[#FAF9F7]/95 backdrop-blur-md text-[#B8860B] border border-[#E0D8CA] text-[9px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full shadow-2xs">
+              <div className="absolute top-4 left-4 z-10">
+                <span className="bg-white/95 backdrop-blur-md text-[#8C6D1F] border border-[#E0D8CA] text-[10px] uppercase font-bold tracking-[0.2em] px-3.5 py-1 rounded-full shadow-2xs">
                   {product.category || product.category_name || 'Eau de Parfum'}
                 </span>
               </div>
@@ -521,33 +526,33 @@ const ProductDetails = () => {
                 type="button"
                 onClick={toggleWishlist}
                 aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                className={`absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-2xs cursor-pointer ${
+                className={`absolute top-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm cursor-pointer ${
                   isWishlisted 
                     ? 'bg-red-50 text-red-600 border border-red-200' 
-                    : 'bg-white/90 text-gray-500 hover:text-black hover:bg-white border border-[#EFECE6]'
+                    : 'bg-white/95 text-stone-600 hover:text-black hover:scale-105 border border-[#EFECE6]'
                 }`}
               >
-                <Heart size={15} className={isWishlisted ? 'fill-red-600 text-red-600' : 'text-gray-500'} />
+                <Heart size={16} className={isWishlisted ? 'fill-red-600 text-red-600' : 'text-stone-600'} />
               </button>
 
               {/* Low Stock Badge */}
               {!isOutOfStock && maxStockForSize <= 5 && maxStockForSize > 0 && (
-                <div className="absolute bottom-3 left-3 bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5] text-[9px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full">
-                  Only {maxStockForSize} flacons remaining
+                <div className="absolute bottom-4 left-4 bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5] text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full shadow-xs">
+                  Only {maxStockForSize} flacons remaining in atelier
                 </div>
               )}
             </div>
 
-            {/* Thumbnail Navigation Row (Only show when 2 or more WORKING images exist) */}
+            {/* Thumbnail Navigation Row */}
             {validImages.length > 1 && (
-              <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none">
+              <div className="flex items-center gap-3 overflow-x-auto py-1 scrollbar-none">
                 {validImages.map((img, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setSelectedImage(img)}
-                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-white p-1 transition-all duration-200 border-2 shrink-0 cursor-pointer ${
-                      currentMainImage === img ? 'border-black shadow-xs' : 'border-[#ECE7DE] opacity-70 hover:opacity-100'
+                    className={`relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-white p-1.5 transition-all duration-300 border-2 shrink-0 cursor-pointer ${
+                      currentMainImage === img ? 'border-[#B8860B] ring-2 ring-[#B8860B]/30 shadow-xs' : 'border-[#ECE7DE] opacity-70 hover:opacity-100 hover:border-stone-400'
                     }`}
                   >
                     <img 
@@ -562,19 +567,36 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* RIGHT: Product Purchasing Information - Highly Compact & Single Window Screen Ready */}
-          <div className="lg:col-span-7 bg-white rounded-2xl p-4 sm:p-5 lg:p-5 border border-[#ECE7DE] shadow-2xs space-y-2.5 sm:space-y-3">
+          {/* RIGHT: Product Purchasing Information - Unboxed, Airy, Breathing Luxury Layout */}
+          <div className="lg:col-span-6 xl:col-span-6 space-y-6 sm:space-y-7">
             
-            {/* Header: Brand, Title, Rating */}
-            <div>
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#B8860B] block mb-0.5">
-                ROVE & AMBER • Fine Fragrance
-              </span>
-              <div className="flex items-baseline justify-between gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-serif text-black font-normal leading-tight m-0">
-                  {product.name}
-                </h1>
-                {/* Rating and Reviews clickable shortcut */}
+            {/* 1. Header: Brand, Title, Rating, Stock */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#A67C38] flex items-center gap-2">
+                  <span className="w-4 h-[1px] bg-[#A67C38]" />
+                  <span>ROVE & AMBER • HAUTE PARFUMERIE</span>
+                </span>
+
+                {/* Stock Indicator */}
+                {isOutOfStock ? (
+                  <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                    Currently Unavailable
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>In Stock • Dispatched within 24h</span>
+                  </span>
+                )}
+              </div>
+
+              <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif text-[#170E08] font-normal leading-[1.12] tracking-tight m-0">
+                {product.name}
+              </h1>
+
+              {/* Reviews & Star Rating */}
+              <div className="flex items-center gap-2 pt-0.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -584,112 +606,111 @@ const ProductDetails = () => {
                       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs bg-transparent border-0 p-0 cursor-pointer hover:opacity-85 transition-opacity group"
+                  className="inline-flex items-center gap-2 text-xs bg-transparent border-0 p-0 cursor-pointer hover:opacity-85 transition-opacity group"
                   title="View reviews or write a review"
                 >
                   <div className="flex items-center text-[#B8860B]">
                     {[1, 2, 3, 4, 5].map(star => (
                       <Star 
                         key={star} 
-                        size={12} 
+                        size={13} 
                         className={star <= Math.round(product.rating || 5) ? 'fill-[#B8860B] text-[#B8860B]' : 'text-gray-300'} 
                       />
                     ))}
                   </div>
-                  <span className="font-bold text-gray-800 text-[11px]">{product.rating || 5.0}</span>
-                  <span className="text-gray-400 text-[11px]">({product.reviewsCount || 0})</span>
-                  <span className="text-[10px] text-[#B8860B] underline font-medium ml-0.5 group-hover:text-black transition-colors">
-                    {product.reviewsCount > 0 ? 'See reviews' : 'Write review'}
+                  <span className="font-bold text-[#170E08] text-xs">{product.rating || 5.0}</span>
+                  <span className="text-stone-400 text-xs">({product.reviewsCount || 0} reviews)</span>
+                  <span className="text-[11px] text-[#A67C38] underline font-medium ml-1 group-hover:text-black transition-colors">
+                    {product.reviewsCount > 0 ? 'Read reviews' : 'Write review'}
                   </span>
                 </button>
               </div>
             </div>
 
-            {/* Price & Stock Badge */}
-            <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2.5 border-b border-gray-100">
-              <div className="flex items-baseline gap-2.5">
-                <span className="text-xl sm:text-2xl font-bold font-sans text-black">
+            {/* 2. Price Row */}
+            <div className="py-3.5 border-y border-[#ECE7DE] flex flex-wrap items-baseline justify-between gap-3">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="text-2xl sm:text-3xl font-serif font-bold text-[#140D07] tracking-tight">
                   ₹{currentUnitPrice.toLocaleString('en-IN')}
                 </span>
-                {originalUnitPrice && (
+                {originalUnitPrice && discountPercent && discountPercent > 0 && (
                   <>
-                    <span className="text-xs sm:text-sm font-sans text-gray-400 line-through">
+                    <span className="text-sm font-sans text-stone-400 line-through">
                       ₹{originalUnitPrice.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[10px] font-bold text-[#B8860B] bg-[#FFF8EB] border border-[#E8DCC0] px-2 py-0.2 rounded-full">
+                    <span className="text-[11px] font-bold text-[#8C6D1F] bg-[#FAF3E0] border border-[#E0D0A5] px-2.5 py-0.5 rounded-full">
                       Save {discountPercent}%
                     </span>
                   </>
                 )}
-                <span className="text-[10px] text-gray-400 font-light block">
+                <span className="text-xs text-stone-500 font-light block">
                   (Incl. of all taxes)
                 </span>
               </div>
 
-              {/* Live Stock Pill */}
-              {isOutOfStock ? (
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
-                  Out of Stock
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>In Stock</span>
-                </span>
-              )}
+              <div className="text-[11px] text-stone-500 font-medium">
+                Complimentary White-Glove Courier Included
+              </div>
             </div>
 
-            {/* Description (Concise 2 Lines) */}
-            <p className="text-xs text-stone-600 leading-snug font-light line-clamp-2 m-0">
-              {product.description || 'An artisanal fine fragrance slow-macerated with rare golden amber, precious oud accords, and noble botanicals, crafted for lasting presence and distinguished sillage.'}
-            </p>
+            {/* 3. Description & Olfactory Notes */}
+            <div className="space-y-3">
+              <p className="text-sm text-stone-600 leading-relaxed font-light m-0">
+                {product.description || 'An artisanal fine fragrance slow-macerated with rare golden amber, precious oud accords, and noble botanicals, crafted for lasting presence and distinguished sillage.'}
+              </p>
+            </div>
 
-            {/* Variant Size & Combo Selection: 50ML, 2ML, 50ML + 2ML COMBO */}
-            <div className="space-y-2.5">
+            {/* 4. Select Flacon & Trial Pack Options */}
+            <div className="space-y-3 pt-1">
               <div className="flex justify-between items-center">
-                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-700">
-                  Select Flacon & Trial Pack
+                <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#170E08]">
+                  Select Flacon & Trial Format
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowReturnPolicyModal(true)}
-                  className="text-[10px] text-[#B8860B] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                  className="text-xs text-[#A67C38] hover:text-black hover:underline font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
-                  <ShieldCheck size={12} />
-                  <span>Return Policy</span>
+                  <ShieldCheck size={13} className="text-[#A67C38]" />
+                  <span>Return Policy Details ↗</span>
                 </button>
               </div>
 
-              {/* 3 Main Combo Choices */}
-              <div className="grid grid-cols-3 gap-2">
+              {/* 3 Spacious Choice Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 
                 {/* 1. COMBO: 50ml + 2ml (Recommended) */}
                 <button
                   type="button"
                   onClick={() => setComboSelection('combo')}
-                  className={`relative p-2.5 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  className={`relative p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                     comboSelection === 'combo'
-                      ? 'bg-[#FBF8F2] border-[#B8860B] shadow-xs ring-1 ring-[#B8860B]/40'
-                      : 'bg-[#FAF9F7] border-[#ECE7DE] hover:border-black'
+                      ? 'bg-[#FCF9F3] border-[#B8860B] shadow-sm ring-1 ring-[#B8860B]/40'
+                      : 'bg-white border-[#E8DFC9] hover:border-stone-400'
                   }`}
                 >
-                  <span className="absolute -top-2 left-2 bg-[#1B120C] text-[#ECC880] text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded-full border border-[#D4AF37]/50 shadow-2xs">
-                    ★ Recommended
-                  </span>
-                  <div>
-                    <span className="text-xs font-serif font-bold text-black block leading-tight">
-                      {baseBottleSize} + 2ML
+                  <div className="flex items-center justify-between gap-1 mb-2">
+                    <span className="bg-[#1C120C] text-[#ECC880] text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border border-[#D4AF37]/50 shadow-2xs">
+                      ★ Recommended
                     </span>
-                    <span className="text-[9px] text-gray-500 block leading-tight mt-0.5">
-                      Flacon + Sample
+                    <span className="text-[9.5px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                      7-Day Trial
                     </span>
                   </div>
-                  <div className="mt-2 pt-1 border-t border-amber-200/60 flex items-baseline justify-between">
-                    <span className="text-xs font-bold text-[#B8860B] font-sans">
+                  <div>
+                    <span className="text-sm font-serif font-bold text-[#140D07] block leading-snug">
+                      {baseBottleSize} + 2ml Sample
+                    </span>
+                    <span className="text-[11px] text-stone-500 block leading-tight mt-0.5">
+                      Flacon & Companion Vial
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-amber-200/50 flex items-baseline justify-between">
+                    <span className="text-sm font-bold text-[#B8860B] font-sans">
                       ₹{(basePrice + samplePrice).toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[8px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
-                      7-Day Return
+                    <span className="text-[10px] text-emerald-700 font-semibold">
+                      Full Refund Guarantee
                     </span>
                   </div>
                 </button>
@@ -698,26 +719,34 @@ const ProductDetails = () => {
                 <button
                   type="button"
                   onClick={() => setComboSelection('bottle')}
-                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  className={`p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                     comboSelection === 'bottle'
-                      ? 'bg-white border-2 border-black shadow-xs ring-1 ring-black/20'
-                      : 'bg-[#FAF9F7] border-[#ECE7DE] hover:border-black'
+                      ? 'bg-white border-black shadow-sm ring-1 ring-black/20'
+                      : 'bg-white border-[#E8DFC9] hover:border-stone-400'
                   }`}
                 >
-                  <div>
-                    <span className="text-xs font-serif font-bold text-black block leading-tight">
-                      {baseBottleSize}
+                  <div className="flex items-center justify-between gap-1 mb-2">
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-stone-400">
+                      Standard
                     </span>
-                    <span className="text-[9px] text-gray-500 block leading-tight mt-0.5">
-                      Flacon Only
+                    <span className="text-[9.5px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
+                      Final Sale
                     </span>
                   </div>
-                  <div className="mt-2 pt-1 border-t border-gray-100 flex items-baseline justify-between">
-                    <span className="text-xs font-bold text-black font-sans">
+                  <div>
+                    <span className="text-sm font-serif font-bold text-[#140D07] block leading-snug">
+                      {baseBottleSize} Flacon
+                    </span>
+                    <span className="text-[11px] text-stone-500 block leading-tight mt-0.5">
+                      Standalone Fragrance Flacon
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-stone-200 flex items-baseline justify-between">
+                    <span className="text-sm font-bold text-[#140D07] font-sans">
                       ₹{basePrice.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[8px] font-medium text-stone-500 bg-stone-100 px-1 rounded">
-                      No Return
+                    <span className="text-[10px] text-stone-400">
+                      Non-Returnable
                     </span>
                   </div>
                 </button>
@@ -726,194 +755,210 @@ const ProductDetails = () => {
                 <button
                   type="button"
                   onClick={() => setComboSelection('sample')}
-                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  className={`p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                     comboSelection === 'sample'
-                      ? 'bg-white border-2 border-black shadow-xs ring-1 ring-black/20'
-                      : 'bg-[#FAF9F7] border-[#ECE7DE] hover:border-black'
+                      ? 'bg-white border-black shadow-sm ring-1 ring-black/20'
+                      : 'bg-white border-[#E8DFC9] hover:border-stone-400'
                   }`}
                 >
-                  <div>
-                    <span className="text-xs font-serif font-bold text-black block leading-tight">
-                      2ML
+                  <div className="flex items-center justify-between gap-1 mb-2">
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-stone-400">
+                      Trial Wear
                     </span>
-                    <span className="text-[9px] text-gray-500 block leading-tight mt-0.5">
-                      Discovery Vial
+                    <span className="text-[9.5px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
+                      2ml Vial
                     </span>
                   </div>
-                  <div className="mt-2 pt-1 border-t border-gray-100 flex items-baseline justify-between">
-                    <span className="text-xs font-bold text-black font-sans">
+                  <div>
+                    <span className="text-sm font-serif font-bold text-[#140D07] block leading-snug">
+                      2ml Discovery
+                    </span>
+                    <span className="text-[11px] text-stone-500 block leading-tight mt-0.5">
+                      Personal Trial Vial
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-stone-200 flex items-baseline justify-between">
+                    <span className="text-sm font-bold text-[#140D07] font-sans">
                       ₹{samplePrice.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[8px] font-medium text-stone-500 bg-stone-100 px-1 rounded">
-                      No Return
+                    <span className="text-[10px] text-stone-400">
+                      Trial Vial
                     </span>
                   </div>
                 </button>
               </div>
 
-              {/* DYNAMIC RETURN POLICY NOTIFICATION BANNER */}
-              <div className="pt-0.5">
+              {/* 5. Clear, Reassuring Guarantee Callout */}
+              <div className="pt-1">
                 {comboSelection === 'combo' && (
-                  <div className="p-2.5 sm:p-3 rounded-xl bg-[#F0F8F3] border border-[#BDE5CC] transition-all">
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-[#F2F8F4] to-[#FAF8F5] border border-emerald-200 shadow-2xs transition-all">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-                        <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
-                        <span>7-Day Return Guarantee Included</span>
+                      <span className="text-xs sm:text-sm font-bold text-emerald-900 flex items-center gap-2">
+                        <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                        <span>7-Day At-Home Experience Guarantee Included</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowReturnPolicyModal(true)}
-                        className="text-[10px] text-emerald-900 underline font-semibold hover:text-black cursor-pointer shrink-0"
+                        className="text-[11px] text-emerald-900 underline font-semibold hover:text-black cursor-pointer shrink-0"
                       >
                         Policy Details
                       </button>
                     </div>
-                    <p className="text-[11px] text-emerald-900 leading-snug font-light m-0 mt-1">
-                      Spray and test the companion <strong>2ml sample</strong> at home first. If it does not suit your skin, return the <strong>sealed 50ml flacon within 7 days for a 100% full refund</strong> (keep the 2ml sample as our gift).
+                    <p className="text-xs text-emerald-900/90 leading-relaxed font-light m-0 mt-1.5">
+                      Spray and test the companion <strong>2ml sample vial</strong> at home first. If the scent does not harmonize with your skin chemistry, simply return the <strong>unopened 50ml flacon within 7 days for a 100% full refund</strong> — keep the 2ml sample with our compliments.
                     </p>
                   </div>
                 )}
 
                 {comboSelection === 'bottle' && (
-                  <div className="p-2.5 sm:p-3 rounded-xl bg-[#FAF5EB] border border-[#E8DCC0] transition-all space-y-1">
+                  <div className="p-4 rounded-2xl bg-[#FAF6EE] border border-[#E0D0A5] transition-all space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-[#8C6D1F] flex items-center gap-1.5">
-                        <AlertCircle size={14} className="text-[#8C6D1F] shrink-0" />
-                        <span>Non-Returnable (Final Sale)</span>
+                      <span className="text-xs sm:text-sm font-bold text-[#8C6D1F] flex items-center gap-2">
+                        <AlertCircle size={15} className="text-[#8C6D1F] shrink-0" />
+                        <span>Final Sale • Hygiene Sealed Flacon</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowReturnPolicyModal(true)}
-                        className="text-[10px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
+                        className="text-[11px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
                       >
-                        View Return Policy
+                        Policy Details
                       </button>
                     </div>
-                    <p className="text-[11px] text-stone-600 leading-snug font-light m-0">
-                      Due to cosmetics hygiene & fragrance safety regulations, standalone 50ml flacons cannot be returned once delivered.
+                    <p className="text-xs text-stone-600 leading-relaxed font-light m-0">
+                      In accordance with luxury cosmetics safety guidelines, standalone flacons cannot be returned once unsealed.
                     </p>
-                    <div className="pt-1 flex items-center justify-between text-[11px]">
-                      <span className="text-stone-500 font-light">Want to test risk-free at home?</span>
+                    <div className="pt-1 flex items-center justify-between text-xs flex-wrap gap-2">
+                      <span className="text-stone-500 font-light">Would you prefer to test risk-free at home first?</span>
                       <button
                         type="button"
                         onClick={() => setComboSelection('combo')}
-                        className="text-[#B8860B] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                        className="text-[#8C6D1F] font-bold hover:underline cursor-pointer flex items-center gap-1"
                       >
                         <span>Upgrade to 50ml + 2ml (+₹{samplePrice})</span>
-                        <ArrowRight size={11} />
+                        <ArrowRight size={12} />
                       </button>
                     </div>
                   </div>
                 )}
 
                 {comboSelection === 'sample' && (
-                  <div className="p-2.5 sm:p-3 rounded-xl bg-[#FAF5EB] border border-[#E8DCC0] transition-all">
+                  <div className="p-4 rounded-2xl bg-[#FAF6EE] border border-[#E0D0A5] transition-all">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-[#8C6D1F] flex items-center gap-1.5">
-                        <AlertCircle size={14} className="text-[#8C6D1F] shrink-0" />
-                        <span>Discovery Sample (Non-Returnable)</span>
+                      <span className="text-xs sm:text-sm font-bold text-[#8C6D1F] flex items-center gap-2">
+                        <AlertCircle size={15} className="text-[#8C6D1F] shrink-0" />
+                        <span>Discovery Sample Vial</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowReturnPolicyModal(true)}
-                        className="text-[10px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
+                        className="text-[11px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
                       >
-                        View Return Policy
+                        Policy Details
                       </button>
                     </div>
-                    <p className="text-[11px] text-stone-600 leading-snug font-light m-0 mt-1">
-                      2ml sample vials are personal discovery formats created for trial wear and are strictly non-returnable.
+                    <p className="text-xs text-stone-600 leading-relaxed font-light m-0 mt-1">
+                      Individual 2ml discovery vials are intimate trial formats made for personal testing and are final sale.
                     </p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Quantity Selector & Total Amount */}
-            <div className="flex items-center justify-between pt-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600">Qty:</span>
-                <div className="inline-flex items-center bg-[#FAF9F7] border border-[#E0D8C8] rounded-full p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1 || isOutOfStock}
-                    aria-label="Decrease quantity"
-                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 transition-colors disabled:opacity-40 cursor-pointer"
-                  >
-                    <Minus size={12} />
-                  </button>
-                  <span className="w-8 text-center text-xs font-bold text-black">
-                    {isOutOfStock ? 0 : quantity}
+            {/* 6. Quantity Selector & Action Buttons */}
+            <div className="pt-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-stone-700">Quantity:</span>
+                  <div className="inline-flex items-center bg-[#FAF9F7] border border-[#E0D8CA] rounded-full p-1 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1 || isOutOfStock}
+                      aria-label="Decrease quantity"
+                      className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                    >
+                      <Minus size={13} />
+                    </button>
+                    <span className="w-10 text-center text-sm font-bold text-[#140D07] font-sans">
+                      {isOutOfStock ? 0 : quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(Math.min(maxStockForSize, quantity + 1))}
+                      disabled={quantity >= maxStockForSize || isOutOfStock}
+                      aria-label="Increase quantity"
+                      className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[10px] text-stone-400 uppercase tracking-widest block font-medium">Total Amount</span>
+                  <span className="text-lg sm:text-xl font-serif font-bold text-[#140D07]">
+                    ₹{(isOutOfStock ? 0 : totalPrice).toLocaleString('en-IN')}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(Math.min(maxStockForSize, quantity + 1))}
-                    disabled={quantity >= maxStockForSize || isOutOfStock}
-                    aria-label="Increase quantity"
-                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 transition-colors disabled:opacity-40 cursor-pointer"
-                  >
-                    <Plus size={12} />
-                  </button>
                 </div>
               </div>
 
-              <div className="text-right">
-                <span className="text-[9px] text-gray-400 uppercase tracking-wider block">Total Amount</span>
-                <span className="text-sm sm:text-base font-bold text-black font-sans">
-                  ₹{(isOutOfStock ? 0 : totalPrice).toLocaleString('en-IN')}
-                </span>
-              </div>
-            </div>
+              {/* Action Buttons: Add to Bag and Instant Checkout */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                {isInCart ? (
+                  <button
+                    type="button"
+                    onClick={() => router.push('/cart')}
+                    className="flex-1 bg-[#1C120C] hover:bg-black text-[#ECC880] border border-[#1C120C] py-3.5 px-6 rounded-full flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.99] cursor-pointer font-serif uppercase tracking-widest text-xs font-bold"
+                  >
+                    <ShoppingBag size={15} className="text-[#ECC880]" />
+                    <span>View Shopping Bag</span>
+                    <ArrowRight size={13} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleAddToCart(false)}
+                    disabled={isOutOfStock || isAddingToCart}
+                    className="flex-1 bg-[#1C120C] hover:bg-black disabled:bg-stone-200 disabled:text-stone-400 text-[#ECC880] py-3.5 px-6 rounded-full flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.99] cursor-pointer font-serif uppercase tracking-widest text-xs font-bold group"
+                  >
+                    <ShoppingBag size={15} className="text-[#ECC880] group-hover:scale-110 transition-transform" />
+                    <span>{isAddingToCart ? 'Adding to Bag...' : 'Add to Shopping Bag'}</span>
+                  </button>
+                )}
 
-            {/* Action Buttons: Add to Cart and Buy Now */}
-            <div className="pt-1 flex flex-col sm:flex-row gap-2.5">
-              {isInCart ? (
                 <button
                   type="button"
-                  onClick={() => router.push('/cart')}
-                  className="flex-1 bg-[#18110D] hover:bg-black text-[#ECC880] border border-[#18110D] py-2.5 sm:py-3 px-5 rounded-full flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer font-serif uppercase tracking-widest text-xs"
-                >
-                  <ShoppingBag size={14} className="text-[#ECC880]" />
-                  <span>View Cart</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleAddToCart(false)}
+                  onClick={() => handleAddToCart(true)}
                   disabled={isOutOfStock || isAddingToCart}
-                  className="flex-1 bg-black hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white py-2.5 sm:py-3 px-5 rounded-full flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer font-serif uppercase tracking-widest text-xs"
+                  className="flex-1 bg-white hover:bg-stone-900 hover:text-white disabled:bg-stone-100 disabled:text-stone-400 text-[#1C120C] border border-[#1C120C] py-3.5 px-6 rounded-full flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer font-serif uppercase tracking-widest text-xs font-bold shadow-2xs"
                 >
-                  <ShoppingBag size={14} />
-                  <span>{isAddingToCart ? 'Adding to Cart...' : 'Add to Cart'}</span>
+                  <span>Instant Checkout</span>
+                  <ArrowRight size={13} />
                 </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => handleAddToCart(true)}
-                disabled={isOutOfStock || isAddingToCart}
-                className="flex-1 bg-[#FAF8F5] hover:bg-black hover:text-white disabled:bg-gray-100 disabled:text-gray-400 text-black border border-black py-2.5 sm:py-3 px-5 rounded-full flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer font-serif uppercase tracking-widest text-xs"
-              >
-                <span>Instant Checkout</span>
-              </button>
-            </div>
-
-            {/* Trust Badges - Ultra Compact */}
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-center">
-              <div className="flex items-center justify-center gap-1.5 p-1.5 rounded-xl bg-[#FAF9F7]">
-                <Truck size={13} className="text-[#B8860B] shrink-0" />
-                <span className="text-[10px] font-semibold text-gray-700">Express Delivery</span>
-              </div>
-              <div className="flex items-center justify-center gap-1.5 p-1.5 rounded-xl bg-[#FAF9F7]">
-                <ShieldCheck size={13} className="text-[#B8860B] shrink-0" />
-                <span className="text-[10px] font-semibold text-gray-700">Artisanal Extract</span>
-              </div>
-              <div className="flex items-center justify-center gap-1.5 p-1.5 rounded-xl bg-[#FAF9F7]">
-                <RotateCcw size={13} className="text-[#B8860B] shrink-0" />
-                <span className="text-[10px] font-semibold text-gray-700">Luxury Coffret</span>
               </div>
             </div>
+
+            {/* 7. Luxury Guarantees Banner */}
+            <div className="pt-4 border-t border-[#ECE7DE] grid grid-cols-3 gap-3 text-center">
+              <div className="flex flex-col items-center p-3 rounded-2xl bg-white border border-[#ECE7DE] shadow-2xs">
+                <Truck size={16} className="text-[#B8860B] mb-1" />
+                <span className="text-[11px] font-bold text-stone-800">Express Delivery</span>
+                <span className="text-[10px] text-stone-400 font-light">Complimentary Pan-India</span>
+              </div>
+              <div className="flex flex-col items-center p-3 rounded-2xl bg-white border border-[#ECE7DE] shadow-2xs">
+                <ShieldCheck size={16} className="text-[#B8860B] mb-1" />
+                <span className="text-[11px] font-bold text-stone-800">100% Authentic</span>
+                <span className="text-[10px] text-stone-400 font-light">Artisanal Extrait</span>
+              </div>
+              <div className="flex flex-col items-center p-3 rounded-2xl bg-white border border-[#ECE7DE] shadow-2xs">
+                <Sparkles size={16} className="text-[#B8860B] mb-1" />
+                <span className="text-[11px] font-bold text-stone-800">Luxury Coffret</span>
+                <span className="text-[10px] text-stone-400 font-light">Gold Foil Packaging</span>
+              </div>
+            </div>
+
           </div>
         </div>
 

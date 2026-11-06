@@ -363,7 +363,6 @@ export default function AdminCouponsPage() {
               value={filterDate}
               onChange={setFilterDate}
               placeholder="Filter by Expiry Date"
-              showPresets={true}
             />
           </div>
           {filterDate && (

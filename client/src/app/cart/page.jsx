@@ -92,6 +92,7 @@ export default function CartPage() {
       message.success('Upgraded to 50ml + 2ml combo');
       loadCart();
     } catch (err) {
+      if (err?.isHandledAuth) return;
       message.error('Failed to upgrade item');
     }
   };
@@ -147,11 +148,13 @@ export default function CartPage() {
       return;
     }
 
-    // Immediately load any cached in-memory cart items to eliminate initial empty flash
+    // Immediately load any cached in-memory cart items if already loaded
     loadCart();
     const immediateCart = cartService.getCart();
-    if (immediateCart && immediateCart.length > 0) {
+    if (immediateCart && immediateCart.length > 0 && cartService.hasInitialFetch()) {
       setIsCartLoading(false);
+    } else {
+      setIsCartLoading(true);
     }
 
     cartService.fetchCart()
@@ -273,6 +276,7 @@ export default function CartPage() {
         message.error(res?.message || 'Invalid promotional voucher code.');
       }
     } catch (err) {
+      if (err?.isHandledAuth) return;
       message.error(err.message || 'Failed to apply promotional coupon.');
     } finally {
       setPromoLoading(false);
@@ -288,6 +292,7 @@ export default function CartPage() {
       setDiscountAmount(0);
       loadCart();
     } catch (err) {
+      if (err?.isHandledAuth) return;
       message.error(err.message || 'Failed to remove promotional coupon.');
     } finally {
       setPromoLoading(false);
@@ -317,6 +322,7 @@ export default function CartPage() {
         message.success(`${pointsToApply.toLocaleString()} privilege points applied! (Saved ₹${Math.floor(pointsToApply * (rewardRate / 100)).toLocaleString('en-IN')})`);
         loadCart();
       } catch (err) {
+        if (err?.isHandledAuth) return;
         message.error(err.message || 'Failed to apply reward points.');
       } finally {
         setRewardLoading(false);
@@ -332,6 +338,7 @@ export default function CartPage() {
       message.info('Loyalty privilege points discount removed.');
       loadCart();
     } catch (err) {
+      if (err?.isHandledAuth) return;
       message.error(err.message || 'Failed to remove reward points.');
     } finally {
       setRewardLoading(false);
@@ -478,48 +485,39 @@ export default function CartPage() {
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black selection:bg-[#B8860B] selection:text-white flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 md:pb-20 w-full flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-22 pb-4 w-full flex-1 flex flex-col justify-start">
         
-        {/* Breadcrumb Trail */}
-        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-xs text-gray-400 mb-6 uppercase tracking-widest">
-          <Link href="/" className="hover:text-black transition-colors">Home</Link>
-          <span className="text-gray-300">/</span>
-          <Link href="/shop" className="hover:text-black transition-colors">Collections</Link>
-          <span className="text-gray-300">/</span>
-          <span className="text-black font-semibold">Shopping Bag</span>
-        </nav>
+        {/* Compact Breadcrumb & Page Header Bar */}
+        <div className="mb-3 sm:mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+            <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 text-[11px] text-gray-400 uppercase tracking-widest">
+              <Link href="/" className="hover:text-black transition-colors">Home</Link>
+              <span className="text-gray-300">/</span>
+              <Link href="/shop" className="hover:text-black transition-colors">Collections</Link>
+              <span className="text-gray-300">/</span>
+              <span className="text-black font-semibold">Shopping Bag</span>
+            </nav>
 
-        {/* Page Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-[#ECE7DE]">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5] text-[10px] font-bold uppercase tracking-widest">
-                Atelier Checkout
-              </span>
-              <span className="text-xs text-gray-500">
-                {isCartLoading ? (
-                  <span className="inline-block w-24 h-3 bg-[#EAE3D2] rounded animate-pulse align-middle" />
-                ) : (
-                  `${totalItemCount} ${totalItemCount === 1 ? 'fragrance flacon' : 'fragrance flacons'}`
-                )}
+            <span className="w-1 h-1 rounded-full bg-[#D5C9B8]" />
+
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-serif font-normal text-black tracking-tight m-0">
+                Your Shopping Bag
+              </h1>
+              <span className="px-2 py-0.5 rounded-full bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5] text-[10px] font-bold uppercase tracking-wider">
+                {(isCartLoading || !cartService.hasInitialFetch()) ? 'Checking Bag...' : `${totalItemCount} ${totalItemCount === 1 ? 'Flacon' : 'Flacons'}`}
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-black tracking-tight">
-              Your Shopping Bag
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-500 font-light mt-1.5 max-w-xl leading-relaxed">
-              Review your preserved signature fragrances, review complimentary packaging, and proceed to secure boutique order registration.
-            </p>
           </div>
 
-          {!isCartLoading && cartItems.length > 0 && (
-            <div className="flex items-center gap-3">
+          {!isCartLoading && cartService.hasInitialFetch() && cartItems.length > 0 && (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleClearCart}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-red-600 hover:bg-red-50 border border-[#E0D8CA] hover:border-red-200 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider text-gray-500 hover:text-red-600 hover:bg-red-50 border border-[#E0D8CA] hover:border-red-200 transition-colors cursor-pointer"
               >
-                <Trash2 size={13} />
+                <Trash2 size={12} />
                 <span>Clear All</span>
               </button>
             </div>
@@ -527,82 +525,46 @@ export default function CartPage() {
         </div>
 
         {/* CART CONTENT: SKELETON, EMPTY STATE OR ACTIVE ITEMS */}
-        {isCartLoading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-pulse">
-            {/* Left Column: Product Card Skeleton */}
-            <div className="lg:col-span-8 space-y-5">
-              <div className="bg-white rounded-2xl border border-[#E8DFC9] shadow-xs overflow-hidden">
-                <div className="p-4 sm:p-5 border-b border-[#ECE7DE] flex items-center justify-between">
-                  <div className="h-4 w-36 bg-[#ECE7DE] rounded" />
-                  <div className="h-4 w-20 bg-[#F4EFE6] rounded" />
-                </div>
-                <div className="divide-y divide-[#ECE7DE]">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1 min-w-0 w-full sm:w-auto">
-                        <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl bg-[#F4EFE6] shrink-0 border border-[#EAE3D2]" />
-                        <div className="space-y-2.5 flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <div className="h-3 w-20 bg-[#ECE7DE] rounded" />
-                            <div className="h-3 w-16 bg-[#F4EFE6] rounded" />
-                          </div>
-                          <div className="h-5 w-44 sm:w-64 bg-[#ECE7DE] rounded" />
-                          <div className="h-3 w-32 bg-[#F4EFE6] rounded" />
-                          <div className="h-5 w-24 bg-[#E0D0A5]/60 rounded mt-1" />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 self-end sm:self-center">
-                        <div className="h-9 w-28 rounded-full bg-[#F4EFE6] border border-[#EAE3D2]" />
-                        <div className="h-8 w-8 rounded-full bg-[#F4EFE6]" />
+        {(isCartLoading || !cartService.hasInitialFetch()) ? (
+          /* UNIFIED SINGLE-CARD SKELETON */
+          <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 animate-pulse">
+            {/* Left Column Skeleton */}
+            <div className="lg:col-span-7 xl:col-span-8 p-4 sm:p-5 border-b lg:border-b-0 lg:border-r border-[#ECE7DE] space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
+                <div className="h-4 w-36 bg-[#ECE7DE] rounded" />
+                <div className="h-4 w-20 bg-[#F4EFE6] rounded" />
+              </div>
+              <div className="divide-y divide-[#ECE7DE] space-y-3">
+                {[1, 2].map((i) => (
+                  <div key={i} className="pt-3 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-20 rounded-xl bg-[#F4EFE6] shrink-0 border border-[#EAE3D2]" />
+                      <div className="space-y-2">
+                        <div className="h-3 w-28 bg-[#ECE7DE] rounded" />
+                        <div className="h-4 w-44 bg-[#ECE7DE] rounded" />
+                        <div className="h-3 w-20 bg-[#F4EFE6] rounded" />
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Complimentary Gifting Bar Skeleton */}
-              <div className="rounded-2xl border border-[#E8DFC9] bg-white p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#FAF3E0] border border-[#E0D0A5]" />
-                  <div className="space-y-1.5">
-                    <div className="h-3.5 w-40 bg-[#ECE7DE] rounded" />
-                    <div className="h-2.5 w-56 bg-[#F4EFE6] rounded" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-7 w-20 rounded-full bg-[#F4EFE6]" />
+                      <div className="h-4 w-14 bg-[#ECE7DE] rounded" />
+                    </div>
                   </div>
-                </div>
-                <div className="h-7 w-20 rounded-full bg-[#F4EFE6]" />
+                ))}
               </div>
             </div>
 
-            {/* Right Column: Order Summary Skeleton */}
-            <div className="lg:col-span-4">
-              <div className="bg-white rounded-2xl border border-[#E8DFC9] shadow-xs p-6 space-y-5">
-                <div className="flex items-center justify-between pb-4 border-b border-[#ECE7DE]">
-                  <div className="h-5 w-32 bg-[#ECE7DE] rounded" />
-                  <div className="h-4 w-12 bg-[#F4EFE6] rounded" />
-                </div>
-                <div className="h-10 rounded-full bg-[#F4EFE6] border border-[#EAE3D2]" />
-                <div className="h-16 rounded-xl bg-[#FAF9F7] border border-[#ECE7DE]" />
-                <div className="space-y-3 pt-2">
-                  <div className="flex justify-between">
-                    <div className="h-3.5 w-24 bg-[#F4EFE6] rounded" />
-                    <div className="h-3.5 w-16 bg-[#F4EFE6] rounded" />
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="h-3.5 w-28 bg-[#F4EFE6] rounded" />
-                    <div className="h-3.5 w-20 bg-[#F4EFE6] rounded" />
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="h-3.5 w-20 bg-[#F4EFE6] rounded" />
-                    <div className="h-3.5 w-14 bg-[#F4EFE6] rounded" />
-                  </div>
-                  <div className="flex justify-between pt-3 border-t border-[#ECE7DE]">
-                    <div className="h-5 w-20 bg-[#ECE7DE] rounded" />
-                    <div className="h-6 w-24 bg-[#E0D0A5]/70 rounded" />
-                  </div>
-                </div>
-                <div className="h-12 w-full rounded-full bg-[#E8DFC9]" />
-                <div className="h-8 w-full rounded bg-[#FAF9F7]" />
+            {/* Right Column Skeleton */}
+            <div className="lg:col-span-5 xl:col-span-4 bg-[#FAF8F5] p-5 space-y-4">
+              <div className="h-5 w-32 bg-[#ECE7DE] rounded" />
+              <div className="space-y-2 pt-2">
+                <div className="h-3 w-full bg-[#F4EFE6] rounded" />
+                <div className="h-3 w-full bg-[#F4EFE6] rounded" />
+                <div className="h-3 w-3/4 bg-[#F4EFE6] rounded" />
               </div>
+              <div className="h-9 rounded-xl bg-[#F4EFE6]" />
+              <div className="h-12 rounded-xl bg-[#F4EFE6]" />
+              <div className="h-11 rounded-full bg-[#E0D0A5]/60 mt-4" />
             </div>
           </div>
         ) : cartItems.length === 0 ? (
@@ -657,230 +619,224 @@ export default function CartPage() {
             </div>
           </div>
         ) : (
-          /* ACTIVE 2-COLUMN LUXURY CART GRID */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          /* UNIFIED SINGLE-WINDOW LUXURY CART MASTER CARD */
+          <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-md overflow-hidden grid grid-cols-1 lg:grid-cols-12 flex-1">
             
-            {/* LEFT COLUMN: SINGLE PRODUCT CARD (8 Cols) */}
-            <div className="lg:col-span-8 space-y-5">
+            {/* LEFT COLUMN: PRESERVED FLACONS (8 Cols on xl, 7 on lg) */}
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#ECE7DE]">
               
-              {/* Single Luxury Product Card containing all cart items */}
-              <div className="bg-white rounded-2xl border border-[#E8DFC9] shadow-xs overflow-hidden">
-                {/* Products List inside single card with dividers */}
-                <div className="divide-y divide-[#ECE7DE]">
-                  {cartItems.map((item) => {
-                    const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
-                    const price = Number(item.price) || 0;
-                    const itemTotal = price * (parseInt(item.quantity, 10) || 1);
-                    const maxStock = item.maxStock !== undefined ? item.maxStock : 99;
-                    const isMaxReached = item.quantity >= maxStock;
+              {/* Scrollable Products List Container */}
+              <div className="p-4 sm:p-5 overflow-y-auto max-h-[calc(100vh-275px)] divide-y divide-[#ECE7DE] custom-scrollbar">
+                {cartItems.map((item) => {
+                  const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
+                  const price = Number(item.price) || 0;
+                  const itemTotal = price * (parseInt(item.quantity, 10) || 1);
+                  const maxStock = item.maxStock !== undefined ? item.maxStock : 99;
+                  const isMaxReached = item.quantity >= maxStock;
 
-                    return (
-                      <div
-                        key={itemKey}
-                        className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between transition-colors hover:bg-[#FAF9F7]/40"
-                      >
-                        {/* Fixed Size Thumbnail & Title */}
-                        <div className="flex items-center gap-4 flex-1 min-w-0 w-full sm:w-auto">
+                  return (
+                    <div
+                      key={itemKey}
+                      className="py-3.5 sm:py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between transition-colors hover:bg-[#FAF9F7]/40"
+                    >
+                      {/* Thumbnail & Title Details */}
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0 w-full sm:w-auto">
+                        <Link 
+                          href={`/product/${item.productId || item.id}`}
+                          className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-1.5 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group"
+                        >
+                          <img
+                            src={getImageUrl(item.image)}
+                            alt={item.name}
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => { e.target.src = '/images/perfumes/gemini_amber_royal.jpg'; }}
+                          />
+                        </Link>
+
+                        <div className="space-y-1.5 min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[9px] tracking-[0.18em] uppercase font-semibold text-[#B86526]">
+                              Fine Fragrance
+                            </span>
+                            <span className="w-1 h-1 rounded-full bg-[#D5C9B8]" />
+                            <span className="text-[9.5px] text-gray-700 font-bold bg-[#FAF7F2] px-1.5 py-0.5 rounded border border-[#E8DFC9]">
+                              Size: {item.size || '50ML'}
+                            </span>
+
+                            {/* Refined Luxury Status Badges */}
+                            {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) ? (
+                              <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                <ShieldCheck size={11} className="text-emerald-600" />
+                                <span>7-Day At-Home Trial Included</span>
+                              </span>
+                            ) : (item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) ? (
+                              <span className="text-[9px] font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                                2ml Discovery Sample
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-medium text-stone-500 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded-full">
+                                <span>Sealed Flacon Edition</span>
+                              </span>
+                            )}
+                          </div>
+
                           <Link 
                             href={`/product/${item.productId || item.id}`}
-                            className="relative w-20 h-24 sm:w-24 sm:h-28 rounded-xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-2 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group"
+                            className="text-sm sm:text-base font-serif font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors block truncate"
                           >
-                            <img
-                              src={getImageUrl(item.image)}
-                              alt={item.name}
-                              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                              onError={(e) => { e.target.src = '/images/perfumes/gemini_amber_royal.jpg'; }}
-                            />
+                            {item.name}
                           </Link>
+                          
+                          <p className="text-xs font-semibold text-[#1A1A1A] font-sans m-0">
+                            ₹{price.toLocaleString('en-IN')}
+                            <span className="text-[10px] font-normal text-gray-400 ml-1">/ unit</span>
+                          </p>
 
-                          <div className="space-y-1.5 min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[9.5px] tracking-[0.2em] uppercase font-semibold text-[#B86526]">
-                                Fine Fragrance
-                              </span>
-                              <span className="w-1 h-1 rounded-full bg-[#D5C9B8]" />
-                              <span className="text-[10px] text-gray-700 font-bold bg-[#FAF7F2] px-2 py-0.5 rounded border border-[#E8DFC9]">
-                                Size: {item.size || '50ML'}
-                              </span>
-
-                              {/* Return Policy Badges */}
-                              {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) ? (
-                                <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                                  <ShieldCheck size={11} className="text-emerald-600" />
-                                  <span>7-Day Return Guarantee Included</span>
-                                </span>
-                              ) : (item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) ? (
-                                <span className="text-[9.5px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
-                                  Discovery Sample (Non-Returnable)
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-[9.5px] font-medium text-[#8C6D1F] bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                                  <AlertCircle size={10} className="text-[#8C6D1F]" />
-                                  <span>Non-Returnable (Final Sale)</span>
-                                </span>
-                              )}
-                            </div>
-
-                            <Link 
-                              href={`/product/${item.productId || item.id}`}
-                              className="text-base sm:text-lg font-serif font-medium text-[#1A1A1A] hover:text-[#B86526] transition-colors block truncate"
-                            >
-                              {item.name}
-                            </Link>
-                            
-                            <p className="text-xs sm:text-sm font-semibold text-[#1A1A1A] font-sans">
-                              ₹{price.toLocaleString('en-IN')}
-                              <span className="text-[11px] font-normal text-gray-400 ml-1">/ unit</span>
-                            </p>
-
-                            {/* Upgrade Option for Standalone Bottle */}
-                            {!(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && !(item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) && (
-                              <div className="mt-2 p-2 rounded-xl bg-[#FAF6EE] border border-[#E0D0A5] flex items-center justify-between gap-3 max-w-md">
+                          {/* Professional Luxury Upgrade Card */}
+                          {!(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && !(item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) && (
+                            <div className="mt-2 p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-[#FAF8F5] via-[#FFFDF9] to-[#F5ECE0] border border-[#E5DAC6] hover:border-[#B8860B]/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 max-w-lg shadow-2xs group">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-7 h-7 rounded-full bg-[#FAF0D4] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
+                                  <Sparkles size={12} className="text-[#B8860B]" />
+                                </div>
                                 <div className="min-w-0">
-                                  <p className="text-[10.5px] font-bold text-[#8C6D1F] m-0 flex items-center gap-1">
-                                    <Sparkles size={11} className="text-[#B8860B]" />
-                                    <span>Add 2ml Companion Sample & Return Guarantee (+₹199)</span>
+                                  <p className="text-[11px] font-bold text-[#1A1A1A] m-0 leading-tight">
+                                    Add 2ml Companion Trial Pack
+                                    <span className="text-[#8C6D1F] font-bold ml-1.5 font-sans">(+₹199)</span>
                                   </p>
-                                  <p className="text-[9.5px] text-gray-500 m-0">
-                                    Test at home first — return sealed 50ml flacon if not satisfied.
+                                  <p className="text-[10px] text-stone-500 m-0 font-light leading-tight mt-0.5">
+                                    Test on skin at home • 7-day risk-free return on sealed 50ml flacon
                                   </p>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpgradeToCombo(item)}
-                                  className="px-3 py-1 rounded-full bg-black text-white hover:bg-stone-800 text-[9.5px] uppercase font-bold tracking-wider transition-all shrink-0 cursor-pointer shadow-2xs active:scale-95"
-                                >
-                                  + Upgrade
-                                </button>
                               </div>
-                            )}
 
-                            {/* Note for Combo */}
-                            {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && (
-                              <p className="text-[10px] text-emerald-800 m-0 leading-tight">
-                                ★ <em>Includes 2ml companion sample. Test on skin at home; keep 50ml box sealed for 100% full refund within 7 days.</em>
-                              </p>
-                            )}
+                              <button
+                                type="button"
+                                onClick={() => handleUpgradeToCombo(item)}
+                                className="self-end sm:self-center px-3 py-1 rounded-full bg-[#1C120C] hover:bg-black text-[#ECC880] text-[10px] font-serif uppercase tracking-wider font-bold transition-all shrink-0 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap"
+                              >
+                                + Add Trial
+                              </button>
+                            </div>
+                          )}
 
-                            {isMaxReached && (
-                              <span className="text-[10px] text-amber-700 font-medium block">
-                                Max available atelier inventory ({maxStock})
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                          {/* Reassuring note once upgraded */}
+                          {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && (
+                            <p className="text-[10.5px] text-emerald-800 m-0 font-light leading-tight pt-0.5">
+                              ★ <em>Includes companion 2ml sample vial. Test first at home; full refund available within 7 days.</em>
+                            </p>
+                          )}
 
-                        {/* Quantity Controls & Line Total */}
-                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-[#F0EBE0]">
-                          
-                          {/* Quantity Counter */}
-                          <div className="inline-flex items-center bg-[#FAF7F2] border border-[#E0D8CA] rounded-full p-1 shadow-2xs">
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, -1, maxStock)}
-                              disabled={item.quantity <= 1}
-                              className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-                              aria-label="Decrease quantity"
-                            >
-                              <Minus size={12} strokeWidth={2} />
-                            </button>
-                            <span className="w-8 text-center text-xs font-bold text-[#1A1A1A] font-sans">
-                              {item.quantity}
+                          {isMaxReached && (
+                            <span className="text-[9.5px] text-amber-700 font-medium block">
+                              Max available inventory ({maxStock})
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, 1, maxStock)}
-                              disabled={isMaxReached}
-                              className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-                              aria-label="Increase quantity"
-                            >
-                              <Plus size={12} strokeWidth={2} />
-                            </button>
-                          </div>
-
-                          {/* Line Total */}
-                          <div className="text-right min-w-[85px]">
-                            <span className="text-base sm:text-lg font-bold text-[#1A1A1A] font-sans block">
-                              ₹{itemTotal.toLocaleString('en-IN')}
-                            </span>
-                          </div>
-
-                          {/* Remove Action */}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.productId || item.id, item.size, item.name)}
-                            className="w-9 h-9 rounded-full bg-[#FAF7F2] hover:bg-red-50 text-gray-400 hover:text-red-600 border border-[#E8DFC9] hover:border-red-200 transition-colors flex items-center justify-center cursor-pointer shrink-0"
-                            title="Remove fragrance"
-                            aria-label={`Remove ${item.name} from bag`}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
 
-                {/* Card Footer: Continue Exploring Collections inside the card */}
-                <div className="p-4 sm:p-5 bg-[#FAF9F7]/80 border-t border-[#ECE7DE] flex items-center justify-between">
-                  <Link 
-                    href="/shop"
-                    className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-black hover:text-[#B8860B] transition-colors group cursor-pointer"
-                  >
-                    <ArrowLeft size={13} className="group-hover:-translate-x-1 transition-transform" />
-                    <span>Continue Exploring Collections</span>
-                  </Link>
+                      {/* Quantity Controls & Line Total */}
+                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#F0EBE0]">
+                        
+                        {/* Quantity Counter */}
+                        <div className="inline-flex items-center bg-[#FAF7F2] border border-[#E0D8CA] rounded-full p-0.5 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, -1, maxStock)}
+                            disabled={item.quantity <= 1}
+                            className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus size={11} strokeWidth={2} />
+                          </button>
+                          <span className="w-7 text-center text-xs font-bold text-[#1A1A1A] font-sans">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQty(item.productId || item.id, item.size, item.quantity, 1, maxStock)}
+                            disabled={isMaxReached}
+                            className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus size={11} strokeWidth={2} />
+                          </button>
+                        </div>
 
-                  <span className="text-[11px] text-[#8C7A6B] font-medium hidden sm:inline-block">
-                    {cartItems.length} {cartItems.length === 1 ? 'fragrance flacon' : 'fragrance flacons'} in bag
-                  </span>
-                </div>
+                        {/* Line Total */}
+                        <div className="text-right min-w-[75px]">
+                          <span className="text-sm sm:text-base font-bold text-[#1A1A1A] font-sans block">
+                            ₹{itemTotal.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+
+                        {/* Remove Action */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item.productId || item.id, item.size, item.name)}
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FAF7F2] hover:bg-red-50 text-gray-400 hover:text-red-600 border border-[#E8DFC9] hover:border-red-200 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+                          title="Remove fragrance"
+                          aria-label={`Remove ${item.name} from bag`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
+              {/* Card Footer on Left: Continue Exploring Collections */}
+              <div className="p-3 sm:p-4 bg-[#FAF9F7]/90 border-t border-[#ECE7DE] flex items-center justify-between text-xs">
+                <Link 
+                  href="/shop"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:text-[#B8860B] transition-colors group cursor-pointer"
+                >
+                  <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
+                  <span>Continue Exploring Collections</span>
+                </Link>
+
+                <span className="text-[11px] text-[#8C7A6B] font-medium hidden sm:inline-block">
+                  {cartItems.length} {cartItems.length === 1 ? 'fragrance flacon' : 'fragrance flacons'} in bag
+                </span>
+              </div>
             </div>
 
-            {/* RIGHT COLUMN: STICKY ORDER SUMMARY (4 Cols) */}
-            <div className="lg:col-span-4 lg:sticky lg:top-28">
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DFC9] shadow-sm space-y-5">
-                <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-4">
-                  <h3 className="text-xl font-serif font-bold text-black tracking-tight">
+            {/* RIGHT COLUMN: BOUTIQUE ORDER SUMMARY (5 Cols on lg, 4 on xl) */}
+            <div className="lg:col-span-5 xl:col-span-4 bg-[#FAF8F5] p-4 sm:p-5 flex flex-col justify-between">
+              
+              <div className="space-y-3.5">
+                {/* Order Summary Header */}
+                <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-2.5">
+                  <h3 className="text-base sm:text-lg font-serif font-bold text-black tracking-tight m-0">
                     Order Summary
                   </h3>
-                  <span className="text-[11px] font-semibold text-[#8C6D1F] bg-[#FAF3E0] px-3 py-1 rounded-full border border-[#E8DEC8]">
+                  <span className="text-[10px] font-semibold text-[#8C6D1F] bg-[#FAF3E0] px-2.5 py-0.5 rounded-full border border-[#E8DEC8]">
                     {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
                   </span>
                 </div>
 
-                <div className="space-y-3 text-xs">
+                {/* Subtotals & Line Items */}
+                <div className="space-y-2 text-xs">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal ({totalItemCount} {totalItemCount === 1 ? 'item' : 'items'})</span>
                     <span className="font-sans font-bold text-black">₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
 
-                  <div className="flex justify-between text-gray-600">
-                    <span>White-Glove Courier Delivery</span>
-                    <span className="text-emerald-700 font-bold uppercase text-[10px]">COMPLIMENTARY</span>
-                  </div>
-
-                  <div className="flex justify-between text-gray-600">
-                    <span>Signature Packaging & Samples</span>
-                    <span className="text-emerald-700 font-bold uppercase text-[10px]">INCLUDED</span>
-                  </div>
-
                   {discountAmount > 0 && appliedCoupon && (
-                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-3.5 py-2.5 rounded-xl border border-emerald-200">
+                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
                       <div className="flex items-center gap-1.5">
-                        <Tag size={13} className="text-emerald-700" />
-                        <span className="font-bold uppercase tracking-wider text-[11px]">
+                        <Tag size={12} className="text-emerald-700" />
+                        <span className="font-bold uppercase tracking-wider text-[10px]">
                           {appliedCoupon.code} {appliedCoupon.discountType === 'percentage' ? `(${appliedCoupon.discountValue}% OFF)` : `(₹${appliedCoupon.discountValue} OFF)`}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <span className="font-sans font-bold text-emerald-700">-₹{discountAmount.toLocaleString('en-IN')}</span>
                         <button
                           type="button"
                           onClick={handleRemoveCoupon}
-                          className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer ml-1"
+                          className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer"
                           title="Remove coupon"
                         >
                           ✕
@@ -890,16 +846,16 @@ export default function CartPage() {
                   )}
 
                   {rewardDiscountAmount > 0 && (
-                    <div className="flex justify-between items-center text-[#8C6D1F] bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] px-3.5 py-2.5 rounded-xl border border-[#D4AF37]/50 shadow-2xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-5 h-5 rounded-full bg-[#B8860B]/15 flex items-center justify-center shrink-0">
-                          <Sparkles size={11} className="text-[#B8860B]" />
+                    <div className="flex justify-between items-center text-[#8C6D1F] bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] px-3 py-2 rounded-xl border border-[#D4AF37]/50 shadow-2xs">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="w-4 h-4 rounded-full bg-[#B8860B]/15 flex items-center justify-center shrink-0">
+                          <Sparkles size={10} className="text-[#B8860B]" />
                         </div>
-                        <span className="font-semibold text-xs text-[#6B5115] tracking-wide truncate">
+                        <span className="font-semibold text-[11px] text-[#6B5115] tracking-wide truncate">
                           Privilege Points ({rewardPointsUsed.toLocaleString()} pts)
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <span className="font-sans font-bold text-xs text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
                         <button
                           type="button"
@@ -908,7 +864,7 @@ export default function CartPage() {
                             handleRemoveRewards();
                           }}
                           disabled={rewardLoading}
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-stone-200/60 text-xs transition-colors cursor-pointer"
+                          className="w-4 h-4 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-stone-200/60 text-xs transition-colors cursor-pointer"
                           title="Remove privilege points"
                         >
                           ✕
@@ -917,9 +873,9 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-between items-baseline text-sm font-bold text-black pt-3 border-t border-[#ECE7DE] font-serif">
-                    <span className="text-base text-gray-800">Estimated Total</span>
-                    <span className="font-sans text-2xl font-bold text-black tracking-tight">
+                  <div className="flex justify-between items-baseline text-sm font-bold text-black pt-2 border-t border-[#ECE7DE] font-serif">
+                    <span className="text-sm text-gray-800">Estimated Total</span>
+                    <span className="font-sans text-xl sm:text-2xl font-bold text-black tracking-tight">
                       ₹{finalTotal.toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -927,60 +883,44 @@ export default function CartPage() {
 
                 {/* Promo Code Input Form or Active Coupon Card */}
                 {appliedCoupon ? (
-                  <div className="pt-2">
-                    <label className="text-[10px] uppercase font-bold tracking-[0.18em] text-[#8C7A6B] block mb-1.5">
-                      Applied Promotional Voucher
-                    </label>
-                    <div className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF6ED] border border-[#E8DFC9]">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
-                          <Check size={14} />
+                  <div>
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF6ED] border border-[#E8DFC9]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-[10px] shrink-0">
+                          <Check size={11} />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-bold text-xs text-[#8C6D1F] uppercase tracking-wider">
-                              {appliedCoupon.code}
-                            </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                              Applied
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-gray-500 m-0">
-                            {appliedCoupon.description || 'Promotional coupon active'}
-                          </p>
-                        </div>
+                        <span className="font-mono font-bold text-xs text-[#8C6D1F] uppercase tracking-wider">
+                          {appliedCoupon.code} applied
+                        </span>
                       </div>
                       <button
                         type="button"
                         onClick={handleRemoveCoupon}
                         disabled={promoLoading}
-                        className="text-xs font-bold text-red-600 hover:text-red-700 hover:underline px-2 py-1 cursor-pointer"
+                        className="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline px-1.5 py-0.5 cursor-pointer"
                       >
                         Remove
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="pt-2">
-                    <label className="text-[10px] uppercase font-bold tracking-[0.18em] text-[#8C7A6B] block mb-1.5">
-                      Promotional Voucher / Patron Code
-                    </label>
-                    <form onSubmit={handleApplyPromo} className="flex gap-2">
+                  <div>
+                    <form onSubmit={handleApplyPromo} className="flex gap-1.5">
                       <input
                         type="text"
-                        placeholder="e.g. ROVE101"
+                        placeholder="Voucher: e.g. ROVE101"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
                         disabled={promoLoading}
-                        className="flex-1 px-3.5 py-2.5 rounded-xl text-xs bg-[#FAF9F7] border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-gray-400 font-mono"
+                        className="flex-1 px-3 py-1.5 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-gray-400 font-mono"
                       />
                       <button
                         type="submit"
                         disabled={promoLoading || !promoCode.trim()}
-                        className="bg-[#1C1714] hover:bg-black text-[#ECC880] px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center shrink-0 shadow-xs"
+                        className="bg-[#1C1714] hover:bg-black text-[#ECC880] px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center shrink-0 shadow-2xs"
                       >
                         {promoLoading ? (
-                          <Loader2 size={13} className="animate-spin" />
+                          <Loader2 size={12} className="animate-spin" />
                         ) : (
                           'Apply'
                         )}
@@ -990,117 +930,117 @@ export default function CartPage() {
                 )}
 
                 {/* Patron Privilege Wallet Card with High-Precision Luxury Toggle */}
-                <div className="pt-3 border-t border-[#ECE7DE]">
-                  <div 
-                    onClick={handleToggleRewards}
-                    className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 cursor-pointer select-none ${
-                      rewardPointsUsed > 0 
-                        ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-xs' 
-                        : 'bg-[#FAF9F7] hover:bg-[#F7F4EC] border-[#E8DFC9] hover:border-[#D5C7A8]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-2xs border ${
-                          rewardPointsUsed > 0 
-                            ? 'bg-gradient-to-br from-[#E5B869] to-[#B8860B] text-white border-[#8C6D1F]' 
-                            : 'bg-white text-[#B8860B] border-[#E5DAC6]'
-                        }`}>
-                          <Coins size={18} strokeWidth={1.75} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs sm:text-[13px] font-bold text-[#1A1A1A] tracking-tight">
-                              Patron Privilege Wallet
-                            </span>
-                            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                              rewardPointsUsed > 0 
-                                ? 'bg-[#B8860B] text-white shadow-2xs' 
-                                : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
-                            }`}>
-                              {availableRewardPoints.toLocaleString()} pts
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#7A6B5D] mt-0.5 font-light leading-snug">
-                            {rewardPointsUsed > 0 ? (
-                              <span className="text-emerald-800 font-semibold flex items-center gap-1">
-                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                                {rewardPointsUsed.toLocaleString()} pts applied (Saving ₹{rewardDiscountAmount.toLocaleString('en-IN')})
-                              </span>
-                            ) : availableRewardPoints > 0 ? (
-                              <span>
-                                Tap to redeem up to {availableRewardPoints.toLocaleString()} pts (Save ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})
-                              </span>
-                            ) : (
-                              <span>Earn privilege points on this order for future acquisitions</span>
-                            )}
-                          </p>
-                        </div>
+                <div 
+                  onClick={handleToggleRewards}
+                  className={`p-2.5 sm:p-3 rounded-xl border transition-all duration-300 cursor-pointer select-none ${
+                    rewardPointsUsed > 0 
+                      ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-2xs' 
+                      : 'bg-white hover:bg-[#F7F4EC] border-[#E8DFC9] hover:border-[#D5C7A8]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-2xs border ${
+                        rewardPointsUsed > 0 
+                          ? 'bg-gradient-to-br from-[#E5B869] to-[#B8860B] text-white border-[#8C6D1F]' 
+                          : 'bg-[#FAF7F2] text-[#B8860B] border-[#E5DAC6]'
+                      }`}>
+                        <Wallet size={15} strokeWidth={1.75} />
                       </div>
-
-                      {/* Luxury Toggle Switch */}
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={rewardPointsUsed > 0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleRewards();
-                        }}
-                        disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-                          rewardPointsUsed > 0 
-                            ? 'bg-[#1C1714] shadow-[0_0_8px_rgba(212,175,55,0.35)]' 
-                            : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
-                        }`}
-                        title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
-                      >
-                        <span
-                          className={`pointer-events-none flex items-center justify-center h-5 w-5 transform rounded-full shadow-md ring-0 transition-transform duration-300 ease-in-out ${
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-bold text-[#1A1A1A] tracking-tight">
+                            Patron Privilege Wallet
+                          </span>
+                          <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full shrink-0 ${
                             rewardPointsUsed > 0 
-                              ? 'translate-x-5 bg-gradient-to-br from-[#F6D389] to-[#DEB368]' 
-                              : 'translate-x-0 bg-white'
-                          }`}
-                        >
-                          {rewardLoading && (
-                            <Loader2 size={10} className="animate-spin text-[#241306]" />
+                              ? 'bg-[#B8860B] text-white' 
+                              : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
+                          }`}>
+                            {availableRewardPoints.toLocaleString()} pts
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-[#7A6B5D] mt-0.5 font-light leading-tight truncate">
+                          {rewardPointsUsed > 0 ? (
+                            <span className="text-emerald-800 font-semibold">
+                              ✓ {rewardPointsUsed.toLocaleString()} pts applied (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                            </span>
+                          ) : availableRewardPoints > 0 ? (
+                            <span>
+                              Redeem up to ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')} off
+                            </span>
+                          ) : (
+                            <span>Earn privilege points on this order</span>
                           )}
-                        </span>
-                      </button>
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Luxury Toggle Switch */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={rewardPointsUsed > 0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleRewards();
+                      }}
+                      disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+                        rewardPointsUsed > 0 
+                          ? 'bg-[#1C1714] shadow-[0_0_6px_rgba(212,175,55,0.35)]' 
+                          : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
+                      }`}
+                      title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
+                    >
+                      <span
+                        className={`pointer-events-none flex items-center justify-center h-4 w-4 transform rounded-full shadow-md ring-0 transition-transform duration-300 ease-in-out ${
+                          rewardPointsUsed > 0 
+                            ? 'translate-x-4 bg-gradient-to-br from-[#F6D389] to-[#DEB368]' 
+                            : 'translate-x-0 bg-white'
+                        }`}
+                      >
+                        {rewardLoading && (
+                          <Loader2 size={8} className="animate-spin text-[#241306]" />
+                        )}
+                      </span>
+                    </button>
                   </div>
                 </div>
+              </div>
 
+              {/* Checkout Action & Security Badges Container */}
+              <div className="pt-3 border-t border-[#ECE7DE] space-y-2 mt-3">
                 {/* Primary Proceed to Checkout CTA */}
                 <button
                   type="button"
                   onClick={handleStartCheckout}
-                  className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3.5 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-md shadow-amber-950/10 transition-all cursor-pointer group"
+                  className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-950/10 transition-all cursor-pointer group"
                 >
                   <Lock size={13} strokeWidth={2.2} />
                   <span>Proceed to Checkout</span>
                   <ArrowRight size={13} strokeWidth={2.2} className="group-hover:translate-x-1 transition-transform" />
                 </button>
 
-                {/* Trust and Payment Security Badges */}
-                <div className="pt-3 border-t border-[#ECE7DE] grid grid-cols-3 gap-2 text-[10px] text-gray-500 text-center">
-                  <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7] border border-[#F0EAE0]">
-                    <ShieldCheck size={14} className="text-[#B8860B] mb-1" />
-                    <span className="font-semibold text-gray-700 text-[10px]">100% Authentic</span>
-                    <span className="text-[9px] text-gray-400">Atelier Perfume</span>
-                  </div>
-                  <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7] border border-[#F0EAE0]">
-                    <Sparkles size={14} className="text-[#B8860B] mb-1" />
-                    <span className="font-semibold text-gray-700 text-[10px]">2ml Guarantee</span>
-                    <span className="text-[9px] text-gray-400">Complimentary</span>
-                  </div>
-                  <div className="flex flex-col items-center p-2 rounded-xl bg-[#FAF9F7] border border-[#F0EAE0]">
-                    <Lock size={14} className="text-[#B8860B] mb-1" />
-                    <span className="font-semibold text-gray-700 text-[10px]">256-Bit SSL</span>
-                    <span className="text-[9px] text-gray-400">Encrypted</span>
-                  </div>
+                {/* Compact Single-Line Security & Guarantee Reassurance */}
+                <div className="flex items-center justify-center gap-2 text-[10px] text-gray-500 font-medium">
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck size={11} className="text-[#B8860B]" />
+                    <span>Authentic</span>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Sparkles size={11} className="text-[#B8860B]" />
+                    <span>2ml Guarantee</span>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Lock size={11} className="text-[#B8860B]" />
+                    <span>256-Bit SSL</span>
+                  </span>
                 </div>
               </div>
+
             </div>
 
           </div>

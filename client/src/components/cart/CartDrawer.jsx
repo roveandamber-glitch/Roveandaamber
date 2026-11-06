@@ -245,16 +245,15 @@ const CartDrawer = ({ isOpen, onClose }) => {
                           {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) ? (
                             <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
                               <ShieldCheck size={9} />
-                              <span>7-Day Return</span>
+                              <span>7-Day Trial Included</span>
                             </span>
                           ) : (item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) ? (
                             <span className="text-[9px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.2 rounded">
-                              Sample (No Return)
+                              2ml Sample
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-stone-600 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
-                              <AlertCircle size={8.5} className="text-[#8C6D1F]" />
-                              <span>Final Sale (No Return)</span>
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-stone-500 bg-stone-100 border border-stone-200 px-1.5 py-0.2 rounded">
+                              <span>Sealed Flacon</span>
                             </span>
                           )}
                           <span className="text-xs font-bold text-black font-sans ml-auto">
@@ -264,18 +263,21 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
                         {/* Upgrade option for standalone bottle */}
                         {!(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && !(item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) && (
-                          <div className="mt-1.5 p-1.5 rounded-lg bg-[#FAF6EE] border border-[#E0D0A5] flex items-center justify-between gap-1.5">
+                          <div className="mt-2 p-2 rounded-xl bg-gradient-to-r from-[#FAF8F5] via-[#FFFDF9] to-[#F5ECE0] border border-[#E5DAC6] flex items-center justify-between gap-2 shadow-2xs">
                             <div className="min-w-0">
-                              <p className="text-[9.5px] font-bold text-[#8C6D1F] m-0 leading-tight">
-                                + 2ml Sample & 7-Day Return (+₹199)
+                              <p className="text-[10px] font-bold text-[#1A1A1A] m-0 leading-tight">
+                                Add 2ml Trial Pack <span className="text-[#8C6D1F] font-bold">(+₹199)</span>
+                              </p>
+                              <p className="text-[9px] text-stone-500 m-0 font-light leading-tight mt-0.5">
+                                7-day home trial on sealed bottle
                               </p>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleUpgradeItem(item)}
-                              className="px-2 py-0.5 rounded-full bg-black text-white hover:bg-stone-800 text-[8.5px] uppercase font-bold tracking-wider transition-all shrink-0 cursor-pointer shadow-2xs"
+                              className="px-2.5 py-1 rounded-full bg-[#1C120C] hover:bg-black text-[#ECC880] text-[9px] font-serif uppercase tracking-wider font-bold transition-all shrink-0 cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
                             >
-                              Upgrade
+                              + Add
                             </button>
                           </div>
                         )}

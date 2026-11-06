@@ -249,8 +249,11 @@ const LoginContent = () => {
     if (typeof window !== 'undefined') {
       loginForm.resetFields();
       registerForm.resetFields();
-      if (searchParams?.get('logout') === 'true') {
+      if (searchParams?.get('logout') === 'true' || searchParams?.get('reason') === 'expired' || searchParams?.get('reason') === 'unauthorized') {
         authService.clearSession();
+        if (searchParams?.get('reason') === 'expired') {
+          setErrorMessage('Your session has expired. Please sign in to continue.');
+        }
         return;
       }
 

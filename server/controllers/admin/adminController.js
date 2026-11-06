@@ -643,7 +643,19 @@ export const updateAdminProduct = async (req, res) => {
       imageList = req.files.map(f => ({ url: getUploadedFileUrl(f), alt: name || '' }));
     } else if (req.file) {
       imageList = [{ url: getUploadedFileUrl(req.file), alt: name || '' }];
-    } else if (req.body.images !== undefined) {
+    }
+
+    if (req.body.existingImages !== undefined) {
+      const existing = Array.isArray(req.body.existingImages) ? req.body.existingImages : [req.body.existingImages];
+      const existingMapped = existing
+        .filter(u => typeof u === 'string' && u.trim() && !u.includes('no-image.jpg'))
+        .map(u => ({ url: u, alt: name || '' }));
+      if (imageList) {
+        imageList = [...existingMapped, ...imageList];
+      } else if (existingMapped.length > 0) {
+        imageList = existingMapped;
+      }
+    } else if (!imageList && req.body.images !== undefined) {
       const raw = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
       imageList = raw.map(u => (typeof u === 'string' ? { url: u, alt: name || '' } : u));
     }

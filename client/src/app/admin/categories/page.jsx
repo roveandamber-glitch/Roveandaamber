@@ -342,7 +342,7 @@ function CategoriesContent() {
                         </h3>
                       </div>
                       <span className="text-xs bg-black/60 backdrop-blur-md text-white/90 px-2.5 py-1 rounded-full font-mono border border-white/20">
-                        {cat.itemCount || 0} Flacons
+                        {cat.itemCount || 0} Products
                       </span>
                     </div>
                   </div>

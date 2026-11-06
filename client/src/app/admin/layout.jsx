@@ -42,6 +42,8 @@ const AdminLayout = ({ children }) => {
   });
   const [backendLive, setBackendLive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -49,6 +51,8 @@ const AdminLayout = ({ children }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (pathname === '/admin/login' || pathname === '/login') {
+        setIsAuthorized(true);
+        setIsCheckingAuth(false);
         return;
       }
 
@@ -58,15 +62,22 @@ const AdminLayout = ({ children }) => {
       if (userStr) {
         try {
           userRole = JSON.parse(userStr)?.role;
-        } catch (e) {}
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       // If unauthenticated or not an admin, redirect to dedicated admin login
       if (!token || userRole !== 'admin') {
+        setIsAuthorized(false);
+        setIsCheckingAuth(false);
         const loginTarget = window.location.hostname.startsWith('admin.') ? '/login' : '/admin/login';
         router.replace(loginTarget);
         return;
       }
+
+      setIsAuthorized(true);
+      setIsCheckingAuth(false);
 
       adminService.checkHealth().then((status) => {
         setBackendLive(status);
@@ -396,6 +407,21 @@ const AdminLayout = ({ children }) => {
   // Completely bypass admin chrome on the admin login page
   if (pathname === '/admin/login' || pathname === '/login') {
     return <>{children}</>;
+  }
+
+  // Guard: if checking auth or not authorized, show luxury loading state and do NOT render children
+  if (isCheckingAuth || !isAuthorized) {
+    return (
+      <div className="min-h-screen bg-[#1B100A] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-10 h-10 rounded-full border-2 border-[#D4A64A] border-t-transparent animate-spin mb-4" />
+        <span className="font-serif tracking-[0.2em] text-[#D4A64A] text-sm font-medium">
+          ROVE & AMBER
+        </span>
+        <span className="text-[9px] uppercase tracking-[0.3em] text-[#D4A64A]/60 mt-1">
+          Verifying Atelier Credentials...
+        </span>
+      </div>
+    );
   }
 
   return (

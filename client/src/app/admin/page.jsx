@@ -149,7 +149,7 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6 sm:space-y-8 animate-fadeIn text-[#1B100A] max-w-[1600px] mx-auto pb-12">
       {/* 1. TOP HEADER & CONTROLS */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/60 backdrop-blur-sm p-4 sm:p-5 rounded-2xl border border-[#E8DFC8]">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 bg-white/70 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[#E8DFC8] shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl sm:text-3xl font-serif text-[#1B100A] font-normal tracking-tight">
@@ -160,15 +160,15 @@ const AdminDashboard = () => {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-[#5C4D3E] font-light mt-1">
-            Real-time boutique metrics, order fulfillment pipeline, and flacon sales performance.
+            Real-time boutique metrics, order fulfillment pipeline, and product sales performance.
           </p>
         </div>
 
         {/* Date Filter & Action Buttons */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap xl:flex-nowrap xl:justify-end">
           <button
             onClick={handleRefresh}
-            className={`p-2.5 rounded-xl bg-white border border-[#E8DFC8] text-gray-600 hover:text-[#B38728] hover:border-[#D4A64A] transition-all shadow-2xs ${refreshing ? 'animate-spin' : ''}`}
+            className={`p-2.5 rounded-xl bg-white border border-[#E8DFC8] text-gray-600 hover:text-[#B38728] hover:border-[#D4A64A] transition-all shadow-2xs cursor-pointer shrink-0 ${refreshing ? 'animate-spin' : ''}`}
             title="Refresh Live Data"
           >
             <RefreshCw size={15} />
@@ -176,14 +176,14 @@ const AdminDashboard = () => {
 
           {/* Interactive Dynamic Time Range Filter */}
           <Dropdown menu={{ items: timeRangeMenuItems }} trigger={['click']}>
-            <button className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#E8DFC8] text-xs font-semibold text-gray-800 shadow-2xs hover:border-[#D4A64A] transition-colors cursor-pointer">
-              <Calendar size={14} className="text-[#D4A64A]" />
+            <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-[#E8DFC8] text-xs font-semibold text-gray-800 shadow-2xs hover:border-[#D4A64A] transition-colors cursor-pointer shrink-0 whitespace-nowrap">
+              <Calendar size={13} className="text-[#D4A64A]" />
               <span>{timeRange}</span>
-              <ChevronDown size={13} className="text-gray-400 ml-0.5" />
+              <ChevronDown size={12} className="text-gray-400 ml-0.5" />
             </button>
           </Dropdown>
 
-          <div className="w-44">
+          <div className="w-36 sm:w-40 shrink-0">
             <CustomDatePicker
               value={customDateFilter}
               onChange={(d) => {
@@ -192,24 +192,23 @@ const AdminDashboard = () => {
                 else setTimeRange('All Time');
               }}
               placeholder="Pick Custom Date"
-              showPresets={true}
             />
           </div>
 
           <Link
             href="/admin/orders"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E8DFC8] hover:bg-[#FAF7F2] text-xs font-semibold text-[#1B100A] shadow-2xs transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-[#E8DFC8] hover:bg-[#FAF7F2] text-xs font-semibold text-[#1B100A] shadow-2xs transition-all shrink-0 whitespace-nowrap"
           >
-            <ShoppingBag size={14} className="text-[#D4A64A]" />
+            <ShoppingBag size={13} className="text-[#D4A64A]" />
             <span>All Orders</span>
           </Link>
 
           <Link
             href="/admin/products/add"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4A64A] via-[#C6922C] to-[#B38728] hover:brightness-105 text-[#1B100A] text-xs font-semibold tracking-wide shadow-md shadow-amber-900/10 active:scale-95 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4A64A] via-[#C6922C] to-[#B38728] hover:brightness-105 text-[#1B100A] text-xs font-semibold tracking-wide shadow-sm shadow-amber-900/10 active:scale-95 transition-all shrink-0 whitespace-nowrap ml-auto xl:ml-0"
           >
-            <Plus size={15} strokeWidth={2.5} />
-            <span>Add Flacon</span>
+            <Plus size={14} strokeWidth={2.5} />
+            <span>Add Product</span>
           </Link>
         </div>
       </div>
@@ -291,7 +290,7 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-2xl p-5 border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-shadow relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-              Catalog Flacons
+              Catalog Products
             </span>
             <div className="w-10 h-10 rounded-xl bg-[#FAF7F2] border border-[#E8DFC8] flex items-center justify-center text-[#B38728] group-hover:scale-105 transition-transform">
               <Package size={18} />
@@ -321,7 +320,7 @@ const AdminDashboard = () => {
                 Recent Orders
               </h2>
               <p className="text-xs text-gray-500 font-light mt-0.5">
-                Overview of latest boutique flacon purchases and patron orders.
+                Overview of latest boutique product purchases and patron orders.
               </p>
             </div>
             <Link 
@@ -560,7 +559,7 @@ const AdminDashboard = () => {
               >
                 <Layers size={16} className="text-[#B38728] mb-1.5 group-hover:scale-110 transition-transform" />
                 <p className="text-xs font-semibold text-gray-900">All Perfumes</p>
-                <p className="text-[10px] text-gray-500">Catalog & flacons</p>
+                <p className="text-[10px] text-gray-500">Catalog & products</p>
               </Link>
 
               <Link
@@ -636,12 +635,12 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* TOP PERFORMING FLACONS (5 COLS) */}
+        {/* TOP PERFORMING PRODUCTS (5 COLS) */}
         <div className="lg:col-span-5 bg-white rounded-2xl border border-[#E8DFC8] shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base sm:text-lg font-serif text-[#1B100A] font-medium">
-                Top Performing Flacons
+                Top Performing Products
               </h2>
               <p className="text-xs text-gray-500 font-light mt-0.5">
                 Best-selling fragrance creations from actual orders
