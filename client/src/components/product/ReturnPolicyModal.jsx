@@ -51,7 +51,7 @@ export default function ReturnPolicyModal({ open, onClose }) {
               <span className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-xs">
                 ✨
               </span>
-              <span className="text-xs font-serif uppercase tracking-wider">
+              <span className="text-xs font-sans font-semibold uppercase tracking-wider">
                 50ml + 2ml Combo • 7-Day Return Guarantee
               </span>
             </div>
@@ -66,7 +66,7 @@ export default function ReturnPolicyModal({ open, onClose }) {
               <span className="w-6 h-6 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-xs">
                 ⚠️
               </span>
-              <span className="text-xs font-serif uppercase tracking-wider">
+              <span className="text-xs font-sans font-semibold uppercase tracking-wider">
                 Standalone Flacon (50ml Only) • Non-Returnable
               </span>
             </div>
@@ -81,7 +81,7 @@ export default function ReturnPolicyModal({ open, onClose }) {
               <span className="w-6 h-6 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-xs">
                 🧪
               </span>
-              <span className="text-xs font-serif uppercase tracking-wider">
+              <span className="text-xs font-sans font-semibold uppercase tracking-wider">
                 Discovery Sample (2ml Only) • Non-Returnable
               </span>
             </div>

@@ -199,7 +199,7 @@ export default function ProductReviews({
               Patron Assessment
             </span>
             <div className="flex items-baseline justify-center md:justify-start gap-2 mb-1.5">
-              <span className="text-4xl sm:text-5xl font-serif font-bold text-black leading-none">
+              <span className="text-4xl sm:text-5xl font-sans font-bold text-black leading-none">
                 {avgRating}
               </span>
               <span className="text-sm text-gray-500 font-light">/ 5.0</span>

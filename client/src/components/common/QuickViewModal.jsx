@@ -198,7 +198,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
 
               {/* Price & Stock */}
               <div className="flex items-baseline gap-4 mb-4 pb-4 border-b border-gray-200">
-                <span className="text-2xl font-bold text-[#1A1A1A]">
+                <span className="text-2xl font-sans font-bold text-[#1A1A1A]">
                   ₹{(product.price || 0).toLocaleString('en-IN')}
                 </span>
                 {currentSizeStock > 0 ? (

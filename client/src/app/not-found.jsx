@@ -31,7 +31,7 @@ export default function NotFound() {
 
         {/* Big Stylized 404 Number */}
         <div className="relative mb-4">
-          <span className="font-serif text-8xl sm:text-9xl md:text-[140px] font-normal tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-[#F6D389] via-[#DEB368] to-[#6E4E20] select-none drop-shadow-[0_4px_24px_rgba(222,179,104,0.3)]">
+          <span className="font-sans font-bold text-8xl sm:text-9xl md:text-[140px] tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-[#F6D389] via-[#DEB368] to-[#6E4E20] select-none drop-shadow-[0_4px_24px_rgba(222,179,104,0.3)]">
             404
           </span>
         </div>

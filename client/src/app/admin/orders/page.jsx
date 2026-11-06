@@ -899,7 +899,7 @@ export default function AdminOrdersPage() {
                           />
                         </div>
                         <div className="min-w-0">
-                          <div className="font-serif font-semibold text-xs text-[#1A1A1A] truncate">{item.name || item.product_name}</div>
+                          <div className="font-sans font-semibold text-xs text-[#1A1A1A] truncate">{item.name || item.product_name}</div>
                           <div className="text-[11px] text-gray-400 mt-0.5">
                             Qty: <strong className="text-gray-700">{qty}</strong> × ₹{unitPrice.toLocaleString('en-IN')}
                             {item.size && <span className="ml-1.5 px-1.5 py-0.2 rounded bg-gray-100 text-[10px] text-gray-700 font-semibold">{item.size}</span>}

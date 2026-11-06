@@ -529,7 +529,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] uppercase font-bold text-gray-400 block">Total Investment</span>
-                  <span className="font-serif font-bold text-base text-[#1A1A1A]">
+                  <span className="font-sans font-bold text-base text-[#1A1A1A]">
                     ₹{(orderConfirmed.total_amount || finalTotal).toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -946,7 +946,7 @@ export default function CheckoutPage() {
                     )}
 
                     <div className="flex justify-between items-baseline pt-2 border-t border-[#ECE7DE]">
-                      <span className="font-serif font-bold text-sm text-black">Total Amount</span>
+                      <span className="font-sans font-bold text-sm text-black">Total Amount</span>
                       <span className="font-sans text-xl font-bold text-black tracking-tight">
                         ₹{finalTotal.toLocaleString('en-IN')}
                       </span>

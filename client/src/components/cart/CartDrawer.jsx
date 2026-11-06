@@ -329,7 +329,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 <span>Atelier White-Glove Shipping</span>
                 <span className="text-emerald-700 font-bold uppercase text-[10px]">Free</span>
               </div>
-              <div className="flex justify-between text-sm font-bold text-black pt-2 border-t border-gray-100 font-serif">
+              <div className="flex justify-between text-sm font-bold text-black pt-2 border-t border-gray-100 font-sans">
                 <span>Total Amount</span>
                 <span className="font-sans text-base font-bold">₹{totalAmount.toLocaleString('en-IN')}</span>
               </div>
@@ -415,7 +415,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
               </span>
               <h3 className="text-2xl font-serif font-bold text-black">Delivery Details</h3>
               <p className="text-xs text-gray-500">
-                Confirm your dispatch information for all {totalItemCount} items (₹{totalAmount.toLocaleString('en-IN')}).
+                Confirm your dispatch information for all {totalItemCount} items (<span className="font-sans font-semibold">₹{totalAmount.toLocaleString('en-IN')}</span>).
               </p>
             </div>
 

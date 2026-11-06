@@ -7,11 +7,16 @@
     scroll-behavior: smooth;
     overflow-x: hidden;
     width: 100%;
+    font-variant-numeric: lining-nums tabular-nums;
   }
   body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  *, ::before, ::after {
+    font-variant-numeric: lining-nums tabular-nums;
   }
 }
 

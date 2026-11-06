@@ -485,10 +485,10 @@ export default function CartPage() {
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black selection:bg-[#B8860B] selection:text-white flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-22 pb-4 w-full flex-1 flex flex-col justify-start">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16 w-full flex-1 flex flex-col justify-start min-h-screen">
         
         {/* Compact Breadcrumb & Page Header Bar */}
-        <div className="mb-3 sm:mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
             <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 text-[11px] text-gray-400 uppercase tracking-widest">
               <Link href="/" className="hover:text-black transition-colors">Home</Link>
@@ -509,19 +509,6 @@ export default function CartPage() {
               </span>
             </div>
           </div>
-
-          {!isCartLoading && cartService.hasInitialFetch() && cartItems.length > 0 && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleClearCart}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider text-gray-500 hover:text-red-600 hover:bg-red-50 border border-[#E0D8CA] hover:border-red-200 transition-colors cursor-pointer"
-              >
-                <Trash2 size={12} />
-                <span>Clear All</span>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* CART CONTENT: SKELETON, EMPTY STATE OR ACTIVE ITEMS */}
@@ -620,13 +607,35 @@ export default function CartPage() {
           </div>
         ) : (
           /* UNIFIED SINGLE-WINDOW LUXURY CART MASTER CARD */
-          <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-md overflow-hidden grid grid-cols-1 lg:grid-cols-12 flex-1">
+          <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-md overflow-hidden grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-[580px] sm:min-h-[640px]">
             
             {/* LEFT COLUMN: PRESERVED FLACONS (8 Cols on xl, 7 on lg) */}
             <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#ECE7DE]">
               
+              {/* Internal Box Header with Clear All inside the box */}
+              <div className="px-5 py-3.5 bg-[#FAF9F7]/90 border-b border-[#ECE7DE] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif font-bold text-sm sm:text-base text-black tracking-tight">
+                    Fragrance Flacons
+                  </span>
+                  <span className="text-[10px] font-semibold text-[#8C6D1F] bg-[#FAF3E0] px-2 py-0.5 rounded-full border border-[#E8DEC8]">
+                    {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleClearCart}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider text-gray-500 hover:text-red-600 hover:bg-red-50 border border-[#E0D8CA] hover:border-red-200 transition-colors cursor-pointer"
+                  title="Clear all flacons from bag"
+                >
+                  <Trash2 size={12} />
+                  <span>Clear All</span>
+                </button>
+              </div>
+
               {/* Scrollable Products List Container */}
-              <div className="p-4 sm:p-5 overflow-y-auto max-h-[calc(100vh-275px)] divide-y divide-[#ECE7DE] custom-scrollbar">
+              <div className="p-4 sm:p-5 overflow-y-auto max-h-[540px] divide-y divide-[#ECE7DE] custom-scrollbar flex-1">
                 {cartItems.map((item) => {
                   const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
                   const price = Number(item.price) || 0;
@@ -873,7 +882,7 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-between items-baseline text-sm font-bold text-black pt-2 border-t border-[#ECE7DE] font-serif">
+                  <div className="flex justify-between items-baseline text-sm font-semibold text-black pt-2 border-t border-[#ECE7DE]">
                     <span className="text-sm text-gray-800">Estimated Total</span>
                     <span className="font-sans text-xl sm:text-2xl font-bold text-black tracking-tight">
                       ₹{finalTotal.toLocaleString('en-IN')}

@@ -13,12 +13,20 @@ import {
   Heart, 
   Star, 
   ChevronRight, 
+  ChevronDown,
   Check, 
   ArrowLeft,
   PackageOpen,
   AlertCircle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Maximize2,
+  Zap,
+  Leaf,
+  Gem,
+  FlaskConical,
+  Gift,
+  X
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -59,6 +67,7 @@ const ProductDetails = () => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
 
   // Related Products State
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -269,6 +278,37 @@ const ProductDetails = () => {
     ? selectedImage
     : (validImages[0] || null);
 
+  const displayThumbnails = useMemo(() => {
+    if (validImages.length > 0) return validImages;
+    if (currentMainImage) return [currentMainImage];
+    return [];
+  }, [validImages, currentMainImage]);
+
+  const handleNextThumbnail = () => {
+    if (displayThumbnails.length <= 1) return;
+    const currentIdx = displayThumbnails.indexOf(currentMainImage);
+    const nextIdx = (currentIdx + 1) % displayThumbnails.length;
+    setSelectedImage(displayThumbnails[nextIdx]);
+  };
+
+  const scentNotesText = useMemo(() => {
+    if (!product) return 'Top notes: Bergamot, Pink Pepper | Heart: Damask Rose | Base: Oud, Ambergris';
+    if (product.topNotes || product.heartNotes || product.baseNotes) {
+      const parts = [];
+      if (product.topNotes) parts.push(`Top notes: ${product.topNotes}`);
+      if (product.heartNotes) parts.push(`Heart: ${product.heartNotes}`);
+      if (product.baseNotes) parts.push(`Base: ${product.baseNotes}`);
+      return parts.join(' | ');
+    }
+    if (product.fragranceFamily) {
+      return `Top notes: Bergamot, Pink Pepper | Heart: ${product.fragranceFamily} | Base: Oud, Ambergris`;
+    }
+    if (Array.isArray(product.details) && product.details.length > 0) {
+      return product.details.slice(0, 3).join(' | ');
+    }
+    return 'Top notes: Bergamot, Pink Pepper | Heart: Damask Rose | Base: Oud, Ambergris';
+  }, [product]);
+
   // Stock and Availability Logic
   const availableSizesMap = useMemo(() => {
     if (!product) return {};
@@ -471,10 +511,10 @@ const ProductDetails = () => {
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-[#1A1A1A] pt-20 sm:pt-24 pb-20 md:pb-12 flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10 w-full flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 w-full flex-1">
         
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-[11px] uppercase tracking-widest text-stone-500 mb-6">
+        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-[11px] text-stone-500 mb-3 sm:mb-4">
           <Link href="/" className="hover:text-black transition-colors">Home</Link>
           <ChevronRight size={10} className="text-stone-400" />
           <Link href="/shop" className="hover:text-black transition-colors">Collections</Link>
@@ -482,235 +522,293 @@ const ProductDetails = () => {
           <span className="text-[#1A120B] font-semibold truncate max-w-[200px] sm:max-w-xs">{product.name}</span>
         </nav>
 
-        {/* Hero Product Showcase Grid - Spacious, Airy, Luxury Boutique Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+        {/* Hero Product Showcase Grid - Single-Window Compact Atelier Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
-          {/* LEFT: Image Gallery Showcase (Spacious Museum-Quality Portrait Canvas) */}
-          <div className="lg:col-span-6 xl:col-span-6 lg:sticky lg:top-28 space-y-4">
+          {/* LEFT: Image Gallery Showcase & Feature Badges */}
+          <div className="lg:col-span-6 xl:col-span-6">
             
-            {/* Primary Main Image Container */}
-            <div className="relative rounded-3xl bg-gradient-to-b from-[#FDFBF9] via-[#FAF7F2] to-[#F5ECE0] border border-[#ECE7DE] p-6 sm:p-10 aspect-[4/5] sm:aspect-square flex items-center justify-center overflow-hidden shadow-xs group">
-              {currentMainImage ? (
-                <img
-                  src={currentMainImage}
-                  alt={product.name}
-                  className="w-full h-full object-contain drop-shadow-xl transition-transform duration-700 ease-out group-hover:scale-105 select-none"
-                  onError={() => handleImageError(currentMainImage)}
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center select-none">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center mb-4 shadow-sm">
-                    <Sparkles size={32} strokeWidth={1.5} className="text-[#B8860B]" />
-                  </div>
-                  <span className="text-[10px] uppercase font-bold tracking-[0.28em] text-[#8C6D1F] mb-1.5">
-                    ROVE & AMBER • ATELIER
-                  </span>
-                  <h3 className="font-serif text-xl sm:text-2xl text-[#1A120B] font-normal max-w-xs leading-tight">
-                    {product.name}
-                  </h3>
-                  <span className="text-xs text-stone-500 font-light mt-1.5">
-                    {product.category || product.category_name || 'Fine Fragrance Extrait'}
-                  </span>
+            {/* Gallery: Vertical Thumbnails + Main Showcase Image */}
+            <div className="flex gap-3 sm:gap-3.5 items-start">
+              
+              {/* Vertical Thumbnail Strip */}
+              {displayThumbnails.length > 0 && (
+                <div className="flex flex-col gap-2.5 w-14 sm:w-16 shrink-0">
+                  {displayThumbnails.slice(0, 4).map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedImage(img)}
+                      className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-white p-1 transition-all duration-200 border-2 shrink-0 cursor-pointer ${
+                        currentMainImage === img ? 'border-[#B8860B] ring-1 ring-[#B8860B]/40 shadow-xs' : 'border-[#ECE7DE] hover:border-stone-400 opacity-80 hover:opacity-100'
+                      }`}
+                      title={`View angle ${idx + 1}`}
+                    >
+                      <img 
+                        src={img} 
+                        alt={`${product.name} thumbnail ${idx + 1}`} 
+                        className="w-full h-full object-contain"
+                        onError={() => handleImageError(img)}
+                      />
+                    </button>
+                  ))}
+
+                  {/* Down Chevron / Next image scroll button */}
+                  {displayThumbnails.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleNextThumbnail}
+                      className="w-14 h-7 sm:w-16 sm:h-7 rounded-lg border border-[#E8DFC9] bg-white hover:bg-stone-50 flex items-center justify-center text-stone-500 hover:text-stone-900 transition-colors cursor-pointer shadow-2xs"
+                      title="Next view"
+                      aria-label="Next view"
+                    >
+                      <ChevronDown size={14} />
+                    </button>
+                  )}
                 </div>
               )}
 
-              {/* Category / Concentration Badge */}
-              <div className="absolute top-4 left-4 z-10">
-                <span className="bg-white/95 backdrop-blur-md text-[#8C6D1F] border border-[#E0D8CA] text-[10px] uppercase font-bold tracking-[0.2em] px-3.5 py-1 rounded-full shadow-2xs">
-                  {product.category || product.category_name || 'Eau de Parfum'}
-                </span>
-              </div>
-
-              {/* Wishlist Button on Main Image */}
-              <button
-                type="button"
-                onClick={toggleWishlist}
-                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                className={`absolute top-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm cursor-pointer ${
-                  isWishlisted 
-                    ? 'bg-red-50 text-red-600 border border-red-200' 
-                    : 'bg-white/95 text-stone-600 hover:text-black hover:scale-105 border border-[#EFECE6]'
-                }`}
-              >
-                <Heart size={16} className={isWishlisted ? 'fill-red-600 text-red-600' : 'text-stone-600'} />
-              </button>
-
-              {/* Low Stock Badge */}
-              {!isOutOfStock && maxStockForSize <= 5 && maxStockForSize > 0 && (
-                <div className="absolute bottom-4 left-4 bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5] text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full shadow-xs">
-                  Only {maxStockForSize} flacons remaining in atelier
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnail Navigation Row */}
-            {validImages.length > 1 && (
-              <div className="flex items-center gap-3 overflow-x-auto py-1 scrollbar-none">
-                {validImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSelectedImage(img)}
-                    className={`relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-white p-1.5 transition-all duration-300 border-2 shrink-0 cursor-pointer ${
-                      currentMainImage === img ? 'border-[#B8860B] ring-2 ring-[#B8860B]/30 shadow-xs' : 'border-[#ECE7DE] opacity-70 hover:opacity-100 hover:border-stone-400'
-                    }`}
-                  >
-                    <img 
-                      src={img} 
-                      alt={`${product.name} view ${idx + 1}`} 
-                      className="w-full h-full object-contain"
-                      onError={() => handleImageError(img)}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT: Product Purchasing Information - Unboxed, Airy, Breathing Luxury Layout */}
-          <div className="lg:col-span-6 xl:col-span-6 space-y-6 sm:space-y-7">
-            
-            {/* 1. Header: Brand, Title, Rating, Stock */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#A67C38] flex items-center gap-2">
-                  <span className="w-4 h-[1px] bg-[#A67C38]" />
-                  <span>ROVE & AMBER • HAUTE PARFUMERIE</span>
-                </span>
-
-                {/* Stock Indicator */}
-                {isOutOfStock ? (
-                  <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
-                    Currently Unavailable
-                  </span>
+              {/* Primary Main Image Container - Constrained to 420px-440px so it fits cleanly in 1 window */}
+              <div className="relative flex-1 rounded-2xl sm:rounded-3xl bg-[#F6F2EA] border border-[#E8DFC9] h-[380px] sm:h-[420px] lg:h-[440px] flex items-center justify-center overflow-hidden shadow-2xs group">
+                {currentMainImage ? (
+                  <img
+                    src={currentMainImage}
+                    alt={product.name}
+                    className="w-full h-full object-contain drop-shadow-md p-3 sm:p-4 select-none transition-transform duration-500 group-hover:scale-105"
+                    onError={() => handleImageError(currentMainImage)}
+                  />
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>In Stock • Dispatched within 24h</span>
-                  </span>
+                  <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center select-none">
+                    <div className="w-16 h-16 rounded-2xl bg-[#FAF3E0] border border-[#E0D0A5] flex items-center justify-center mb-3 shadow-2xs">
+                      <Sparkles size={26} strokeWidth={1.5} className="text-[#B8860B]" />
+                    </div>
+                    <span className="text-[9.5px] uppercase font-bold tracking-[0.24em] text-[#8C6D1F] mb-1">
+                      ROVE & AMBER • ATELIER
+                    </span>
+                    <h3 className="font-serif text-lg sm:text-xl text-[#1A120B] font-normal max-w-xs leading-snug">
+                      {product.name}
+                    </h3>
+                    <span className="text-xs text-stone-500 font-light mt-1">
+                      {product.category || product.category_name || 'Fine Fragrance Extrait'}
+                    </span>
+                  </div>
                 )}
-              </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif text-[#170E08] font-normal leading-[1.12] tracking-tight m-0">
-                {product.name}
-              </h1>
+                {/* Category / Concentration Badge */}
+                <div className="absolute top-3.5 left-3.5 z-10">
+                  <span className="bg-white/95 backdrop-blur-md text-[#8C6D1F] border border-[#E0D8CA] text-[9.5px] uppercase font-bold tracking-[0.16em] px-3 py-0.5 rounded-full shadow-2xs">
+                    {product.category || product.category_name || 'Eau de Parfum'}
+                  </span>
+                </div>
 
-              {/* Reviews & Star Rating */}
-              <div className="flex items-center gap-2 pt-0.5">
+                {/* Wishlist Button on Main Image */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveTab('reviews');
-                    setTimeout(() => {
-                      const el = document.getElementById('reviews');
-                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                  }}
-                  className="inline-flex items-center gap-2 text-xs bg-transparent border-0 p-0 cursor-pointer hover:opacity-85 transition-opacity group"
-                  title="View reviews or write a review"
+                  onClick={toggleWishlist}
+                  aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                  className={`absolute top-3.5 right-3.5 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-xs cursor-pointer ${
+                    isWishlisted 
+                      ? 'bg-red-50 text-red-600 border border-red-200' 
+                      : 'bg-white text-stone-600 hover:text-black hover:scale-105 border border-[#EFECE6]'
+                  }`}
                 >
-                  <div className="flex items-center text-[#B8860B]">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <Star 
-                        key={star} 
-                        size={13} 
-                        className={star <= Math.round(product.rating || 5) ? 'fill-[#B8860B] text-[#B8860B]' : 'text-gray-300'} 
-                      />
-                    ))}
-                  </div>
-                  <span className="font-bold text-[#170E08] text-xs">{product.rating || 5.0}</span>
-                  <span className="text-stone-400 text-xs">({product.reviewsCount || 0} reviews)</span>
-                  <span className="text-[11px] text-[#A67C38] underline font-medium ml-1 group-hover:text-black transition-colors">
-                    {product.reviewsCount > 0 ? 'Read reviews' : 'Write review'}
-                  </span>
+                  <Heart size={15} className={isWishlisted ? 'fill-red-600 text-red-600' : 'text-stone-600'} />
                 </button>
+
+                {/* Zoom / Fullscreen Button on Main Image */}
+                {currentMainImage && (
+                  <button
+                    type="button"
+                    onClick={() => setIsZoomOpen(true)}
+                    aria-label="Enlarge image"
+                    className="absolute bottom-3.5 right-3.5 z-10 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-black border border-[#EFECE6] flex items-center justify-center transition-all shadow-xs cursor-pointer hover:scale-105"
+                  >
+                    <Maximize2 size={13} />
+                  </button>
+                )}
+
+                {/* Low Stock Indicator */}
+                {!isOutOfStock && maxStockForSize <= 5 && maxStockForSize > 0 && (
+                  <div className="absolute bottom-3.5 left-3.5 bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5] text-[9px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full shadow-2xs">
+                    Only {maxStockForSize} flacons remaining
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* 2. Price Row */}
-            <div className="py-3.5 border-y border-[#ECE7DE] flex flex-wrap items-baseline justify-between gap-3">
-              <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="text-2xl sm:text-3xl font-serif font-bold text-[#140D07] tracking-tight">
+            {/* 4 Feature Badges Underneath Image */}
+            <div className="grid grid-cols-4 gap-2 pt-3 border-t border-stone-200/60 mt-3 text-stone-700">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Leaf size={16} strokeWidth={1.5} className="text-[#8C6D1F] shrink-0" />
+                <div className="text-[10px] sm:text-[11px] leading-tight">
+                  <span className="font-semibold block text-stone-800">Long-Lasting</span>
+                  <span className="text-stone-400 font-normal">(8–10 Hours)</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Gem size={16} strokeWidth={1.5} className="text-[#8C6D1F] shrink-0" />
+                <div className="text-[10px] sm:text-[11px] leading-tight">
+                  <span className="font-semibold block text-stone-800">Premium</span>
+                  <span className="text-stone-400 font-normal">Ingredients</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <FlaskConical size={16} strokeWidth={1.5} className="text-[#8C6D1F] shrink-0" />
+                <div className="text-[10px] sm:text-[11px] leading-tight">
+                  <span className="font-semibold block text-stone-800">IFRA</span>
+                  <span className="text-stone-400 font-normal">Compliant</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Gift size={16} strokeWidth={1.5} className="text-[#8C6D1F] shrink-0" />
+                <div className="text-[10px] sm:text-[11px] leading-tight">
+                  <span className="font-semibold block text-stone-800">Complimentary</span>
+                  <span className="text-stone-400 font-normal">Sample</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Product Purchasing Information - Compact, Breathing Luxury Layout */}
+          <div className="lg:col-span-6 xl:col-span-6 space-y-3 lg:space-y-3.5">
+            
+            {/* 1. Brand Tagline & Stock Status Badge */}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#A67C38] flex items-center gap-1.5">
+                <span className="w-3.5 h-[1px] bg-[#A67C38]" />
+                <span>ROVE & AMBER • HAUTE PARFUMERIE</span>
+              </span>
+
+              {/* Stock Indicator */}
+              {isOutOfStock ? (
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                  Currently Unavailable
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>In Stock • Dispatched within 24h</span>
+                </span>
+              )}
+            </div>
+
+            {/* 2. Flacon Title */}
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-serif text-[#170E08] font-normal leading-tight tracking-tight m-0">
+              {product.name}
+            </h1>
+
+            {/* 3. Star Rating & Review Link */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('reviews');
+                  setTimeout(() => {
+                    const el = document.getElementById('reviews');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 100);
+                }}
+                className="inline-flex items-center gap-1.5 text-xs bg-transparent border-0 p-0 cursor-pointer hover:opacity-85 transition-opacity group"
+                title="View reviews or write a review"
+              >
+                <div className="flex items-center text-[#B8860B]">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star 
+                      key={star} 
+                      size={12} 
+                      className={star <= Math.round(product.rating || 5) ? 'fill-[#B8860B] text-[#B8860B]' : 'text-gray-300'} 
+                    />
+                  ))}
+                </div>
+                <span className="font-bold text-[#170E08] text-xs font-sans">{product.rating || 4.8}</span>
+                <span className="text-stone-400 text-xs font-sans">({product.reviewsCount || 0} reviews)</span>
+                <span className="text-[11px] text-[#A67C38] underline font-medium ml-1 group-hover:text-black transition-colors">
+                  {product.reviewsCount > 0 ? 'Read reviews' : 'Write a review'}
+                </span>
+              </button>
+            </div>
+
+            {/* 4. Price & Courier Row */}
+            <div className="flex items-center justify-between gap-3 flex-wrap py-0.5 border-y border-[#ECE7DE]/80">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-2xl lg:text-[28px] font-sans font-bold text-[#140D07] tracking-tight">
                   ₹{currentUnitPrice.toLocaleString('en-IN')}
                 </span>
-                {originalUnitPrice && discountPercent && discountPercent > 0 && (
-                  <>
-                    <span className="text-sm font-sans text-stone-400 line-through">
-                      ₹{originalUnitPrice.toLocaleString('en-IN')}
-                    </span>
-                    <span className="text-[11px] font-bold text-[#8C6D1F] bg-[#FAF3E0] border border-[#E0D0A5] px-2.5 py-0.5 rounded-full">
-                      Save {discountPercent}%
-                    </span>
-                  </>
-                )}
-                <span className="text-xs text-stone-500 font-light block">
+                <span className="text-xs text-stone-500 font-light">
                   (Incl. of all taxes)
                 </span>
+                {originalUnitPrice && discountPercent && discountPercent > 0 && (
+                  <span className="text-[10px] font-bold text-[#8C6D1F] bg-[#FAF3E0] border border-[#E0D0A5] px-2 py-0.5 rounded-full font-sans">
+                    Save {discountPercent}%
+                  </span>
+                )}
               </div>
 
-              <div className="text-[11px] text-stone-500 font-medium">
-                Complimentary White-Glove Courier Included
+              <div className="inline-flex items-center gap-1.5 text-xs text-stone-600 font-medium">
+                <Truck size={14} className="text-stone-500 shrink-0" />
+                <span>Complimentary White-Glove Courier Included</span>
               </div>
             </div>
 
-            {/* 3. Description & Olfactory Notes */}
-            <div className="space-y-3">
-              <p className="text-sm text-stone-600 leading-relaxed font-light m-0">
-                {product.description || 'An artisanal fine fragrance slow-macerated with rare golden amber, precious oud accords, and noble botanicals, crafted for lasting presence and distinguished sillage.'}
-              </p>
+            {/* 5. Olfactory Notes Single-Line */}
+            <div className="flex items-center gap-2 text-xs text-stone-600 py-0.5">
+              <Leaf size={14} className="text-[#8C6D1F] shrink-0" />
+              <span className="truncate">
+                {scentNotesText}
+              </span>
             </div>
 
-            {/* 4. Select Flacon & Trial Pack Options */}
-            <div className="space-y-3 pt-1">
+            {/* 6. Select Flacon & Trial Format (3 Choice Cards) */}
+            <div className="space-y-2 pt-0.5">
               <div className="flex justify-between items-center">
-                <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#170E08]">
-                  Select Flacon & Trial Format
-                </label>
+                <span className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#170E08]">
+                  SELECT FLACON & TRIAL FORMAT
+                </span>
                 <button
                   type="button"
                   onClick={() => setShowReturnPolicyModal(true)}
-                  className="text-xs text-[#A67C38] hover:text-black hover:underline font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                  className="text-xs text-[#A67C38] hover:text-black font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                 >
-                  <ShieldCheck size={13} className="text-[#A67C38]" />
+                  <ShieldCheck size={12} className="text-[#A67C38]" />
                   <span>Return Policy Details ↗</span>
                 </button>
               </div>
 
-              {/* 3 Spacious Choice Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* 3 Format Choice Cards */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
                 
                 {/* 1. COMBO: 50ml + 2ml (Recommended) */}
                 <button
                   type="button"
                   onClick={() => setComboSelection('combo')}
-                  className={`relative p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                  className={`relative p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                     comboSelection === 'combo'
-                      ? 'bg-[#FCF9F3] border-[#B8860B] shadow-sm ring-1 ring-[#B8860B]/40'
+                      ? 'bg-[#FCF9F3] border-[#B8860B] shadow-2xs ring-1 ring-[#B8860B]/30'
                       : 'bg-white border-[#E8DFC9] hover:border-stone-400'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="bg-[#1C120C] text-[#ECC880] text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border border-[#D4AF37]/50 shadow-2xs">
-                      ★ Recommended
+                  <div className="flex items-center justify-between gap-1 mb-1.5 flex-wrap">
+                    <span className="bg-[#8C6D1F] text-white text-[8.5px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded shadow-2xs">
+                      ★ RECOMMENDED
                     </span>
-                    <span className="text-[9.5px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                    <span className="text-[8.5px] font-semibold text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">
                       7-Day Trial
                     </span>
                   </div>
                   <div>
-                    <span className="text-sm font-serif font-bold text-[#140D07] block leading-snug">
+                    <span className="text-[12.5px] sm:text-[13px] font-sans font-bold text-[#140D07] block leading-tight">
                       {baseBottleSize} + 2ml Sample
                     </span>
-                    <span className="text-[11px] text-stone-500 block leading-tight mt-0.5">
+                    <span className="text-[10px] text-stone-500 block leading-tight mt-0.5 truncate">
                       Flacon & Companion Vial
                     </span>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-amber-200/50 flex items-baseline justify-between">
-                    <span className="text-sm font-bold text-[#B8860B] font-sans">
+                  <div className="mt-2 pt-1.5 border-t border-amber-200/60 flex items-baseline justify-between flex-wrap gap-1">
+                    <span className="text-sm font-bold text-[#140D07] font-sans">
                       ₹{(basePrice + samplePrice).toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[10px] text-emerald-700 font-semibold">
-                      Full Refund Guarantee
+                    <span className="text-[9.5px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                      <Check size={10} className="stroke-[3]" /> Full Refund Guarantee
                     </span>
                   </div>
                 </button>
@@ -719,33 +817,33 @@ const ProductDetails = () => {
                 <button
                   type="button"
                   onClick={() => setComboSelection('bottle')}
-                  className={`p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                  className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                     comboSelection === 'bottle'
-                      ? 'bg-white border-black shadow-sm ring-1 ring-black/20'
+                      ? 'bg-[#FCF9F3] border-[#1C120C] shadow-2xs ring-1 ring-black/20'
                       : 'bg-white border-[#E8DFC9] hover:border-stone-400'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-[9px] uppercase font-bold tracking-wider text-stone-400">
-                      Standard
+                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <span className="text-[8.5px] uppercase font-bold tracking-wider text-stone-500">
+                      STANDARD
                     </span>
-                    <span className="text-[9.5px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
+                    <span className="text-[8.5px] font-medium text-stone-500 bg-stone-100 px-1 py-0.5 rounded">
                       Final Sale
                     </span>
                   </div>
                   <div>
-                    <span className="text-sm font-serif font-bold text-[#140D07] block leading-snug">
+                    <span className="text-[12.5px] sm:text-[13px] font-sans font-bold text-[#140D07] block leading-tight">
                       {baseBottleSize} Flacon
                     </span>
-                    <span className="text-[11px] text-stone-500 block leading-tight mt-0.5">
+                    <span className="text-[10px] text-stone-500 block leading-tight mt-0.5 truncate">
                       Standalone Fragrance Flacon
                     </span>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-stone-200 flex items-baseline justify-between">
+                  <div className="mt-2 pt-1.5 border-t border-stone-200 flex items-baseline justify-between flex-wrap gap-1">
                     <span className="text-sm font-bold text-[#140D07] font-sans">
                       ₹{basePrice.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[10px] text-stone-400">
+                    <span className="text-[9.5px] text-stone-400">
                       Non-Returnable
                     </span>
                   </div>
@@ -755,212 +853,200 @@ const ProductDetails = () => {
                 <button
                   type="button"
                   onClick={() => setComboSelection('sample')}
-                  className={`p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                  className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                     comboSelection === 'sample'
-                      ? 'bg-white border-black shadow-sm ring-1 ring-black/20'
+                      ? 'bg-[#FCF9F3] border-[#1C120C] shadow-2xs ring-1 ring-black/20'
                       : 'bg-white border-[#E8DFC9] hover:border-stone-400'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-[9px] uppercase font-bold tracking-wider text-stone-400">
-                      Trial Wear
+                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <span className="text-[8.5px] uppercase font-bold tracking-wider text-stone-500">
+                      TRIAL WEAR
                     </span>
-                    <span className="text-[9.5px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
+                    <span className="text-[8.5px] font-medium text-stone-500 bg-stone-100 px-1 py-0.5 rounded">
                       2ml Vial
                     </span>
                   </div>
                   <div>
-                    <span className="text-sm font-serif font-bold text-[#140D07] block leading-snug">
+                    <span className="text-[12.5px] sm:text-[13px] font-sans font-bold text-[#140D07] block leading-tight">
                       2ml Discovery
                     </span>
-                    <span className="text-[11px] text-stone-500 block leading-tight mt-0.5">
+                    <span className="text-[10px] text-stone-500 block leading-tight mt-0.5 truncate">
                       Personal Trial Vial
                     </span>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-stone-200 flex items-baseline justify-between">
+                  <div className="mt-2 pt-1.5 border-t border-stone-200 flex items-baseline justify-between flex-wrap gap-1">
                     <span className="text-sm font-bold text-[#140D07] font-sans">
                       ₹{samplePrice.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[10px] text-stone-400">
+                    <span className="text-[9.5px] text-stone-400">
                       Trial Vial
                     </span>
                   </div>
                 </button>
               </div>
-
-              {/* 5. Clear, Reassuring Guarantee Callout */}
-              <div className="pt-1">
-                {comboSelection === 'combo' && (
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-[#F2F8F4] to-[#FAF8F5] border border-emerald-200 shadow-2xs transition-all">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-emerald-900 flex items-center gap-2">
-                        <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
-                        <span>7-Day At-Home Experience Guarantee Included</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowReturnPolicyModal(true)}
-                        className="text-[11px] text-emerald-900 underline font-semibold hover:text-black cursor-pointer shrink-0"
-                      >
-                        Policy Details
-                      </button>
-                    </div>
-                    <p className="text-xs text-emerald-900/90 leading-relaxed font-light m-0 mt-1.5">
-                      Spray and test the companion <strong>2ml sample vial</strong> at home first. If the scent does not harmonize with your skin chemistry, simply return the <strong>unopened 50ml flacon within 7 days for a 100% full refund</strong> — keep the 2ml sample with our compliments.
-                    </p>
-                  </div>
-                )}
-
-                {comboSelection === 'bottle' && (
-                  <div className="p-4 rounded-2xl bg-[#FAF6EE] border border-[#E0D0A5] transition-all space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-[#8C6D1F] flex items-center gap-2">
-                        <AlertCircle size={15} className="text-[#8C6D1F] shrink-0" />
-                        <span>Final Sale • Hygiene Sealed Flacon</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowReturnPolicyModal(true)}
-                        className="text-[11px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
-                      >
-                        Policy Details
-                      </button>
-                    </div>
-                    <p className="text-xs text-stone-600 leading-relaxed font-light m-0">
-                      In accordance with luxury cosmetics safety guidelines, standalone flacons cannot be returned once unsealed.
-                    </p>
-                    <div className="pt-1 flex items-center justify-between text-xs flex-wrap gap-2">
-                      <span className="text-stone-500 font-light">Would you prefer to test risk-free at home first?</span>
-                      <button
-                        type="button"
-                        onClick={() => setComboSelection('combo')}
-                        className="text-[#8C6D1F] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                      >
-                        <span>Upgrade to 50ml + 2ml (+₹{samplePrice})</span>
-                        <ArrowRight size={12} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {comboSelection === 'sample' && (
-                  <div className="p-4 rounded-2xl bg-[#FAF6EE] border border-[#E0D0A5] transition-all">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-[#8C6D1F] flex items-center gap-2">
-                        <AlertCircle size={15} className="text-[#8C6D1F] shrink-0" />
-                        <span>Discovery Sample Vial</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowReturnPolicyModal(true)}
-                        className="text-[11px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
-                      >
-                        Policy Details
-                      </button>
-                    </div>
-                    <p className="text-xs text-stone-600 leading-relaxed font-light m-0 mt-1">
-                      Individual 2ml discovery vials are intimate trial formats made for personal testing and are final sale.
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
 
-            {/* 6. Quantity Selector & Action Buttons */}
-            <div className="pt-2 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-700">Quantity:</span>
-                  <div className="inline-flex items-center bg-[#FAF9F7] border border-[#E0D8CA] rounded-full p-1 shadow-2xs">
-                    <button
-                      type="button"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={quantity <= 1 || isOutOfStock}
-                      aria-label="Decrease quantity"
-                      className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
-                    >
-                      <Minus size={13} />
-                    </button>
-                    <span className="w-10 text-center text-sm font-bold text-[#140D07] font-sans">
-                      {isOutOfStock ? 0 : quantity}
+            {/* 7. Reassuring Guarantee Callout Box */}
+            <div className="pt-0.5">
+              {comboSelection === 'combo' && (
+                <div className="p-3 rounded-xl bg-[#F4F9F5] border border-emerald-200/90 shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                      <ShieldCheck size={14} className="text-emerald-700 shrink-0" />
+                      <span>7-Day At-Home Experience Guarantee Included</span>
                     </span>
                     <button
                       type="button"
-                      onClick={() => setQuantity(Math.min(maxStockForSize, quantity + 1))}
-                      disabled={quantity >= maxStockForSize || isOutOfStock}
-                      aria-label="Increase quantity"
-                      className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                      onClick={() => setShowReturnPolicyModal(true)}
+                      className="text-[11px] text-emerald-900 underline font-semibold hover:text-black cursor-pointer shrink-0"
                     >
-                      <Plus size={13} />
+                      Policy Details ↗
                     </button>
                   </div>
+                  <p className="text-[11.5px] text-emerald-900/90 leading-relaxed font-light m-0 mt-1">
+                    Spray and test the companion 2ml sample vial at home first. If the scent does not harmonize with you, return the unopened 50ml flacon for a full refund.
+                  </p>
                 </div>
+              )}
 
-                <div className="text-right">
-                  <span className="text-[10px] text-stone-400 uppercase tracking-widest block font-medium">Total Amount</span>
-                  <span className="text-lg sm:text-xl font-serif font-bold text-[#140D07]">
-                    ₹{(isOutOfStock ? 0 : totalPrice).toLocaleString('en-IN')}
-                  </span>
+              {comboSelection === 'bottle' && (
+                <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#E0D0A5] shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-[#8C6D1F] flex items-center gap-1.5">
+                      <AlertCircle size={14} className="text-[#8C6D1F] shrink-0" />
+                      <span>Final Sale • Hygiene Sealed Flacon</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowReturnPolicyModal(true)}
+                      className="text-[11px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
+                    >
+                      Policy Details ↗
+                    </button>
+                  </div>
+                  <p className="text-[11.5px] text-stone-600 leading-relaxed font-light m-0 mt-1">
+                    Standalone flacons cannot be returned once unsealed. <button type="button" onClick={() => setComboSelection('combo')} className="text-[#8C6D1F] underline font-bold cursor-pointer">Upgrade to Combo</button> to test risk-free at home.
+                  </p>
                 </div>
-              </div>
+              )}
 
-              {/* Action Buttons: Add to Bag and Instant Checkout */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                {isInCart ? (
-                  <button
-                    type="button"
-                    onClick={() => router.push('/cart')}
-                    className="flex-1 bg-[#1C120C] hover:bg-black text-[#ECC880] border border-[#1C120C] py-3.5 px-6 rounded-full flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.99] cursor-pointer font-serif uppercase tracking-widest text-xs font-bold"
-                  >
-                    <ShoppingBag size={15} className="text-[#ECC880]" />
-                    <span>View Shopping Bag</span>
-                    <ArrowRight size={13} />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleAddToCart(false)}
-                    disabled={isOutOfStock || isAddingToCart}
-                    className="flex-1 bg-[#1C120C] hover:bg-black disabled:bg-stone-200 disabled:text-stone-400 text-[#ECC880] py-3.5 px-6 rounded-full flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.99] cursor-pointer font-serif uppercase tracking-widest text-xs font-bold group"
-                  >
-                    <ShoppingBag size={15} className="text-[#ECC880] group-hover:scale-110 transition-transform" />
-                    <span>{isAddingToCart ? 'Adding to Bag...' : 'Add to Shopping Bag'}</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => handleAddToCart(true)}
-                  disabled={isOutOfStock || isAddingToCart}
-                  className="flex-1 bg-white hover:bg-stone-900 hover:text-white disabled:bg-stone-100 disabled:text-stone-400 text-[#1C120C] border border-[#1C120C] py-3.5 px-6 rounded-full flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer font-serif uppercase tracking-widest text-xs font-bold shadow-2xs"
-                >
-                  <span>Instant Checkout</span>
-                  <ArrowRight size={13} />
-                </button>
-              </div>
+              {comboSelection === 'sample' && (
+                <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#E0D0A5] shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-[#8C6D1F] flex items-center gap-1.5">
+                      <AlertCircle size={14} className="text-[#8C6D1F] shrink-0" />
+                      <span>Discovery Sample Vial</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowReturnPolicyModal(true)}
+                      className="text-[11px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
+                    >
+                      Policy Details ↗
+                    </button>
+                  </div>
+                  <p className="text-[11.5px] text-stone-600 leading-relaxed font-light m-0 mt-1">
+                    Individual 2ml discovery vials are intimate trial formats made for personal testing and are final sale.
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* 7. Luxury Guarantees Banner */}
-            <div className="pt-4 border-t border-[#ECE7DE] grid grid-cols-3 gap-3 text-center">
-              <div className="flex flex-col items-center p-3 rounded-2xl bg-white border border-[#ECE7DE] shadow-2xs">
-                <Truck size={16} className="text-[#B8860B] mb-1" />
-                <span className="text-[11px] font-bold text-stone-800">Express Delivery</span>
-                <span className="text-[10px] text-stone-400 font-light">Complimentary Pan-India</span>
+            {/* 8. Action Row (Above the Fold): Stepper + Add to Cart + Buy Now */}
+            <div className="pt-1.5 flex items-center gap-2.5 sm:gap-3">
+              {/* Stepper */}
+              <div className="inline-flex items-center bg-[#F5F2EB] border border-[#E0D8CA] rounded-xl h-11 px-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1 || isOutOfStock}
+                  aria-label="Decrease quantity"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                >
+                  <Minus size={13} />
+                </button>
+                <span className="w-8 text-center text-sm font-bold text-[#140D07] font-sans">
+                  {isOutOfStock ? 0 : quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity(Math.min(maxStockForSize, quantity + 1))}
+                  disabled={quantity >= maxStockForSize || isOutOfStock}
+                  aria-label="Increase quantity"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                >
+                  <Plus size={13} />
+                </button>
               </div>
-              <div className="flex flex-col items-center p-3 rounded-2xl bg-white border border-[#ECE7DE] shadow-2xs">
-                <ShieldCheck size={16} className="text-[#B8860B] mb-1" />
-                <span className="text-[11px] font-bold text-stone-800">100% Authentic</span>
-                <span className="text-[10px] text-stone-400 font-light">Artisanal Extrait</span>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-2xl bg-white border border-[#ECE7DE] shadow-2xs">
-                <Sparkles size={16} className="text-[#B8860B] mb-1" />
-                <span className="text-[11px] font-bold text-stone-800">Luxury Coffret</span>
-                <span className="text-[10px] text-stone-400 font-light">Gold Foil Packaging</span>
-              </div>
+
+              {/* Primary CTA: Add to Cart */}
+              {isInCart ? (
+                <button
+                  type="button"
+                  onClick={() => router.push('/cart')}
+                  className="flex-1 h-11 bg-[#1C120C] hover:bg-black text-[#ECC880] rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-xs font-bold font-sans"
+                >
+                  <ShoppingBag size={14} className="text-[#ECC880]" />
+                  <span>View in Bag</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleAddToCart(false)}
+                  disabled={isOutOfStock || isAddingToCart}
+                  className="flex-1 h-11 bg-[#1C120C] hover:bg-black disabled:bg-stone-200 disabled:text-stone-400 text-white rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-xs font-bold font-sans group"
+                >
+                  <ShoppingBag size={14} className="text-white group-hover:scale-110 transition-transform" />
+                  <span>{isAddingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                </button>
+              )}
+
+              {/* Secondary CTA: Buy Now */}
+              <button
+                type="button"
+                onClick={() => handleAddToCart(true)}
+                disabled={isOutOfStock || isAddingToCart}
+                className="flex-1 h-11 bg-white hover:bg-stone-50 disabled:bg-stone-100 disabled:text-stone-400 text-[#1C120C] border border-[#1C120C] rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-xs font-bold font-sans shadow-2xs"
+              >
+                <Zap size={14} className="text-[#1C120C]" />
+                <span>Buy Now</span>
+              </button>
             </div>
 
           </div>
         </div>
+
+        {/* Fullscreen Image Preview Lightbox */}
+        {isZoomOpen && currentMainImage && (
+          <div 
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setIsZoomOpen(false)}
+          >
+            <div 
+              className="relative max-w-4xl max-h-[90vh] bg-white rounded-3xl p-4 sm:p-6 overflow-hidden flex flex-col items-center shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setIsZoomOpen(false)}
+                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center cursor-pointer transition-colors"
+                aria-label="Close image preview"
+              >
+                <X size={18} />
+              </button>
+              <img
+                src={currentMainImage}
+                alt={product.name}
+                className="max-h-[75vh] w-auto object-contain select-none"
+              />
+              <div className="mt-3 text-center">
+                <h4 className="font-serif text-lg text-stone-900">{product.name}</h4>
+                <span className="text-xs text-stone-500 font-sans">{product.category || 'Fine Fragrance Extrait'}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SECTION 2: Detailed Accordion / Tabs (Notes, Details, Specifications, Reviews) */}
         <section id="reviews" className="mt-12 sm:mt-16 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-10 border border-[#ECE7DE] shadow-2xs">

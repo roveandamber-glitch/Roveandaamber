@@ -435,7 +435,7 @@ export default function MyOrdersPage() {
 
                       {/* Verified Grand Total */}
                       <div className="text-right pl-2 border-l border-[#E3DACB]">
-                        <span className="text-base sm:text-lg font-serif font-bold text-[#1C1714]">
+                        <span className="text-base sm:text-lg font-sans font-bold text-[#1C1714]">
                           ₹{resolvedTotal.toLocaleString('en-IN')}
                         </span>
                       </div>
@@ -950,7 +950,7 @@ export default function MyOrdersPage() {
                   <span>White-Glove Courier Logistics</span>
                   <span className="text-emerald-800 font-semibold uppercase text-[10px]">Complimentary</span>
                 </div>
-                <div className="flex justify-between text-sm font-serif font-bold text-black pt-2 border-t border-[#ECE5D8]">
+                <div className="flex justify-between text-sm font-sans font-bold text-black pt-2 border-t border-[#ECE5D8]">
                   <span>Total Amount Settled</span>
                   <span className="font-sans font-bold">
                     ₹{(Number(activeInvoiceOrder.total_amount) || Number(activeInvoiceOrder.totalAmount) || 0).toLocaleString('en-IN')}
