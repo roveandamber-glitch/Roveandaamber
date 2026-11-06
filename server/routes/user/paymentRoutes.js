@@ -4,13 +4,17 @@ import {
   createPaymentOrder,
   verifyPayment,
   handlePaymentFailure,
-  getPaymentStatus
+  getPaymentStatus,
+  handleRazorpayWebhook
 } from '../../controllers/user/paymentController.js';
 import { protect, optionalAuth } from '../../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Payment Specific Rate Limiter (Fraud prevention & anti-spam)
+// Webhook endpoint (must accept raw payloads directly from Razorpay without auth token)
+router.post('/webhook', handleRazorpayWebhook);
+
+// Payment Specific Rate Limiter (Fraud prevention & anti-spam for client actions)
 const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 60,

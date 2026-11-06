@@ -106,6 +106,37 @@ export const razorpayService = {
       console.error('Cryptographic signature verification error:', error);
       return false;
     }
+  },
+
+  // 3. Cryptographic HMAC-SHA256 Razorpay Webhook Verification
+  verifyWebhookSignature: (rawPayload, signature, secret) => {
+    const webhookSecret = secret || process.env.RAZORPAY_WEBHOOK_SECRET || 'rove@2026';
+    if (!signature || !webhookSecret) {
+      return false;
+    }
+
+    try {
+      const payloadString = Buffer.isBuffer(rawPayload)
+        ? rawPayload.toString('utf-8')
+        : (typeof rawPayload === 'string' ? rawPayload : JSON.stringify(rawPayload));
+
+      const generatedSignature = crypto
+        .createHmac('sha256', webhookSecret.trim())
+        .update(payloadString)
+        .digest('hex');
+
+      const expectedBuffer = Buffer.from(generatedSignature, 'utf-8');
+      const receivedBuffer = Buffer.from(signature || '', 'utf-8');
+
+      if (expectedBuffer.length !== receivedBuffer.length) {
+        return false;
+      }
+
+      return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+    } catch (error) {
+      console.error('Webhook signature verification error:', error);
+      return false;
+    }
   }
 };
 

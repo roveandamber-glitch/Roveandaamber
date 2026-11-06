@@ -300,3 +300,67 @@ export const getPaymentStatus = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to retrieve payment status.' });
   }
 };
+
+// 5. Asynchronous Webhook Receiver for Razorpay Real-Time Server-to-Server Notifications
+export const handleRazorpayWebhook = async (req, res) => {
+  try {
+    const signature = req.headers['x-razorpay-signature'];
+    const rawPayload = req.rawBody || JSON.stringify(req.body);
+
+    const isValid = razorpayService.verifyWebhookSignature(rawPayload, signature);
+    if (!isValid) {
+      console.warn('⚠️ [Razorpay Webhook]: Invalid cryptographic signature received.');
+      return res.status(400).json({ success: false, message: 'Invalid webhook signature.' });
+    }
+
+    const event = req.body?.event;
+    const payload = req.body?.payload || {};
+
+    console.log(`🔔 [Razorpay Webhook]: Received event '${event}'`);
+
+    if (event === 'payment.captured' || event === 'order.paid') {
+      const paymentEntity = payload.payment ? payload.payment.entity : null;
+      const orderEntity = payload.order ? payload.order.entity : null;
+
+      const razorpayOrderId = (orderEntity && orderEntity.id) || (paymentEntity && paymentEntity.order_id);
+      const razorpayPaymentId = paymentEntity ? paymentEntity.id : '';
+      const method = paymentEntity ? paymentEntity.method : 'Razorpay Webhook';
+
+      if (razorpayOrderId) {
+        const paidOrder = await OrderModel.markAsPaid(razorpayOrderId, {
+          razorpayPaymentId,
+          razorpaySignature: signature,
+          paymentDetails: {
+            transactionId: razorpayPaymentId,
+            method: method || 'Razorpay',
+            bank: paymentEntity?.bank || '',
+            wallet: paymentEntity?.wallet || '',
+            paidAt: new Date()
+          }
+        });
+
+        if (paidOrder) {
+          // Send automated customer email confirmations asynchronously
+          emailService.sendPaymentConfirmation(paidOrder).catch(err => {
+            console.warn('⚠️ [Webhook Email Notice]: Confirmation email error:', err.message);
+          });
+          emailService.sendInvoiceEmail(paidOrder).catch(err => {
+            console.warn('⚠️ [Webhook Email Notice]: Invoice email error:', err.message);
+          });
+        }
+      }
+    } else if (event === 'payment.failed') {
+      const paymentEntity = payload.payment ? payload.payment.entity : null;
+      if (paymentEntity && paymentEntity.order_id) {
+        const failureReason = paymentEntity.error_description || paymentEntity.error_code || 'Payment failed at gateway.';
+        await OrderModel.markAsFailed(paymentEntity.order_id, failureReason);
+      }
+    }
+
+    // Always acknowledge 200 OK to Razorpay to prevent repeat retries
+    return res.status(200).json({ status: 'ok' });
+  } catch (error) {
+    console.error('Razorpay webhook processing error:', error);
+    return res.status(200).json({ status: 'error_handled', message: error.message });
+  }
+};

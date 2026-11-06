@@ -141,8 +141,13 @@ app.use('/api/auth/verify-otp', authLimiter);
 // ==========================================
 // 5. Body Parsing & Payload Quotas
 // ==========================================
-// Protect memory against buffer exhaustion attacks
-app.use(express.json({ limit: '10mb' }));
+// Protect memory against buffer exhaustion attacks & capture raw body for webhook verification
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ==========================================
