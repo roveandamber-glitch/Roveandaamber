@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Form, Input, message } from 'antd';
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import authService from '@/services/authService';
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -309,5 +309,17 @@ export default function AdminLoginPage() {
       </footer>
 
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FBF9F5] flex items-center justify-center p-4">
+        <div className="w-8 h-8 border-2 border-[#1C120C] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <AdminLoginContent />
+    </Suspense>
   );
 }
