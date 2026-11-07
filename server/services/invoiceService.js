@@ -85,7 +85,7 @@ export const generateInvoicePDF = (order, res) => {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader(
     'Content-Disposition',
-    `attachment; filename="Invoice-${inv.orderId.replace('#', '')}.pdf"`
+    `inline; filename="Invoice-${inv.orderId.replace('#', '')}.pdf"`
   );
 
   doc.pipe(res);

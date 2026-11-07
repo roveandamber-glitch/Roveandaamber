@@ -31,6 +31,7 @@ import { AuthGateModal } from '@/components/common';
 import authService from '@/services/authService';
 import cartService from '@/services/cartService';
 import { getImageUrl } from '@/utils/imageHelper';
+import OrderInvoiceModal from './components/OrderInvoiceModal';
 
 const TRACKING_STEPS = [
   { name: 'Order Confirmed', description: 'Order verified & payment logged', icon: Check },
@@ -878,117 +879,12 @@ export default function MyOrdersPage() {
         )}
       </Modal>
 
-      {/* 6. LUXURY INVOICE & RECEIPT MODAL */}
-      <Modal
+      {/* 6. LUXURY PDF INVOICE MODAL */}
+      <OrderInvoiceModal
+        order={activeInvoiceOrder}
         open={Boolean(activeInvoiceOrder)}
-        onCancel={() => setActiveInvoiceOrder(null)}
-        footer={null}
-        centered
-        width={600}
-        className="rounded-3xl overflow-hidden"
-      >
-        {activeInvoiceOrder && (
-          <div className="p-4 sm:p-6 space-y-6">
-            
-            {/* Invoice Header */}
-            <div className="text-center pb-5 border-b border-[#ECE5D8] space-y-1">
-              <span className="font-serif text-lg font-bold tracking-[0.22em] text-[#A47E3B] uppercase">
-                ROVE & AMBER
-              </span>
-              <p className="text-[9px] tracking-[0.3em] uppercase text-[#7D7063]">
-                Maison Fine Fragrance • Tax Invoice
-              </p>
-            </div>
-
-            {/* Invoice Meta Grid */}
-            <div className="grid grid-cols-2 gap-4 text-xs bg-[#FAF8F5] p-4 rounded-2xl border border-[#ECE5D8]">
-              <div>
-                <p className="text-[10px] text-[#8C7A6B] uppercase tracking-wider">Invoice Number</p>
-                <p className="font-mono font-bold text-[#1C1714] mt-0.5">
-                  INV-{String(activeInvoiceOrder.orderId || activeInvoiceOrder.id || '').replace('#', '')}
-                </p>
-                <p className="text-[10px] text-[#8C7A6B] uppercase tracking-wider mt-2">Billed To</p>
-                <p className="font-bold text-[#1C1714] mt-0.5">
-                  {activeInvoiceOrder.customer_name || user?.name || 'Valued Patron'}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-[10px] text-[#8C7A6B] uppercase tracking-wider">Issue Date</p>
-                <p className="font-medium text-[#1C1714] mt-0.5">
-                  {new Date(activeInvoiceOrder.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </p>
-                <p className="text-[10px] text-[#8C7A6B] uppercase tracking-wider mt-2">Payment Clearance</p>
-                <p className="font-bold text-emerald-800 mt-0.5">
-                  {activeInvoiceOrder.paymentMethod || 'Razorpay Gateway'} ({activeInvoiceOrder.paymentStatus || 'Paid'})
-                </p>
-              </div>
-            </div>
-
-            {/* Line Items Table */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-[11px] font-bold text-[#8C7A6B] uppercase pb-2 border-b border-[#ECE5D8]">
-                <span>Description</span>
-                <span>Amount</span>
-              </div>
-
-              {(activeInvoiceOrder.items || []).map((it, idx) => {
-                const itName = it.product_name || it.name || 'Fine Fragrance';
-                const itQty = parseInt(it.quantity, 10) || 1;
-                const itPrice = Number(it.price) || 0;
-                return (
-                  <div key={idx} className="flex justify-between text-xs py-1.5 border-b border-stone-100">
-                    <div>
-                      <span className="font-medium text-black">{itName}</span>
-                      <span className="text-[#8C7A6B] ml-2 font-mono text-[11px]">({it.size || '50ml'} × {itQty})</span>
-                    </div>
-                    <span className="font-mono font-bold">₹{(itPrice * itQty).toLocaleString('en-IN')}</span>
-                  </div>
-                );
-              })}
-
-              {/* Total Calculation */}
-              <div className="pt-3 space-y-1 text-xs">
-                <div className="flex justify-between text-[#7D7063]">
-                  <span>Subtotal</span>
-                  <span className="font-mono">
-                    ₹{((activeInvoiceOrder.items || []).reduce((s, i) => s + (Number(i.price) * (parseInt(i.quantity, 10) || 1)), 0)).toLocaleString('en-IN')}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[#7D7063]">
-                  <span>White-Glove Courier Logistics</span>
-                  <span className="text-emerald-800 font-semibold uppercase text-[10px]">Complimentary</span>
-                </div>
-                <div className="flex justify-between text-sm font-sans font-bold text-black pt-2 border-t border-[#ECE5D8]">
-                  <span>Total Amount Settled</span>
-                  <span className="font-sans font-bold">
-                    ₹{(Number(activeInvoiceOrder.total_amount) || Number(activeInvoiceOrder.totalAmount) || 0).toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-[#FAF8F5] hover:bg-[#F2EDE4] border border-[#D8CEBE] text-black py-3 rounded-full text-xs font-semibold transition-colors cursor-pointer"
-              >
-                <Printer size={14} />
-                <span>Print Tax Invoice</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveInvoiceOrder(null)}
-                className="flex-1 bg-[#1C1714] text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-[#2C2420] transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+        onClose={() => setActiveInvoiceOrder(null)}
+      />
 
       {/* 7. LUXURY RETURN & REFUND MODAL (Enforces 2 ml Sample Bottle Rule) */}
       <Modal

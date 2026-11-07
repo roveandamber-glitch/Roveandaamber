@@ -240,7 +240,7 @@ export default function CartOrderSummary({
               </div>
             </div>
 
-            {/* Toggle Switch - Standard Comfortable Touch Size */}
+            {/* Toggle Switch - Enhanced Touch Size */}
             <button
               type="button"
               role="switch"
@@ -250,21 +250,21 @@ export default function CartOrderSummary({
                 handleToggleRewards();
               }}
               disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`relative inline-flex h-7.5 w-13 sm:w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed items-center ${
                 rewardPointsUsed > 0
-                  ? 'bg-[#1C1714] shadow-[0_0_6px_rgba(212,175,55,0.35)]'
+                  ? 'bg-[#1C1714] shadow-[0_0_8px_rgba(212,175,55,0.45)]'
                   : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
               }`}
               title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
             >
               <span
-                className={`pointer-events-none flex items-center justify-center h-5 w-5 transform rounded-full shadow-md ring-0 transition-transform duration-300 ease-in-out ${
+                className={`pointer-events-none flex items-center justify-center h-6.5 w-6.5 transform rounded-full shadow-md ring-0 transition-transform duration-300 ease-in-out ${
                   rewardPointsUsed > 0
-                    ? 'translate-x-5 bg-gradient-to-br from-[#F6D389] to-[#DEB368]'
-                    : 'translate-x-0 bg-white'
+                    ? 'translate-x-5.5 sm:translate-x-6.5 bg-gradient-to-br from-[#F6D389] to-[#DEB368]'
+                    : 'translate-x-0.5 bg-white'
                 }`}
               >
-                {rewardLoading && <Loader2 size={10} className="animate-spin text-[#241306]" />}
+                {rewardLoading && <Loader2 size={12} className="animate-spin text-[#241306]" />}
               </span>
             </button>
           </div>
@@ -276,7 +276,7 @@ export default function CartOrderSummary({
         <button
           type="button"
           onClick={handleStartCheckout}
-          className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3.5 rounded-full font-bold uppercase tracking-widest text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-amber-950/15 transition-all cursor-pointer group"
+          className="w-full min-h-[52px] sm:min-h-[56px] px-6 py-3.5 bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] rounded-2xl font-bold uppercase tracking-widest text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-md shadow-amber-950/15 transition-all cursor-pointer group"
         >
           <Lock size={14} strokeWidth={2.2} />
           <span>Proceed to Checkout</span>

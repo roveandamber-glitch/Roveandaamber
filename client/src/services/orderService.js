@@ -7,6 +7,12 @@ const orderService = {
   getOrderById: async (id) => (await api.get(`/orders/${id}`)).data,
   getTracking: async (id) => (await api.get(`/orders/${id}/track`)).data,
   getInvoice: async (id) => (await api.get(`/orders/${id}/invoice`)).data,
+  downloadInvoicePDF: async (id) => {
+    const res = await api.get(`/orders/${id}/invoice/download`, {
+      responseType: 'blob'
+    });
+    return res.data;
+  },
   updateOrderStatus: async (id, status) => (await api.patch(`/orders/${id}/status`, { status })).data,
   checkEligibility: async (id) => (await api.get(`/user/orders/${id}/eligibility`)).data,
   cancelOrder: async (id, data) => (await api.post(`/user/orders/${id}/cancel`, data)).data,

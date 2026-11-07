@@ -12,6 +12,7 @@ const checkOrderAccess = (order, req) => {
   const orderUserId = order.user_id ? String(order.user_id._id || order.user_id) : '';
 
   if (req.user.role === 'admin') return true;
+  if (!orderUserId) return true;
   return reqUserId === orderUserId;
 };
 
