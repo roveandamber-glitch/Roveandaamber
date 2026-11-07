@@ -516,15 +516,17 @@ export const createAdminProduct = async (req, res) => {
       }
     }
 
-    let calculatedStock = parseInt(stock, 10) || 0;
-    if (Object.keys(parsedSizesMap).length > 0) {
-      calculatedStock = Object.values(parsedSizesMap).reduce((sum, val) => sum + (parseInt(val, 10) || 0), 0);
-    } else {
-      parsedSizesMap = {
-        '50ml': Math.floor(calculatedStock * 0.6) || 6,
-        '100ml': Math.floor(calculatedStock * 0.4) || 4
-      };
-      calculatedStock = Object.values(parsedSizesMap).reduce((sum, val) => sum + val, 0);
+    let calculatedStock = stock !== undefined ? (parseInt(stock, 10) || 0) : undefined;
+    if (calculatedStock === undefined) {
+      if (Object.keys(parsedSizesMap).length > 0) {
+        calculatedStock = Object.values(parsedSizesMap).reduce((sum, val) => sum + (parseInt(val, 10) || 0), 0);
+      } else {
+        parsedSizesMap = {
+          '50ml': 6,
+          '100ml': 4
+        };
+        calculatedStock = 10;
+      }
     }
 
     // Media processing: handle uploaded files or direct URLs
@@ -632,7 +634,9 @@ export const updateAdminProduct = async (req, res) => {
     if (sizes) {
       try {
         parsedSizesMap = typeof sizes === 'string' ? JSON.parse(sizes) : sizes;
-        calculatedStock = Object.values(parsedSizesMap).reduce((sum, val) => sum + (parseInt(val, 10) || 0), 0);
+        if (calculatedStock === undefined) {
+          calculatedStock = Object.values(parsedSizesMap).reduce((sum, val) => sum + (parseInt(val, 10) || 0), 0);
+        }
       } catch {
         // preserve existing if invalid
       }

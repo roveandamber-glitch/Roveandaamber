@@ -214,24 +214,27 @@ export default function CartOrderSummary({
                     Patron Wallet
                   </span>
                   <span
-                    className={`text-xs font-sans font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                    className={`text-xs font-sans font-bold px-2.5 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
                       rewardPointsUsed > 0
                         ? 'bg-[#B8860B] text-white'
                         : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
                     }`}
                   >
-                    ₹{walletBalanceInRupees.toLocaleString('en-IN')}
+                    <span>{Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts</span>
+                    <span className="font-normal opacity-85">
+                      ({walletBalanceInRupees > 0 ? `₹${walletBalanceInRupees.toLocaleString('en-IN')}` : '₹0'})
+                    </span>
                   </span>
                 </div>
                 <p className="text-xs text-stone-500 m-0 mt-0.5 font-light leading-snug truncate">
                   {rewardPointsUsed > 0 ? (
                     <span className="text-emerald-800 font-semibold">
-                      ✓ Applied towards this order (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                      ✓ Applied {Number(rewardPointsUsed).toLocaleString('en-IN')} pts towards order (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
                     </span>
                   ) : walletBalanceInRupees > 0 ? (
-                    <span>Available to apply towards this order</span>
+                    <span>Redeem {Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹{walletBalanceInRupees.toLocaleString('en-IN')} off</span>
                   ) : (
-                    <span>Earn wallet credits on every order</span>
+                    <span>Earn wallet points on every order</span>
                   )}
                 </p>
               </div>

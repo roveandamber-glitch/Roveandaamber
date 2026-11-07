@@ -32,7 +32,6 @@ import { message, Form, Input, Spin } from 'antd';
 import cartService from '@/services/cartService';
 import paymentService from '@/services/paymentService';
 import { getImageUrl } from '@/utils/imageHelper';
-import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
 import { AuthGateModal } from '@/components/common';
 import authService from '@/services/authService';
 
@@ -484,6 +483,8 @@ export default function CheckoutPage() {
     );
   }
 
+  const walletCashValue = Math.floor((availableRewardPoints || 0) * ((rewardRate || 100) / 100));
+
   return (
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
       <Navbar />
@@ -670,54 +671,26 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* SLEEK & PREMIUM COMPACT GIFT BAR */}
-                  <div className={`rounded-xl border transition-all p-2.5 flex items-center justify-between gap-2.5 ${
-                    giftOptions?.isGift
-                      ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-2xs'
-                      : 'bg-[#FAF8F5] border-[#E8DEC8] hover:border-[#D4AF37]/50'
-                  }`}>
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-8 h-8 rounded-lg bg-[#1C1714] text-[#ECC880] flex items-center justify-center shrink-0 border border-[#3E3024]">
-                        <Gift size={14} />
-                      </div>
-                      <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+                  {/* Subtle Gift Order Reassurance (Configured in Bag) */}
+                  {giftOptions?.isGift && (
+                    <div className="p-2.5 rounded-xl bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border border-[#D4AF37]/50 flex items-center justify-between gap-2 shadow-2xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Gift size={14} className="text-[#8C6D1F] shrink-0" />
                         <span className="text-xs font-semibold text-[#1C1714] truncate">
-                          {giftOptions?.isGift 
-                            ? `Artisanal Gift for ${giftOptions.recipientName}` 
-                            : 'Sending as an Artisanal Gift?'}
+                          Artisanal Gift Order for <strong className="font-bold">{giftOptions.recipientName}</strong>
                         </span>
-                        <span className="text-[9.5px] text-[#8C6D1F] bg-[#FAF1D9] border border-[#E5D7B3] px-2 py-0.2 rounded-full font-medium shrink-0">
-                          {giftOptions?.occasion || 'Complimentary Signature Box & Note'}
+                        <span className="text-[10px] text-[#8C6D1F] bg-[#FAF1D9] border border-[#E5D7B3] px-2 py-0.5 rounded-full font-medium shrink-0">
+                          {giftOptions.occasion || 'Gift Box Included'}
                         </span>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setIsGiftModalOpen(true)}
-                        className="px-3 py-1 rounded-full bg-[#1C1714] hover:bg-[#2C2420] text-[#FAF7F2] text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                      <Link
+                        href="/cart"
+                        className="text-[10.5px] font-bold text-[#8C6D1F] hover:text-black underline uppercase tracking-wider shrink-0"
                       >
-                        <Sparkles size={10} className="text-[#ECC880]" />
-                        <span>{giftOptions?.isGift ? 'Edit Gift' : '+ Add Gift'}</span>
-                      </button>
-                      {giftOptions?.isGift && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setGiftOptions(null);
-                            setUseGiftAddress(false);
-                            try { localStorage.removeItem('rove_amber_gift_options'); } catch (e) {}
-                            message.info('Artisanal gift option removed.');
-                          }}
-                          className="w-5 h-5 rounded-full bg-white hover:bg-red-50 text-gray-400 hover:text-red-600 border border-[#E0D8CB] flex items-center justify-center text-[10px] transition-colors cursor-pointer"
-                          title="Remove gift option"
-                        >
-                          ✕
-                        </button>
-                      )}
+                        Edit in Bag
+                      </Link>
                     </div>
-                  </div>
+                  )}
 
                   {/* COMPACT & ERGONOMIC DELIVERY FORM */}
                   <div className="space-y-2.5">
@@ -924,8 +897,8 @@ export default function CheckoutPage() {
 
                     {rewardDiscountAmount > 0 && (
                       <div className="flex justify-between items-center text-[#8C6D1F] bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/50 shadow-2xs">
-                        <span className="font-semibold text-[10.5px] truncate">
-                          Privilege Points ({rewardPointsUsed.toLocaleString()} pts)
+                        <span className="font-semibold text-xs text-[#6B5115] tracking-wide truncate">
+                          Patron Wallet Credit
                         </span>
                         <div className="flex items-center gap-1 shrink-0">
                           <span className="font-sans font-bold text-xs text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
@@ -953,42 +926,48 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Patron Privilege Wallet Toggle */}
+                  {/* Patron Privilege Wallet Toggle (Spacious Luxury Size & Real Money) */}
                   <div 
                     onClick={handleToggleRewards}
-                    className={`p-2.5 rounded-xl border transition-all duration-300 cursor-pointer select-none ${
+                    className={`p-3.5 sm:p-4 rounded-xl border transition-all duration-300 cursor-pointer select-none ${
                       rewardPointsUsed > 0 
-                        ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-2xs' 
-                        : 'bg-white hover:bg-[#F9F7F2] border-[#E8DFC9]'
+                        ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-xs' 
+                        : 'bg-white hover:bg-[#F9F7F2] border-[#E8DFC9] hover:border-[#B8860B]/60'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs ${
                           rewardPointsUsed > 0 
                             ? 'bg-[#B8860B] text-white border-[#8C6D1F]' 
                             : 'bg-[#FAF7F2] text-[#B8860B] border-[#E5DAC6]'
                         }`}>
-                          <Wallet size={14} />
+                          <Wallet size={18} strokeWidth={1.8} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs font-bold text-[#1A1A1A]">
-                              Patron Privilege Points
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs sm:text-sm font-bold text-[#1A1A1A]">
+                              Patron Wallet
                             </span>
-                            <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]">
-                              {availableRewardPoints.toLocaleString()} pts
+                            <span className={`text-xs font-sans font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                              rewardPointsUsed > 0
+                                ? 'bg-[#B8860B] text-white'
+                                : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
+                            }`}>
+                              ₹{walletCashValue.toLocaleString('en-IN')}
                             </span>
                           </div>
-                          <p className="text-[10px] text-[#7A6B5D] font-light leading-none mt-0.5 m-0 truncate">
+                          <p className="text-xs text-[#7A6B5D] font-light leading-snug mt-0.5 m-0 truncate">
                             {rewardPointsUsed > 0 
-                              ? `${rewardPointsUsed.toLocaleString()} pts applied (Saving ₹${rewardDiscountAmount.toLocaleString('en-IN')})` 
-                              : `Tap to redeem points (Save ₹${Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')})`}
+                              ? `✓ Applied towards this order (-₹${rewardDiscountAmount.toLocaleString('en-IN')})` 
+                              : walletCashValue > 0
+                                ? `Available to apply towards this order`
+                                : `Earn wallet credits on every order`}
                           </p>
                         </div>
                       </div>
 
-                      {/* Toggle Switch */}
+                      {/* Toggle Switch - Comfortable Touch Size */}
                       <button
                         type="button"
                         role="switch"
@@ -998,13 +977,13 @@ export default function CheckoutPage() {
                           handleToggleRewards();
                         }}
                         disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed ${
                           rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2]'
                         }`}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-                            rewardPointsUsed > 0 ? 'translate-x-4' : 'translate-x-0'
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                            rewardPointsUsed > 0 ? 'translate-x-5' : 'translate-x-0'
                           }`}
                         />
                       </button>
@@ -1013,42 +992,42 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Razorpay Instant Checkout Section */}
-                <div className="space-y-2 pt-2 border-t border-[#ECE7DE]">
-                  <div className="p-2.5 rounded-xl bg-white border border-[#E5DFD5] space-y-1.5 shadow-2xs">
+                <div className="space-y-3 pt-2.5 border-t border-[#ECE7DE]">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-[#E5DFD5] space-y-1.5 shadow-2xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-3.5 h-3.5 rounded-full border-2 border-black flex items-center justify-center bg-white shrink-0">
-                          <div className="w-1.5 h-1.5 rounded-full bg-black" />
+                        <div className="w-4 h-4 rounded-full border-2 border-black flex items-center justify-center bg-white shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-black" />
                         </div>
-                        <span className="text-xs font-semibold text-gray-900">Instant Online Payment</span>
-                        <RazorpayLogo className="h-3.5 w-auto" />
+                        <span className="text-xs sm:text-sm font-semibold text-gray-900">Instant Online Payment</span>
+                        <RazorpayLogo className="h-4 w-auto" />
                       </div>
-                      <span className="text-[9.5px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                      <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
                         Instant
                       </span>
                     </div>
 
-                    <p className="text-[10.5px] text-gray-500 m-0 leading-tight font-light">
+                    <p className="text-[11px] text-gray-500 m-0 leading-tight font-light pl-6">
                       UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, NetBanking.
                     </p>
                   </div>
 
-                  {/* Submit Pay Button */}
+                  {/* Submit Pay Button - Prominent, Large Luxury Button */}
                   <button
                     type="submit"
                     form="checkout-form"
                     disabled={loading}
                     onClick={() => form.submit()}
-                    className="w-full bg-[#111111] hover:bg-black active:scale-[0.99] text-white py-3 rounded-xl font-semibold text-xs tracking-wide flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full h-13 sm:h-14 bg-[#140E0A] hover:bg-black active:scale-[0.99] text-[#F3DFBE] rounded-xl font-bold text-sm sm:text-[15px] tracking-wide flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 border border-[#B8860B]/40"
                   >
                     {loading ? (
                       <>
-                        <Loader2 size={14} className="animate-spin text-white" />
+                        <Loader2 size={16} className="animate-spin text-[#ECC880]" />
                         <span>Securing Order...</span>
                       </>
                     ) : (
                       <>
-                        <Lock size={13} className="text-gray-300" />
+                        <Lock size={15} className="text-[#ECC880] shrink-0" />
                         <span>Pay ₹{finalTotal.toLocaleString('en-IN')} with Razorpay</span>
                       </>
                     )}
@@ -1082,24 +1061,6 @@ export default function CheckoutPage() {
         description="Private checkout requires verified customer authentication. Please sign in or register to complete your order."
         confirmText="Sign In to Checkout"
         cancelText="Return to Shopping Bag"
-      />
-
-      {/* Gift Customization Modal Re-usable */}
-      <GiftPersonalizeModal
-        open={isGiftModalOpen}
-        onClose={() => setIsGiftModalOpen(false)}
-        initialData={giftOptions}
-        onSave={(data) => {
-          setGiftOptions(data);
-          if (data?.recipientName) {
-            form.setFieldsValue({
-              customerName: data.recipientName,
-              phone: data.recipientPhone || form.getFieldValue('phone'),
-              address: data.recipientAddress || form.getFieldValue('address')
-            });
-            setUseGiftAddress(true);
-          }
-        }}
       />
     </div>
   );

@@ -417,9 +417,63 @@ const adminService = {
   /* --------------------------------------------------------------------------
      11. REPORTS & ANALYTICS
      -------------------------------------------------------------------------- */
-  getReports: async (range = '30d') => {
+  getReports: async (range = '30d', customParams = {}) => {
     try {
-      const response = await api.get('/admin/reports/monthly', { params: { range } });
+      let endpoint = '/admin/reports/custom';
+      let params = {};
+      const now = new Date();
+
+      if (range === 'today' || range === '1d') {
+        endpoint = '/admin/reports/daily';
+        params.date = now.toISOString().split('T')[0];
+      } else if (range === 'yesterday') {
+        endpoint = '/admin/reports/daily';
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        params.date = yesterday.toISOString().split('T')[0];
+      } else if (range === '7d' || range === 'last_week' || range === 'week') {
+        endpoint = '/admin/reports/custom';
+        const past7 = new Date(now);
+        past7.setDate(now.getDate() - 7);
+        params.startDate = past7.toISOString().split('T')[0];
+        params.endDate = now.toISOString().split('T')[0];
+      } else if (range === 'this_month') {
+        endpoint = '/admin/reports/monthly';
+        params.year = now.getFullYear();
+        params.month = now.getMonth() + 1;
+      } else if (range === 'last_month') {
+        endpoint = '/admin/reports/monthly';
+        const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        params.year = prevMonthDate.getFullYear();
+        params.month = prevMonthDate.getMonth() + 1;
+      } else if (range === '30d') {
+        endpoint = '/admin/reports/custom';
+        const past30 = new Date(now);
+        past30.setDate(now.getDate() - 30);
+        params.startDate = past30.toISOString().split('T')[0];
+        params.endDate = now.toISOString().split('T')[0];
+      } else if (range === '90d') {
+        endpoint = '/admin/reports/custom';
+        const past90 = new Date(now);
+        past90.setDate(now.getDate() - 90);
+        params.startDate = past90.toISOString().split('T')[0];
+        params.endDate = now.toISOString().split('T')[0];
+      } else if (range === '1y') {
+        endpoint = '/admin/reports/custom';
+        params.startDate = `${now.getFullYear()}-01-01`;
+        params.endDate = now.toISOString().split('T')[0];
+      } else if (range === 'custom') {
+        if (customParams.startDate && customParams.endDate) {
+          endpoint = '/admin/reports/custom';
+          params.startDate = customParams.startDate;
+          params.endDate = customParams.endDate;
+        } else if (customParams.date) {
+          endpoint = '/admin/reports/daily';
+          params.date = customParams.date;
+        }
+      }
+
+      const response = await api.get(endpoint, { params });
       if (response?.data?.success && response.data.data) {
         const raw = response.data.data;
         const timeline = raw.timeline || [];
@@ -427,13 +481,13 @@ const adminService = {
         const orderStats = raw.orderStats || {};
 
         let chart = timeline.map((t) => ({
-          day: t.date ? new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : `Day ${t.day}`,
-          date: t.date,
-          sales: Number(t.netSales || t.grossSales || 0),
+          day: t.timeSlot || (t.date ? new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : `Day ${t.day}`),
+          date: t.date || t.timeSlot,
+          sales: Number(t.netSales !== undefined ? t.netSales : (t.grossSales || 0)),
           orders: Number(t.ordersCount || 0)
         }));
 
-        // If the monthly timeline has zero recorded sales, merge with live dashboard chart
+        // If the timeline has zero recorded sales, merge with live dashboard chart
         const totalSalesInTimeline = chart.reduce((acc, c) => acc + c.sales, 0);
         if (totalSalesInTimeline === 0) {
           try {
@@ -444,12 +498,13 @@ const adminService = {
           } catch (e) {}
         }
 
-        const totalRev = Number(financials.netSales || financials.grossSales || 0);
+        const totalRev = Number(financials.netSales !== undefined ? financials.netSales : (financials.grossSales || 0));
         const totalOrd = Number(orderStats.totalOrders || 0);
 
         return {
           success: true,
           data: {
+            periodName: raw.periodName || '',
             totalRevenue: totalRev,
             totalOrders: totalOrd,
             aov: Number(financials.averageOrderValue || (totalOrd > 0 ? Math.round(totalRev / totalOrd) : 0)),
@@ -459,7 +514,7 @@ const adminService = {
         };
       }
     } catch (err) {
-      console.warn('Backend /admin/reports/monthly notice:', err?.response?.data?.message || err.message);
+      console.warn('Backend report error, falling back:', err?.response?.data?.message || err.message);
     }
 
     // Fallback using live dashboard stats

@@ -1,28 +1,28 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Modal, message } from 'antd';
-import { Gift, Check, BookmarkCheck, ArrowLeft, X } from 'lucide-react';
+import { Gift, Check, BookmarkCheck, X, Sparkles } from 'lucide-react';
 import cartService from '@/services/cartService';
 
 const PACKAGING_OPTIONS = [
   {
     id: 'imperial_gold',
     name: 'Signature Gold Box',
-    tagline: 'Classic gold gift box with an elegant ribbon',
+    tagline: 'Classic gold gift box with an elegant hand-tied satin ribbon',
     badge: 'Popular',
     fee: 'FREE'
   },
   {
     id: 'royal_velvet',
     name: 'Royal Velvet Box',
-    tagline: 'Warm amber gift box lined with soft velvet',
+    tagline: 'Warm amber presentation box lined with soft velveteen',
     badge: 'Luxury',
     fee: 'FREE'
   },
   {
     id: 'atelier_noir',
     name: 'Classic Black Box',
-    tagline: 'Elegant black gift box with gold logo',
+    tagline: 'Matte black gift box with embossed gold atelier crest',
     badge: 'Minimalist',
     fee: 'FREE'
   }
@@ -42,19 +42,19 @@ const OCCASIONS = [
 const MESSAGE_TEMPLATES = [
   {
     label: 'Birthday',
-    text: 'Wishing you a wonderful birthday filled with joy and happiness!'
+    text: 'Wishing you a wonderful birthday filled with joy, luxury, and happiness!'
   },
   {
     label: 'Anniversary',
-    text: 'Happy Anniversary! Wishing you many more years of love and joy.'
+    text: 'Happy Anniversary! Wishing you many more years of love, warmth, and laughter.'
   },
   {
     label: 'Celebration',
-    text: 'Congratulations on your special day! Best wishes for the future.'
+    text: 'Warmest congratulations on your milestone! Wishing you continued success.'
   },
   {
     label: 'With Love',
-    text: 'A special fragrance chosen just for you. With all my love.'
+    text: 'A signature fine fragrance chosen especially for you. With all my love.'
   }
 ];
 
@@ -81,7 +81,7 @@ export default function GiftPersonalizeModal({
         setOccasion(initialData.occasion || OCCASIONS[0]);
         setSelectedPackaging(initialData.packagingId || PACKAGING_OPTIONS[0].id);
         setMessageText(initialData.messageText || initialData.giftMessage || '');
-        setShipDirect(!!initialData.recipientAddress);
+        setShipDirect(Boolean(initialData.recipientAddress));
       } else {
         setRecipientName('');
         setRecipientPhone('');
@@ -107,7 +107,7 @@ export default function GiftPersonalizeModal({
       recipientName: recipientName.trim(),
       recipientPhone: recipientPhone.trim(),
       recipientAddress: shipDirect ? recipientAddress.trim() : '',
-      occasion: occasion,
+      occasion,
       packagingId: pkg.id,
       packagingName: pkg.name,
       messageText: messageText.trim(),
@@ -130,9 +130,9 @@ export default function GiftPersonalizeModal({
       onCancel={onClose}
       footer={null}
       centered
-      width={600}
+      width={580}
       closable={false}
-      className="font-sans gift-studio-modal"
+      className="font-sans"
       styles={{
         content: {
           borderRadius: 20,
@@ -143,65 +143,52 @@ export default function GiftPersonalizeModal({
       }}
     >
       <div className="bg-[#FAF8F5] text-black flex flex-col max-h-[85vh]">
-        {/* Header Banner */}
-        <div className="bg-gradient-to-r from-[#1B100A] via-[#2A1A10] to-[#1B100A] text-white p-5 sm:p-6 relative overflow-hidden shrink-0">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4A64A]/10 rounded-full blur-2xl pointer-events-none" />
+        {/* Refined Header */}
+        <div className="bg-[#18110B] text-white p-5 sm:p-6 relative overflow-hidden shrink-0">
+          <div className="absolute top-0 right-0 w-44 h-44 bg-[#D4A64A]/10 rounded-full blur-2xl pointer-events-none" />
           
-          {/* Header Action: Prominent Back & Close Buttons */}
-          <div className="flex items-center justify-between mb-3 relative z-10">
+          <div className="flex items-center justify-between mb-2.5 relative z-10">
+            <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-[0.22em] text-[#ECC880]">
+              <Sparkles size={11} className="text-[#ECC880]" />
+              Complimentary Gift Service
+            </span>
+
+            {/* Single clean close button */}
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-stone-200 hover:text-white text-xs font-semibold tracking-wide transition-all cursor-pointer border border-white/20 shadow-xs"
+              className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-stone-200 hover:text-white flex items-center justify-center transition-all cursor-pointer border border-white/20"
+              aria-label="Close"
             >
-              <ArrowLeft size={14} />
-              <span>Back</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-stone-200 hover:text-white flex items-center justify-center transition-all cursor-pointer border border-white/20 shadow-xs"
-              aria-label="Close gift options"
-            >
-              <X size={16} />
+              <X size={15} />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="w-6 h-6 rounded-full bg-[#D4A64A]/20 border border-[#D4A64A]/40 text-[#ECC880] flex items-center justify-center text-xs">
-              <Gift size={13} />
-            </span>
-            <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#ECC880]">
-              GIFT OPTIONS
-            </span>
-          </div>
-
-          <h2 className="text-2xl sm:text-3xl font-serif font-medium tracking-tight text-white m-0">
-            Send as a Gift
+          <h2 className="text-xl sm:text-2xl font-serif font-normal text-white m-0">
+            Send as an Artisanal Gift
           </h2>
-          <p className="text-xs text-stone-300 font-light mt-1.5 max-w-lg leading-relaxed">
-            We will include free luxury gift packaging, an elegant ribbon, and your personal note card with this order.
+          <p className="text-xs text-stone-300 font-light mt-1 max-w-md leading-relaxed">
+            Every gift order receives our complimentary presentation box, satin ribbon, and a hand-scribed note card.
           </p>
         </div>
 
-        {/* Modal Form */}
-        <div className="p-5 sm:p-6 space-y-6 overflow-y-auto flex-1">
+        {/* Form Body with Smooth Custom Scrollbar */}
+        <div className="p-5 sm:p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
           
-          {/* 1. Recipient Details */}
-          <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
+          {/* Step 1: Recipient Information */}
+          <div className="space-y-2.5">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-stone-800 block">
               1. Recipient Details
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
                 <span className="text-[11px] text-stone-500 block mb-1">Recipient Name *</span>
                 <input
                   type="text"
-                  placeholder="e.g. John Doe / Priya Sharma"
+                  placeholder="e.g. Sarah Jenkins"
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors"
+                  className="w-full px-3 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors"
                 />
               </div>
 
@@ -212,13 +199,13 @@ export default function GiftPersonalizeModal({
                   placeholder="+91 98765 43210"
                   value={recipientPhone}
                   onChange={(e) => setRecipientPhone(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors"
+                  className="w-full px-3 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors"
                 />
               </div>
             </div>
 
             {/* Direct Ship Toggle */}
-            <div className="pt-1">
+            <div className="pt-0.5">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -232,24 +219,24 @@ export default function GiftPersonalizeModal({
               </label>
 
               {shipDirect && (
-                <div className="mt-2.5">
+                <div className="mt-2">
                   <span className="text-[11px] text-stone-500 block mb-1">Recipient Delivery Address</span>
                   <textarea
                     rows={2}
-                    placeholder="Enter recipient's full address, street, city, state, and pin code..."
+                    placeholder="Enter recipient's address, city, state, and pin code..."
                     value={recipientAddress}
                     onChange={(e) => setRecipientAddress(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors"
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors"
                   />
                 </div>
               )}
             </div>
           </div>
 
-          {/* 2. Occasion Selection */}
+          {/* Step 2: Occasion */}
           <div className="space-y-2 pt-2 border-t border-[#ECE7DE]">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-stone-700">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-stone-800">
                 2. Choose Occasion
               </label>
               <span className="text-[11px] text-[#8C6D1F] font-semibold">{occasion}</span>
@@ -263,7 +250,7 @@ export default function GiftPersonalizeModal({
                   onClick={() => setOccasion(occ)}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
                     occasion === occ
-                      ? 'bg-[#1B100A] text-white border-[#1B100A] shadow-xs'
+                      ? 'bg-[#1C120C] text-white border-[#1C120C] shadow-2xs'
                       : 'bg-white text-stone-700 border-[#E0D8CA] hover:border-[#B8860B]'
                   }`}
                 >
@@ -273,39 +260,39 @@ export default function GiftPersonalizeModal({
             </div>
           </div>
 
-          {/* 3. Packaging Style */}
-          <div className="space-y-3 pt-2 border-t border-[#ECE7DE]">
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
-              3. Choose Gift Box (Free)
+          {/* Step 3: Signature Box (Free) */}
+          <div className="space-y-2 pt-2 border-t border-[#ECE7DE]">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-stone-800 block">
+              3. Choose Signature Box (Complimentary)
             </label>
 
-            <div className="grid grid-cols-1 gap-2.5">
+            <div className="grid grid-cols-1 gap-2">
               {PACKAGING_OPTIONS.map((pkg) => (
                 <div
                   key={pkg.id}
                   onClick={() => setSelectedPackaging(pkg.id)}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                  className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                     selectedPackaging === pkg.id
-                      ? 'bg-white border-[#B8860B] ring-1 ring-[#B8860B] shadow-xs'
+                      ? 'bg-white border-[#B8860B] ring-1 ring-[#B8860B]/50 shadow-2xs'
                       : 'bg-white/70 hover:bg-white border-[#E0D8CA]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                       selectedPackaging === pkg.id
                         ? 'border-[#B8860B] bg-[#B8860B] text-white'
                         : 'border-stone-300 bg-white'
                     }`}>
-                      {selectedPackaging === pkg.id && <Check size={12} strokeWidth={3} />}
+                      {selectedPackaging === pkg.id && <Check size={11} strokeWidth={3} />}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-serif font-bold text-xs text-[#1B100A]">{pkg.name}</span>
-                        <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5]">
+                        <span className="font-serif font-bold text-xs text-[#1C120C]">{pkg.name}</span>
+                        <span className="text-[8.5px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full bg-[#FAF3E0] text-[#8C6D1F] border border-[#E0D0A5]">
                           {pkg.badge}
                         </span>
                       </div>
-                      <p className="text-[11px] text-stone-500 font-light mt-0.5">
+                      <p className="text-[11px] text-stone-500 font-light mt-0.5 leading-tight">
                         {pkg.tagline}
                       </p>
                     </div>
@@ -319,26 +306,26 @@ export default function GiftPersonalizeModal({
             </div>
           </div>
 
-          {/* 4. Personal Message Card */}
-          <div className="space-y-3 pt-2 border-t border-[#ECE7DE]">
+          {/* Step 4: Handwritten Note Card */}
+          <div className="space-y-2.5 pt-2 border-t border-[#ECE7DE]">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-stone-700">
-                4. Your Personal Note Card
+              <label className="text-[11px] font-bold uppercase tracking-wider text-stone-800">
+                4. Personalized Note Card
               </label>
               <span className="text-[10px] text-stone-400 font-mono">
                 {messageText.length}/250 chars
               </span>
             </div>
 
-            {/* Quick Inspiration */}
+            {/* Quick Inspiration Chips */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] text-stone-400">Quick Templates:</span>
+              <span className="text-[10.5px] text-stone-400">Inspiration:</span>
               {MESSAGE_TEMPLATES.map((tmpl) => (
                 <button
                   key={tmpl.label}
                   type="button"
                   onClick={() => setMessageText(tmpl.text)}
-                  className="text-[10px] px-2.5 py-1 rounded-full bg-white hover:bg-[#FAF3E0] text-stone-600 hover:text-[#8C6D1F] border border-[#E0D8CA] hover:border-[#E0D0A5] transition-all cursor-pointer"
+                  className="text-[10px] px-2.5 py-0.5 rounded-full bg-white hover:bg-[#FAF3E0] text-stone-600 hover:text-[#8C6D1F] border border-[#E0D8CA] hover:border-[#E0D0A5] transition-all cursor-pointer"
                 >
                   {tmpl.label}
                 </button>
@@ -351,24 +338,24 @@ export default function GiftPersonalizeModal({
               placeholder="Write your personal gift message here..."
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors leading-relaxed font-serif"
+              className="w-full px-3 py-2 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-[#B8860B] transition-colors leading-relaxed font-serif"
             />
 
-            {/* Live Card Preview */}
+            {/* Live Stationery Preview */}
             {messageText.trim() && (
-              <div className="p-4 rounded-xl bg-gradient-to-br from-[#FFFDF9] via-[#FAF6ED] to-[#F5ECE0] border border-[#E2D5BE] shadow-xs relative overflow-hidden">
-                <div className="flex items-center justify-between mb-2">
+              <div className="p-3.5 rounded-xl bg-gradient-to-br from-[#FFFDF9] via-[#FAF6ED] to-[#F5ECE0] border border-[#E2D5BE] shadow-2xs">
+                <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#8C6D1F]">
-                    Note Card Preview
+                    Stationery Note Card Preview
                   </span>
                   <span className="text-[10px] font-serif italic text-stone-400">
-                    Gift Message
+                    {occasion}
                   </span>
                 </div>
-                <p className="font-serif italic text-stone-800 text-xs sm:text-sm leading-relaxed text-center py-2 px-4 border-y border-[#E8DFC8]/60 my-1">
+                <p className="font-serif italic text-stone-800 text-xs sm:text-[13px] leading-relaxed text-center py-2 px-3 border-y border-[#E8DFC8]/60 my-1">
                   &ldquo;{messageText}&rdquo;
                 </p>
-                <div className="text-right text-[11px] font-serif text-stone-600 font-medium pt-1">
+                <div className="text-right text-[11px] font-serif text-stone-600 font-medium pt-0.5">
                   — For {recipientName || 'Gift Recipient'}
                 </div>
               </div>
@@ -377,21 +364,20 @@ export default function GiftPersonalizeModal({
 
         </div>
 
-        {/* Modal Footer */}
-        <div className="p-4 sm:p-5 bg-white border-t border-[#ECE7DE] flex items-center justify-between gap-3 shrink-0">
+        {/* Clean, Non-duplicate Footer */}
+        <div className="p-4 bg-white border-t border-[#ECE7DE] flex items-center justify-between gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-bold text-stone-700 hover:text-black bg-stone-100 hover:bg-stone-200 active:scale-95 transition-all cursor-pointer border border-stone-200"
+            className="px-4 py-2 rounded-full text-xs font-semibold text-stone-600 hover:text-black bg-stone-100 hover:bg-stone-200 active:scale-95 transition-all cursor-pointer border border-stone-200"
           >
-            <ArrowLeft size={13} />
-            <span>Back</span>
+            Cancel
           </button>
 
           <button
             type="button"
             onClick={handleApply}
-            className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] font-bold uppercase tracking-wider text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+            className="px-6 py-2 rounded-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] font-bold uppercase tracking-wider text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
             <BookmarkCheck size={14} />
             <span>Save Gift Details</span>

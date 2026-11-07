@@ -339,17 +339,26 @@ const ProductDetails = () => {
   // Stock for the base bottle
   const bottleStock = useMemo(() => {
     if (!product) return 0;
-    if (availableSizesMap[baseBottleSize] !== undefined) return Number(availableSizesMap[baseBottleSize]);
-    if (availableSizesMap['50ML'] !== undefined) return Number(availableSizesMap['50ML']);
-    if (product.stock !== undefined) return Number(product.stock);
+    const sizeKeys = Object.keys(availableSizesMap);
+    const nonSampleKeys = sizeKeys.filter(k => !k.toLowerCase().includes('sample') && !k.toLowerCase().includes('2ml'));
+    const matchingKey = nonSampleKeys.find(k => k.toUpperCase() === baseBottleSize.toUpperCase()) || nonSampleKeys[0];
+    if (matchingKey && availableSizesMap[matchingKey] !== undefined) {
+      const qty = Number(availableSizesMap[matchingKey]);
+      if (qty > 0 || nonSampleKeys.length === 1) return qty;
+    }
+    if (product.stock !== undefined && product.stock !== null) return Number(product.stock);
     return 99;
   }, [product, baseBottleSize, availableSizesMap]);
 
   // Stock for 2ml sample
   const sampleStock = useMemo(() => {
     if (!product) return 0;
-    if (availableSizesMap['2ML'] !== undefined) return Number(availableSizesMap['2ML']);
-    if (availableSizesMap['2ML SAMPLE'] !== undefined) return Number(availableSizesMap['2ML SAMPLE']);
+    const sizeKeys = Object.keys(availableSizesMap);
+    const sampleKey = sizeKeys.find(k => k.toLowerCase().includes('sample') || k.toLowerCase().includes('2ml'));
+    if (sampleKey && availableSizesMap[sampleKey] !== undefined) {
+      return Number(availableSizesMap[sampleKey]);
+    }
+    if (product.stock !== undefined && product.stock !== null) return Number(product.stock);
     return 99;
   }, [product, availableSizesMap]);
 

@@ -704,28 +704,28 @@ export default function CartPage() {
                             <span className="text-[10px] font-normal text-gray-400 ml-1">/ unit</span>
                           </p>
 
-                          {/* Upgrade to 2ml Companion Trial Pack - Professional Luxury Standard */}
+                          {/* Upgrade to 2ml Combo Trial Pack - Unlocks 7-Day Return on Main Flacon */}
                           {!(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && !(item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) && (
-                            <div className="mt-2 p-2 sm:py-1.5 sm:px-3 rounded-lg bg-[#FAF8F5] border border-[#E8DFC9] hover:border-[#B8860B]/60 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 max-w-lg shadow-2xs">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <FlaskConical size={12} className="text-[#8C6D1F] shrink-0" />
-                                <span className="text-[11px] sm:text-xs font-semibold text-stone-900 leading-tight">
-                                  Add 2ml Companion Trial <span className="font-sans font-bold text-[#8C6D1F] ml-0.5">(+₹199)</span>
-                                </span>
+                            <div className="mt-2.5 p-2.5 sm:py-2 sm:px-3 rounded-xl bg-[#FAF8F4] border border-[#E8DFC9] hover:border-[#B8860B]/60 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 max-w-lg shadow-2xs">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <FlaskConical size={13} className="text-[#8C6D1F] shrink-0" />
+                                  <span className="text-[11.5px] sm:text-xs font-bold text-[#140D07] leading-tight">
+                                    Add 2ml Trial Combo <span className="font-sans text-[#8C6D1F] ml-0.5">(+₹199)</span>
+                                  </span>
+                                </div>
+                                <p className="text-[10px] sm:text-[10.5px] text-stone-600 font-light m-0 mt-0.5 pl-4 sm:pl-5 leading-snug">
+                                  Test 2ml vial at home • <strong className="text-stone-800 font-semibold">Unlocks 7-day return</strong> on sealed flacon
+                                </p>
                               </div>
-                              <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-0.5 sm:pt-0">
-                                <span className="text-[9.5px] text-stone-500 font-light sm:hidden">
-                                  7-day home trial guarantee
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpgradeToCombo(item)}
-                                  className="inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-bold text-[#140D07] bg-white hover:bg-stone-50 border border-stone-300 hover:border-black px-2.5 py-1 rounded-md transition-all shadow-2xs cursor-pointer whitespace-nowrap ml-auto"
-                                >
-                                  <Plus size={11} strokeWidth={2.5} className="text-[#8C6D1F]" />
-                                  <span>Add Trial</span>
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleUpgradeToCombo(item)}
+                                className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-[#140D07] bg-white hover:bg-stone-50 border border-stone-300 hover:border-black px-3 py-1.5 rounded-lg transition-all shadow-2xs cursor-pointer whitespace-nowrap shrink-0 self-end sm:self-center"
+                              >
+                                <Plus size={12} strokeWidth={2.5} className="text-[#8C6D1F]" />
+                                <span>Add Combo</span>
+                              </button>
                             </div>
                           )}
 
@@ -733,7 +733,7 @@ export default function CartPage() {
                           {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && (
                             <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-800 font-medium">
                               <Check size={12} className="text-emerald-700 shrink-0" />
-                              <span>Includes companion 2ml sample vial (7-day home trial guarantee)</span>
+                              <span>Combo Edition: Includes 2ml test vial • 7-day return enabled on sealed flacon</span>
                             </div>
                           )}
 
@@ -794,6 +794,55 @@ export default function CartPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Artisanal Gift Personalization Banner in Shopping Bag */}
+              <div className="p-3 sm:p-4 bg-gradient-to-r from-[#FAF6ED] via-[#FFFDF9] to-[#F5ECE0] border-t border-[#ECE7DE] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-[#1C1714] text-[#ECC880] flex items-center justify-center shrink-0 border border-[#3E3024] shadow-2xs">
+                    <Gift size={16} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs sm:text-sm font-bold text-[#1C1714]">
+                        {giftOptions?.isGift ? `Artisanal Gift for ${giftOptions.recipientName}` : 'Sending as an Artisanal Gift?'}
+                      </span>
+                      <span className="text-[10px] text-[#8C6D1F] bg-[#FAF1D9] border border-[#E5D7B3] px-2 py-0.5 rounded-full font-medium shrink-0">
+                        {giftOptions?.occasion || 'Complimentary Signature Box & Note'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-500 font-light m-0 mt-0.5 truncate">
+                      {giftOptions?.isGift
+                        ? `Includes ${giftOptions.packagingName || 'Signature Presentation Box'} + personal note card`
+                        : 'Free luxury gift box packaging, silk ribbon, and custom message card included.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsGiftModalOpen(true)}
+                    className="px-3.5 py-1.5 rounded-full bg-[#1C1714] hover:bg-[#2C2420] active:scale-95 text-[#FAF7F2] text-xs font-bold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <Sparkles size={11} className="text-[#ECC880]" />
+                    <span>{giftOptions?.isGift ? 'Edit Gift' : '+ Add Gift Options'}</span>
+                  </button>
+                  {giftOptions?.isGift && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGiftOptions(null);
+                        cartService.updateGiftOptions(null);
+                        message.info('Gift options removed.');
+                      }}
+                      className="w-7 h-7 rounded-full bg-white hover:bg-red-50 text-gray-400 hover:text-red-600 border border-[#E0D8CB] flex items-center justify-center text-xs transition-colors cursor-pointer"
+                      title="Remove gift option"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Card Footer on Left: Continue Exploring Collections */}
