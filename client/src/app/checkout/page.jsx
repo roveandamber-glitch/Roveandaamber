@@ -949,20 +949,23 @@ export default function CheckoutPage() {
                             <span className="text-xs sm:text-sm font-bold text-[#1A1A1A]">
                               Patron Wallet
                             </span>
-                            <span className={`text-xs font-sans font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                            <span className={`text-xs font-sans font-bold px-2.5 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
                               rewardPointsUsed > 0
                                 ? 'bg-[#B8860B] text-white'
                                 : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
                             }`}>
-                              ₹{walletCashValue.toLocaleString('en-IN')}
+                              <span>{Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts</span>
+                              <span className="font-normal opacity-85">
+                                ({walletCashValue > 0 ? `₹${walletCashValue.toLocaleString('en-IN')}` : '₹0'})
+                              </span>
                             </span>
                           </div>
                           <p className="text-xs text-[#7A6B5D] font-light leading-snug mt-0.5 m-0 truncate">
                             {rewardPointsUsed > 0 
-                              ? `✓ Applied towards this order (-₹${rewardDiscountAmount.toLocaleString('en-IN')})` 
+                              ? `✓ Applied ${Number(rewardPointsUsed).toLocaleString('en-IN')} pts towards order (-₹${rewardDiscountAmount.toLocaleString('en-IN')})` 
                               : walletCashValue > 0
-                                ? `Available to apply towards this order`
-                                : `Earn wallet credits on every order`}
+                                ? `Redeem ${Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹${walletCashValue.toLocaleString('en-IN')} off`
+                                : `Earn wallet points on every order`}
                           </p>
                         </div>
                       </div>
