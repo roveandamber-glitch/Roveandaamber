@@ -35,9 +35,9 @@ import OrderInvoiceModal from './components/OrderInvoiceModal';
 
 const TRACKING_STEPS = [
   { name: 'Order Confirmed', description: 'Order verified & payment logged', icon: Check },
-  { name: 'Artisan Prep', description: 'Hand-blended, bottled & wax-sealed', icon: Sparkles },
+  { name: 'Processing', description: 'Order verified & preparing for dispatch', icon: Package },
   { name: 'In Transit', description: 'Dispatched via White-Glove courier', icon: Truck },
-  { name: 'Delivered', description: 'Arrived at your sanctuary', icon: MapPin }
+  { name: 'Delivered', description: 'Delivered to your destination', icon: MapPin }
 ];
 
 export default function MyOrdersPage() {
@@ -172,7 +172,7 @@ export default function MyOrdersPage() {
     if (s === 'cancelled') return -1;
     if (s === 'delivered') return 3;
     if (s === 'shipped' || s === 'in transit') return 2;
-    if (s === 'processing' || s === 'artisan prep') return 1;
+    if (s === 'processing' || s === 'artisan prep' || s === 'pending') return 1;
     return 0; // Placed / Confirmed
   };
 
@@ -244,13 +244,13 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] flex flex-col justify-between pt-24 sm:pt-28 font-sans text-stone-900">
+    <div className="min-h-screen bg-[#FBF9F5] flex flex-col justify-between pt-16 sm:pt-20 font-sans text-stone-900">
       <Navbar />
 
-      <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex-1">
+      <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-8 sm:pb-12 flex-1">
         
         {/* Luxury Hero Header */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#ECE5D8]">
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-6 pb-5 border-b border-[#ECE5D8]">
           <div>
             <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] text-[#8C7A6B] mb-2 font-medium">
               <Link href="/" className="hover:text-black transition-colors">Home</Link>
@@ -495,10 +495,10 @@ export default function MyOrdersPage() {
                         <div className="flex items-center gap-2">
                           <Sparkles size={14} className="text-[#A47E3B] shrink-0" />
                           <span>
-                            {currentStep === 0 && 'Your bespoke fragrance order has been logged into the maison atelier queue.'}
-                            {currentStep === 1 && 'Our perfumers are blending, bottling, and preparing the gold-embossed presentation coffret.'}
+                            {currentStep === 0 && 'Your fragrance order has been confirmed.'}
+                            {currentStep === 1 && 'Order is confirmed and being prepared for courier dispatch.'}
                             {currentStep === 2 && `Consignment is in transit with ${order.tracking?.courierName || 'Delhivery'}.`}
-                            {currentStep === 3 && 'Order delivered successfully. Enjoy your signature olfactory impression.'}
+                            {currentStep === 3 && 'Order delivered successfully. Thank you for choosing ROVE & AMBER.'}
                           </span>
                         </div>
 

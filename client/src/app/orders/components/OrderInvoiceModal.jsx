@@ -271,3 +271,4 @@ export default function OrderInvoiceModal({ order, open, onClose }) {
     </Modal>
   );
 }
+

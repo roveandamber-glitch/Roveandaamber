@@ -6,8 +6,7 @@ import productService from '@/services/productService';
 import categoryService from '@/services/categoryService';
 import adminService from '@/services/adminService';
 import AddProductHeader from '../components/AddProductHeader';
-import ProductFormDetails from '../components/ProductFormDetails';
-import ProductFormSidebar from '../components/ProductFormSidebar';
+import ProductUnifiedForm from '../components/ProductUnifiedForm';
 
 export default function AddProduct() {
   const router = useRouter();
@@ -106,7 +105,7 @@ export default function AddProduct() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-3 pb-4">
+    <div className="w-full max-w-5xl mx-auto space-y-4 pb-8">
       <AddProductHeader
         name={watchedName}
         loading={loading}
@@ -121,32 +120,21 @@ export default function AddProduct() {
         initialValues={{ samplePrice: 199, stock: 25, flaconSize: '50ml', sampleStock: 25 }}
         className="w-full"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
-          <div className="lg:col-span-7 space-y-3">
-            <ProductFormDetails
-              form={form}
-              categories={categories}
-              watchedOriginalPrice={watchedOriginalPrice}
-              watchedPrice={watchedPrice}
-              watchedFlaconSize={watchedFlaconSize}
-              watchedStock={watchedStock}
-              watchedSamplePrice={watchedSamplePrice}
-            />
-          </div>
-
-          <div className="lg:col-span-5 space-y-3">
-            <ProductFormSidebar
-              fileList={fileList}
-              beforeUpload={beforeUpload}
-              handleUploadChange={handleUploadChange}
-              watchedOriginalPrice={watchedOriginalPrice}
-              watchedPrice={watchedPrice}
-              watchedSamplePrice={watchedSamplePrice}
-              watchedStock={watchedStock}
-              loading={loading}
-            />
-          </div>
-        </div>
+        <ProductUnifiedForm
+          form={form}
+          categories={categories}
+          fileList={fileList}
+          beforeUpload={beforeUpload}
+          handleUploadChange={handleUploadChange}
+          loading={loading}
+          isEdit={false}
+          watchedOriginalPrice={watchedOriginalPrice}
+          watchedPrice={watchedPrice}
+          watchedSamplePrice={watchedSamplePrice}
+          watchedStock={watchedStock}
+          watchedFlaconSize={watchedFlaconSize}
+          onCancel={() => router.push('/admin/products')}
+        />
       </Form>
     </div>
   );
