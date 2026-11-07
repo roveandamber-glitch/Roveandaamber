@@ -102,8 +102,8 @@ export default function OrderInvoiceModal({ order, open, onClose }) {
         {/* Header Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-[#ECE5D8]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF3E0] text-[#B8860B] border border-[#E0D0A5] flex items-center justify-center shrink-0 shadow-2xs">
-              <FileText size={20} />
+            <div className="w-10 h-10 rounded-xl bg-[#140D07] border border-[#E0D0A5] flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+              <img src="/favicon.png" alt="ROVE & AMBER" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -209,17 +209,26 @@ export default function OrderInvoiceModal({ order, open, onClose }) {
 
               {/* Items List */}
               <div className="space-y-2">
-                <div className="flex justify-between text-[11px] font-bold text-[#8C7A6B] uppercase pb-2 border-b border-[#ECE5D8]">
-                  <span>Description</span>
-                  <span>Amount</span>
+                <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-[#8C7A6B] uppercase pb-2 border-b border-[#ECE5D8]">
+                  <span className="col-span-5">Fragrance Item</span>
+                  <span className="col-span-3">Format / Size</span>
+                  <span className="col-span-1 text-center">Qty</span>
+                  <span className="col-span-3 text-right">Amount</span>
                 </div>
                 {(order.items || []).map((it, idx) => (
-                  <div key={idx} className="flex justify-between text-xs py-2 border-b border-stone-100">
-                    <div>
-                      <span className="font-semibold text-stone-900">{it.product_name || it.name || 'Fine Fragrance'}</span>
-                      <span className="text-stone-500 ml-2 font-mono text-[11px]">({it.size || '50ml'} × {it.quantity || 1})</span>
-                    </div>
-                    <span className="font-mono font-bold">₹{((Number(it.price) || 0) * (it.quantity || 1)).toLocaleString('en-IN')}</span>
+                  <div key={idx} className="grid grid-cols-12 gap-2 text-xs py-2 border-b border-stone-100 items-center">
+                    <span className="col-span-5 font-semibold text-stone-900 truncate">
+                      {it.product_name || it.name || 'Fine Fragrance'}
+                    </span>
+                    <span className="col-span-3 text-stone-500 font-mono text-[11px] truncate">
+                      {it.size || '50ml'}
+                    </span>
+                    <span className="col-span-1 text-center font-bold text-stone-700">
+                      {it.quantity || 1}
+                    </span>
+                    <span className="col-span-3 text-right font-mono font-bold text-stone-900">
+                      ₹{((Number(it.price) || 0) * (it.quantity || 1)).toLocaleString('en-IN')}
+                    </span>
                   </div>
                 ))}
 
