@@ -80,6 +80,14 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    size_prices: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    },
+    size_original_prices: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    },
     image: {
       type: String,
       default: ''

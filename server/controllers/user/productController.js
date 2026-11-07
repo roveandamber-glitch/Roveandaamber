@@ -91,6 +91,8 @@ export const formatProduct = (p) => {
     video: doc.video || '',
     sizes_stock: sizeMap,
     sizes: sizeKeys,
+    size_prices: doc.size_prices || {},
+    size_original_prices: doc.size_original_prices || {},
     samplePrice: doc.samplePrice !== undefined ? Number(doc.samplePrice) : 199,
     fragranceFamily: doc.fragranceFamily || 'Amber & Woods',
     gender: doc.gender || 'unisex',

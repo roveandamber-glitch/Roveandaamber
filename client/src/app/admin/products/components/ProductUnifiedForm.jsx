@@ -1,16 +1,19 @@
 "use client";
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { Form, Input, Select, InputNumber, Upload, Button, Tooltip } from 'antd';
 import { 
   TagOutlined, 
   SafetyCertificateOutlined, 
   PictureOutlined, 
   PlusOutlined, 
-  SaveOutlined 
+  SaveOutlined,
+  DeleteOutlined,
+  Layers,
+  Sparkles
 } from '@ant-design/icons';
 
 const { Option } = Select;
-export const PRESET_SIZES = ['50ml', '100ml', '30ml', 'Discovery Coffret (3x30ml)', 'Discovery Set'];
+export const PRESET_SIZES = ['30ml', '50ml', '100ml', 'Discovery Coffret (3x30ml)', 'Discovery Set'];
 
 export default function ProductUnifiedForm({
   form,
@@ -18,26 +21,63 @@ export default function ProductUnifiedForm({
   fileList = [],
   beforeUpload,
   handleUploadChange,
+  variants = [],
+  setVariants,
+  tieredPricing = [],
+  setTieredPricing,
   loading = false,
   isEdit = false,
-  watchedOriginalPrice,
-  watchedPrice,
-  watchedSamplePrice,
-  watchedStock,
-  watchedFlaconSize,
   onCancel
 }) {
-  const discountPercent = useMemo(() => {
-    const orig = Number(watchedOriginalPrice);
-    const curr = Number(watchedPrice);
-    if (orig && curr && orig > curr) {
-      return Math.round(((orig - curr) / orig) * 100);
-    }
-    return null;
-  }, [watchedOriginalPrice, watchedPrice]);
+  const [showTieredPricing, setShowTieredPricing] = useState(tieredPricing.length > 0);
+
+  // Add new quantity / size variant
+  const handleAddVariant = (presetSize = '') => {
+    const nextId = String(Date.now());
+    const newVariant = {
+      id: nextId,
+      size: presetSize || '50ml',
+      price: variants.length > 0 ? variants[variants.length - 1].price : 4950,
+      originalPrice: variants.length > 0 ? variants[variants.length - 1].originalPrice : '',
+      stock: 20
+    };
+    setVariants([...variants, newVariant]);
+  };
+
+  // Update variant field
+  const handleVariantChange = (id, field, value) => {
+    setVariants(variants.map(v => v.id === id ? { ...v, [field]: value } : v));
+  };
+
+  // Remove variant (keeps at least 1)
+  const handleRemoveVariant = (id) => {
+    if (variants.length <= 1) return;
+    setVariants(variants.filter(v => v.id !== id));
+  };
+
+  // Add quantity bulk discount tier
+  const handleAddTier = () => {
+    const nextMin = tieredPricing.length > 0 ? (tieredPricing[tieredPricing.length - 1].minQty || 1) + 1 : 2;
+    setTieredPricing([
+      ...tieredPricing,
+      { minQty: nextMin, discountPercent: 10 }
+    ]);
+  };
+
+  const handleRemoveTier = (index) => {
+    setTieredPricing(tieredPricing.filter((_, i) => i !== index));
+  };
+
+  const handleTierChange = (index, field, value) => {
+    const updated = [...tieredPricing];
+    updated[index] = { ...updated[index], [field]: value };
+    setTieredPricing(updated);
+  };
+
+  const totalFlaconStock = variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EAE3D6] shadow-xs space-y-6 max-w-5xl mx-auto">
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EAE3D6] shadow-xs space-y-6 max-w-5xl mx-auto font-sans">
       
       {/* 1. Header Bar Inside Card */}
       <div className="flex items-center justify-between pb-4 border-b border-[#F0EBE1]">
@@ -47,11 +87,11 @@ export default function ProductUnifiedForm({
             <span>{isEdit ? 'Edit Perfume Flacon Formulation' : 'Create New Perfume Flacon'}</span>
           </h2>
           <p className="text-xs text-stone-500 m-0 mt-0.5">
-            Fill in pricing, bottle inventory, and imagery in this unified form.
+            Set multiple prices based on bottle quantity/size, inventory allocation, and olfactory notes.
           </p>
         </div>
         <span className="text-[10px] font-mono font-bold bg-[#FAF7F2] text-[#8C6D1F] px-3 py-1 rounded-full border border-[#E2D6C0] shrink-0">
-          SINGLE FORM
+          MULTI-PRICE READY
         </span>
       </div>
 
@@ -89,184 +129,266 @@ export default function ProductUnifiedForm({
         </div>
       </div>
 
-      {/* 3. Pricing Section (MRP, Offer Price, 2ml Sample Price) */}
-      <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-[#E8DFC9] space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8C6D1F]">
-            Pricing Structure
-          </span>
-          {discountPercent && (
-            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Save {discountPercent}% Off MRP
-            </span>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Main Price (MRP) */}
-          <Form.Item
-            label={
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-stone-600 flex items-center justify-between w-full">
-                <span>Main Price (MRP ₹)</span>
-                <Tooltip title="Original list price before discount. Displayed crossed out on storefront.">
-                  <span className="cursor-help opacity-70">ⓘ</span>
-                </Tooltip>
+      {/* 3. MULTIPLE PRICES BASED ON QUANTITY / SIZE */}
+      <div className="p-4 sm:p-5 bg-[#FAF8F5] rounded-2xl border border-[#E8DFC9] space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#140D07]">
+                Pricing & Inventory by Quantity / Size
               </span>
-            }
-            name="originalPrice"
-            className="!mb-0"
-          >
-            <InputNumber 
-              min={0} 
-              step={50}
-              placeholder="e.g. 7650"
-              formatter={value => value ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-              parser={value => value.replace(/₹\s?|(,*)/g, '')}
-              className="w-full rounded-xl py-1 text-xs font-mono font-medium border-stone-300 bg-white" 
-            />
-          </Form.Item>
-
-          {/* Offer Price (Selling Price) */}
-          <Form.Item
-            label={
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#140D07] flex items-center justify-between w-full">
-                <span className="font-extrabold text-[#140D07]">Offer Price (₹) *</span>
-                <span className="text-[8.5px] bg-[#140D07] text-[#FAF7F2] px-1.5 py-0.2 rounded font-bold uppercase">
-                  Selling
-                </span>
+              <span className="text-[10px] bg-[#FAF0D4] text-[#8C6D1F] font-bold px-2 py-0.5 rounded-full border border-[#E8DEC8]">
+                {variants.length} Size{variants.length > 1 ? 's' : ''} Configured
               </span>
-            }
-            name="price"
-            className="!mb-0"
-            rules={[{ required: true, message: 'Please enter offer price' }]}
-          >
-            <InputNumber 
-              min={0} 
-              step={50}
-              placeholder="5999"
-              formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={value => value.replace(/₹\s?|(,*)/g, '')}
-              className="w-full rounded-xl py-1 text-xs font-mono font-bold border-[#8C6D1F] bg-white ring-1 ring-[#8C6D1F]/20" 
-            />
-          </Form.Item>
-
-          {/* 2ml Sample Price */}
-          <Form.Item
-            label={
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#B3874B] flex items-center justify-between w-full">
-                <span>Sample Price (₹) *</span>
-                <span className="text-[8.5px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded font-bold uppercase">
-                  ★ 2ml
-                </span>
-              </span>
-            }
-            name="samplePrice"
-            className="!mb-0"
-            rules={[{ required: true, message: 'Specify 2ml sample vial price' }]}
-          >
-            <InputNumber 
-              min={0} 
-              step={10}
-              placeholder="199"
-              formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={value => value.replace(/₹\s?|(,*)/g, '')}
-              className="w-full rounded-xl py-1 text-xs font-mono font-bold border-amber-300 bg-amber-50/40" 
-            />
-          </Form.Item>
-        </div>
-      </div>
-
-      {/* 4. Flacon Size & Stock Inventory Section */}
-      <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-[#E8DFC9] space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#1B100A]">
-            Flacon Size & Inventory Allocation
-          </span>
-          <span className={`text-[10.5px] font-mono font-bold px-2.5 py-0.5 rounded-full ${
-            Number(watchedStock || 0) > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-          }`}>
-            {Number(watchedStock || 0) > 0 ? `${watchedStock} Units Available` : 'Out of Stock'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
-          {/* Main Flacon Stock */}
-          <div className="sm:col-span-4">
-            <Form.Item
-              label={<span className="text-[10.5px] font-bold uppercase tracking-wider text-stone-700">Flacon Stock (Units) *</span>}
-              name="stock"
-              className="!mb-0"
-              rules={[{ required: true, message: 'Enter total flacon stock' }]}
-            >
-              <InputNumber 
-                min={0} 
-                placeholder="25" 
-                className="w-full rounded-xl py-1 text-xs font-mono font-bold border-stone-300 bg-white" 
-              />
-            </Form.Item>
+            </div>
+            <p className="text-[11px] text-stone-500 m-0 mt-0.5">
+              Enter individual selling price and MRP for each bottle quantity / ml format.
+            </p>
           </div>
 
-          {/* Flacon Size Format with Quick Presets */}
-          <div className="sm:col-span-5">
-            <Form.Item
-              label={<span className="text-[10.5px] font-bold uppercase tracking-wider text-stone-700">Flacon Size / Format *</span>}
-              name="flaconSize"
-              className="!mb-0"
-              rules={[{ required: true, message: 'Enter flacon size' }]}
-            >
-              <Input 
-                placeholder="e.g. 50ml or Discovery Coffret (3x30ml)" 
-                className="rounded-xl py-1 text-xs border-stone-300 font-medium bg-white" 
-              />
-            </Form.Item>
-            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-              {PRESET_SIZES.map(preset => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => form.setFieldsValue({ flaconSize: preset })}
-                  className={`text-[9.5px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
-                    watchedFlaconSize === preset 
-                      ? 'bg-[#140D07] text-white border-black font-bold' 
-                      : 'bg-white hover:bg-stone-50 text-stone-600 border-stone-300'
-                  }`}
-                >
-                  {preset}
-                </button>
-              ))}
+          <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0 self-start sm:self-center">
+            {totalFlaconStock} Total Flacons
+          </span>
+        </div>
+
+        {/* Dynamic Variants Rows */}
+        <div className="space-y-2.5">
+          {variants.map((variant, index) => {
+            const hasDiscount = variant.originalPrice && Number(variant.originalPrice) > Number(variant.price);
+            const discountPct = hasDiscount ? Math.round(((Number(variant.originalPrice) - Number(variant.price)) / Number(variant.originalPrice)) * 100) : null;
+
+            return (
+              <div 
+                key={variant.id || index}
+                className="p-3 sm:p-3.5 bg-white rounded-xl border border-[#E8DFC9] shadow-2xs space-y-2 transition-all hover:border-[#B8860B]/60"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                  
+                  {/* Quantity / Size Name */}
+                  <div className="sm:col-span-3">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-1">
+                      Bottle Quantity / Size *
+                    </label>
+                    <Input
+                      value={variant.size}
+                      onChange={(e) => handleVariantChange(variant.id, 'size', e.target.value)}
+                      placeholder="e.g. 50ml or 100ml"
+                      className="rounded-lg text-xs font-semibold border-stone-300"
+                    />
+                  </div>
+
+                  {/* Offer Price (Selling Price) */}
+                  <div className="sm:col-span-3">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#140D07] block mb-1">
+                      Offer Price (₹ Selling) *
+                    </label>
+                    <InputNumber
+                      min={0}
+                      step={50}
+                      value={variant.price}
+                      onChange={(val) => handleVariantChange(variant.id, 'price', val)}
+                      formatter={value => value ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                      parser={value => value.replace(/₹\s?|(,*)/g, '')}
+                      placeholder="4950"
+                      className="w-full rounded-lg text-xs font-mono font-bold border-[#8C6D1F] bg-[#FCFBF8]"
+                    />
+                  </div>
+
+                  {/* MRP (List Price) */}
+                  <div className="sm:col-span-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                        Main Price (MRP ₹)
+                      </label>
+                      {discountPct && (
+                        <span className="text-[8.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                          {discountPct}% off
+                        </span>
+                      )}
+                    </div>
+                    <InputNumber
+                      min={0}
+                      step={50}
+                      value={variant.originalPrice}
+                      onChange={(val) => handleVariantChange(variant.id, 'originalPrice', val)}
+                      formatter={value => value ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                      parser={value => value.replace(/₹\s?|(,*)/g, '')}
+                      placeholder="5999"
+                      className="w-full rounded-lg text-xs font-mono font-medium border-stone-300"
+                    />
+                  </div>
+
+                  {/* Stock Quantity */}
+                  <div className="sm:col-span-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-1">
+                      Stock (Units) *
+                    </label>
+                    <InputNumber
+                      min={0}
+                      value={variant.stock}
+                      onChange={(val) => handleVariantChange(variant.id, 'stock', val)}
+                      placeholder="20"
+                      className="w-full rounded-lg text-xs font-mono font-bold border-stone-300"
+                    />
+                  </div>
+
+                  {/* Delete Button */}
+                  <div className="sm:col-span-1 flex justify-end sm:justify-center">
+                    <Button
+                      type="text"
+                      danger
+                      disabled={variants.length <= 1}
+                      onClick={() => handleRemoveVariant(variant.id)}
+                      icon={<DeleteOutlined />}
+                      className="!h-8 !w-8 flex items-center justify-center !rounded-lg text-stone-400 hover:text-red-600 hover:!bg-red-50"
+                      title="Remove variant"
+                    />
+                  </div>
+
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add Variant Controls & Quick Presets */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+              Quick Add:
+            </span>
+            {PRESET_SIZES.map(preset => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => handleAddVariant(preset)}
+                className="text-[10px] px-2.5 py-1 rounded-lg bg-white hover:bg-stone-50 border border-stone-300 hover:border-black font-medium transition-all cursor-pointer shadow-2xs"
+              >
+                + {preset}
+              </button>
+            ))}
+          </div>
+
+          <Button
+            type="dashed"
+            onClick={() => handleAddVariant('')}
+            icon={<PlusOutlined />}
+            className="!rounded-xl text-xs font-bold !border-[#B8860B]/70 !text-[#8C6D1F] hover:!border-black hover:!text-black"
+          >
+            Add Custom Quantity / Price
+          </Button>
+        </div>
+
+        {/* 2ml Sample Guarantee Section */}
+        <div className="p-3 bg-white rounded-xl border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 text-[#8C6D1F] flex items-center justify-center shrink-0">
+              <SafetyCertificateOutlined className="text-sm" />
+            </div>
+            <div>
+              <span className="font-bold text-[#140D07] block text-xs">
+                2ml Discovery Trial Guarantee
+              </span>
+              <span className="text-[11px] text-stone-500 font-light block leading-tight">
+                Customers who purchase the 2ml trial vial unlock 7-day returns on sealed flacons.
+              </span>
             </div>
           </div>
 
-          {/* 2ml Sample Stock */}
-          <div className="sm:col-span-3">
-            <Form.Item
-              label={<span className="text-[10.5px] font-bold uppercase tracking-wider text-amber-900">2ml Sample Stock</span>}
-              name="sampleStock"
-              className="!mb-0"
-            >
-              <InputNumber 
-                min={0} 
-                placeholder="25" 
-                className="w-full rounded-xl py-1 text-xs font-mono font-bold border-amber-300 bg-amber-50/40" 
-              />
-            </Form.Item>
+          <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+            <div>
+              <span className="text-[9.5px] uppercase font-bold text-stone-500 block mb-0.5">Vial Price</span>
+              <Form.Item name="samplePrice" className="!mb-0">
+                <InputNumber
+                  min={0}
+                  step={10}
+                  formatter={value => value ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                  parser={value => value.replace(/₹\s?|(,*)/g, '')}
+                  className="w-24 rounded-lg text-xs font-mono font-bold border-amber-300 bg-amber-50/40"
+                />
+              </Form.Item>
+            </div>
+
+            <div>
+              <span className="text-[9.5px] uppercase font-bold text-stone-500 block mb-0.5">Vial Stock</span>
+              <Form.Item name="sampleStock" className="!mb-0">
+                <InputNumber
+                  min={0}
+                  className="w-20 rounded-lg text-xs font-mono font-bold border-stone-300"
+                />
+              </Form.Item>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white border border-amber-200/90 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-2 min-w-0">
-            <SafetyCertificateOutlined className="text-amber-700 text-sm shrink-0" />
-            <span className="text-stone-700 truncate">
-              <strong className="text-stone-900 font-semibold">7-Day Home Trial Guarantee:</strong> 2ml discovery vial enables customer returns on sealed flacons.
-            </span>
+        {/* Optional: Bulk Quantity Tier Pricing Toggle */}
+        <div className="pt-2 border-t border-[#E8DFC9]">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                const nextState = !showTieredPricing;
+                setShowTieredPricing(nextState);
+                if (nextState && tieredPricing.length === 0) {
+                  handleAddTier();
+                }
+              }}
+              className="text-[11px] font-bold text-[#8C6D1F] hover:text-black flex items-center gap-1.5 cursor-pointer underline decoration-[#8C6D1F]/40"
+            >
+              <Sparkles className="text-xs" />
+              <span>{showTieredPricing ? 'Hide Bulk Quantity Discount Tiers' : '+ Add Volume / Quantity Discount Tiers (Buy 2+, Buy 3+)'}</span>
+            </button>
           </div>
-          <span className="font-mono font-bold text-[#8C6D1F] shrink-0">
-            ₹{watchedSamplePrice || 199}/vial
-          </span>
+
+          {showTieredPricing && (
+            <div className="mt-3 p-3 bg-white rounded-xl border border-stone-200 space-y-2">
+              <span className="text-[10px] uppercase font-bold text-stone-600 block">
+                Automatic Volume Discounts:
+              </span>
+              {tieredPricing.map((tier, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-xs">
+                  <span className="text-stone-600">Buy</span>
+                  <InputNumber
+                    min={2}
+                    value={tier.minQty}
+                    onChange={(val) => handleTierChange(idx, 'minQty', val)}
+                    className="w-18 rounded-md font-mono"
+                  />
+                  <span className="text-stone-600">or more flacons → get</span>
+                  <InputNumber
+                    min={1}
+                    max={80}
+                    value={tier.discountPercent}
+                    onChange={(val) => handleTierChange(idx, 'discountPercent', val)}
+                    formatter={val => `${val}%`}
+                    parser={val => val.replace('%', '')}
+                    className="w-22 rounded-md font-mono font-bold text-emerald-700"
+                  />
+                  <span className="text-stone-600">discount off unit price</span>
+                  <Button
+                    type="text"
+                    danger
+                    onClick={() => handleRemoveTier(idx)}
+                    icon={<DeleteOutlined />}
+                    className="text-stone-400 hover:text-red-600"
+                  />
+                </div>
+              ))}
+              <Button
+                type="dashed"
+                size="small"
+                onClick={handleAddTier}
+                icon={<PlusOutlined />}
+                className="mt-1 text-[11px]"
+              >
+                Add Tier
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 5. Olfactory Description */}
+      {/* 4. Olfactory Description */}
       <div>
         <Form.Item
           label={<span className="text-[11px] font-bold uppercase tracking-wider text-stone-700">Olfactory Description & Notes</span>}
@@ -281,7 +403,7 @@ export default function ProductUnifiedForm({
         </Form.Item>
       </div>
 
-      {/* 6. Flacon Imagery Section (Directly Inside Card) */}
+      {/* 5. Flacon Imagery Section (Directly Inside Card) */}
       <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-[#E8DFC9] space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -315,7 +437,7 @@ export default function ProductUnifiedForm({
         </p>
       </div>
 
-      {/* 7. Action Footer Inside Card */}
+      {/* 6. Action Footer Inside Card */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#F0EBE1]">
         {onCancel && (
           <Button
@@ -339,4 +461,3 @@ export default function ProductUnifiedForm({
     </div>
   );
 }
-

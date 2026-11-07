@@ -30,6 +30,8 @@ const formatProduct = (p) => {
     originalPrice: doc.originalPrice || doc.price,
     stock: doc.stock !== undefined ? doc.stock : 10,
     sizes: sizesObj,
+    size_prices: doc.size_prices || {},
+    size_original_prices: doc.size_original_prices || {},
     image: doc.image || '',
     images: doc.images || (doc.image ? [{ url: doc.image, alt: doc.name }] : []),
     category_id: doc.category_id,
@@ -516,6 +518,24 @@ export const createAdminProduct = async (req, res) => {
       }
     }
 
+    let parsedSizePrices = {};
+    if (req.body.size_prices) {
+      try {
+        parsedSizePrices = typeof req.body.size_prices === 'string' ? JSON.parse(req.body.size_prices) : req.body.size_prices;
+      } catch {
+        parsedSizePrices = {};
+      }
+    }
+
+    let parsedSizeOriginalPrices = {};
+    if (req.body.size_original_prices) {
+      try {
+        parsedSizeOriginalPrices = typeof req.body.size_original_prices === 'string' ? JSON.parse(req.body.size_original_prices) : req.body.size_original_prices;
+      } catch {
+        parsedSizeOriginalPrices = {};
+      }
+    }
+
     let calculatedStock = stock !== undefined ? (parseInt(stock, 10) || 0) : undefined;
     if (calculatedStock === undefined) {
       if (Object.keys(parsedSizesMap).length > 0) {
@@ -579,6 +599,8 @@ export const createAdminProduct = async (req, res) => {
       fragranceFamily: fragranceFamily || 'Oriental Woody',
       gender: gender || 'unisex',
       sizes: JSON.stringify(parsedSizesMap),
+      size_prices: parsedSizePrices,
+      size_original_prices: parsedSizeOriginalPrices,
       details: Array.isArray(parsedDetails) ? parsedDetails : [],
       giftOccasions: Array.isArray(parsedOccasions) ? parsedOccasions : ['Birthday', 'Anniversary'],
       isFeatured: isFeatured === 'true' || isFeatured === true,
@@ -678,6 +700,16 @@ export const updateAdminProduct = async (req, res) => {
     if (fragranceFamily !== undefined) updateData.fragranceFamily = fragranceFamily;
     if (gender !== undefined) updateData.gender = gender;
     if (parsedSizesMap) updateData.sizes = JSON.stringify(parsedSizesMap);
+    if (req.body.size_prices !== undefined) {
+      try {
+        updateData.size_prices = typeof req.body.size_prices === 'string' ? JSON.parse(req.body.size_prices) : req.body.size_prices;
+      } catch {}
+    }
+    if (req.body.size_original_prices !== undefined) {
+      try {
+        updateData.size_original_prices = typeof req.body.size_original_prices === 'string' ? JSON.parse(req.body.size_original_prices) : req.body.size_original_prices;
+      } catch {}
+    }
     if (video !== undefined) updateData.video = video;
 
     if (imageList) {
