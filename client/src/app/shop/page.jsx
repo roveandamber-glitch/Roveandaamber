@@ -278,7 +278,7 @@ const ShopContent = () => {
     (priceRange[0] > 0 || priceRange[1] < maxPrice ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] font-sans text-[#1A1A1A] pt-20 sm:pt-24 pb-20 md:pb-12">
+    <div className="min-h-screen bg-[#FAF9F7] font-sans text-[#1A1A1A] pt-20 sm:pt-24">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-4 sm:py-6">

@@ -450,7 +450,7 @@ const ProductDetails = () => {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF9F7] font-sans pt-20 sm:pt-22 pb-12">
+      <div className="min-h-screen bg-[#FAF9F7] font-sans pt-20 sm:pt-22">
         <Navbar />
         <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
           <div className="h-4 w-48 bg-gray-200 rounded mb-8" />
@@ -509,7 +509,7 @@ const ProductDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] font-sans text-[#1A1A1A] pt-20 sm:pt-24 pb-20 md:pb-12 flex flex-col justify-between">
+    <div className="min-h-screen bg-[#FAF9F7] font-sans text-[#1A1A1A] pt-20 sm:pt-24 flex flex-col justify-between">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 w-full flex-1">
@@ -529,12 +529,12 @@ const ProductDetails = () => {
           {/* LEFT: Image Gallery Showcase & Feature Badges */}
           <div className="lg:col-span-6 xl:col-span-6">
             
-            {/* Gallery: Vertical Thumbnails + Main Showcase Image */}
-            <div className="flex gap-3 sm:gap-3.5 items-start">
+            {/* Gallery: Responsive Layout (Full-width Main Image + Horizontal Thumbnails on Mobile, Vertical Strip on Desktop) */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-3.5 items-start">
               
-              {/* Vertical Thumbnail Strip */}
-              {displayThumbnails.length > 0 && (
-                <div className="flex flex-col gap-2.5 w-14 sm:w-16 shrink-0">
+              {/* Thumbnail Strip: Only show if there are 2 or more angles/images */}
+              {displayThumbnails.length > 1 && (
+                <div className="order-2 sm:order-1 flex flex-row sm:flex-col gap-2 sm:gap-2.5 w-full sm:w-16 shrink-0 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 justify-center sm:justify-start custom-scrollbar">
                   {displayThumbnails.slice(0, 4).map((img, idx) => (
                     <button
                       key={idx}
@@ -554,12 +554,12 @@ const ProductDetails = () => {
                     </button>
                   ))}
 
-                  {/* Down Chevron / Next image scroll button */}
+                  {/* Down Chevron / Next image scroll button (desktop only) */}
                   {displayThumbnails.length > 1 && (
                     <button
                       type="button"
                       onClick={handleNextThumbnail}
-                      className="w-14 h-7 sm:w-16 sm:h-7 rounded-lg border border-[#E8DFC9] bg-white hover:bg-stone-50 flex items-center justify-center text-stone-500 hover:text-stone-900 transition-colors cursor-pointer shadow-2xs"
+                      className="hidden sm:flex w-14 h-7 sm:w-16 sm:h-7 rounded-lg border border-[#E8DFC9] bg-white hover:bg-stone-50 items-center justify-center text-stone-500 hover:text-stone-900 transition-colors cursor-pointer shadow-2xs"
                       title="Next view"
                       aria-label="Next view"
                     >
@@ -569,8 +569,8 @@ const ProductDetails = () => {
                 </div>
               )}
 
-              {/* Primary Main Image Container - Constrained to 420px-440px so it fits cleanly in 1 window */}
-              <div className="relative flex-1 rounded-2xl sm:rounded-3xl bg-[#F6F2EA] border border-[#E8DFC9] h-[380px] sm:h-[420px] lg:h-[440px] flex items-center justify-center overflow-hidden shadow-2xs group">
+              {/* Primary Main Image Container - Full width on mobile */}
+              <div className="order-1 sm:order-2 relative w-full flex-1 rounded-2xl sm:rounded-3xl bg-[#F6F2EA] border border-[#E8DFC9] h-[320px] sm:h-[420px] lg:h-[440px] flex items-center justify-center overflow-hidden shadow-2xs group">
                 {currentMainImage ? (
                   <img
                     src={currentMainImage}
@@ -637,32 +637,32 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            {/* 4 Feature Badges Underneath Image */}
-            <div className="grid grid-cols-4 gap-2 pt-3 border-t border-stone-200/60 mt-3 text-stone-700">
-              <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* 4 Feature Badges Underneath Image (2x2 on mobile, 4 columns on desktop) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-2 pt-3 border-t border-stone-200/60 mt-3 text-stone-700">
+              <div className="flex items-center gap-2">
                 <Leaf size={16} strokeWidth={1.5} className="text-[#8C6D1F] shrink-0" />
-                <div className="text-[10px] sm:text-[11px] leading-tight">
+                <div className="text-[11px] leading-tight">
                   <span className="font-semibold block text-stone-800">Long-Lasting</span>
                   <span className="text-stone-400 font-normal">(8–10 Hours)</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-2">
                 <Gem size={16} strokeWidth={1.5} className="text-[#8C6D1F] shrink-0" />
-                <div className="text-[10px] sm:text-[11px] leading-tight">
+                <div className="text-[11px] leading-tight">
                   <span className="font-semibold block text-stone-800">Premium</span>
                   <span className="text-stone-400 font-normal">Ingredients</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-2">
                 <FlaskConical size={16} strokeWidth={1.5} className="text-[#8C6D1F] shrink-0" />
-                <div className="text-[10px] sm:text-[11px] leading-tight">
+                <div className="text-[11px] leading-tight">
                   <span className="font-semibold block text-stone-800">IFRA</span>
                   <span className="text-stone-400 font-normal">Compliant</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-2">
                 <Gift size={16} strokeWidth={1.5} className="text-[#8C6D1F] shrink-0" />
-                <div className="text-[10px] sm:text-[11px] leading-tight">
+                <div className="text-[11px] leading-tight">
                   <span className="font-semibold block text-stone-800">Complimentary</span>
                   <span className="text-stone-400 font-normal">Sample</span>
                 </div>
@@ -674,19 +674,19 @@ const ProductDetails = () => {
           <div className="lg:col-span-6 xl:col-span-6 space-y-3 lg:space-y-3.5">
             
             {/* 1. Brand Tagline & Stock Status Badge */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#A67C38] flex items-center gap-1.5">
-                <span className="w-3.5 h-[1px] bg-[#A67C38]" />
-                <span>ROVE & AMBER • HAUTE PARFUMERIE</span>
+            <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#A67C38] flex items-center gap-1.5 min-w-0">
+                <span className="w-3.5 h-[1px] bg-[#A67C38] shrink-0" />
+                <span className="truncate">ROVE & AMBER • HAUTE PARFUMERIE</span>
               </span>
 
               {/* Stock Indicator */}
               {isOutOfStock ? (
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 shrink-0 whitespace-nowrap">
                   Currently Unavailable
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0 whitespace-nowrap">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>In Stock • Dispatched within 24h</span>
                 </span>
@@ -745,16 +745,17 @@ const ProductDetails = () => {
                 )}
               </div>
 
-              <div className="inline-flex items-center gap-1.5 text-xs text-stone-600 font-medium">
+              <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs text-stone-600 font-medium">
                 <Truck size={14} className="text-stone-500 shrink-0" />
-                <span>Complimentary White-Glove Courier Included</span>
+                <span className="hidden sm:inline">Complimentary White-Glove Courier Included</span>
+                <span className="sm:hidden">Complimentary Courier Included</span>
               </div>
             </div>
 
             {/* 5. Olfactory Notes Single-Line */}
             <div className="flex items-center gap-2 text-xs text-stone-600 py-0.5">
               <Leaf size={14} className="text-[#8C6D1F] shrink-0" />
-              <span className="truncate">
+              <span className="line-clamp-2 sm:line-clamp-1">
                 {scentNotesText}
               </span>
             </div>
@@ -770,19 +771,19 @@ const ProductDetails = () => {
             />
 
             {/* 8. Action Row (Above the Fold): Stepper + Add to Cart + Buy Now */}
-            <div className="pt-1.5 flex items-center gap-2.5 sm:gap-3">
+            <div className="pt-1.5 flex items-center gap-2 sm:gap-3">
               {/* Stepper */}
-              <div className="inline-flex items-center bg-[#F5F2EB] border border-[#E0D8CA] rounded-xl h-11 px-1.5 shrink-0">
+              <div className="inline-flex items-center bg-[#F5F2EB] border border-[#E0D8CA] rounded-xl h-11 px-1 sm:px-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={quantity <= 1 || isOutOfStock}
                   aria-label="Decrease quantity"
-                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
                 >
-                  <Minus size={13} />
+                  <Minus size={12} />
                 </button>
-                <span className="w-8 text-center text-sm font-bold text-[#140D07] font-sans">
+                <span className="w-7 sm:w-8 text-center text-xs sm:text-sm font-bold text-[#140D07] font-sans">
                   {isOutOfStock ? 0 : quantity}
                 </span>
                 <button
@@ -790,9 +791,9 @@ const ProductDetails = () => {
                   onClick={() => setQuantity(Math.min(maxStockForSize, quantity + 1))}
                   disabled={quantity >= maxStockForSize || isOutOfStock}
                   aria-label="Increase quantity"
-                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
                 >
-                  <Plus size={13} />
+                  <Plus size={12} />
                 </button>
               </div>
 
@@ -801,9 +802,9 @@ const ProductDetails = () => {
                 <button
                   type="button"
                   onClick={() => router.push('/cart')}
-                  className="flex-1 h-11 bg-[#1C120C] hover:bg-black text-[#ECC880] rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-xs font-bold font-sans"
+                  className="flex-1 h-11 bg-[#1C120C] hover:bg-black text-[#ECC880] rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-[11px] sm:text-xs font-bold font-sans px-2"
                 >
-                  <ShoppingBag size={14} className="text-[#ECC880]" />
+                  <ShoppingBag size={14} className="text-[#ECC880] shrink-0" />
                   <span>View in Bag</span>
                 </button>
               ) : (
@@ -811,22 +812,31 @@ const ProductDetails = () => {
                   type="button"
                   onClick={() => handleAddToCart(false)}
                   disabled={isOutOfStock || isAddingToCart}
-                  className="flex-1 h-11 bg-[#1C120C] hover:bg-black disabled:bg-stone-200 disabled:text-stone-400 text-white rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-xs font-bold font-sans group"
+                  className="flex-1 h-11 bg-[#1C120C] hover:bg-black disabled:bg-stone-200 disabled:text-stone-400 text-white rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-[11px] sm:text-xs font-bold font-sans group px-2"
                 >
-                  <ShoppingBag size={14} className="text-white group-hover:scale-110 transition-transform" />
+                  <ShoppingBag size={14} className="text-white group-hover:scale-110 transition-transform shrink-0" />
                   <span>{isAddingToCart ? 'Adding...' : 'Add to Cart'}</span>
                 </button>
               )}
 
-              {/* Secondary CTA: Buy Now */}
+              {/* Secondary CTA: Wishlist */}
               <button
                 type="button"
-                onClick={() => handleAddToCart(true)}
-                disabled={isOutOfStock || isAddingToCart}
-                className="flex-1 h-11 bg-white hover:bg-stone-50 disabled:bg-stone-100 disabled:text-stone-400 text-[#1C120C] border border-[#1C120C] rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-xs font-bold font-sans shadow-2xs"
+                onClick={toggleWishlist}
+                className={`flex-1 h-11 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-[11px] sm:text-xs font-bold font-sans shadow-2xs px-2 border ${
+                  isWishlisted
+                    ? 'bg-[#FAF3E0] border-[#B8860B] text-[#8C6D1F]'
+                    : 'bg-white hover:bg-stone-50 border-[#1C120C] text-[#1C120C]'
+                }`}
+                title={isWishlisted ? "Remove from wishlist" : "Save to wishlist"}
               >
-                <Zap size={14} className="text-[#1C120C]" />
-                <span>Buy Now</span>
+                <Heart
+                  size={14}
+                  className={`shrink-0 transition-colors ${
+                    isWishlisted ? 'fill-red-600 text-red-600' : 'text-current'
+                  }`}
+                />
+                <span>{isWishlisted ? 'In Wishlist' : 'Wishlist'}</span>
               </button>
             </div>
 

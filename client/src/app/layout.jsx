@@ -37,7 +37,7 @@ export default function RootLayout({ children }) {
         className="bg-[#FAF9F7] text-[#1A1A1A] font-sans antialiased selection:bg-[#B8860B] selection:text-white overflow-x-hidden w-full"
         suppressHydrationWarning
       >
-        <div className="min-h-screen pb-16 md:pb-0 overflow-x-hidden w-full">
+        <div className="min-h-screen overflow-x-hidden w-full">
           {children}
         </div>
         <BottomNav />
