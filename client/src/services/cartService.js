@@ -483,6 +483,53 @@ export const cartService = {
   },
 
   /**
+   * Retrieve active promotional coupons
+   */
+  getAvailableCoupons: async () => {
+    try {
+      const res = await api.get('/cart/coupons');
+      if (res?.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        return res.data.data;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch available coupons from server:', err);
+    }
+    // High-fidelity fallback to default seeded promotional coupons
+    return [
+      {
+        code: 'ROVE10',
+        description: '10% privilege on your luxury fragrance purchase',
+        discountType: 'percentage',
+        discountValue: 10,
+        minOrderAmount: 1999,
+        maxDiscountAmount: 1500
+      },
+      {
+        code: 'AMBER20',
+        description: '20% off on orders above ₹4,000',
+        discountType: 'percentage',
+        discountValue: 20,
+        minOrderAmount: 4000,
+        maxDiscountAmount: 2500
+      },
+      {
+        code: 'LUXURY500',
+        description: 'Flat ₹500 privilege on orders above ₹3,000',
+        discountType: 'fixed',
+        discountValue: 500,
+        minOrderAmount: 3000
+      },
+      {
+        code: 'FIRSTORDER',
+        description: 'Welcome gift: 15% off on your first order',
+        discountType: 'percentage',
+        discountValue: 15,
+        minOrderAmount: 2499
+      }
+    ];
+  },
+
+  /**
    * Apply Patron Privilege Reward Points
    */
   applyRewards: async (points) => {

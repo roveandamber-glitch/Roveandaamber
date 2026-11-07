@@ -1,4 +1,5 @@
 import { CartModel } from '../../models/cartModel.js';
+import { Coupon } from '../../models/couponModel.js';
 
 // Helper to extract userId or guestId
 const getIdentity = (req) => {
@@ -160,6 +161,43 @@ export const applyCoupon = async (req, res) => {
   } catch (error) {
     console.error('Apply coupon error:', error);
     return res.status(400).json({ success: false, message: error.message || 'Failed to apply coupon.' });
+  }
+};
+
+// 5.5: Retrieve Active Available Promotional Coupons
+export const getAvailableCoupons = async (req, res) => {
+  try {
+    const now = new Date();
+    const coupons = await Coupon.find({
+      isActive: true,
+      $or: [
+        { expiryDate: null },
+        { expiryDate: { $gte: now } }
+      ]
+    }).sort({ minOrderAmount: 1 }).lean();
+
+    const available = coupons.filter(c => {
+      if (c.usageLimit && c.usedCount >= c.usageLimit) return false;
+      return true;
+    }).map(c => ({
+      id: c._id.toString(),
+      code: c.code,
+      description: c.description || '',
+      discountType: c.discountType,
+      discountValue: c.discountValue,
+      minOrderAmount: c.minOrderAmount || 0,
+      maxDiscountAmount: c.maxDiscountAmount || null,
+      expiryDate: c.expiryDate ? c.expiryDate.toISOString().split('T')[0] : null
+    }));
+
+    return res.json({
+      success: true,
+      count: available.length,
+      data: available
+    });
+  } catch (error) {
+    console.error('Get available coupons error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve available coupons.' });
   }
 };
 

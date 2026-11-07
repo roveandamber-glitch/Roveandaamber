@@ -33,6 +33,8 @@ import cartService from '@/services/cartService';
 import orderService from '@/services/orderService';
 import { getImageUrl } from '@/utils/imageHelper';
 import GiftPersonalizeModal from '@/components/cart/GiftPersonalizeModal';
+import CartOrderSummary from '@/components/cart/CartOrderSummary';
+import AvailableCouponsModal from '@/components/cart/AvailableCouponsModal';
 import ReturnPolicyModal from '@/components/product/ReturnPolicyModal';
 import { showLuxuryDeleteModal, AuthGateModal } from '@/components/common';
 import authService from '@/services/authService';
@@ -67,6 +69,8 @@ export default function CartPage() {
   const [promoCode, setPromoCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [isCouponsModalOpen, setIsCouponsModalOpen] = useState(false);
   const [promoLoading, setPromoLoading] = useState(false);
   const [rewardPointsUsed, setRewardPointsUsed] = useState(0);
   const [rewardDiscountAmount, setRewardDiscountAmount] = useState(0);
@@ -150,6 +154,15 @@ export default function CartPage() {
 
     // Immediately load any cached in-memory cart items if already loaded
     loadCart();
+
+    // Fetch active available promotional coupons
+    cartService.getAvailableCoupons()
+      .then((coupons) => {
+        if (Array.isArray(coupons)) {
+          setAvailableCoupons(coupons);
+        }
+      })
+      .catch((err) => console.warn('Could not load available coupons:', err));
     const immediateCart = cartService.getCart();
     if (immediateCart && immediateCart.length > 0 && cartService.hasInitialFetch()) {
       setIsCartLoading(false);
@@ -257,9 +270,12 @@ export default function CartPage() {
   };
 
   // Promo code / voucher handling connecting directly to backend Coupon verification
-  const handleApplyPromo = async (e) => {
-    e.preventDefault();
-    const cleanCode = promoCode.trim().toUpperCase();
+  const handleApplyPromo = async (eOrCode) => {
+    if (eOrCode && typeof eOrCode.preventDefault === 'function') {
+      eOrCode.preventDefault();
+    }
+    const targetCode = typeof eOrCode === 'string' ? eOrCode : promoCode;
+    const cleanCode = (targetCode || '').trim().toUpperCase();
     if (!cleanCode) {
       message.warning('Please enter a promotional voucher code.');
       return;
@@ -485,10 +501,10 @@ export default function CartPage() {
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black selection:bg-[#B8860B] selection:text-white flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16 w-full flex-1 flex flex-col justify-start min-h-screen">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 sm:pb-10 lg:pb-12 w-full flex-1 flex flex-col justify-start">
         
         {/* Compact Breadcrumb & Page Header Bar */}
-        <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-2 sm:mb-3 flex flex-wrap items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
             <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 text-[11px] text-gray-400 uppercase tracking-widest">
               <Link href="/" className="hover:text-black transition-colors">Home</Link>
@@ -514,7 +530,7 @@ export default function CartPage() {
         {/* CART CONTENT: SKELETON, EMPTY STATE OR ACTIVE ITEMS */}
         {(isCartLoading || !cartService.hasInitialFetch()) ? (
           /* UNIFIED SINGLE-CARD SKELETON */
-          <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 animate-pulse">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E8DFC9] shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 flex-1 mb-6 sm:mb-8 lg:mb-10 animate-pulse">
             {/* Left Column Skeleton */}
             <div className="lg:col-span-7 xl:col-span-8 p-4 sm:p-5 border-b lg:border-b-0 lg:border-r border-[#ECE7DE] space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
@@ -607,13 +623,13 @@ export default function CartPage() {
           </div>
         ) : (
           /* UNIFIED SINGLE-WINDOW LUXURY CART MASTER CARD */
-          <div className="bg-white rounded-3xl border border-[#E8DFC9] shadow-md overflow-hidden grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-[580px] sm:min-h-[640px]">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E8DFC9] shadow-md overflow-hidden grid grid-cols-1 lg:grid-cols-12 flex-1 mb-6 sm:mb-8 lg:mb-10">
             
             {/* LEFT COLUMN: PRESERVED FLACONS (8 Cols on xl, 7 on lg) */}
-            <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#ECE7DE]">
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#ECE7DE] lg:overflow-hidden">
               
               {/* Internal Box Header with Clear All inside the box */}
-              <div className="px-5 py-3.5 bg-[#FAF9F7]/90 border-b border-[#ECE7DE] flex items-center justify-between">
+              <div className="px-4 sm:px-5 py-2.5 sm:py-3 bg-[#FAF9F7]/90 border-b border-[#ECE7DE] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="font-serif font-bold text-sm sm:text-base text-black tracking-tight">
                     Fragrance Flacons
@@ -635,7 +651,7 @@ export default function CartPage() {
               </div>
 
               {/* Scrollable Products List Container */}
-              <div className="p-4 sm:p-5 overflow-y-auto max-h-[540px] divide-y divide-[#ECE7DE] custom-scrollbar flex-1">
+              <div className="p-3.5 sm:p-4 overflow-y-auto max-h-[500px] lg:max-h-[520px] divide-y divide-[#ECE7DE] custom-scrollbar flex-1">
                 {cartItems.map((item) => {
                   const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
                   const price = Number(item.price) || 0;
@@ -663,28 +679,14 @@ export default function CartPage() {
                         </Link>
 
                         <div className="space-y-1.5 min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[9px] tracking-[0.18em] uppercase font-semibold text-[#B86526]">
-                              Fine Fragrance
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-semibold text-stone-700 bg-[#FAF7F2] px-2 py-0.5 rounded-md border border-[#E8DEC8]">
+                              {item.size || '50ML'}
                             </span>
-                            <span className="w-1 h-1 rounded-full bg-[#D5C9B8]" />
-                            <span className="text-[9.5px] text-gray-700 font-bold bg-[#FAF7F2] px-1.5 py-0.5 rounded border border-[#E8DFC9]">
-                              Size: {item.size || '50ML'}
-                            </span>
-
-                            {/* Refined Luxury Status Badges */}
-                            {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) ? (
-                              <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                                 <ShieldCheck size={11} className="text-emerald-600" />
-                                <span>7-Day At-Home Trial Included</span>
-                              </span>
-                            ) : (item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) ? (
-                              <span className="text-[9px] font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
-                                2ml Discovery Sample
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[9px] font-medium text-stone-500 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded-full">
-                                <span>Sealed Flacon Edition</span>
+                                <span>7-Day Trial Included</span>
                               </span>
                             )}
                           </div>
@@ -701,38 +703,29 @@ export default function CartPage() {
                             <span className="text-[10px] font-normal text-gray-400 ml-1">/ unit</span>
                           </p>
 
-                          {/* Professional Luxury Upgrade Card */}
+                          {/* Upgrade to 2ml Companion Trial Pack */}
                           {!(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && !(item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) && (
-                            <div className="mt-2 p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-[#FAF8F5] via-[#FFFDF9] to-[#F5ECE0] border border-[#E5DAC6] hover:border-[#B8860B]/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 max-w-lg shadow-2xs group">
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-7 h-7 rounded-full bg-[#FAF0D4] border border-[#E0D0A5] text-[#8C6D1F] flex items-center justify-center shrink-0">
-                                  <Sparkles size={12} className="text-[#B8860B]" />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-[11px] font-bold text-[#1A1A1A] m-0 leading-tight">
-                                    Add 2ml Companion Trial Pack
-                                    <span className="text-[#8C6D1F] font-bold ml-1.5 font-sans">(+₹199)</span>
-                                  </p>
-                                  <p className="text-[10px] text-stone-500 m-0 font-light leading-tight mt-0.5">
-                                    Test on skin at home • 7-day risk-free return on sealed 50ml flacon
-                                  </p>
-                                </div>
+                            <div className="mt-2 p-2.5 rounded-xl bg-[#FAF8F5] border border-[#E5DAC6] hover:border-[#B8860B]/50 transition-all flex items-center justify-between gap-3 max-w-md shadow-2xs">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Sparkles size={13} className="text-[#B8860B] shrink-0" />
+                                <p className="text-xs font-bold text-stone-900 m-0 truncate">
+                                  Add 2ml Companion Trial Pack <span className="text-[#8C6D1F] font-sans font-bold">(+₹199)</span>
+                                </p>
                               </div>
-
                               <button
                                 type="button"
                                 onClick={() => handleUpgradeToCombo(item)}
-                                className="self-end sm:self-center px-3 py-1 rounded-full bg-[#1C120C] hover:bg-black text-[#ECC880] text-[10px] font-serif uppercase tracking-wider font-bold transition-all shrink-0 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap"
+                                className="px-3 py-1 rounded-full bg-[#1C120C] hover:bg-black text-[#ECC880] text-[10px] uppercase tracking-wider font-bold transition-all shrink-0 cursor-pointer shadow-2xs whitespace-nowrap"
                               >
                                 + Add Trial
                               </button>
                             </div>
                           )}
 
-                          {/* Reassuring note once upgraded */}
+                          {/* Note once upgraded */}
                           {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && (
                             <p className="text-[10.5px] text-emerald-800 m-0 font-light leading-tight pt-0.5">
-                              ★ <em>Includes companion 2ml sample vial. Test first at home; full refund available within 7 days.</em>
+                              ★ Includes companion 2ml sample vial with 7-day return guarantee.
                             </p>
                           )}
 
@@ -796,7 +789,7 @@ export default function CartPage() {
               </div>
 
               {/* Card Footer on Left: Continue Exploring Collections */}
-              <div className="p-3 sm:p-4 bg-[#FAF9F7]/90 border-t border-[#ECE7DE] flex items-center justify-between text-xs">
+              <div className="p-3 sm:p-4 bg-[#FAF9F7]/90 border-t border-[#ECE7DE] flex items-center justify-start text-xs">
                 <Link 
                   href="/shop"
                   className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:text-[#B8860B] transition-colors group cursor-pointer"
@@ -804,265 +797,57 @@ export default function CartPage() {
                   <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
                   <span>Continue Exploring Collections</span>
                 </Link>
-
-                <span className="text-[11px] text-[#8C7A6B] font-medium hidden sm:inline-block">
-                  {cartItems.length} {cartItems.length === 1 ? 'fragrance flacon' : 'fragrance flacons'} in bag
-                </span>
               </div>
             </div>
 
             {/* RIGHT COLUMN: BOUTIQUE ORDER SUMMARY (5 Cols on lg, 4 on xl) */}
-            <div className="lg:col-span-5 xl:col-span-4 bg-[#FAF8F5] p-4 sm:p-5 flex flex-col justify-between">
-              
-              <div className="space-y-3.5">
-                {/* Order Summary Header */}
-                <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-2.5">
-                  <h3 className="text-base sm:text-lg font-serif font-bold text-black tracking-tight m-0">
-                    Order Summary
-                  </h3>
-                  <span className="text-[10px] font-semibold text-[#8C6D1F] bg-[#FAF3E0] px-2.5 py-0.5 rounded-full border border-[#E8DEC8]">
-                    {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
-                  </span>
-                </div>
-
-                {/* Subtotals & Line Items */}
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal ({totalItemCount} {totalItemCount === 1 ? 'item' : 'items'})</span>
-                    <span className="font-sans font-bold text-black">₹{subtotal.toLocaleString('en-IN')}</span>
-                  </div>
-
-                  {discountAmount > 0 && appliedCoupon && (
-                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
-                      <div className="flex items-center gap-1.5">
-                        <Tag size={12} className="text-emerald-700" />
-                        <span className="font-bold uppercase tracking-wider text-[10px]">
-                          {appliedCoupon.code} {appliedCoupon.discountType === 'percentage' ? `(${appliedCoupon.discountValue}% OFF)` : `(₹${appliedCoupon.discountValue} OFF)`}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-sans font-bold text-emerald-700">-₹{discountAmount.toLocaleString('en-IN')}</span>
-                        <button
-                          type="button"
-                          onClick={handleRemoveCoupon}
-                          className="text-gray-400 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer"
-                          title="Remove coupon"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {rewardDiscountAmount > 0 && (
-                    <div className="flex justify-between items-center text-[#8C6D1F] bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] px-3 py-2 rounded-xl border border-[#D4AF37]/50 shadow-2xs">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-4 h-4 rounded-full bg-[#B8860B]/15 flex items-center justify-center shrink-0">
-                          <Sparkles size={10} className="text-[#B8860B]" />
-                        </div>
-                        <span className="font-semibold text-[11px] text-[#6B5115] tracking-wide truncate">
-                          Privilege Points ({rewardPointsUsed.toLocaleString()} pts)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="font-sans font-bold text-xs text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveRewards();
-                          }}
-                          disabled={rewardLoading}
-                          className="w-4 h-4 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-stone-200/60 text-xs transition-colors cursor-pointer"
-                          title="Remove privilege points"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-baseline text-sm font-semibold text-black pt-2 border-t border-[#ECE7DE]">
-                    <span className="text-sm text-gray-800">Estimated Total</span>
-                    <span className="font-sans text-xl sm:text-2xl font-bold text-black tracking-tight">
-                      ₹{finalTotal.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Promo Code Input Form or Active Coupon Card */}
-                {appliedCoupon ? (
-                  <div>
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF6ED] border border-[#E8DFC9]">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-[10px] shrink-0">
-                          <Check size={11} />
-                        </div>
-                        <span className="font-mono font-bold text-xs text-[#8C6D1F] uppercase tracking-wider">
-                          {appliedCoupon.code} applied
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleRemoveCoupon}
-                        disabled={promoLoading}
-                        className="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline px-1.5 py-0.5 cursor-pointer"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <form onSubmit={handleApplyPromo} className="flex gap-1.5">
-                      <input
-                        type="text"
-                        placeholder="Voucher: e.g. ROVE101"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        disabled={promoLoading}
-                        className="flex-1 px-3 py-1.5 rounded-xl text-xs bg-white border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-gray-400 font-mono"
-                      />
-                      <button
-                        type="submit"
-                        disabled={promoLoading || !promoCode.trim()}
-                        className="bg-[#1C1714] hover:bg-black text-[#ECC880] px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center shrink-0 shadow-2xs"
-                      >
-                        {promoLoading ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : (
-                          'Apply'
-                        )}
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-                {/* Patron Privilege Wallet Card with High-Precision Luxury Toggle */}
-                <div 
-                  onClick={handleToggleRewards}
-                  className={`p-2.5 sm:p-3 rounded-xl border transition-all duration-300 cursor-pointer select-none ${
-                    rewardPointsUsed > 0 
-                      ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-2xs' 
-                      : 'bg-white hover:bg-[#F7F4EC] border-[#E8DFC9] hover:border-[#D5C7A8]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-2xs border ${
-                        rewardPointsUsed > 0 
-                          ? 'bg-gradient-to-br from-[#E5B869] to-[#B8860B] text-white border-[#8C6D1F]' 
-                          : 'bg-[#FAF7F2] text-[#B8860B] border-[#E5DAC6]'
-                      }`}>
-                        <Wallet size={15} strokeWidth={1.75} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-bold text-[#1A1A1A] tracking-tight">
-                            Patron Privilege Wallet
-                          </span>
-                          <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full shrink-0 ${
-                            rewardPointsUsed > 0 
-                              ? 'bg-[#B8860B] text-white' 
-                              : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
-                          }`}>
-                            {availableRewardPoints.toLocaleString()} pts
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-[#7A6B5D] mt-0.5 font-light leading-tight truncate">
-                          {rewardPointsUsed > 0 ? (
-                            <span className="text-emerald-800 font-semibold">
-                              ✓ {rewardPointsUsed.toLocaleString()} pts applied (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
-                            </span>
-                          ) : availableRewardPoints > 0 ? (
-                            <span>
-                              Redeem up to ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')} off
-                            </span>
-                          ) : (
-                            <span>Earn privilege points on this order</span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Luxury Toggle Switch */}
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={rewardPointsUsed > 0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleRewards();
-                      }}
-                      disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-                        rewardPointsUsed > 0 
-                          ? 'bg-[#1C1714] shadow-[0_0_6px_rgba(212,175,55,0.35)]' 
-                          : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
-                      }`}
-                      title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
-                    >
-                      <span
-                        className={`pointer-events-none flex items-center justify-center h-4 w-4 transform rounded-full shadow-md ring-0 transition-transform duration-300 ease-in-out ${
-                          rewardPointsUsed > 0 
-                            ? 'translate-x-4 bg-gradient-to-br from-[#F6D389] to-[#DEB368]' 
-                            : 'translate-x-0 bg-white'
-                        }`}
-                      >
-                        {rewardLoading && (
-                          <Loader2 size={8} className="animate-spin text-[#241306]" />
-                        )}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Checkout Action & Security Badges Container */}
-              <div className="pt-3 border-t border-[#ECE7DE] space-y-2 mt-3">
-                {/* Primary Proceed to Checkout CTA */}
-                <button
-                  type="button"
-                  onClick={handleStartCheckout}
-                  className="w-full bg-gradient-to-r from-[#ECC880] via-[#DEB368] to-[#C99042] text-[#281608] hover:brightness-105 active:scale-[0.99] py-3 rounded-full font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-950/10 transition-all cursor-pointer group"
-                >
-                  <Lock size={13} strokeWidth={2.2} />
-                  <span>Proceed to Checkout</span>
-                  <ArrowRight size={13} strokeWidth={2.2} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-
-                {/* Compact Single-Line Security & Guarantee Reassurance */}
-                <div className="flex items-center justify-center gap-2 text-[10px] text-gray-500 font-medium">
-                  <span className="flex items-center gap-1">
-                    <ShieldCheck size={11} className="text-[#B8860B]" />
-                    <span>Authentic</span>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Sparkles size={11} className="text-[#B8860B]" />
-                    <span>2ml Guarantee</span>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Lock size={11} className="text-[#B8860B]" />
-                    <span>256-Bit SSL</span>
-                  </span>
-                </div>
-              </div>
-
+            <div className="lg:col-span-5 xl:col-span-4 flex flex-col justify-between overflow-hidden">
+              <CartOrderSummary
+                totalItemCount={totalItemCount}
+                subtotal={subtotal}
+                discountAmount={discountAmount}
+                appliedCoupon={appliedCoupon}
+                handleRemoveCoupon={handleRemoveCoupon}
+                rewardDiscountAmount={rewardDiscountAmount}
+                rewardPointsUsed={rewardPointsUsed}
+                handleRemoveRewards={handleRemoveRewards}
+                rewardLoading={rewardLoading}
+                finalTotal={finalTotal}
+                promoCode={promoCode}
+                setPromoCode={setPromoCode}
+                promoLoading={promoLoading}
+                handleApplyPromo={handleApplyPromo}
+                handleToggleRewards={handleToggleRewards}
+                availableRewardPoints={availableRewardPoints}
+                rewardRate={rewardRate}
+                handleStartCheckout={handleStartCheckout}
+                availableCoupons={availableCoupons}
+                onOpenCouponsModal={() => setIsCouponsModalOpen(true)}
+              />
             </div>
 
           </div>
         )}
         {/* Gift Studio Personalization Popup Modal */}
-      <GiftPersonalizeModal
-        open={isGiftModalOpen}
-        onClose={() => setIsGiftModalOpen(false)}
-        initialData={giftOptions}
-        onSave={(data) => {
-          setGiftOptions(data);
-        }}
-      />
+        <GiftPersonalizeModal
+          open={isGiftModalOpen}
+          onClose={() => setIsGiftModalOpen(false)}
+          initialData={giftOptions}
+          onSave={(data) => {
+            setGiftOptions(data);
+          }}
+        />
+
+        {/* Available Promotional Coupons Modal */}
+        <AvailableCouponsModal
+          open={isCouponsModalOpen}
+          onClose={() => setIsCouponsModalOpen(false)}
+          coupons={availableCoupons}
+          subtotal={subtotal}
+          appliedCoupon={appliedCoupon}
+          onApplyCoupon={handleApplyPromo}
+          loading={promoLoading}
+        />
     </main>
 
       {/* MODAL: AUTHENTICATION GATE PROMPT (For Unauthenticated Checkout Attempts) */}

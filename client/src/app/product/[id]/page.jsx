@@ -33,6 +33,7 @@ import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/product/ProductCard';
 import ProductReviews from '@/components/product/ProductReviews';
 import ReturnPolicyModal from '@/components/product/ReturnPolicyModal';
+import FlaconFormatSelector from '@/components/product/FlaconFormatSelector';
 import productService from '@/services/productService';
 import cartService from '@/services/cartService';
 import authService from '@/services/authService';
@@ -758,200 +759,15 @@ const ProductDetails = () => {
               </span>
             </div>
 
-            {/* 6. Select Flacon & Trial Format (3 Choice Cards) */}
-            <div className="space-y-2 pt-0.5">
-              <div className="flex justify-between items-center">
-                <span className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#170E08]">
-                  SELECT FLACON & TRIAL FORMAT
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowReturnPolicyModal(true)}
-                  className="text-xs text-[#A67C38] hover:text-black font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  <ShieldCheck size={12} className="text-[#A67C38]" />
-                  <span>Return Policy Details ↗</span>
-                </button>
-              </div>
-
-              {/* 3 Format Choice Cards */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                
-                {/* 1. COMBO: 50ml + 2ml (Recommended) */}
-                <button
-                  type="button"
-                  onClick={() => setComboSelection('combo')}
-                  className={`relative p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-                    comboSelection === 'combo'
-                      ? 'bg-[#FCF9F3] border-[#B8860B] shadow-2xs ring-1 ring-[#B8860B]/30'
-                      : 'bg-white border-[#E8DFC9] hover:border-stone-400'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-1 mb-1.5 flex-wrap">
-                    <span className="bg-[#8C6D1F] text-white text-[8.5px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded shadow-2xs">
-                      ★ RECOMMENDED
-                    </span>
-                    <span className="text-[8.5px] font-semibold text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">
-                      7-Day Trial
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[12.5px] sm:text-[13px] font-sans font-bold text-[#140D07] block leading-tight">
-                      {baseBottleSize} + 2ml Sample
-                    </span>
-                    <span className="text-[10px] text-stone-500 block leading-tight mt-0.5 truncate">
-                      Flacon & Companion Vial
-                    </span>
-                  </div>
-                  <div className="mt-2 pt-1.5 border-t border-amber-200/60 flex items-baseline justify-between flex-wrap gap-1">
-                    <span className="text-sm font-bold text-[#140D07] font-sans">
-                      ₹{(basePrice + samplePrice).toLocaleString('en-IN')}
-                    </span>
-                    <span className="text-[9.5px] text-emerald-700 font-semibold flex items-center gap-0.5">
-                      <Check size={10} className="stroke-[3]" /> Full Refund Guarantee
-                    </span>
-                  </div>
-                </button>
-
-                {/* 2. Standalone 50ml (Bottle Only) */}
-                <button
-                  type="button"
-                  onClick={() => setComboSelection('bottle')}
-                  className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-                    comboSelection === 'bottle'
-                      ? 'bg-[#FCF9F3] border-[#1C120C] shadow-2xs ring-1 ring-black/20'
-                      : 'bg-white border-[#E8DFC9] hover:border-stone-400'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-1 mb-1.5">
-                    <span className="text-[8.5px] uppercase font-bold tracking-wider text-stone-500">
-                      STANDARD
-                    </span>
-                    <span className="text-[8.5px] font-medium text-stone-500 bg-stone-100 px-1 py-0.5 rounded">
-                      Final Sale
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[12.5px] sm:text-[13px] font-sans font-bold text-[#140D07] block leading-tight">
-                      {baseBottleSize} Flacon
-                    </span>
-                    <span className="text-[10px] text-stone-500 block leading-tight mt-0.5 truncate">
-                      Standalone Fragrance Flacon
-                    </span>
-                  </div>
-                  <div className="mt-2 pt-1.5 border-t border-stone-200 flex items-baseline justify-between flex-wrap gap-1">
-                    <span className="text-sm font-bold text-[#140D07] font-sans">
-                      ₹{basePrice.toLocaleString('en-IN')}
-                    </span>
-                    <span className="text-[9.5px] text-stone-400">
-                      Non-Returnable
-                    </span>
-                  </div>
-                </button>
-
-                {/* 3. 2ml Sample (Sample Only) */}
-                <button
-                  type="button"
-                  onClick={() => setComboSelection('sample')}
-                  className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-                    comboSelection === 'sample'
-                      ? 'bg-[#FCF9F3] border-[#1C120C] shadow-2xs ring-1 ring-black/20'
-                      : 'bg-white border-[#E8DFC9] hover:border-stone-400'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-1 mb-1.5">
-                    <span className="text-[8.5px] uppercase font-bold tracking-wider text-stone-500">
-                      TRIAL WEAR
-                    </span>
-                    <span className="text-[8.5px] font-medium text-stone-500 bg-stone-100 px-1 py-0.5 rounded">
-                      2ml Vial
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[12.5px] sm:text-[13px] font-sans font-bold text-[#140D07] block leading-tight">
-                      2ml Discovery
-                    </span>
-                    <span className="text-[10px] text-stone-500 block leading-tight mt-0.5 truncate">
-                      Personal Trial Vial
-                    </span>
-                  </div>
-                  <div className="mt-2 pt-1.5 border-t border-stone-200 flex items-baseline justify-between flex-wrap gap-1">
-                    <span className="text-sm font-bold text-[#140D07] font-sans">
-                      ₹{samplePrice.toLocaleString('en-IN')}
-                    </span>
-                    <span className="text-[9.5px] text-stone-400">
-                      Trial Vial
-                    </span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* 7. Reassuring Guarantee Callout Box */}
-            <div className="pt-0.5">
-              {comboSelection === 'combo' && (
-                <div className="p-3 rounded-xl bg-[#F4F9F5] border border-emerald-200/90 shadow-2xs">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                      <ShieldCheck size={14} className="text-emerald-700 shrink-0" />
-                      <span>7-Day At-Home Experience Guarantee Included</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowReturnPolicyModal(true)}
-                      className="text-[11px] text-emerald-900 underline font-semibold hover:text-black cursor-pointer shrink-0"
-                    >
-                      Policy Details ↗
-                    </button>
-                  </div>
-                  <p className="text-[11.5px] text-emerald-900/90 leading-relaxed font-light m-0 mt-1">
-                    Spray and test the companion 2ml sample vial at home first. If the scent does not harmonize with you, return the unopened 50ml flacon for a full refund.
-                  </p>
-                </div>
-              )}
-
-              {comboSelection === 'bottle' && (
-                <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#E0D0A5] shadow-2xs">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-[#8C6D1F] flex items-center gap-1.5">
-                      <AlertCircle size={14} className="text-[#8C6D1F] shrink-0" />
-                      <span>Final Sale • Hygiene Sealed Flacon</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowReturnPolicyModal(true)}
-                      className="text-[11px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
-                    >
-                      Policy Details ↗
-                    </button>
-                  </div>
-                  <p className="text-[11.5px] text-stone-600 leading-relaxed font-light m-0 mt-1">
-                    Standalone flacons cannot be returned once unsealed. <button type="button" onClick={() => setComboSelection('combo')} className="text-[#8C6D1F] underline font-bold cursor-pointer">Upgrade to Combo</button> to test risk-free at home.
-                  </p>
-                </div>
-              )}
-
-              {comboSelection === 'sample' && (
-                <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#E0D0A5] shadow-2xs">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-[#8C6D1F] flex items-center gap-1.5">
-                      <AlertCircle size={14} className="text-[#8C6D1F] shrink-0" />
-                      <span>Discovery Sample Vial</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowReturnPolicyModal(true)}
-                      className="text-[11px] text-[#8C6D1F] underline font-semibold hover:text-black cursor-pointer shrink-0"
-                    >
-                      Policy Details ↗
-                    </button>
-                  </div>
-                  <p className="text-[11.5px] text-stone-600 leading-relaxed font-light m-0 mt-1">
-                    Individual 2ml discovery vials are intimate trial formats made for personal testing and are final sale.
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* 6. Select Flacon & Trial Format Selector */}
+            <FlaconFormatSelector
+              comboSelection={comboSelection}
+              setComboSelection={setComboSelection}
+              basePrice={basePrice}
+              samplePrice={samplePrice}
+              baseBottleSize={baseBottleSize}
+              onOpenReturnPolicy={() => setShowReturnPolicyModal(true)}
+            />
 
             {/* 8. Action Row (Above the Fold): Stepper + Add to Cart + Buy Now */}
             <div className="pt-1.5 flex items-center gap-2.5 sm:gap-3">

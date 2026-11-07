@@ -7,6 +7,7 @@ import {
   removeCartItem,
   applyCoupon,
   removeCoupon,
+  getAvailableCoupons,
   applyRewardPoints,
   removeRewardPoints,
   updateGiftOptions,
@@ -16,6 +17,10 @@ import {
 import { protect } from '../../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+// Public: Retrieve active promotional coupons
+router.get('/coupons', getAvailableCoupons);
+router.get('/available-coupons', getAvailableCoupons);
 
 // Support both logged-in and guest customers via optionalAuth
 // Strictly require authenticated customer account for all cart operations (Private Route)
