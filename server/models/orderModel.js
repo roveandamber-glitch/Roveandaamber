@@ -246,6 +246,7 @@ const orderSchema = new mongoose.Schema(
       confirmedSent: { type: Boolean, default: false },
       dispatchedSent: { type: Boolean, default: false },
       lastDispatchedTrackingNumber: { type: String, default: '' },
+      lastDispatchedEmailAt: { type: Date },
       deliveredSent: { type: Boolean, default: false },
       cancelledSent: { type: Boolean, default: false }
     },
@@ -540,14 +541,22 @@ export const OrderModel = {
   findById: async (id) => {
     if (!id) return null;
     let order = null;
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      order = await Order.findById(id).populate('user_id', 'name email');
+    const cleanId = String(id).trim();
+
+    if (mongoose.Types.ObjectId.isValid(cleanId)) {
+      order = await Order.findById(cleanId).populate('user_id', 'name email');
     }
     if (!order) {
-      order = await Order.findOne({ orderId: id }).populate('user_id', 'name email');
-    }
-    if (!order) {
-      order = await Order.findOne({ razorpayOrderId: id }).populate('user_id', 'name email');
+      const withHash = cleanId.startsWith('#') ? cleanId : `#${cleanId}`;
+      const withoutHash = cleanId.replace('#', '');
+      order = await Order.findOne({
+        $or: [
+          { orderId: cleanId },
+          { orderId: withHash },
+          { orderId: withoutHash },
+          { razorpayOrderId: cleanId }
+        ]
+      }).populate('user_id', 'name email');
     }
     if (!order) return null;
     const doc = order.toObject();

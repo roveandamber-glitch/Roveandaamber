@@ -169,11 +169,43 @@ const generateInvoiceBuffer = (order) => {
   });
 };
 
-// Base HTML Template Generator with Luxury Styling
+// Global Memory Debounce Guard (Prevents duplicate automated emails for same order & event within 2 minutes)
+const sentEmailDebounceMap = new Map();
+
+const isDuplicateEmail = (orderId, emailType, cooldownMs = 120000) => {
+  if (!orderId) return false;
+  const key = `${orderId}_${emailType}`;
+  const now = Date.now();
+  const lastSent = sentEmailDebounceMap.get(key);
+  if (lastSent && (now - lastSent) < cooldownMs) {
+    console.warn(`🛑 [Email Service]: Blocked duplicate ${emailType} email for order ${orderId} (sent ${Math.round((now - lastSent) / 1000)}s ago)`);
+    return true;
+  }
+  sentEmailDebounceMap.set(key, now);
+  if (sentEmailDebounceMap.size > 300) {
+    for (const [k, time] of sentEmailDebounceMap.entries()) {
+      if (now - time > 600000) sentEmailDebounceMap.delete(k);
+    }
+  }
+  return false;
+};
+
+// Base HTML Template Generator with Luxury Styling & Responsive Mobile Grid
+const getClientBaseUrl = () => {
+  if (process.env.PUBLIC_CLIENT_URL) return process.env.PUBLIC_CLIENT_URL.trim().replace(/\/+$/, '');
+  if (process.env.CLIENT_URL) {
+    const urls = process.env.CLIENT_URL.split(',').map(u => u.trim().replace(/\/+$/, ''));
+    const nonLocal = urls.find(u => !u.includes('localhost') && !u.includes('127.0.0.1'));
+    if (nonLocal) return nonLocal;
+    return urls[0];
+  }
+  return process.env.NODE_ENV === 'production' ? 'https://www.roveandamber.com' : 'http://localhost:3000';
+};
+
 const buildEmailHtml = ({ preheader, title, subtitle, contentHtml, orderId, actionUrl, actionText }) => {
   const brandGold = '#C49A45';
   const brandDark = '#141416';
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const clientUrl = getClientBaseUrl();
   const finalActionUrl = actionUrl || `${clientUrl}/orders/${(orderId || '').replace('#', '')}`;
 
   return `
@@ -184,23 +216,31 @@ const buildEmailHtml = ({ preheader, title, subtitle, contentHtml, orderId, acti
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <style>
-    body { margin: 0; padding: 0; background-color: #0F0F10; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #E5E5E5; }
-    .container { max-width: 600px; margin: 40px auto; background-color: #1A1A1D; border: 1px solid #2B2824; border-radius: 6px; overflow: hidden; }
-    .header { background-color: #141416; padding: 36px 40px; text-align: center; border-bottom: 1px solid #2B2824; }
-    .brand-title { font-size: 24px; letter-spacing: 4px; color: #FFFFFF; margin: 0; font-weight: 300; }
-    .brand-subtitle { font-size: 10px; letter-spacing: 2.5px; color: ${brandGold}; margin-top: 8px; text-transform: uppercase; }
-    .hero { padding: 36px 40px 24px; text-align: center; }
-    .hero-title { font-size: 20px; color: #FFFFFF; margin: 0 0 8px; font-weight: 400; letter-spacing: 0.5px; }
-    .hero-subtitle { font-size: 13px; color: #9E9B95; margin: 0; line-height: 1.6; }
-    .body-content { padding: 0 40px 30px; font-size: 14px; line-height: 1.6; color: #D1CEC7; }
-    .card { background-color: #212024; border: 1px solid #332F2A; border-radius: 4px; padding: 20px; margin: 20px 0; }
+    body { margin: 0; padding: 0; background-color: #0F0F10; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #E5E5E5; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 600px; width: 100%; margin: 30px auto; background-color: #1A1A1D; border: 1px solid #2B2824; border-radius: 8px; overflow: hidden; }
+    .header { background-color: #141416; padding: 32px 30px; text-align: center; border-bottom: 1px solid #2B2824; }
+    .brand-title { font-size: 23px; letter-spacing: 4px; color: #FFFFFF; margin: 0; font-weight: 300; font-family: Georgia, 'Times New Roman', serif; }
+    .brand-subtitle { font-size: 10px; letter-spacing: 2.5px; color: ${brandGold}; margin-top: 8px; text-transform: uppercase; font-weight: 600; }
+    .hero { padding: 30px 30px 18px; text-align: center; }
+    .hero-title { font-size: 21px; color: #FFFFFF; margin: 0 0 8px; font-weight: 400; letter-spacing: 0.5px; font-family: Georgia, 'Times New Roman', serif; }
+    .hero-subtitle { font-size: 13.5px; color: #9E9B95; margin: 0; line-height: 1.6; }
+    .body-content { padding: 0 30px 28px; font-size: 14px; line-height: 1.6; color: #D1CEC7; word-wrap: break-word; }
+    .card { background-color: #212024; border: 1px solid #332F2A; border-radius: 6px; padding: 18px 20px; margin: 20px 0; }
     .item-row { display: table; width: 100%; padding: 8px 0; border-bottom: 1px solid #2D2B30; }
     .item-cell-name { display: table-cell; text-align: left; font-size: 13px; color: #FFFFFF; }
     .item-cell-price { display: table-cell; text-align: right; font-size: 13px; color: ${brandGold}; font-weight: bold; }
-    .cta-container { text-align: center; margin: 32px 0 16px; }
-    .cta-button { display: inline-block; background-color: ${brandGold}; color: #000000 !important; text-decoration: none; padding: 14px 32px; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; border-radius: 2px; }
-    .footer { background-color: #141416; padding: 28px 40px; text-align: center; font-size: 11px; color: #736E65; border-top: 1px solid #2B2824; line-height: 1.8; }
+    .cta-container { text-align: center; margin: 28px 0 16px; }
+    .cta-button { display: inline-block; background-color: ${brandGold}; color: #000000 !important; text-decoration: none; padding: 14px 32px; font-size: 12px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; border-radius: 4px; }
+    .footer { background-color: #141416; padding: 24px 30px; text-align: center; font-size: 11px; color: #736E65; border-top: 1px solid #2B2824; line-height: 1.8; }
     .footer a { color: ${brandGold}; text-decoration: none; }
+    @media only screen and (max-width: 480px) {
+      .container { width: 100% !important; margin: 0 !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; }
+      .header { padding: 24px 16px !important; }
+      .hero { padding: 22px 16px 14px !important; }
+      .body-content { padding: 0 16px 24px !important; }
+      .card { padding: 14px !important; margin: 16px 0 !important; }
+      .cta-button { width: 100% !important; box-sizing: border-box !important; padding: 14px 16px !important; }
+    }
   </style>
 </head>
 <body>
@@ -437,8 +477,8 @@ export const emailService = {
       subtitle: `Your flacons are being reserved for order ${orderId}`,
       contentHtml,
       orderId,
-      actionText: 'Track Your Order',
-      actionUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/order-confirmation/${orderId.replace('#', '')}`
+      actionText: 'View Order Details',
+      actionUrl: `${getClientBaseUrl()}/orders/${orderId.replace('#', '')}`
     });
 
     return sendEmail({
@@ -467,8 +507,8 @@ export const emailService = {
         <div style="font-size:13px; margin-top:4px;">Invoice Number: <strong>${order.invoice?.invoiceNumber || `INV-${orderId.replace('#', '')}`}</strong></div>
       </div>
 
-      <p>Your flacons have now entered the <strong>Artisan Packaging</strong> stage. Each flacon is carefully inspected, capped, and housed in our protective gold-embossed coffrets.</p>
-      <p style="font-size:13px; color:#9E9B95;">You can download your official tax invoice anytime using the button below or directly in your account.</p>
+      <p>Your flacons are now being carefully inspected, hand-sealed, and prepared in protective packaging for courier transit.</p>
+      <p style="font-size:13px; color:#9E9B95;">You can view your order tracking and download your official tax invoice using the button below or directly in your account.</p>
     `;
 
     const html = buildEmailHtml({
@@ -477,7 +517,7 @@ export const emailService = {
       contentHtml,
       orderId,
       actionText: 'View Order & Invoice',
-      actionUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/orders/${orderId.replace('#', '')}`
+      actionUrl: `${getClientBaseUrl()}/orders/${orderId.replace('#', '')}`
     });
 
     return sendEmail({
@@ -496,11 +536,11 @@ export const emailService = {
 
     const contentHtml = `
       <p>Dear ${order.customer_name || 'Valued Patron'},</p>
-      <p>Your order <strong>${orderId}</strong> has been confirmed and logged for bespoke atelier preparation.</p>
+      <p>Your order <strong>${orderId}</strong> has been confirmed and logged for packaging and dispatch.</p>
 
       <div class="card" style="border-left: 3px solid #C49A45; background-color: #1A1A1D; padding: 20px; border-radius: 6px; margin: 20px 0;">
-        <div style="color:#C49A45; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:2px; margin-bottom: 8px;">Order Confirmed & In Preparation</div>
-        <p style="font-size:13px; color:#D1CEC7; margin:0; line-height:1.6;">Our master perfumers have begun hand-inspecting, bottling, and preparing the presentation coffret for your fragrance selection. You will receive tracking details once your consignment is dispatched via Delhivery.</p>
+        <div style="color:#C49A45; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:2px; margin-bottom: 8px;">Order Confirmed & Preparing for Dispatch</div>
+        <p style="font-size:13px; color:#D1CEC7; margin:0; line-height:1.6;">Your selected fragrances are being prepared with complimentary white-glove packaging. You will receive real-time courier tracking milestones as soon as Delhivery completes courier pickup.</p>
       </div>
 
       <p style="font-size:13px; color:#9E9B95;">
@@ -510,11 +550,11 @@ export const emailService = {
 
     const html = buildEmailHtml({
       title: 'Order Confirmed',
-      subtitle: 'Your fragrances are being prepared by the atelier',
+      subtitle: 'Your fragrances are being prepared for dispatch',
       contentHtml,
       orderId,
       actionText: 'View Order Status',
-      actionUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/orders/${orderId.replace('#', '')}`
+      actionUrl: `${getClientBaseUrl()}/orders/${orderId.replace('#', '')}`
     });
 
     return sendEmail({
@@ -547,7 +587,7 @@ export const emailService = {
       contentHtml,
       orderId,
       actionText: 'Browse Collections',
-      actionUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/shop`
+      actionUrl: `${getClientBaseUrl()}/shop`
     });
 
     return sendEmail({
@@ -557,78 +597,114 @@ export const emailService = {
     });
   },
 
-  // 3. Shipping Notification Email (Dispatched with Courier)
+  // 3. Shipping Notification Email (Dispatched with Courier - Strictly Deduplicated)
   sendShippingNotification: async (order) => {
     const recipientEmail = order.email || (order.user_id && order.user_id.email) || order.giftRecipient?.email;
     if (!recipientEmail) return { success: false, message: 'Customer email missing.' };
 
     const orderId = order.orderId || `#ORD-${String(order.id || order._id).slice(-4).toUpperCase()}`;
+    const cleanOrderId = String(order.orderId || order.id || order._id || '');
+
+    // Memory debounce: Block duplicate dispatch emails within 2 minutes for the same order
+    if (isDuplicateEmail(cleanOrderId, 'DISPATCH_EMAIL', 120000)) {
+      console.log(`ℹ️ [Email Service]: Blocked duplicate dispatch email call for order ${cleanOrderId}`);
+      return { success: true, message: 'Duplicate dispatch notification blocked by cooldown guard.' };
+    }
+
     const courier = order.tracking?.courierName || 'Delhivery';
-    const trackingNumber = order.tracking?.trackingNumber || 'Available shortly';
-    const trackingUrl = 'https://www.delhivery.com/';
+    const rawTrackId = order.tracking?.trackingNumber;
+    const hasRealTracking = Boolean(
+      rawTrackId && 
+      rawTrackId !== 'Available shortly' && 
+      rawTrackId !== 'null' && 
+      rawTrackId !== 'undefined' && 
+      String(rawTrackId).trim().length > 0
+    );
+    const trackingNumber = hasRealTracking ? String(rawTrackId).trim() : '';
+    const trackingUrl = hasRealTracking 
+      ? `https://www.delhivery.com/track/package/${trackingNumber}`
+      : 'https://www.delhivery.com/';
     const estDate = order.tracking?.estimatedDelivery
       ? new Date(order.tracking.estimatedDelivery).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      : 'In 2-3 business days';
+      : 'In 2–4 business days';
 
     const contentHtml = `
-      <p>Dear ${order.customer_name || 'Valued Patron'},</p>
-      <p>Your artisanal fragrance flacons have been hand-inspected, sealed, and dispatched for delivery via <strong>${courier}</strong>.</p>
+      <p style="margin-top: 0; font-size: 15px; color: #FFFFFF; font-weight: 500;">
+        Dear ${order.customer_name || 'Valued Patron'},
+      </p>
+      <p style="font-size: 13.5px; color: #D1CEC7; line-height: 1.6; margin-bottom: 20px;">
+        Your order <strong>${orderId}</strong> has been hand-inspected, presentation-boxed, and dispatched from our atelier for courier transit via <strong>${courier}</strong>.
+      </p>
 
-      <div class="card" style="border-left: 3px solid #C49A45; background-color: #1A1A1D; padding: 22px 20px; border-radius: 6px; margin: 20px 0;">
-        <div style="color:#C49A45; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:2px; margin-bottom: 12px;">Delhivery Dispatch & Consignment Tracking</div>
+      <!-- Clean, Fully-Responsive Consignment Details Box -->
+      <div style="background-color: #212024; border: 1px solid #332F2A; border-left: 3px solid #C49A45; border-radius: 6px; padding: 18px 20px; margin: 20px 0;">
+        <div style="color: #C49A45; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;">
+          Consignment Details
+        </div>
         
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">
           <tr>
-            <td style="padding: 4px 0; font-size: 13px; color: #9E9B95; width: 140px;">Courier Partner:</td>
-            <td style="padding: 4px 0; font-size: 13px; color: #FFFFFF; font-weight: bold;">${courier}</td>
+            <td style="padding: 7px 0; font-size: 13px; color: #9E9B95; border-bottom: 1px solid #2B2824;">Courier Partner</td>
+            <td style="padding: 7px 0; font-size: 13px; color: #FFFFFF; font-weight: bold; text-align: right; border-bottom: 1px solid #2B2824;">${courier}</td>
           </tr>
           <tr>
-            <td style="padding: 4px 0; font-size: 13px; color: #9E9B95;">Estimated Arrival:</td>
-            <td style="padding: 4px 0; font-size: 13px; color: #C49A45; font-weight: bold;">${estDate}</td>
+            <td style="padding: 7px 0; font-size: 13px; color: #9E9B95; border-bottom: 1px solid #2B2824;">Estimated Delivery</td>
+            <td style="padding: 7px 0; font-size: 13px; color: #C49A45; font-weight: bold; text-align: right; border-bottom: 1px solid #2B2824;">${estDate}</td>
           </tr>
           <tr>
-            <td style="padding: 4px 0; font-size: 13px; color: #9E9B95;">Tracking Portal:</td>
-            <td style="padding: 4px 0; font-size: 13px;">
-              <a href="https://www.delhivery.com/" target="_blank" style="color:#C49A45; font-weight:bold; text-decoration:underline;">https://www.delhivery.com/</a>
+            <td style="padding: 7px 0; font-size: 13px; color: #9E9B95;">Tracking Portal</td>
+            <td style="padding: 7px 0; font-size: 13px; text-align: right;">
+              <a href="https://www.delhivery.com/" target="_blank" style="color: #C49A45; font-weight: bold; text-decoration: underline;">delhivery.com</a>
             </td>
           </tr>
         </table>
 
-        <!-- Prominent Track ID Box with 1-Tap Copy Option -->
-        <div style="background-color: #121214; border: 1px dashed #C49A45; border-radius: 6px; padding: 14px 18px; text-align: center; margin: 16px 0;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #C49A45; font-weight: bold; margin-bottom: 6px;">
-            DELHIVERY TRACK ID (AWB)
+        <!-- Prominent Track ID Box -->
+        ${hasRealTracking ? `
+          <div style="background-color: #141416; border: 1px solid #C49A45; border-radius: 6px; padding: 14px 16px; text-align: center; margin-top: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #C49A45; font-weight: bold; margin-bottom: 6px;">
+              DELHIVERY TRACK ID (AWB)
+            </div>
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 19px; font-weight: bold; color: #FFFFFF; letter-spacing: 1.5px; padding: 4px 0; word-break: break-word;">
+              ${trackingNumber}
+            </div>
+            <div style="font-size: 11px; color: #9E9B95; margin-top: 4px;">
+              Tap or copy Track ID to follow delivery milestones.
+            </div>
           </div>
-          <div style="font-family: 'Courier New', Courier, monospace; font-size: 22px; font-weight: bold; color: #FFFFFF; letter-spacing: 3px; padding: 6px 0; user-select: all; -webkit-user-select: all; word-break: break-all;">
-            ${trackingNumber}
-          </div>
-          <div style="font-size: 11px; color: #9E9B95; margin-top: 6px;">
-            <span style="color: #C49A45; font-weight: bold;">[Tap or double-click Track ID to copy]</span>
-          </div>
-        </div>
 
-        <div style="margin-top:14px; padding:12px; background:rgba(196,154,69,0.08); border: 1px solid rgba(196,154,69,0.2); border-radius:4px; font-size:12px; color:#D1CEC7; line-height:1.6;">
-          <strong style="color:#C49A45;">How to track:</strong> Open <a href="https://www.delhivery.com/" target="_blank" style="color:#C49A45; font-weight: bold; text-decoration: underline;">https://www.delhivery.com/</a>, paste your Track ID <strong style="color:#FFFFFF; font-family: monospace;">${trackingNumber}</strong> in the search box, and click track.
-        </div>
+          <div style="margin-top: 14px; padding: 12px; background: rgba(196,154,69,0.06); border: 1px solid rgba(196,154,69,0.2); border-radius: 4px; font-size: 12px; color: #D1CEC7; line-height: 1.6;">
+            <strong style="color: #C49A45;">How to track:</strong> Visit <a href="https://www.delhivery.com/" target="_blank" style="color: #C49A45; font-weight: bold; text-decoration: underline;">delhivery.com</a>, enter Track ID <strong style="color: #FFFFFF; font-family: monospace;">${trackingNumber}</strong> in the search bar, and click track.
+          </div>
+        ` : `
+          <div style="background-color: #141416; border: 1px solid #332F2A; border-radius: 6px; padding: 14px 16px; text-align: center; margin-top: 16px; font-size: 12px; color: #A09D96; line-height: 1.5;">
+            Your parcel is registered with ${courier}. Transit checkpoints and tracking numbers will update automatically upon courier terminal scan.
+          </div>
+        `}
       </div>
 
-      <p style="font-size:13px; color:#9E9B95;">
-        Delivering to: ${order.isGift && order.giftRecipient?.name ? `<strong>${order.giftRecipient.name}</strong>, ` : ''}${order.address || 'Your address'}
-      </p>
+      <div style="font-size: 13px; color: #9E9B95; line-height: 1.6; margin-top: 16px;">
+        <span style="color: #C49A45; font-weight: bold;">Delivery Address:</span><br/>
+        <span style="color: #FFFFFF;">${order.isGift && order.giftRecipient?.name ? `<strong>${order.giftRecipient.name}</strong>, ` : ''}${order.address || 'Address provided at checkout'}</span>
+      </div>
     `;
 
     const html = buildEmailHtml({
-      title: 'Your Order Has Dispatched',
-      subtitle: `Your fragrances have been dispatched via ${courier}`,
+      title: 'Your Order Has Been Dispatched',
+      subtitle: `Your fragrances are on their way via ${courier}`,
       contentHtml,
       orderId,
-      actionText: 'Track on Delhivery.com',
-      actionUrl: 'https://www.delhivery.com/'
+      actionText: hasRealTracking ? 'Track Order on Delhivery' : 'View Order Details',
+      actionUrl: hasRealTracking ? trackingUrl : `${process.env.CLIENT_URL || 'http://localhost:3000'}/orders`
     });
+
+    const emailSubject = hasRealTracking
+      ? `Your Order Has Been Dispatched: ${orderId} | Delhivery AWB: ${trackingNumber}`
+      : `Your Order Has Been Dispatched: ${orderId} | Delhivery Express`;
 
     return sendEmail({
       to: recipientEmail,
-      subject: `Your Fragrance Has Dispatched: ${orderId} | Delhivery AWB: ${trackingNumber}`,
+      subject: emailSubject,
       html
     });
   },
@@ -664,7 +740,7 @@ export const emailService = {
       contentHtml,
       orderId,
       actionText: 'Review Your Experience',
-      actionUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/orders/${orderId.replace('#', '')}`
+      actionUrl: `${getClientBaseUrl()}/orders/${orderId.replace('#', '')}`
     });
 
     return sendEmail({
@@ -711,8 +787,8 @@ export const emailService = {
       subtitle: `Invoice ${invNumber} for Order ${orderId}`,
       contentHtml,
       orderId,
-      actionText: 'Download PDF Online',
-      actionUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/api/orders/${orderId.replace('#', '')}/invoice/download`
+      actionText: 'View Order & Invoice',
+      actionUrl: `${getClientBaseUrl()}/orders/${orderId.replace('#', '')}`
     });
 
     const attachments = [];

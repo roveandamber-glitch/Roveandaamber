@@ -1315,16 +1315,25 @@ export const updateOrderStatus = async (req, res) => {
                                   previousNormalizedStatus !== 'Processing' && previousNormalizedStatus !== 'Confirmed';
 
     const isDispatchedTransition = currentNormalizedStatus === 'Dispatch' && previousNormalizedStatus !== 'Dispatch';
-    const isNewTrackingOnDispatch = currentNormalizedStatus === 'Dispatch' && 
-                                    currentTrackingNumber && 
-                                    currentTrackingNumber !== order.emailNotifications.lastDispatchedTrackingNumber;
+    const prevHadNoTracking = !order.emailNotifications.lastDispatchedTrackingNumber || 
+                              order.emailNotifications.lastDispatchedTrackingNumber === 'Available shortly';
+    const hasRealTrackingNow = Boolean(currentTrackingNumber && currentTrackingNumber !== 'Available shortly');
+
+    const isFirstTimeDispatch = isDispatchedTransition && !order.emailNotifications.dispatchedSent;
+    const isInitialTrackingAdd = order.emailNotifications.dispatchedSent && prevHadNoTracking && hasRealTrackingNow;
+
+    const lastSentTime = order.emailNotifications.lastDispatchedEmailAt 
+      ? new Date(order.emailNotifications.lastDispatchedEmailAt).getTime() 
+      : 0;
+    const isOutsideCooldown = (Date.now() - lastSentTime) > 180000; // 3-minute cooldown against duplicate triggers
 
     const isDeliveredTransition = currentNormalizedStatus === 'Delivered' && previousNormalizedStatus !== 'Delivered';
     const isCancelledTransition = currentNormalizedStatus === 'Cancelled' && previousNormalizedStatus !== 'Cancelled';
 
-    if ((isDispatchedTransition && !order.emailNotifications.dispatchedSent) || isNewTrackingOnDispatch) {
+    if ((isFirstTimeDispatch || (isInitialTrackingAdd && isOutsideCooldown))) {
       order.emailNotifications.dispatchedSent = true;
       order.emailNotifications.lastDispatchedTrackingNumber = currentTrackingNumber;
+      order.emailNotifications.lastDispatchedEmailAt = new Date();
       await order.save();
       emailService.sendShippingNotification(order).catch(err => {
         console.warn('⚠️ Dispatch notification email failed:', err.message);

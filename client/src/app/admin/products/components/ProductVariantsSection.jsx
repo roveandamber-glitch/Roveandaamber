@@ -8,7 +8,14 @@ import {
 } from '@ant-design/icons';
 import { Sparkles } from 'lucide-react';
 
-export const PRESET_SIZES = ['30ml', '50ml', '100ml', 'Discovery Coffret (3x30ml)', 'Discovery Set'];
+export const PRESET_OPTIONS = [
+  { label: '50ml (1 Flacon)', size: '50ml' },
+  { label: '100ml (1 Flacon)', size: '100ml' },
+  { label: '2 Flacons (Duo)', size: '2 Flacons (Duo Pack)' },
+  { label: '3 Flacons (Trio)', size: '3 Flacons (Trio Pack)' },
+  { label: '30ml Travel', size: '30ml' },
+  { label: 'Discovery Coffret', size: 'Discovery Coffret (3x30ml)' }
+];
 
 export default function ProductVariantsSection({
   variants = [],
@@ -21,11 +28,19 @@ export default function ProductVariantsSection({
   // Add new quantity / size variant
   const handleAddVariant = (presetSize = '') => {
     const nextId = String(Date.now());
+    const count = variants.length + 1;
+    const defaultLabel = presetSize || (count === 1 ? '50ml (1 Flacon)' : count === 2 ? '2 Flacons (Duo Pack)' : `${count} Flacons Bundle`);
+    
+    // Suggest price based on first variant or default
+    const basePrice = variants.length > 0 ? (Number(variants[0].price) || 4950) : 4950;
+    const baseMRP = variants.length > 0 ? (Number(variants[0].originalPrice) || 5999) : 5999;
+    const multiplier = count === 2 ? 1.85 : count === 3 ? 2.65 : 1;
+
     const newVariant = {
       id: nextId,
-      size: presetSize || '50ml',
-      price: variants.length > 0 ? variants[variants.length - 1].price : 4950,
-      originalPrice: variants.length > 0 ? variants[variants.length - 1].originalPrice : '',
+      size: defaultLabel,
+      price: presetSize ? basePrice : Math.round(basePrice * multiplier),
+      originalPrice: presetSize ? baseMRP : Math.round(baseMRP * multiplier),
       stock: 20
     };
     if (setVariants) setVariants([...variants, newVariant]);
@@ -69,31 +84,35 @@ export default function ProductVariantsSection({
 
   return (
     <div className="p-4 sm:p-5 bg-[#FAF8F5] rounded-2xl border border-[#E8DFC9] space-y-4">
+      
+      {/* Header with Counter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-[#140D07]">
-              Pricing & Inventory by Quantity / Size
+              Quantity & Pricing Tiers
             </span>
             <span className="text-[10px] bg-[#FAF0D4] text-[#8C6D1F] font-bold px-2 py-0.5 rounded-full border border-[#E8DEC8]">
-              {variants.length} Size{variants.length > 1 ? 's' : ''} Configured
+              {variants.length} Tier{variants.length > 1 ? 's' : ''} Configured
             </span>
           </div>
           <p className="text-[11px] text-stone-500 m-0 mt-0.5">
-            Enter individual selling price and MRP for each bottle quantity / ml format.
+            Configure different quantities (e.g. 1 Flacon, 2 Flacons, 3 Flacons, 50ml, 100ml) with their individual selling prices & MRPs.
           </p>
         </div>
 
         <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0 self-start sm:self-center">
-          {totalFlaconStock} Total Flacons
+          {totalFlaconStock} Total Units Stock
         </span>
       </div>
 
-      {/* Dynamic Variants Rows */}
+      {/* Dynamic Quantity & Price Rows */}
       <div className="space-y-2.5">
         {variants.map((variant, index) => {
           const hasDiscount = variant.originalPrice && Number(variant.originalPrice) > Number(variant.price);
-          const discountPct = hasDiscount ? Math.round(((Number(variant.originalPrice) - Number(variant.price)) / Number(variant.originalPrice)) * 100) : null;
+          const discountPct = hasDiscount 
+            ? Math.round(((Number(variant.originalPrice) - Number(variant.price)) / Number(variant.originalPrice)) * 100) 
+            : null;
 
           return (
             <div 
@@ -105,12 +124,12 @@ export default function ProductVariantsSection({
                 {/* Quantity / Size Name */}
                 <div className="sm:col-span-3">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-1">
-                    Bottle Quantity / Size *
+                    Quantity / Size *
                   </label>
                   <Input
                     value={variant.size}
                     onChange={(e) => handleVariantChange(variant.id, 'size', e.target.value)}
-                    placeholder="e.g. 50ml or 100ml"
+                    placeholder="e.g. 1 Flacon (50ml) or 2 Flacons"
                     className="rounded-lg text-xs font-semibold border-stone-300"
                   />
                 </div>
@@ -189,20 +208,20 @@ export default function ProductVariantsSection({
         })}
       </div>
 
-      {/* Add Variant Controls & Quick Presets */}
+      {/* Add Controls & Quick Presets */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
             Quick Add:
           </span>
-          {PRESET_SIZES.map(preset => (
+          {PRESET_OPTIONS.map(preset => (
             <button
-              key={preset}
+              key={preset.label}
               type="button"
-              onClick={() => handleAddVariant(preset)}
+              onClick={() => handleAddVariant(preset.size)}
               className="text-[10px] px-2.5 py-1 rounded-lg bg-white hover:bg-stone-50 border border-stone-300 hover:border-black font-medium transition-all cursor-pointer shadow-2xs"
             >
-              + {preset}
+              + {preset.label}
             </button>
           ))}
         </div>
@@ -213,7 +232,7 @@ export default function ProductVariantsSection({
           icon={<PlusOutlined />}
           className="!rounded-xl text-xs font-bold !border-[#B8860B]/70 !text-[#8C6D1F] hover:!border-black hover:!text-black"
         >
-          Add Custom Quantity / Price
+          + Add Quantity & Price Tier
         </Button>
       </div>
 
@@ -274,7 +293,7 @@ export default function ProductVariantsSection({
             className="text-[11px] font-bold text-[#8C6D1F] hover:text-black flex items-center gap-1.5 cursor-pointer underline decoration-[#8C6D1F]/40"
           >
             <Sparkles size={13} className="text-[#8C6D1F]" />
-            <span>{showTieredPricing ? 'Hide Bulk Quantity Discount Tiers' : '+ Add Volume / Quantity Discount Tiers (Buy 2+, Buy 3+)'}</span>
+            <span>{showTieredPricing ? 'Hide Automatic Volume Discounts' : '+ Add Automatic Volume Discounts (Buy 2+, Buy 3+)'}</span>
           </button>
         </div>
 
@@ -327,4 +346,3 @@ export default function ProductVariantsSection({
     </div>
   );
 }
-

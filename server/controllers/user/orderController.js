@@ -430,11 +430,20 @@ export const updateDeliveryTracking = async (req, res) => {
     // 7. Automated Email Notification: Dispatch tracking updates (Strictly Deduplicated)
     if (!updated.emailNotifications) updated.emailNotifications = {};
     const isDispatchStage = stage === 'Shipped' || stage === 'Dispatch' || stage === 'Dispatched';
-    const hasNewTracking = trackingNumber && trackingNumber !== updated.emailNotifications.lastDispatchedTrackingNumber;
+    const prevHadNoTracking = !updated.emailNotifications.lastDispatchedTrackingNumber || 
+                              updated.emailNotifications.lastDispatchedTrackingNumber === 'Available shortly';
+    const hasRealTrackingNow = Boolean(trackingNumber && trackingNumber !== 'Available shortly');
+    const isInitialTrackingAdd = updated.emailNotifications.dispatchedSent && prevHadNoTracking && hasRealTrackingNow;
 
-    if (isDispatchStage && (!updated.emailNotifications.dispatchedSent || hasNewTracking)) {
+    const lastSentTime = updated.emailNotifications.lastDispatchedEmailAt 
+      ? new Date(updated.emailNotifications.lastDispatchedEmailAt).getTime() 
+      : 0;
+    const isOutsideCooldown = (Date.now() - lastSentTime) > 180000; // 3-minute cooldown
+
+    if (isDispatchStage && (!updated.emailNotifications.dispatchedSent || (isInitialTrackingAdd && isOutsideCooldown))) {
       updated.emailNotifications.dispatchedSent = true;
       updated.emailNotifications.lastDispatchedTrackingNumber = trackingNumber || updated.tracking?.trackingNumber || '';
+      updated.emailNotifications.lastDispatchedEmailAt = new Date();
       try { await updated.save(); } catch (_) {}
       emailService.sendShippingNotification(updated).catch(e => console.warn(e.message));
     } else if (stage === 'Delivered' && !updated.emailNotifications.deliveredSent) {
@@ -583,6 +592,7 @@ export const updateOrderStatus = async (req, res) => {
     if (normalizedStatus === 'Dispatch' && prevStatus !== 'Dispatch' && !updated.emailNotifications.dispatchedSent) {
       updated.emailNotifications.dispatchedSent = true;
       updated.emailNotifications.lastDispatchedTrackingNumber = updated.tracking?.trackingNumber || '';
+      updated.emailNotifications.lastDispatchedEmailAt = new Date();
       await updated.save();
       emailService.sendShippingNotification(updated).catch(e => console.warn(e.message));
     } else if ((normalizedStatus === 'Processing' || normalizedStatus === 'Confirmed') && prevStatus !== 'Processing' && prevStatus !== 'Confirmed' && !updated.emailNotifications.confirmedSent) {
