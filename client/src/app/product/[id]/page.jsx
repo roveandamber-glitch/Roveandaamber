@@ -360,6 +360,11 @@ const ProductDetails = () => {
 
   const isOutOfStock = maxStockForSize === 0 || product?.inStock === false || product?.status === 'Out of Stock';
 
+  const isProductOutOfStock = product?.inStock === false || product?.status === 'Out of Stock' || (bottleStock <= 0 && sampleStock <= 0);
+  const isBottleOutOfStock = isProductOutOfStock || bottleStock <= 0;
+  const isSampleOutOfStock = isProductOutOfStock || sampleStock <= 0;
+  const isComboOutOfStock = isBottleOutOfStock || isSampleOutOfStock;
+
   // Pricing calculations
   const samplePrice = product?.samplePrice !== undefined && product?.samplePrice !== null ? Number(product.samplePrice) : 199;
   const basePrice = Number(product?.price) || 0;
@@ -769,6 +774,10 @@ const ProductDetails = () => {
               baseBottleSize={baseBottleSize}
               onOpenReturnPolicy={() => setShowReturnPolicyModal(true)}
               isOutOfStock={isOutOfStock}
+              isProductOutOfStock={isProductOutOfStock}
+              isComboOutOfStock={isComboOutOfStock}
+              isBottleOutOfStock={isBottleOutOfStock}
+              isSampleOutOfStock={isSampleOutOfStock}
             />
 
             {/* 8. Action Row (Above the Fold): Stepper + Add to Cart / Out of Stock + Wishlist */}

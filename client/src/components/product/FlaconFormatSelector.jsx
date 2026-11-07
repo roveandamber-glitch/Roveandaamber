@@ -13,8 +13,17 @@ export default function FlaconFormatSelector({
   samplePrice = 199,
   baseBottleSize = '50ML',
   onOpenReturnPolicy,
-  isOutOfStock = false
+  isOutOfStock = false,
+  isProductOutOfStock = false,
+  isComboOutOfStock = false,
+  isBottleOutOfStock = false,
+  isSampleOutOfStock = false
 }) {
+  const isAllOutOfStock = Boolean(isProductOutOfStock || isOutOfStock);
+  const comboDisabled = Boolean(isAllOutOfStock || isComboOutOfStock);
+  const bottleDisabled = Boolean(isAllOutOfStock || isBottleOutOfStock);
+  const sampleDisabled = Boolean(isAllOutOfStock || isSampleOutOfStock);
+
   // Concise short label for size (e.g. "Coffret" for gift sets, "50ml" for flacons)
   const shortBottleSize = useMemo(() => {
     if (!baseBottleSize) return 'Flacon';
@@ -41,144 +50,199 @@ export default function FlaconFormatSelector({
         {/* 1. COMBO: Flacon + 2ml Sample (Recommended) */}
         <button
           type="button"
-          onClick={() => setComboSelection('combo')}
-          className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between relative group ${
-            comboSelection === 'combo'
-              ? 'bg-[#FCF9F3] border-[#B8860B] ring-1 ring-[#B8860B]/40 shadow-xs'
-              : 'bg-white border-[#ECE7DE] hover:border-stone-400'
+          onClick={() => !comboDisabled && setComboSelection('combo')}
+          disabled={comboDisabled}
+          aria-disabled={comboDisabled}
+          className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between relative select-none ${
+            comboDisabled
+              ? 'bg-[#F6F3EC]/70 border-stone-200/80 opacity-55 cursor-not-allowed shadow-none'
+              : comboSelection === 'combo'
+                ? 'bg-[#FCF9F3] border-[#B8860B] ring-1 ring-[#B8860B]/40 shadow-xs cursor-pointer'
+                : 'bg-white border-[#ECE7DE] hover:border-stone-400 cursor-pointer'
           }`}
         >
           <div>
             <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="bg-[#8C6D1F] text-white text-[7.5px] sm:text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded truncate">
-                ★ Recommended
-              </span>
+              {comboDisabled ? (
+                <span className="bg-stone-200/90 text-stone-500 text-[7.5px] sm:text-[8px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded truncate">
+                  Sold Out
+                </span>
+              ) : (
+                <span className="bg-[#8C6D1F] text-white text-[7.5px] sm:text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded truncate">
+                  ★ Recommended
+                </span>
+              )}
               <div
                 className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                  comboSelection === 'combo'
-                    ? 'border-[#8C6D1F] bg-[#8C6D1F]'
-                    : 'border-stone-300 bg-white'
+                  comboDisabled
+                    ? 'border-stone-300 bg-stone-200/60'
+                    : comboSelection === 'combo'
+                      ? 'border-[#8C6D1F] bg-[#8C6D1F]'
+                      : 'border-stone-300 bg-white'
                 }`}
               >
-                {comboSelection === 'combo' && (
+                {!comboDisabled && comboSelection === 'combo' && (
                   <div className="w-1 h-1 rounded-full bg-white" />
                 )}
               </div>
             </div>
 
-            <span className="text-[11px] sm:text-xs font-sans font-bold text-[#140D07] block truncate leading-tight">
+            <span className={`text-[11px] sm:text-xs font-sans block truncate leading-tight ${
+              comboDisabled ? 'font-medium text-stone-400 line-through' : 'font-bold text-[#140D07]'
+            }`}>
               {shortBottleSize} + 2ml
             </span>
-            <span className="text-[9.5px] sm:text-[10px] text-stone-500 font-light block truncate leading-tight mt-0.5">
-              With 7-Day Return Trial
+            <span className="text-[9.5px] sm:text-[10px] text-stone-400 font-light block truncate leading-tight mt-0.5">
+              {comboDisabled ? 'Unavailable' : 'With 7-Day Return Trial'}
             </span>
           </div>
 
-          <div className="mt-2 pt-1 border-t border-stone-200/50">
-            <span className="text-xs sm:text-[13px] font-bold text-[#140D07] font-sans block leading-tight">
+          <div className="mt-2 pt-1 border-t border-stone-200/50 flex items-center justify-between">
+            <span className={`text-xs sm:text-[13px] font-sans block leading-tight ${
+              comboDisabled ? 'text-stone-400 line-through' : 'font-bold text-[#140D07]'
+            }`}>
               ₹{comboTotal.toLocaleString('en-IN')}
             </span>
+            {comboDisabled && (
+              <span className="text-[8.5px] text-stone-400 font-semibold uppercase tracking-wider">Out of Stock</span>
+            )}
           </div>
         </button>
 
         {/* 2. STANDALONE FLACON */}
         <button
           type="button"
-          onClick={() => setComboSelection('bottle')}
-          className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between relative group ${
-            comboSelection === 'bottle'
-              ? 'bg-[#FCF9F3] border-[#1C120C] ring-1 ring-black/20 shadow-xs'
-              : 'bg-white border-[#ECE7DE] hover:border-stone-400'
+          onClick={() => !bottleDisabled && setComboSelection('bottle')}
+          disabled={bottleDisabled}
+          aria-disabled={bottleDisabled}
+          className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between relative select-none ${
+            bottleDisabled
+              ? 'bg-[#F6F3EC]/70 border-stone-200/80 opacity-55 cursor-not-allowed shadow-none'
+              : comboSelection === 'bottle'
+                ? 'bg-[#FCF9F3] border-[#1C120C] ring-1 ring-black/20 shadow-xs cursor-pointer'
+                : 'bg-white border-[#ECE7DE] hover:border-stone-400 cursor-pointer'
           }`}
         >
           <div>
             <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="bg-stone-100 text-stone-600 text-[7.5px] sm:text-[8px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded truncate">
-                Standard
+              <span className="bg-stone-100 text-stone-500 text-[7.5px] sm:text-[8px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded truncate">
+                {bottleDisabled ? 'Sold Out' : 'Standard'}
               </span>
               <div
                 className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                  comboSelection === 'bottle'
-                    ? 'border-[#1C120C] bg-[#1C120C]'
-                    : 'border-stone-300 bg-white'
+                  bottleDisabled
+                    ? 'border-stone-300 bg-stone-200/60'
+                    : comboSelection === 'bottle'
+                      ? 'border-[#1C120C] bg-[#1C120C]'
+                      : 'border-stone-300 bg-white'
                 }`}
               >
-                {comboSelection === 'bottle' && (
+                {!bottleDisabled && comboSelection === 'bottle' && (
                   <div className="w-1 h-1 rounded-full bg-white" />
                 )}
               </div>
             </div>
 
-            <span className="text-[11px] sm:text-xs font-sans font-semibold text-[#140D07] block truncate leading-tight">
+            <span className={`text-[11px] sm:text-xs font-sans block truncate leading-tight ${
+              bottleDisabled ? 'font-normal text-stone-400 line-through' : 'font-semibold text-[#140D07]'
+            }`}>
               {shortBottleSize} Only
             </span>
-            <span className="text-[9.5px] sm:text-[10px] text-stone-500 font-light block truncate leading-tight mt-0.5">
-              Final Sale (No Return)
+            <span className="text-[9.5px] sm:text-[10px] text-stone-400 font-light block truncate leading-tight mt-0.5">
+              {bottleDisabled ? 'Unavailable' : 'Final Sale (No Return)'}
             </span>
           </div>
 
-          <div className="mt-2 pt-1 border-t border-stone-200/50">
-            <span className="text-xs sm:text-[13px] font-bold text-[#140D07] font-sans block leading-tight">
+          <div className="mt-2 pt-1 border-t border-stone-200/50 flex items-center justify-between">
+            <span className={`text-xs sm:text-[13px] font-sans block leading-tight ${
+              bottleDisabled ? 'text-stone-400 line-through' : 'font-bold text-[#140D07]'
+            }`}>
               ₹{basePrice.toLocaleString('en-IN')}
             </span>
+            {bottleDisabled && (
+              <span className="text-[8.5px] text-stone-400 font-semibold uppercase tracking-wider">Out of Stock</span>
+            )}
           </div>
         </button>
 
         {/* 3. 2ML DISCOVERY SAMPLE */}
         <button
           type="button"
-          onClick={() => setComboSelection('sample')}
-          className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between relative group ${
-            comboSelection === 'sample'
-              ? 'bg-[#FCF9F3] border-[#1C120C] ring-1 ring-black/20 shadow-xs'
-              : 'bg-white border-[#ECE7DE] hover:border-stone-400'
+          onClick={() => !sampleDisabled && setComboSelection('sample')}
+          disabled={sampleDisabled}
+          aria-disabled={sampleDisabled}
+          className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between relative select-none ${
+            sampleDisabled
+              ? 'bg-[#F6F3EC]/70 border-stone-200/80 opacity-55 cursor-not-allowed shadow-none'
+              : comboSelection === 'sample'
+                ? 'bg-[#FCF9F3] border-[#1C120C] ring-1 ring-black/20 shadow-xs cursor-pointer'
+                : 'bg-white border-[#ECE7DE] hover:border-stone-400 cursor-pointer'
           }`}
         >
           <div>
             <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="bg-stone-100 text-stone-600 text-[7.5px] sm:text-[8px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded truncate">
-                Trial Wear
+              <span className="bg-stone-100 text-stone-500 text-[7.5px] sm:text-[8px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded truncate">
+                {sampleDisabled ? 'Sold Out' : 'Trial Wear'}
               </span>
               <div
                 className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                  comboSelection === 'sample'
-                    ? 'border-[#1C120C] bg-[#1C120C]'
-                    : 'border-stone-300 bg-white'
+                  sampleDisabled
+                    ? 'border-stone-300 bg-stone-200/60'
+                    : comboSelection === 'sample'
+                      ? 'border-[#1C120C] bg-[#1C120C]'
+                      : 'border-stone-300 bg-white'
                 }`}
               >
-                {comboSelection === 'sample' && (
+                {!sampleDisabled && comboSelection === 'sample' && (
                   <div className="w-1 h-1 rounded-full bg-white" />
                 )}
               </div>
             </div>
 
-            <span className="text-[11px] sm:text-xs font-sans font-semibold text-[#140D07] block truncate leading-tight">
+            <span className={`text-[11px] sm:text-xs font-sans block truncate leading-tight ${
+              sampleDisabled ? 'font-normal text-stone-400 line-through' : 'font-semibold text-[#140D07]'
+            }`}>
               2ml Sample
             </span>
-            <span className="text-[9.5px] sm:text-[10px] text-stone-500 font-light block truncate leading-tight mt-0.5">
-              Discovery Vial (No Return)
+            <span className="text-[9.5px] sm:text-[10px] text-stone-400 font-light block truncate leading-tight mt-0.5">
+              {sampleDisabled ? 'Unavailable' : 'Discovery Vial (No Return)'}
             </span>
           </div>
 
-          <div className="mt-2 pt-1 border-t border-stone-200/50">
-            <span className="text-xs sm:text-[13px] font-bold text-[#140D07] font-sans block leading-tight">
+          <div className="mt-2 pt-1 border-t border-stone-200/50 flex items-center justify-between">
+            <span className={`text-xs sm:text-[13px] font-sans block leading-tight ${
+              sampleDisabled ? 'text-stone-400 line-through' : 'font-bold text-[#140D07]'
+            }`}>
               ₹{samplePrice.toLocaleString('en-IN')}
             </span>
+            {sampleDisabled && (
+              <span className="text-[8.5px] text-stone-400 font-semibold uppercase tracking-wider">Out of Stock</span>
+            )}
           </div>
         </button>
 
       </div>
 
-      {/* Subtle Return Policy Reassurance Bar */}
-      <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#FAF8F4] border border-[#E8DFC9] text-stone-600">
+      {/* Subtle Return Policy / Availability Reassurance Bar */}
+      <div className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border text-stone-600 transition-colors ${
+        isAllOutOfStock
+          ? 'bg-[#F8F6F2] border-stone-200 text-stone-500'
+          : 'bg-[#FAF8F4] border-[#E8DFC9]'
+      }`}>
         <div className="flex items-center gap-1.5 min-w-0">
-          {comboSelection === 'combo' ? (
+          {isAllOutOfStock ? (
+            <ShieldAlert size={13} className="text-stone-400 shrink-0" />
+          ) : comboSelection === 'combo' ? (
             <ShieldCheck size={13} className="text-[#8C6D1F] shrink-0" />
           ) : (
             <ShieldAlert size={13} className="text-[#A67C38] shrink-0" />
           )}
           <span className="truncate text-[10.5px] sm:text-[11px] text-stone-700">
-            {comboSelection === 'combo' ? (
+            {isAllOutOfStock ? (
+              <>
+                <strong className="text-stone-800 font-semibold">Currently Unavailable:</strong> All flacon formats are out of stock. Restock in progress.
+              </>
+            ) : comboSelection === 'combo' ? (
               <>
                 <strong className="text-stone-900 font-semibold">7-Day Home Trial:</strong> Test 2ml vial first. Full refund on unopened flacon.
               </>
@@ -193,7 +257,7 @@ export default function FlaconFormatSelector({
             )}
           </span>
         </div>
-        {onOpenReturnPolicy && (
+        {onOpenReturnPolicy && !isAllOutOfStock && (
           <button
             type="button"
             onClick={onOpenReturnPolicy}

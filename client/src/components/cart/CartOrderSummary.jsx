@@ -38,6 +38,8 @@ export default function CartOrderSummary({
   availableCoupons = [],
   onOpenCouponsModal
 }) {
+  const walletBalanceInRupees = Math.floor((availableRewardPoints || 0) * ((rewardRate || 100) / 100));
+
   return (
     <div className="bg-[#FAF8F5] p-3.5 sm:p-6 flex flex-col justify-between h-full space-y-4">
       <div className="space-y-4">
@@ -87,7 +89,7 @@ export default function CartOrderSummary({
                   <Sparkles size={10} className="text-[#B8860B]" />
                 </div>
                 <span className="font-semibold text-xs text-[#6B5115] tracking-wide truncate">
-                  Privilege Points ({rewardPointsUsed.toLocaleString()} pts)
+                  Patron Wallet Credit
                 </span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -212,24 +214,24 @@ export default function CartOrderSummary({
                     Patron Wallet
                   </span>
                   <span
-                    className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                    className={`text-xs font-sans font-bold px-2 py-0.5 rounded-full shrink-0 ${
                       rewardPointsUsed > 0
                         ? 'bg-[#B8860B] text-white'
                         : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
                     }`}
                   >
-                    {availableRewardPoints.toLocaleString()} pts
+                    ₹{walletBalanceInRupees.toLocaleString('en-IN')}
                   </span>
                 </div>
                 <p className="text-xs text-stone-500 m-0 mt-0.5 font-light leading-snug truncate">
                   {rewardPointsUsed > 0 ? (
                     <span className="text-emerald-800 font-semibold">
-                      ✓ {rewardPointsUsed.toLocaleString()} pts applied (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                      ✓ Applied towards this order (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
                     </span>
-                  ) : availableRewardPoints > 0 ? (
-                    <span>Redeem up to ₹{Math.floor(availableRewardPoints * (rewardRate / 100)).toLocaleString('en-IN')} off</span>
+                  ) : walletBalanceInRupees > 0 ? (
+                    <span>Available to apply towards this order</span>
                   ) : (
-                    <span>Earn reward points on this order</span>
+                    <span>Earn wallet credits on every order</span>
                   )}
                 </p>
               </div>
