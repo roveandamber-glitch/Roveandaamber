@@ -16,12 +16,14 @@ export default function AddProduct() {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
 
-  const watchedPrice = Form.useWatch('price', form);
-  const watchedOriginalPrice = Form.useWatch('originalPrice', form);
-  const watchedSamplePrice = Form.useWatch('samplePrice', form);
+  // Multi-price by quantity / size variants state
+  const [variants, setVariants] = useState([
+    { id: '1', size: '50ml', price: 4950, originalPrice: 5999, stock: 25 },
+    { id: '2', size: '100ml', price: 7950, originalPrice: 9499, stock: 15 }
+  ]);
+  const [tieredPricing, setTieredPricing] = useState([]);
+
   const watchedName = Form.useWatch('name', form);
-  const watchedStock = Form.useWatch('stock', form);
-  const watchedFlaconSize = Form.useWatch('flaconSize', form);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -58,25 +60,48 @@ export default function AddProduct() {
     try {
       const formData = new FormData();
       formData.append('name', values.name);
-      formData.append('price', values.price);
-      if (values.originalPrice !== undefined && values.originalPrice !== '' && values.originalPrice !== null) {
-        formData.append('originalPrice', values.originalPrice);
+
+      // Primary selling price and MRP derived from the primary variant
+      const primaryVariant = variants[0] || { size: '50ml', price: 4950, originalPrice: '', stock: 25 };
+      formData.append('price', primaryVariant.price || 4950);
+      if (primaryVariant.originalPrice) {
+        formData.append('originalPrice', primaryVariant.originalPrice);
       }
       formData.append('samplePrice', values.samplePrice !== undefined ? values.samplePrice : 199);
       formData.append('category_id', values.category_id);
       
-      const flaconStock = Number(values.stock) || 0;
-      formData.append('stock', flaconStock);
+      // Stock allocation across all variants
+      const totalStock = variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+      formData.append('stock', totalStock);
 
-      const flaconSize = (values.flaconSize || '50ml').trim();
+      // Multi-price maps based on quantity / size
+      const sizesStockMap = {};
+      const sizePricesMap = {};
+      const sizeOriginalPricesMap = {};
+
+      variants.forEach((v) => {
+        const sName = (v.size || '50ml').trim();
+        sizesStockMap[sName] = Number(v.stock) || 0;
+        sizePricesMap[sName] = Number(v.price) || (primaryVariant.price || 4950);
+        if (v.originalPrice) {
+          sizeOriginalPricesMap[sName] = Number(v.originalPrice);
+        }
+      });
+
+      // 2ml discovery trial sample
       const sampleStock = Number(values.sampleStock) || 25;
-      const cleanSizesMap = {
-        [flaconSize]: flaconStock,
-        '2ml Sample': sampleStock
-      };
+      sizesStockMap['2ml Sample'] = sampleStock;
+      sizePricesMap['2ml Sample'] = Number(values.samplePrice) || 199;
 
-      formData.append('sizes', JSON.stringify(cleanSizesMap));
-      formData.append('sizes_stock', JSON.stringify(cleanSizesMap));
+      formData.append('sizes', JSON.stringify(sizesStockMap));
+      formData.append('sizes_stock', JSON.stringify(sizesStockMap));
+      formData.append('size_prices', JSON.stringify(sizePricesMap));
+      formData.append('size_original_prices', JSON.stringify(sizeOriginalPricesMap));
+
+      if (tieredPricing.length > 0) {
+        formData.append('tiered_pricing', JSON.stringify(tieredPricing));
+      }
+
       if (values.description) formData.append('description', values.description);
 
       fileList.forEach((file) => {
@@ -117,7 +142,7 @@ export default function AddProduct() {
         form={form}
         layout="vertical"
         onFinish={onFinish}
-        initialValues={{ samplePrice: 199, stock: 25, flaconSize: '50ml', sampleStock: 25 }}
+        initialValues={{ samplePrice: 199, sampleStock: 25 }}
         className="w-full"
       >
         <ProductUnifiedForm
@@ -126,13 +151,12 @@ export default function AddProduct() {
           fileList={fileList}
           beforeUpload={beforeUpload}
           handleUploadChange={handleUploadChange}
+          variants={variants}
+          setVariants={setVariants}
+          tieredPricing={tieredPricing}
+          setTieredPricing={setTieredPricing}
           loading={loading}
           isEdit={false}
-          watchedOriginalPrice={watchedOriginalPrice}
-          watchedPrice={watchedPrice}
-          watchedSamplePrice={watchedSamplePrice}
-          watchedStock={watchedStock}
-          watchedFlaconSize={watchedFlaconSize}
           onCancel={() => router.push('/admin/products')}
         />
       </Form>

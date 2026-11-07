@@ -330,11 +330,34 @@ const ProductDetails = () => {
     return [];
   }, [product, availableSizesMap]);
 
+  const sizePricesMap = useMemo(() => {
+    if (!product) return {};
+    if (product.size_prices && typeof product.size_prices === 'object') {
+      return product.size_prices;
+    }
+    return {};
+  }, [product]);
+
+  const sizeOriginalPricesMap = useMemo(() => {
+    if (!product) return {};
+    if (product.size_original_prices && typeof product.size_original_prices === 'object') {
+      return product.size_original_prices;
+    }
+    return {};
+  }, [product]);
+
+  const nonSampleSizes = useMemo(() => {
+    return supportedSizes.filter(s => !s.toLowerCase().includes('sample') && !s.toLowerCase().includes('2ml'));
+  }, [supportedSizes]);
+
   const baseBottleSize = useMemo(() => {
+    if (selectedSize && !selectedSize.toLowerCase().includes('sample') && !selectedSize.toLowerCase().includes('2ml')) {
+      return selectedSize.toUpperCase();
+    }
     if (!product) return '50ML';
-    const found = supportedSizes.find(s => !s.toLowerCase().includes('sample') && !s.toLowerCase().includes('2ml'));
+    const found = nonSampleSizes[0];
     return (found || '50ML').toUpperCase();
-  }, [product, supportedSizes]);
+  }, [product, nonSampleSizes, selectedSize]);
 
   // Stock for the base bottle
   const bottleStock = useMemo(() => {
@@ -374,9 +397,22 @@ const ProductDetails = () => {
   const isSampleOutOfStock = isProductOutOfStock || sampleStock <= 0;
   const isComboOutOfStock = isBottleOutOfStock || isSampleOutOfStock;
 
-  // Pricing calculations
+  // Pricing calculations based on bottle size / quantity
   const samplePrice = product?.samplePrice !== undefined && product?.samplePrice !== null ? Number(product.samplePrice) : 199;
-  const basePrice = Number(product?.price) || 0;
+  
+  const basePrice = useMemo(() => {
+    if (!product) return 0;
+    if (selectedSize && sizePricesMap[selectedSize] !== undefined) {
+      return Number(sizePricesMap[selectedSize]);
+    }
+    if (selectedSize) {
+      const match = Object.keys(sizePricesMap).find(k => k.toLowerCase() === selectedSize.toLowerCase());
+      if (match && sizePricesMap[match] !== undefined) {
+        return Number(sizePricesMap[match]);
+      }
+    }
+    return Number(product.price) || 0;
+  }, [product, selectedSize, sizePricesMap]);
 
   const currentUnitPrice = useMemo(() => {
     if (comboSelection === 'sample') return samplePrice;
@@ -385,8 +421,12 @@ const ProductDetails = () => {
   }, [comboSelection, basePrice, samplePrice]);
 
   const originalUnitPrice = useMemo(() => {
-    if (!product?.originalPrice) return null;
-    const orig = Number(product.originalPrice);
+    let orig = null;
+    if (selectedSize && sizeOriginalPricesMap[selectedSize] !== undefined) {
+      orig = Number(sizeOriginalPricesMap[selectedSize]);
+    } else if (product?.originalPrice) {
+      orig = Number(product.originalPrice);
+    }
     if (!orig || isNaN(orig)) return null;
     if (comboSelection === 'sample') return null;
     if (comboSelection === 'combo') {
@@ -395,7 +435,7 @@ const ProductDetails = () => {
       return origCombo > currentCombo ? origCombo : null;
     }
     return orig > basePrice ? orig : null;
-  }, [comboSelection, product, basePrice, samplePrice]);
+  }, [comboSelection, product, selectedSize, sizeOriginalPricesMap, basePrice, samplePrice]);
 
   const discountPercent = originalUnitPrice && originalUnitPrice > currentUnitPrice
     ? Math.round(((originalUnitPrice - currentUnitPrice) / originalUnitPrice) * 100)
@@ -773,6 +813,48 @@ const ProductDetails = () => {
                 {scentNotesText}
               </span>
             </div>
+
+            {/* 5b. Flacon Size / Quantity Variants (if multiple bottle sizes exist) */}
+            {nonSampleSizes.length > 1 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#170E08]">
+                    Select Bottle Size / Quantity
+                  </span>
+                  <span className="text-[11px] font-mono text-[#8C6D1F] font-semibold">
+                    ₹{basePrice.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {nonSampleSizes.map((s) => {
+                    const isSelected = (selectedSize || nonSampleSizes[0] || '').toLowerCase() === s.toLowerCase();
+                    const sizeStock = availableSizesMap[s] !== undefined ? Number(availableSizesMap[s]) : 10;
+                    const sPrice = sizePricesMap[s] !== undefined ? Number(sizePricesMap[s]) : (Number(product.price) || 0);
+                    const isSoldOut = sizeStock <= 0;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        disabled={isSoldOut}
+                        onClick={() => setSelectedSize(s)}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-sans transition-all flex items-center gap-2 cursor-pointer ${
+                          isSelected 
+                            ? 'bg-[#1C120C] text-[#ECC880] border-[#1C120C] font-bold shadow-xs' 
+                            : isSoldOut 
+                              ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed line-through' 
+                              : 'bg-white text-stone-700 border-[#ECE7DE] hover:border-stone-400 font-medium'
+                        }`}
+                      >
+                        <span>{s}</span>
+                        <span className={`text-[10px] font-mono ${isSelected ? 'text-[#ECC880]/80' : 'text-stone-400'}`}>
+                          ₹{sPrice.toLocaleString('en-IN')}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* 6. Select Flacon & Trial Format Selector */}
             <FlaconFormatSelector
