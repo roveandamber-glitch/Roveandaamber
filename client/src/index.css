@@ -293,6 +293,35 @@
   background: #D4A64A;
 }
 
+/* Custom Luxury Scrollbar Utility */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #D4A64A transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #D4A64A;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #B8860B;
+}
+
+/* Hide scrollbar utility while maintaining scroll functionality */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* ==========================================================================
    PREVENT BROWSER BLUE AUTOFILL BACKGROUND (STAY PRISTINE WHITE)
    ========================================================================== */

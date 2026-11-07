@@ -768,18 +768,21 @@ const ProductDetails = () => {
               samplePrice={samplePrice}
               baseBottleSize={baseBottleSize}
               onOpenReturnPolicy={() => setShowReturnPolicyModal(true)}
+              isOutOfStock={isOutOfStock}
             />
 
-            {/* 8. Action Row (Above the Fold): Stepper + Add to Cart + Buy Now */}
+            {/* 8. Action Row (Above the Fold): Stepper + Add to Cart / Out of Stock + Wishlist */}
             <div className="pt-1.5 flex items-center gap-2 sm:gap-3">
               {/* Stepper */}
-              <div className="inline-flex items-center bg-[#F5F2EB] border border-[#E0D8CA] rounded-xl h-11 px-1 sm:px-1.5 shrink-0">
+              <div className={`inline-flex items-center border rounded-xl h-11 px-1 sm:px-1.5 shrink-0 transition-opacity ${
+                isOutOfStock ? 'bg-[#ECE7DE]/50 border-stone-200 opacity-60 cursor-not-allowed' : 'bg-[#F5F2EB] border-[#E0D8CA]'
+              }`}>
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={quantity <= 1 || isOutOfStock}
                   aria-label="Decrease quantity"
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <Minus size={12} />
                 </button>
@@ -791,14 +794,24 @@ const ProductDetails = () => {
                   onClick={() => setQuantity(Math.min(maxStockForSize, quantity + 1))}
                   disabled={quantity >= maxStockForSize || isOutOfStock}
                   aria-label="Increase quantity"
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 cursor-pointer"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center hover:bg-white text-stone-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <Plus size={12} />
                 </button>
               </div>
 
-              {/* Primary CTA: Add to Cart */}
-              {isInCart ? (
+              {/* Primary CTA: Add to Cart / Out of Stock */}
+              {isOutOfStock ? (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="flex-1 h-11 bg-[#ECE7DE] text-stone-400 border border-[#DDD5C7] rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 shadow-none cursor-not-allowed uppercase tracking-wider text-[11px] sm:text-xs font-bold font-sans px-2 select-none"
+                >
+                  <ShoppingBag size={14} className="text-stone-400 shrink-0 opacity-60" />
+                  <span>Out of Stock</span>
+                </button>
+              ) : isInCart ? (
                 <button
                   type="button"
                   onClick={() => router.push('/cart')}
@@ -811,7 +824,7 @@ const ProductDetails = () => {
                 <button
                   type="button"
                   onClick={() => handleAddToCart(false)}
-                  disabled={isOutOfStock || isAddingToCart}
+                  disabled={isAddingToCart}
                   className="flex-1 h-11 bg-[#1C120C] hover:bg-black disabled:bg-stone-200 disabled:text-stone-400 text-white rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer uppercase tracking-wider text-[11px] sm:text-xs font-bold font-sans group px-2"
                 >
                   <ShoppingBag size={14} className="text-white group-hover:scale-110 transition-transform shrink-0" />

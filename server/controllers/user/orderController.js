@@ -256,7 +256,7 @@ export const getMyOrders = async (req, res) => {
         tracking: {
           currentStage: o.status,
           courierName: o.tracking?.courierName || 'Delhivery',
-          trackingNumber: o.tracking?.trackingNumber || `TRK-${String(o.id || o._id).slice(-8).toUpperCase()}`,
+          trackingNumber: (['Dispatch', 'Dispatched', 'Shipped', 'Delivered'].includes(o.status) && o.tracking?.trackingNumber) ? o.tracking.trackingNumber : '',
           estimatedDelivery: o.tracking?.estimatedDelivery || new Date(new Date(o.createdAt || Date.now()).getTime() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         },
         invoiceUrl: `/api/orders/${ordId}/invoice`

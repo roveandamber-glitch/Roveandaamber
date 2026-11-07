@@ -278,8 +278,8 @@ const ProfilePage = () => {
         {/* 2-Column Split Dashboard Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column: Cohesive Modern Sidebar Navigation */}
-          <div className="lg:col-span-4 space-y-4">
+          {/* Left Column: Cohesive Modern Sidebar Navigation (Fixed on Desktop) */}
+          <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto custom-scrollbar">
             
             {/* Unified Profile Card */}
             <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8E2D6] shadow-xs space-y-6">
@@ -428,8 +428,8 @@ const ProfilePage = () => {
 
           </div>
 
-          {/* Right Column: Dynamic Workspace */}
-          <div className="lg:col-span-8">
+          {/* Right Column: Dynamic Workspace (Scrollable on Desktop) */}
+          <div className="lg:col-span-8 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto custom-scrollbar pr-1 pb-4">
             
             {/* TAB 1: Personal Details */}
             {activeTab === 'details' && (
@@ -724,7 +724,7 @@ const ProfilePage = () => {
                           <p className="text-sm font-bold text-black font-sans">
                             Total: ₹{(order.total_amount || 0).toLocaleString('en-IN')}
                           </p>
-                          {order.tracking?.trackingNumber && (
+                          {order.tracking?.trackingNumber && ['Dispatch', 'Dispatched', 'Shipped', 'Delivered'].includes(order.status) ? (
                             <div className="pt-2 flex flex-wrap items-center gap-2">
                               <span className="text-[10px] font-bold text-[#8C6228] bg-[#F9F4EB] px-2 py-0.5 rounded-md border border-[#E8DEC8]">
                                 {order.tracking.courierName || 'Delhivery'}:
@@ -753,12 +753,23 @@ const ProfilePage = () => {
                                 <ExternalLink size={10} />
                               </a>
                             </div>
+                          ) : (
+                            <div className="pt-1.5 flex items-center gap-1.5 text-[11px] text-stone-500 font-light">
+                              {order.status === 'Cancelled' ? (
+                                <span className="text-red-600 font-medium">Order Cancelled</span>
+                              ) : (
+                                <>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                  <span>Tracking ID will be provided upon dispatch</span>
+                                </>
+                              )}
+                            </div>
                           )}
                         </div>
 
                         <Link href="/orders">
                           <button className="px-5 py-2.5 rounded-full bg-[#FAF8F5] hover:bg-black hover:text-white border border-[#E0D8CA] text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2 cursor-pointer">
-                            <span>Track Order</span>
+                            <span>{['Dispatch', 'Dispatched', 'Shipped', 'Delivered'].includes(order.status) ? 'Track Order' : 'View Order'}</span>
                             <ChevronRight size={13} />
                           </button>
                         </Link>

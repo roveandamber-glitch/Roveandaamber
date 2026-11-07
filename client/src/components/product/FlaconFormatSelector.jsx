@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, ShieldAlert } from 'lucide-react';
 
 /**
  * FlaconFormatSelector
@@ -12,7 +12,8 @@ export default function FlaconFormatSelector({
   basePrice = 0,
   samplePrice = 199,
   baseBottleSize = '50ML',
-  onOpenReturnPolicy
+  onOpenReturnPolicy,
+  isOutOfStock = false
 }) {
   // Concise short label for size (e.g. "Coffret" for gift sets, "50ml" for flacons)
   const shortBottleSize = useMemo(() => {
@@ -69,7 +70,7 @@ export default function FlaconFormatSelector({
               {shortBottleSize} + 2ml
             </span>
             <span className="text-[9.5px] sm:text-[10px] text-stone-500 font-light block truncate leading-tight mt-0.5">
-              With Trial Vial
+              With 7-Day Return Trial
             </span>
           </div>
 
@@ -112,7 +113,7 @@ export default function FlaconFormatSelector({
               {shortBottleSize} Only
             </span>
             <span className="text-[9.5px] sm:text-[10px] text-stone-500 font-light block truncate leading-tight mt-0.5">
-              Standalone Flacon
+              Final Sale (No Return)
             </span>
           </div>
 
@@ -155,7 +156,7 @@ export default function FlaconFormatSelector({
               2ml Sample
             </span>
             <span className="text-[9.5px] sm:text-[10px] text-stone-500 font-light block truncate leading-tight mt-0.5">
-              Discovery Vial
+              Discovery Vial (No Return)
             </span>
           </div>
 
@@ -168,10 +169,14 @@ export default function FlaconFormatSelector({
 
       </div>
 
-      {/* Subtle Return Policy Reassurance Bar (Slightly show return policy without breaking UI) */}
+      {/* Subtle Return Policy Reassurance Bar */}
       <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#FAF8F4] border border-[#E8DFC9] text-stone-600">
         <div className="flex items-center gap-1.5 min-w-0">
-          <ShieldCheck size={13} className="text-[#8C6D1F] shrink-0" />
+          {comboSelection === 'combo' ? (
+            <ShieldCheck size={13} className="text-[#8C6D1F] shrink-0" />
+          ) : (
+            <ShieldAlert size={13} className="text-[#A67C38] shrink-0" />
+          )}
           <span className="truncate text-[10.5px] sm:text-[11px] text-stone-700">
             {comboSelection === 'combo' ? (
               <>
@@ -179,11 +184,11 @@ export default function FlaconFormatSelector({
               </>
             ) : comboSelection === 'bottle' ? (
               <>
-                <strong className="text-stone-900 font-semibold">Hygiene-Sealed Flacon:</strong> Eligible for return if unopened within 7 days.
+                <strong className="text-stone-900 font-semibold">Final Sale:</strong> Standalone flacon has no return. Only combo edition includes 7-day home trial.
               </>
             ) : (
               <>
-                <strong className="text-stone-900 font-semibold">2ml Sample:</strong> Intimate discovery vial format for personal testing.
+                <strong className="text-stone-900 font-semibold">Final Sale:</strong> 2ml discovery vial is strictly non-returnable.
               </>
             )}
           </span>

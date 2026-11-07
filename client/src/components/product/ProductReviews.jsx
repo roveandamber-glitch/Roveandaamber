@@ -447,20 +447,21 @@ export default function ProductReviews({
       {/* 3. FILTER & SORT CONTROLS */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-b border-gray-100 pb-3">
         {/* Star Rating Filters */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mr-1 flex items-center gap-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 max-w-full">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mr-1 flex items-center gap-1 whitespace-nowrap shrink-0">
             <Filter size={11} /> Filter:
           </span>
           <button
             type="button"
             onClick={() => setStarFilter('ALL')}
-            className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               starFilter === 'ALL'
                 ? 'bg-black text-white shadow-2xs'
                 : 'bg-[#FAF9F7] text-gray-600 hover:text-black border border-[#E8E2D6]'
             }`}
           >
-            All ({totalCount})
+            <span>All</span>
+            <span className={starFilter === 'ALL' ? 'text-white/80' : 'text-gray-400'}>({totalCount})</span>
           </button>
           {[5, 4, 3, 2, 1].map((s) => {
             const count = ratingCounts[s] || 0;
@@ -470,7 +471,7 @@ export default function ProductReviews({
                 key={s}
                 type="button"
                 onClick={() => setStarFilter(active ? 'ALL' : String(s))}
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   active
                     ? 'bg-[#B8860B] text-white shadow-2xs'
                     : 'bg-[#FAF9F7] text-gray-600 hover:text-black border border-[#E8E2D6]'
@@ -478,7 +479,7 @@ export default function ProductReviews({
               >
                 <span>{s}</span>
                 <Star size={10} className={active ? 'fill-white text-white' : 'fill-[#B8860B] text-[#B8860B]'} />
-                <span className="text-[10px] opacity-75">({count})</span>
+                <span className={active ? 'text-white/80 text-[10px]' : 'text-gray-400 text-[10px]'}>({count})</span>
               </button>
             );
           })}

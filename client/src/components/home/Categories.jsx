@@ -125,11 +125,11 @@ const Categories = () => {
     <section className="pt-2 pb-10 sm:py-14 lg:py-16 px-4 sm:px-6 max-w-7xl mx-auto relative group">
       {/* Subtle Luxury Eyebrow */}
       <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8 select-none">
-        <span className="w-6 sm:w-10 h-[1px] bg-gradient-to-r from-transparent to-[#C5A880]/70" />
+        <span className="hidden sm:block w-6 sm:w-10 h-[1px] bg-gradient-to-r from-transparent to-[#C5A880]/70" />
         <span className="text-[10px] sm:text-xs font-serif tracking-[0.28em] uppercase text-[#8C6D1F] font-medium">
           Curated Fragrance Families
         </span>
-        <span className="w-6 sm:w-10 h-[1px] bg-gradient-to-l from-transparent to-[#C5A880]/70" />
+        <span className="hidden sm:block w-6 sm:w-10 h-[1px] bg-gradient-to-l from-transparent to-[#C5A880]/70" />
       </div>
 
       {/* Horizontal Scroll Wrapper */}

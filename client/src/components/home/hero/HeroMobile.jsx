@@ -42,13 +42,11 @@ export default function HeroMobile({
       <div className="relative z-20 w-full px-6 pt-24 pb-8 flex-1 flex flex-col justify-center items-center text-center">
         <div className="max-w-[340px] flex flex-col items-center text-center translate-y-3 sm:translate-y-5">
           
-          {/* Eyebrow / Brand Descriptor (Centered with balanced luxury gold accents) */}
-          <div className="flex items-center justify-center gap-2.5 mb-2.5">
-            <span className="w-5 h-[1.5px] bg-[#E5B869]" />
+          {/* Eyebrow / Brand Descriptor (Clean centered on mobile without starting/ending lines) */}
+          <div className="flex items-center justify-center mb-2.5">
             <p className="text-[10px] tracking-[0.24em] font-medium uppercase text-[#E5B869] drop-shadow-sm m-0 text-center">
               {current.tagline || 'Fine Fragrance & Artisanal Perfumery'}
             </p>
-            <span className="w-5 h-[1.5px] bg-[#E5B869]" />
           </div>
 
           {/* Main Title (Centered) */}

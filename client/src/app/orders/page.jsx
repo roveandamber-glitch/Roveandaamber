@@ -511,8 +511,8 @@ export default function MyOrdersPage() {
                         </button>
                       </div>
 
-                      {/* Prominent Delhivery Consignment Tracking Box when Track ID is available */}
-                      {order.tracking?.trackingNumber && (
+                      {/* Prominent Delhivery Consignment Tracking Box when Track ID is available & Order is Dispatched */}
+                      {order.tracking?.trackingNumber && ['Dispatch', 'Dispatched', 'Shipped', 'Delivered'].includes(order.status) && (
                         <div className="mt-3 p-3.5 rounded-2xl bg-[#1C1714] text-[#FBF9F5] border border-[#3A2D25] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl bg-[#ECC880]/15 flex items-center justify-center shrink-0 border border-[#ECC880]/20">
@@ -780,9 +780,11 @@ export default function MyOrdersPage() {
                   <p className="text-[#8C7A6B] text-[10px] uppercase tracking-wider">Delhivery Track ID / AWB</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="font-mono font-bold text-[#1C1714]">
-                      {activeTrackingOrder.tracking?.trackingNumber || 'Available upon dispatch'}
+                      {(['Dispatch', 'Dispatched', 'Shipped', 'Delivered'].includes(activeTrackingOrder.status) && activeTrackingOrder.tracking?.trackingNumber)
+                        ? activeTrackingOrder.tracking.trackingNumber
+                        : 'Available upon dispatch'}
                     </span>
-                    {activeTrackingOrder.tracking?.trackingNumber && (
+                    {activeTrackingOrder.tracking?.trackingNumber && ['Dispatch', 'Dispatched', 'Shipped', 'Delivered'].includes(activeTrackingOrder.status) && (
                       <button
                         type="button"
                         onClick={() => {
@@ -800,23 +802,30 @@ export default function MyOrdersPage() {
               </div>
 
               {/* Delhivery Live Link Card */}
-              <div className="pt-3 border-t border-[#ECE5D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-3 rounded-xl">
-                <div>
-                  <p className="text-[11px] font-bold text-[#1C1714]">Live Delhivery Tracking</p>
-                  <p className="text-[10px] text-[#8C7A6B]">
-                    Visit <strong className="text-[#1C1714]">https://www.delhivery.com/</strong> and enter this Track ID to monitor transit milestones.
-                  </p>
+              {activeTrackingOrder.tracking?.trackingNumber && ['Dispatch', 'Dispatched', 'Shipped', 'Delivered'].includes(activeTrackingOrder.status) ? (
+                <div className="pt-3 border-t border-[#ECE5D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-3 rounded-xl">
+                  <div>
+                    <p className="text-[11px] font-bold text-[#1C1714]">Live Delhivery Tracking</p>
+                    <p className="text-[10px] text-[#8C7A6B]">
+                      Visit <strong className="text-[#1C1714]">https://www.delhivery.com/</strong> and enter this Track ID to monitor transit milestones.
+                    </p>
+                  </div>
+                  <a
+                    href="https://www.delhivery.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1C1714] text-[#ECC880] text-xs font-semibold hover:bg-black transition-colors shrink-0 cursor-pointer"
+                  >
+                    <span>Open Delhivery</span>
+                    <ExternalLink size={12} />
+                  </a>
                 </div>
-                <a
-                  href="https://www.delhivery.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1C1714] text-[#ECC880] text-xs font-semibold hover:bg-black transition-colors shrink-0 cursor-pointer"
-                >
-                  <span>Open Delhivery</span>
-                  <ExternalLink size={12} />
-                </a>
-              </div>
+              ) : (
+                <div className="pt-3 border-t border-[#ECE5D8] text-[11px] text-[#8C7A6B] bg-white p-3 rounded-xl flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                  <span>Order is being prepared in our atelier. Real-time Delhivery tracking activates upon dispatch.</span>
+                </div>
+              )}
             </div>
 
             {/* Step Checkpoints */}

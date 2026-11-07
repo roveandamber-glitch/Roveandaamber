@@ -39,7 +39,7 @@ export default function CartOrderSummary({
   onOpenCouponsModal
 }) {
   return (
-    <div className="bg-[#FAF8F5] p-4 sm:p-6 flex flex-col justify-between h-full space-y-4">
+    <div className="bg-[#FAF8F5] p-3.5 sm:p-6 flex flex-col justify-between h-full space-y-4">
       <div className="space-y-4">
         {/* Order Summary Header */}
         <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-3">
@@ -156,12 +156,12 @@ export default function CartOrderSummary({
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
                 disabled={promoLoading}
-                className="flex-1 h-10 px-3.5 rounded-xl text-xs sm:text-sm bg-[#FAF8F5] border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-stone-400 font-mono"
+                className="flex-1 min-w-0 h-10 px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm bg-[#FAF8F5] border border-[#E0D8CA] focus:outline-none focus:border-black uppercase text-black placeholder-stone-400 font-mono"
               />
               <button
                 type="submit"
                 disabled={promoLoading || !promoCode.trim()}
-                className="h-10 bg-[#1C1714] hover:bg-black text-[#ECC880] px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center shrink-0 shadow-2xs"
+                className="h-10 bg-[#1C1714] hover:bg-black text-[#ECC880] px-3 sm:px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center shrink-0 shadow-2xs"
               >
                 {promoLoading ? <Loader2 size={13} className="animate-spin" /> : 'Apply'}
               </button>

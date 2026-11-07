@@ -25,6 +25,7 @@ import {
   Loader2,
   Coins,
   Sparkles,
+  FlaskConical,
   Wallet,
   CreditCard
 } from 'lucide-react';
@@ -501,7 +502,7 @@ export default function CartPage() {
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black selection:bg-[#B8860B] selection:text-white flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 sm:pb-10 lg:pb-12 w-full flex-1 flex flex-col justify-start">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-20 pb-28 sm:pb-10 lg:pb-12 w-full flex-1 flex flex-col justify-start">
         
         {/* Compact Breadcrumb & Page Header Bar */}
         <div className="mb-2 sm:mb-3 flex flex-wrap items-center justify-between gap-2 shrink-0">
@@ -650,8 +651,8 @@ export default function CartPage() {
                 </button>
               </div>
 
-              {/* Scrollable Products List Container */}
-              <div className="p-3.5 sm:p-4 overflow-y-auto max-h-[500px] lg:max-h-[520px] divide-y divide-[#ECE7DE] custom-scrollbar flex-1">
+              {/* Scrollable Products List Container (Responsive height without mobile scroll traps) */}
+              <div className="p-3.5 sm:p-4 divide-y divide-[#ECE7DE] custom-scrollbar flex-1 lg:overflow-y-auto lg:max-h-[520px]">
                 {cartItems.map((item) => {
                   const itemKey = `${item.productId || item.id}_${item.size || '50ML'}`;
                   const price = Number(item.price) || 0;
@@ -665,10 +666,10 @@ export default function CartPage() {
                       className="py-3.5 sm:py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between transition-colors hover:bg-[#FAF9F7]/40"
                     >
                       {/* Thumbnail & Title Details */}
-                      <div className="flex items-center gap-3.5 flex-1 min-w-0 w-full sm:w-auto">
+                      <div className="flex items-start gap-3 sm:gap-3.5 flex-1 min-w-0 w-full sm:w-auto">
                         <Link 
                           href={`/product/${item.productId || item.id}`}
-                          className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-1.5 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group"
+                          className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-xl bg-[#FAF7F2] overflow-hidden shrink-0 flex items-center justify-center p-1.5 border border-[#EAE3D2] hover:border-[#B86526] transition-colors group self-start"
                         >
                           <img
                             src={getImageUrl(item.image)}
@@ -703,30 +704,37 @@ export default function CartPage() {
                             <span className="text-[10px] font-normal text-gray-400 ml-1">/ unit</span>
                           </p>
 
-                          {/* Upgrade to 2ml Companion Trial Pack */}
+                          {/* Upgrade to 2ml Companion Trial Pack - Professional Luxury Standard */}
                           {!(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && !(item.isSampleOnly || (item.size && item.size.includes('SAMPLE') && !item.size.includes('+'))) && (
-                            <div className="mt-2 p-2.5 rounded-xl bg-[#FAF8F5] border border-[#E5DAC6] hover:border-[#B8860B]/50 transition-all flex items-center justify-between gap-3 max-w-md shadow-2xs">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Sparkles size={13} className="text-[#B8860B] shrink-0" />
-                                <p className="text-xs font-bold text-stone-900 m-0 truncate">
-                                  Add 2ml Companion Trial Pack <span className="text-[#8C6D1F] font-sans font-bold">(+₹199)</span>
-                                </p>
+                            <div className="mt-2 p-2 sm:py-1.5 sm:px-3 rounded-lg bg-[#FAF8F5] border border-[#E8DFC9] hover:border-[#B8860B]/60 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 max-w-lg shadow-2xs">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <FlaskConical size={12} className="text-[#8C6D1F] shrink-0" />
+                                <span className="text-[11px] sm:text-xs font-semibold text-stone-900 leading-tight">
+                                  Add 2ml Companion Trial <span className="font-sans font-bold text-[#8C6D1F] ml-0.5">(+₹199)</span>
+                                </span>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleUpgradeToCombo(item)}
-                                className="px-3 py-1 rounded-full bg-[#1C120C] hover:bg-black text-[#ECC880] text-[10px] uppercase tracking-wider font-bold transition-all shrink-0 cursor-pointer shadow-2xs whitespace-nowrap"
-                              >
-                                + Add Trial
-                              </button>
+                              <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-0.5 sm:pt-0">
+                                <span className="text-[9.5px] text-stone-500 font-light sm:hidden">
+                                  7-day home trial guarantee
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpgradeToCombo(item)}
+                                  className="inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-bold text-[#140D07] bg-white hover:bg-stone-50 border border-stone-300 hover:border-black px-2.5 py-1 rounded-md transition-all shadow-2xs cursor-pointer whitespace-nowrap ml-auto"
+                                >
+                                  <Plus size={11} strokeWidth={2.5} className="text-[#8C6D1F]" />
+                                  <span>Add Trial</span>
+                                </button>
+                              </div>
                             </div>
                           )}
 
                           {/* Note once upgraded */}
                           {(item.isCombo || item.hasSample || (item.size && item.size.includes('+'))) && (
-                            <p className="text-[10.5px] text-emerald-800 m-0 font-light leading-tight pt-0.5">
-                              ★ Includes companion 2ml sample vial with 7-day return guarantee.
-                            </p>
+                            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-800 font-medium">
+                              <Check size={12} className="text-emerald-700 shrink-0" />
+                              <span>Includes companion 2ml sample vial (7-day home trial guarantee)</span>
+                            </div>
                           )}
 
                           {isMaxReached && (
