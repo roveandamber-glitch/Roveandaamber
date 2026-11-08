@@ -19,7 +19,7 @@ export default function ProfileSidebar({
   handleLogout
 }) {
   return (
-    <div className="p-5 sm:p-6 flex flex-col justify-between space-y-4 select-none">
+    <div className="p-5 sm:p-6 flex flex-col justify-between space-y-4 select-none h-full">
       <div className="space-y-4">
         {/* User Identity Header */}
         <div className="flex items-center gap-3">

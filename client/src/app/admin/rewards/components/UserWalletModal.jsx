@@ -27,9 +27,8 @@ export default function UserWalletModal({
   const [userDetails, setUserDetails] = useState(null);
   const [transactions, setTransactions] = useState([]);
   
-  // Adjustment state
-  const [adjustMode, setAdjustMode] = useState('increase'); // 'increase' | 'decrease' | 'set'
-  const [adjustPoints, setAdjustPoints] = useState(100);
+  // Direct adjustment state
+  const [adjustPoints, setAdjustPoints] = useState(0);
   const [adjustReason, setAdjustReason] = useState('');
   const [savingPoints, setSavingPoints] = useState(false);
   const [togglingWallet, setTogglingWallet] = useState(false);
@@ -40,14 +39,13 @@ export default function UserWalletModal({
     } else {
       setUserDetails(null);
       setTransactions([]);
-      setAdjustPoints(100);
+      setAdjustPoints(0);
       setAdjustReason('');
-      setAdjustMode('increase');
     }
   }, [open, targetUser]);
 
   const loadUserWalletData = async () => {
-    const userId = targetUser?.userId || targetUser?.id || targetUser?._id || targetUser?.customer;
+    const userId = targetUser?.userId || targetUser?.customerEmail || targetUser?.customerName || targetUser?.customer || targetUser?.id || targetUser?._id;
     if (!userId) return;
 
     setLoading(true);
@@ -56,24 +54,29 @@ export default function UserWalletModal({
       if (res?.success && res.data) {
         setUserDetails(res.data.user);
         setTransactions(res.data.transactions || []);
+        setAdjustPoints(Number(res.data.user.rewardPoints || 0));
       } else {
+        const fallbackPts = Number(targetUser.rawPoints || targetUser.points || 0);
         setUserDetails({
           id: userId,
           name: targetUser.customer || targetUser.name || 'Valued Patron',
-          email: targetUser.email || '',
-          rewardPoints: targetUser.rawPoints || targetUser.points || 0,
+          email: targetUser.customerEmail || targetUser.email || '',
+          rewardPoints: fallbackPts,
           isWalletDisabled: Boolean(targetUser.isWalletDisabled)
         });
+        setAdjustPoints(fallbackPts);
       }
     } catch (err) {
       console.warn('Failed to load user reward history:', err);
+      const fallbackPts = Number(targetUser.rawPoints || targetUser.points || 0);
       setUserDetails({
         id: userId,
         name: targetUser.customer || targetUser.name || 'Valued Patron',
-        email: targetUser.email || '',
-        rewardPoints: targetUser.rawPoints || targetUser.points || 0,
+        email: targetUser.customerEmail || targetUser.email || '',
+        rewardPoints: fallbackPts,
         isWalletDisabled: Boolean(targetUser.isWalletDisabled)
       });
+      setAdjustPoints(fallbackPts);
     } finally {
       setLoading(false);
     }
@@ -81,18 +84,22 @@ export default function UserWalletModal({
 
   const handleAdjustPoints = async (e) => {
     e.preventDefault();
-    if (!userDetails?.id) return;
-    if (!adjustPoints || adjustPoints <= 0) {
-      message.warning('Please enter a valid points amount');
+    const resolvedId = userDetails?.id || userDetails?._id || targetUser?.userId || targetUser?.customerEmail || targetUser?.customerName || targetUser?.customer || targetUser?.id;
+    if (!resolvedId) {
+      message.error('Unable to identify customer account.');
+      return;
+    }
+    if (adjustPoints === undefined || adjustPoints === null || adjustPoints < 0) {
+      message.warning('Please enter a valid points balance (0 or higher)');
       return;
     }
 
     setSavingPoints(true);
     try {
-      const res = await adminService.adjustUserPoints(userDetails.id, {
-        action: adjustMode,
-        points: adjustPoints,
-        reason: adjustReason.trim()
+      const res = await adminService.adjustUserPoints(resolvedId, {
+        action: 'set',
+        points: Number(adjustPoints),
+        reason: adjustReason.trim() || 'Points balance updated by administrator'
       });
 
       if (res?.success) {
@@ -112,15 +119,16 @@ export default function UserWalletModal({
   };
 
   const handleToggleWallet = async () => {
-    if (!userDetails?.id) return;
-    const nextStatus = !userDetails.isWalletDisabled;
+    const resolvedId = userDetails?.id || userDetails?._id || targetUser?.userId || targetUser?.customerEmail || targetUser?.customerName || targetUser?.customer || targetUser?.id;
+    if (!resolvedId) return;
+    const nextStatus = !userDetails?.isWalletDisabled;
 
     setTogglingWallet(true);
     try {
       const res = await adminService.toggleUserWallet(
-        userDetails.id, 
+        resolvedId, 
         nextStatus,
-        nextStatus ? 'Suspended by admin' : 'Restored by admin'
+        nextStatus ? 'Suspended by boutique administration' : 'Restored by boutique administration'
       );
 
       if (res?.success) {
@@ -139,10 +147,6 @@ export default function UserWalletModal({
   };
 
   const currentPoints = Number(userDetails?.rewardPoints || 0);
-  let previewNewPoints = currentPoints;
-  if (adjustMode === 'increase') previewNewPoints = currentPoints + Number(adjustPoints || 0);
-  else if (adjustMode === 'decrease') previewNewPoints = Math.max(0, currentPoints - Number(adjustPoints || 0));
-  else if (adjustMode === 'set') previewNewPoints = Math.max(0, Number(adjustPoints || 0));
 
   return (
     <Modal
@@ -163,7 +167,7 @@ export default function UserWalletModal({
                 Patron Wallet & Points Management
               </h3>
               <p className="text-[11px] text-gray-500 font-normal m-0">
-                View points history, adjust balance, and control wallet status.
+                View points history, edit balance, and control wallet access.
               </p>
             </div>
           </div>
@@ -193,30 +197,30 @@ export default function UserWalletModal({
         </div>
       ) : (
         <div className="pt-4 space-y-5 text-[#1B100A]">
-          {/* User Profile & Current Wallet Card */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-[#FAF8F5] via-[#F7F3EB] to-[#F3ECE0] border border-[#E0D0A5] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
+          {/* User Profile & Current Wallet Card (Clean Alignment) */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF8F5] border border-[#E0D0A5] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-serif font-bold text-base text-[#1C1714]">
                   {userDetails?.name || 'Valued Patron'}
                 </span>
-                <span className="text-[10px] font-mono bg-white/80 border border-[#D9CEBA] px-2 py-0.5 rounded-md text-gray-600 font-semibold">
+                <span className="text-[11px] font-mono bg-white border border-[#D9CEBA] px-2 py-0.5 rounded-md text-gray-600 font-semibold truncate max-w-[200px]">
                   {userDetails?.email || 'Registered Patron'}
                 </span>
               </div>
-              <p className="text-xs text-[#5C5248] font-light">
+              <p className="text-xs text-[#6B5E52] font-light m-0">
                 Manage bespoke flacon reward points, loyalty bonuses, and checkout redemption privileges.
               </p>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="bg-white/90 border border-[#D9CEBA] px-4 py-2.5 rounded-xl shadow-2xs text-right">
-                <span className="text-[10px] uppercase font-bold text-gray-500 block">Available Balance</span>
-                <span className="text-xl font-bold font-mono text-[#8C6D1F]">
-                  {currentPoints.toLocaleString()} <span className="text-xs font-sans text-gray-500">pts</span>
+            <div className="flex items-center gap-3 shrink-0 self-stretch sm:self-center">
+              <div className="bg-white border border-[#D9CEBA] px-4 py-2 rounded-xl shadow-2xs text-right min-w-[130px]">
+                <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Available Balance</span>
+                <span className="text-lg font-bold font-mono text-[#8C6D1F] leading-tight block my-0.5">
+                  {currentPoints.toLocaleString()} <span className="text-xs font-sans text-gray-500 font-normal">pts</span>
                 </span>
-                <span className="text-[10px] text-gray-400 block">
-                  ≈ ₹{Math.floor(currentPoints * 0.1).toLocaleString('en-IN')} boutique value
+                <span className="text-[10.5px] text-gray-500 block">
+                  ≈ ₹{Math.floor(currentPoints * 0.1).toLocaleString('en-IN')} value
                 </span>
               </div>
 
@@ -224,21 +228,21 @@ export default function UserWalletModal({
                 type="button"
                 onClick={handleToggleWallet}
                 disabled={togglingWallet}
-                className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                className={`h-[58px] px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50 shrink-0 ${
                   userDetails?.isWalletDisabled
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
                     : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
                 }`}
                 title={userDetails?.isWalletDisabled ? 'Enable customer wallet' : 'Disable customer wallet'}
               >
                 {userDetails?.isWalletDisabled ? (
                   <>
-                    <Unlock size={13} />
+                    <Unlock size={14} />
                     <span>Enable Wallet</span>
                   </>
                 ) : (
                   <>
-                    <Lock size={13} />
+                    <Lock size={14} />
                     <span>Disable Wallet</span>
                   </>
                 )}
@@ -250,16 +254,14 @@ export default function UserWalletModal({
             <Alert
               type="error"
               showIcon
-              message={<span className="text-xs font-semibold">This user's wallet is currently suspended.</span>}
-              description={<span className="text-[11px] text-gray-600">The patron cannot redeem loyalty points in cart or checkout until you click "Enable Wallet".</span>}
+              message={<span className="text-xs font-semibold">This user&apos;s wallet is currently suspended.</span>}
+              description={<span className="text-[11px] text-gray-600">The patron cannot redeem loyalty points in cart or checkout until you click &quot;Enable Wallet&quot;.</span>}
               className="rounded-xl border-rose-200"
             />
           )}
 
-          {/* Points Adjustment Form */}
+          {/* Simple Direct Points Edit Form */}
           <UserWalletAdjustForm
-            adjustMode={adjustMode}
-            setAdjustMode={setAdjustMode}
             adjustPoints={adjustPoints}
             setAdjustPoints={setAdjustPoints}
             adjustReason={adjustReason}
@@ -267,7 +269,6 @@ export default function UserWalletModal({
             handleAdjustPoints={handleAdjustPoints}
             savingPoints={savingPoints}
             currentPoints={currentPoints}
-            previewNewPoints={previewNewPoints}
           />
 
           {/* User's Points History Table */}

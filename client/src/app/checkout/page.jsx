@@ -1043,29 +1043,44 @@ export default function CheckoutPage() {
                         </div>
                       </div>
 
-                      {/* Toggle Switch */}
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={rewardPointsUsed > 0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleRewards();
-                        }}
-                        disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-                        className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out items-center disabled:opacity-40 disabled:cursor-not-allowed ${
-                          rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
-                        }`}
-                        title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
-                      >
-                        <span
-                          className={`pointer-events-none inline-flex items-center justify-center h-4.5 w-4.5 transform rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out ${
-                            rewardPointsUsed > 0 ? 'translate-x-4.5' : 'translate-x-0'
-                          }`}
+                      {/* Action: Apply / Remove Button */}
+                      {rewardPointsUsed > 0 ? (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                            ✓ Applied
+                          </span>
+                          <button
+                            type="button"
+                            disabled={rewardLoading}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleRewards();
+                            }}
+                            className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline px-1 py-0.5 cursor-pointer disabled:opacity-50"
+                          >
+                            {rewardLoading ? <Loader2 size={11} className="animate-spin inline" /> : 'Remove'}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleRewards();
+                          }}
+                          className="px-3.5 py-1.5 rounded-lg bg-[#1C1714] hover:bg-black text-[#ECC880] text-xs font-bold transition-all shadow-2xs shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                          {rewardLoading && <Loader2 size={10} className="animate-spin text-[#241306]" />}
-                        </span>
-                      </button>
+                          {rewardLoading ? (
+                            <span className="inline-flex items-center gap-1">
+                              <Loader2 size={11} className="animate-spin" />
+                              <span>Applying...</span>
+                            </span>
+                          ) : (
+                            'Apply'
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

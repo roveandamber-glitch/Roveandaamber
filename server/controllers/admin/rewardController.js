@@ -161,22 +161,63 @@ export const updateRewardRules = async (req, res) => {
   }
 };
 
+// Helper to resolve customer User document by ID, Transaction ID, email, or name
+const findCustomerUser = async (identifier) => {
+  if (!identifier) return null;
+  const raw = String(identifier).trim();
+  let user = null;
+
+  // 1. Try finding by MongoDB User ID
+  if (mongoose.Types.ObjectId.isValid(raw)) {
+    user = await User.findById(raw);
+    if (!user) {
+      // 2. If it was a RewardTransaction ID, look up the transaction's user or customer info
+      const tx = await RewardTransaction.findById(raw).lean();
+      if (tx) {
+        if (tx.userId) {
+          user = await User.findById(tx.userId);
+        }
+        if (!user && tx.customerEmail) {
+          user = await User.findOne({ email: tx.customerEmail.toLowerCase().trim() });
+        }
+        if (!user && tx.customerName) {
+          user = await User.findOne({ name: { $regex: new RegExp(`^${tx.customerName.trim()}$`, 'i') } });
+        }
+      }
+    }
+  }
+
+  // 3. Try finding by email or name (exact match)
+  if (!user) {
+    user = await User.findOne({
+      $or: [
+        { email: raw.toLowerCase() },
+        { name: raw }
+      ]
+    });
+  }
+
+  // 4. Try finding by case-insensitive name or email regex
+  if (!user) {
+    user = await User.findOne({
+      $or: [
+        { email: { $regex: new RegExp(`^${raw}$`, 'i') } },
+        { name: { $regex: new RegExp(`^${raw}$`, 'i') } }
+      ]
+    });
+  }
+
+  return user;
+};
+
 // GET /api/admin/rewards/user/:userId/history
 export const getUserRewardHistory = async (req, res) => {
   try {
     const { userId } = req.params;
-    let user = null;
-    if (mongoose.Types.ObjectId.isValid(userId)) {
-      user = await User.findById(userId).select('-password').lean();
-    }
-    if (!user) {
-      user = await User.findOne({
-        $or: [{ email: userId.toLowerCase().trim() }, { name: userId.trim() }]
-      }).select('-password').lean();
-    }
+    const user = await findCustomerUser(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
+      return res.status(404).json({ success: false, message: 'Customer account not found.' });
     }
 
     const query = {
@@ -233,17 +274,9 @@ export const getUserRewardHistory = async (req, res) => {
 export const adjustUserPoints = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { action = 'increase', points = 0, reason = '' } = req.body;
+    const { action = 'set', points = 0, reason = '' } = req.body;
 
-    let user = null;
-    if (mongoose.Types.ObjectId.isValid(userId)) {
-      user = await User.findById(userId);
-    }
-    if (!user) {
-      user = await User.findOne({
-        $or: [{ email: userId.toLowerCase().trim() }, { name: userId.trim() }]
-      });
-    }
+    const user = await findCustomerUser(userId);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'Customer account not found.' });
@@ -261,7 +294,7 @@ export const adjustUserPoints = async (req, res) => {
     } else if (action === 'decrease') {
       delta = -Math.min(currentPoints, numPoints);
       newPoints = Math.max(0, currentPoints - numPoints);
-    } else if (action === 'set') {
+    } else { // 'set' or direct edit
       newPoints = Math.max(0, numPoints);
       delta = newPoints - currentPoints;
     }
@@ -278,7 +311,7 @@ export const adjustUserPoints = async (req, res) => {
         type: 'Adjustment',
         points: delta,
         orderId: `ADJ-${Date.now().toString().slice(-6)}`,
-        description: reason || `Administrative ${action} of points (${delta > 0 ? '+' : ''}${delta} pts)`
+        description: reason || `Administrative update of points (${delta > 0 ? '+' : ''}${delta} pts)`
       });
     }
 
@@ -310,15 +343,7 @@ export const toggleUserWallet = async (req, res) => {
     const { userId } = req.params;
     const { isWalletDisabled, reason = '' } = req.body;
 
-    let user = null;
-    if (mongoose.Types.ObjectId.isValid(userId)) {
-      user = await User.findById(userId);
-    }
-    if (!user) {
-      user = await User.findOne({
-        $or: [{ email: userId.toLowerCase().trim() }, { name: userId.trim() }]
-      });
-    }
+    const user = await findCustomerUser(userId);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'Customer account not found.' });

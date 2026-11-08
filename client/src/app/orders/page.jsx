@@ -1,9 +1,9 @@
 "use client";
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Spin } from 'antd';
 
-export default function MyOrdersRedirectPage() {
+function OrdersRedirectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -24,3 +24,21 @@ export default function MyOrdersRedirectPage() {
     </div>
   );
 }
+
+export default function MyOrdersRedirectPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center space-y-3 font-sans">
+          <Spin size="large" />
+          <p className="text-xs font-serif font-bold uppercase tracking-widest text-[#8C6D1F]">
+            Loading Maison Order Suite...
+          </p>
+        </div>
+      }
+    >
+      <OrdersRedirectContent />
+    </Suspense>
+  );
+}
+

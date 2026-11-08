@@ -90,7 +90,10 @@ export default function AdminRewardsPage() {
   };
 
   const handleOpenUserWallet = (record) => {
-    setSelectedUser(record);
+    setSelectedUser({
+      ...record,
+      userId: record.userId || record.customerEmail || record.customerName || record.customer || record.id
+    });
     setWalletModalOpen(true);
   };
 

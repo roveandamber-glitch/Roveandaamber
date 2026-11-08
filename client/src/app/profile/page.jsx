@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
@@ -17,7 +17,7 @@ import ProfileShoppingBag from './components/ProfileShoppingBag';
 import ProfileOrderHistory from './components/ProfileOrderHistory';
 import ProfileSecurity from './components/ProfileSecurity';
 
-export default function ProfilePage() {
+function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
@@ -292,11 +292,11 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Connected Master Workspace Card with Fixed / Sticky Sidebar */}
-        <div className="bg-white rounded-3xl border border-[#E8E2D6] shadow-xs grid grid-cols-1 lg:grid-cols-12 min-h-[640px] items-start">
+        {/* Connected Master Workspace Card with Fixed Sidebar & Scrollable Content */}
+        <div className="bg-white rounded-3xl border border-[#E8E2D6] shadow-xs grid grid-cols-1 lg:grid-cols-12 min-h-[600px] lg:h-[calc(100vh-180px)] overflow-hidden">
           
-          {/* Left Column: Fixed / Sticky Sidebar Menu (No Scroll, Single Screen Fit) */}
-          <div className="lg:col-span-4 xl:col-span-3.5 bg-[#FCFBF8] border-b lg:border-b-0 lg:border-r border-[#ECE6D9] rounded-t-3xl lg:rounded-tr-none lg:rounded-l-3xl lg:sticky lg:top-24 lg:self-start z-10">
+          {/* Left Column: Fixed Sidebar Menu (Never moves, zero scroll, always in screen) */}
+          <div className="lg:col-span-4 xl:col-span-3.5 bg-[#FCFBF8] border-b lg:border-b-0 lg:border-r border-[#ECE6D9] rounded-t-3xl lg:rounded-tr-none lg:rounded-l-3xl flex flex-col justify-between shrink-0 h-full overflow-hidden select-none">
             <ProfileSidebar
               user={user}
               orders={orders}
@@ -307,8 +307,8 @@ export default function ProfilePage() {
             />
           </div>
 
-          {/* Right Column: Connected Content Workspace */}
-          <div className="lg:col-span-8 xl:col-span-8.5 p-6 sm:p-8 lg:p-10 bg-white rounded-b-3xl lg:rounded-bl-none lg:rounded-r-3xl flex flex-col justify-between min-w-0">
+          {/* Right Column: Scrollable Content Workspace (Orders scroll smoothly inside this pane) */}
+          <div className="lg:col-span-8 xl:col-span-8.5 p-6 sm:p-8 lg:p-10 bg-white rounded-b-3xl lg:rounded-bl-none lg:rounded-r-3xl flex flex-col justify-between min-w-0 h-full lg:overflow-y-auto profile-scroll-pane">
             <div>
               {activeTab === 'details' && (
                 <ProfilePersonalDetails
@@ -355,5 +355,24 @@ export default function ProfilePage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FAF8F5] flex flex-col justify-between pt-16 sm:pt-20 font-sans">
+          <Navbar />
+          <div className="py-32 flex flex-col items-center justify-center space-y-3">
+            <Spin size="large" />
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Loading Profile...</p>
+          </div>
+          <Footer />
+        </div>
+      }
+    >
+      <ProfileContent />
+    </Suspense>
   );
 }

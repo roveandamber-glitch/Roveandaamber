@@ -146,7 +146,11 @@ rewardTransactionSchema.statics.getLedger = async function ({ limit = 50 } = {})
   return txs.map(t => ({
     id: String(t._id),
     _id: String(t._id),
+    transactionId: String(t._id),
+    userId: t.userId ? String(t.userId) : undefined,
+    customerEmail: t.customerEmail || '',
     customer: t.customerName || 'Valued Patron',
+    customerName: t.customerName || 'Valued Patron',
     type: t.type,
     points: t.points > 0 ? `+${t.points}` : `${t.points}`,
     rawPoints: t.points,

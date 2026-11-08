@@ -25,6 +25,25 @@
   background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 50%);
 }
 
+/* Custom luxury scrollbar for profile workspace */
+.profile-scroll-pane {
+  scrollbar-width: thin;
+  scrollbar-color: #D9CEBA transparent;
+}
+.profile-scroll-pane::-webkit-scrollbar {
+  width: 6px;
+}
+.profile-scroll-pane::-webkit-scrollbar-track {
+  background: transparent;
+}
+.profile-scroll-pane::-webkit-scrollbar-thumb {
+  background: #D9CEBA;
+  border-radius: 9999px;
+}
+.profile-scroll-pane::-webkit-scrollbar-thumb:hover {
+  background: #B8860B;
+}
+
 /* Override Ant Design primary and hover colors to luxury black */
 .ant-btn-primary {
   background-color: #000000 !important;
