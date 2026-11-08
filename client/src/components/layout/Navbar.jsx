@@ -247,7 +247,7 @@ const Navbar = () => {
     { name: 'Shopping Bag', path: '/cart', icon: ShoppingBag, badge: cartCount },
     { name: 'Gifts', path: '/gifts', icon: Gift },
     { name: 'Wishlist', path: '/wishlist', icon: Heart, badge: wishlistCount },
-    { name: 'My Orders', path: '/orders', icon: Package },
+    { name: 'My Orders', path: '/profile?tab=orders', icon: Package },
     { name: 'About', path: '/about', icon: Compass },
     { name: 'Contact', path: '/contact', icon: MessageSquare },
   ];
@@ -744,7 +744,7 @@ const Navbar = () => {
                         <span>Profile</span>
                       </button>
                     </Link>
-                    <Link href="/orders" prefetch={true} onClick={() => setIsMenuOpen(false)} className="block">
+                    <Link href="/profile?tab=orders" prefetch={true} onClick={() => setIsMenuOpen(false)} className="block">
                       <button
                         type="button"
                         className="w-full bg-black text-white py-2 rounded-lg font-bold uppercase text-[10px] tracking-wider flex items-center justify-center gap-1 cursor-pointer"

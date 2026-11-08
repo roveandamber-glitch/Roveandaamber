@@ -982,7 +982,7 @@ export default function CartPage() {
                   onClick={() => {
                     setIsCheckoutModalOpen(false);
                     setOrderSuccessData(null);
-                    router.push('/orders');
+                    router.push('/profile?tab=orders');
                   }}
                   className="w-full bg-black hover:bg-[#262626] text-white py-3.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all shadow-xs cursor-pointer"
                 >

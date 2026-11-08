@@ -59,7 +59,7 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2.5 text-xs text-white/65 font-light">
               <li>
-                <Link href="/orders" className="hover:text-[#E5B869] transition-colors">
+                <Link href="/profile?tab=orders" className="hover:text-[#E5B869] transition-colors">
                   Track Order
                 </Link>
               </li>

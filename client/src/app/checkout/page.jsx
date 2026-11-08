@@ -484,6 +484,7 @@ export default function CheckoutPage() {
   }
 
   const walletCashValue = Math.floor((availableRewardPoints || 0) * ((rewardRate || 100) / 100));
+  const pointsPerRupee = (rewardRate || 100) > 0 ? Math.round(100 / (rewardRate || 100)) : 10;
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
@@ -558,7 +559,7 @@ export default function CheckoutPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => router.push('/orders')}
+                onClick={() => router.push('/profile?tab=orders')}
                 className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-black hover:bg-[#262626] text-white text-xs font-bold uppercase tracking-widest transition-all cursor-pointer shadow-xs"
               >
                 Track in My Orders
@@ -959,13 +960,16 @@ export default function CheckoutPage() {
                                 ({walletCashValue > 0 ? `₹${walletCashValue.toLocaleString('en-IN')}` : '₹0'})
                               </span>
                             </span>
+                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#FAF5E8] text-[#8C6D1F] border border-[#E8DFC8] shrink-0">
+                              1 ₹ = {pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'}
+                            </span>
                           </div>
-                          <p className="text-xs text-[#7A6B5D] font-light leading-snug mt-0.5 m-0 truncate">
+                          <p className="text-xs text-[#7A6B5D] font-light leading-snug mt-0.5 m-0">
                             {rewardPointsUsed > 0 
-                              ? `✓ Applied ${Number(rewardPointsUsed).toLocaleString('en-IN')} pts towards order (-₹${rewardDiscountAmount.toLocaleString('en-IN')})` 
+                              ? `✓ Applied ${Number(rewardPointsUsed).toLocaleString('en-IN')} pts towards order (-₹${rewardDiscountAmount.toLocaleString('en-IN')}) • 1 ₹ = ${pointsPerRupee} ${pointsPerRupee === 1 ? 'pt' : 'pts'}` 
                               : walletCashValue > 0
-                                ? `Redeem ${Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹${walletCashValue.toLocaleString('en-IN')} off`
-                                : `Earn wallet points on every order`}
+                                ? `Redeem ${Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹${walletCashValue.toLocaleString('en-IN')} off (${pointsPerRupee} ${pointsPerRupee === 1 ? 'pt' : 'pts'} = ₹1)`
+                                : `Earn wallet points on every order • 1 ₹ = ${pointsPerRupee} ${pointsPerRupee === 1 ? 'pt' : 'pts'}`}
                           </p>
                         </div>
                       </div>

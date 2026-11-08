@@ -138,6 +138,91 @@ const aggregateOrderFinancials = (orders, periodName = 'Selected Period') => {
    ========================================================================== */
 
 /**
+ * GET /api/admin/reports/months-overview
+ * Aggregates all orders by month and year with order counts, status breakdown, and financials
+ */
+export const getMonthWiseOverview = async (req, res) => {
+  try {
+    const orders = await Order.find().lean();
+    
+    // Group orders by Year-Month
+    const monthsMap = new Map();
+    const monthNames = [
+      '', 'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    orders.forEach(o => {
+      const d = new Date(o.createdAt || Date.now());
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const key = `${year}-${String(month).padStart(2, '0')}`;
+
+      if (!monthsMap.has(key)) {
+        monthsMap.set(key, {
+          key,
+          year,
+          month,
+          monthName: monthNames[month],
+          periodName: `${monthNames[month]} ${year}`,
+          totalOrders: 0,
+          grossRevenue: 0,
+          deliveredOrders: 0,
+          processingOrders: 0,
+          cancelledOrders: 0
+        });
+      }
+
+      const rec = monthsMap.get(key);
+      rec.totalOrders++;
+      rec.grossRevenue += Number(o.total_amount || o.subtotal || 0);
+
+      const status = String(o.status || '').toLowerCase();
+      if (status === 'delivered') {
+        rec.deliveredOrders++;
+      } else if (status === 'cancelled') {
+        rec.cancelledOrders++;
+      } else {
+        rec.processingOrders++;
+      }
+    });
+
+    // If current month has no orders, ensure it exists in the list
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth() + 1;
+    const curKey = `${curYear}-${String(curMonth).padStart(2, '0')}`;
+    if (!monthsMap.has(curKey)) {
+      monthsMap.set(curKey, {
+        key: curKey,
+        year: curYear,
+        month: curMonth,
+        monthName: monthNames[curMonth],
+        periodName: `${monthNames[curMonth]} ${curYear}`,
+        totalOrders: 0,
+        grossRevenue: 0,
+        deliveredOrders: 0,
+        processingOrders: 0,
+        cancelledOrders: 0
+      });
+    }
+
+    const data = Array.from(monthsMap.values()).map(m => ({
+      ...m,
+      aov: m.totalOrders > 0 ? Math.round(m.grossRevenue / m.totalOrders) : 0
+    })).sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error('Month-wise overview error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to aggregate month-wise overview.' });
+  }
+};
+
+/**
  * GET /api/admin/reports/monthly
  * Generate monthly sales report for a specific month and year
  */

@@ -549,6 +549,21 @@ const adminService = {
     };
   },
 
+  getMonthWiseOverview: async () => {
+    try {
+      const response = await api.get('/admin/reports/months-overview');
+      if (response?.data) {
+        return response.data;
+      }
+    } catch (err) {
+      console.error('Failed to load month-wise overview from backend:', err?.response?.data?.message || err.message);
+    }
+    return {
+      success: false,
+      data: []
+    };
+  },
+
   downloadReportPDF: async (params = {}) => {
     try {
       const response = await api.get('/admin/reports/export/pdf', {

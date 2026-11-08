@@ -132,7 +132,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
     setIsCheckoutModalOpen(false);
     setOrderSuccessData(null);
     onClose();
-    router.push('/orders');
+    router.push('/profile?tab=orders');
   };
 
   if (!isOpen) return null;

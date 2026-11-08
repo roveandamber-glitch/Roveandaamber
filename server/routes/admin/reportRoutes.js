@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  getMonthWiseOverview,
   getMonthlySalesReport,
   getDailySalesReport,
   getCustomRangeSalesReport,
@@ -23,6 +24,7 @@ router.use(protect, adminOnly);
 /* --------------------------------------------------------------------------
    11.1 MONTHLY SALES REPORTS & EXPORTS
    -------------------------------------------------------------------------- */
+router.get('/months-overview', getMonthWiseOverview);
 router.get('/monthly', validateMonthlyReportParams, getMonthlySalesReport);
 router.get('/export/pdf', validateExportFormat, downloadSalesReportPDF);
 router.get('/export/csv', validateExportFormat, downloadSalesReportCSV);

@@ -39,6 +39,7 @@ export default function CartOrderSummary({
   onOpenCouponsModal
 }) {
   const walletBalanceInRupees = Math.floor((availableRewardPoints || 0) * ((rewardRate || 100) / 100));
+  const pointsPerRupee = (rewardRate || 100) > 0 ? Math.round(100 / (rewardRate || 100)) : 10;
 
   return (
     <div className="bg-[#FAF8F5] p-3.5 sm:p-6 flex flex-col justify-between h-full space-y-4">
@@ -225,16 +226,24 @@ export default function CartOrderSummary({
                       ({walletBalanceInRupees > 0 ? `₹${walletBalanceInRupees.toLocaleString('en-IN')}` : '₹0'})
                     </span>
                   </span>
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#FAF5E8] text-[#8C6D1F] border border-[#E8DFC8] shrink-0">
+                    1 ₹ = {pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'}
+                  </span>
                 </div>
-                <p className="text-xs text-stone-500 m-0 mt-0.5 font-light leading-snug truncate">
+                <p className="text-xs text-stone-500 m-0 mt-0.5 font-light leading-snug">
                   {rewardPointsUsed > 0 ? (
                     <span className="text-emerald-800 font-semibold">
-                      ✓ Applied {Number(rewardPointsUsed).toLocaleString('en-IN')} pts towards order (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
+                      ✓ Applied {Number(rewardPointsUsed).toLocaleString('en-IN')} pts towards order (-₹{rewardDiscountAmount.toLocaleString('en-IN')}) • 1 ₹ = {pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'}
                     </span>
                   ) : walletBalanceInRupees > 0 ? (
-                    <span>Redeem {Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹{walletBalanceInRupees.toLocaleString('en-IN')} off</span>
+                    <span>
+                      Redeem {Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹{walletBalanceInRupees.toLocaleString('en-IN')} off
+                      <span className="text-stone-400 font-mono ml-1.5 font-normal">
+                        ({pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'} = ₹1)
+                      </span>
+                    </span>
                   ) : (
-                    <span>Earn wallet points on every order</span>
+                    <span>Earn wallet points on every order • 1 ₹ = {pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'}</span>
                   )}
                 </p>
               </div>

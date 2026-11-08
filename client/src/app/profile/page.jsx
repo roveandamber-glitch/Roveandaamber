@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { message, Spin } from 'antd';
 import authService from '@/services/authService';
@@ -19,12 +19,20 @@ import ProfileSecurity from './components/ProfileSecurity';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState('details'); // 'details' | 'cart' | 'orders' | 'security'
+
+  useEffect(() => {
+    const tabParam = searchParams?.get('tab');
+    if (tabParam && ['details', 'cart', 'orders', 'security'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Initial & Form State for Change Detection
   const [initialProfile, setInitialProfile] = useState({
@@ -256,11 +264,11 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Connected Master Workspace Card */}
-        <div className="bg-white rounded-3xl border border-[#E8E2D6] shadow-xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+        {/* Connected Master Workspace Card with Fixed / Sticky Sidebar */}
+        <div className="bg-white rounded-3xl border border-[#E8E2D6] shadow-xs grid grid-cols-1 lg:grid-cols-12 min-h-[640px] items-start">
           
-          {/* Left Column: Connected Sidebar Menu */}
-          <div className="lg:col-span-4 xl:col-span-3.5 bg-[#FCFBF8] border-b lg:border-b-0 lg:border-r border-[#ECE6D9]">
+          {/* Left Column: Fixed / Sticky Sidebar Menu (No Scroll, Single Screen Fit) */}
+          <div className="lg:col-span-4 xl:col-span-3.5 bg-[#FCFBF8] border-b lg:border-b-0 lg:border-r border-[#ECE6D9] rounded-t-3xl lg:rounded-tr-none lg:rounded-l-3xl lg:sticky lg:top-24 lg:self-start overflow-hidden">
             <ProfileSidebar
               user={user}
               orders={orders}
@@ -272,7 +280,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Right Column: Connected Content Workspace */}
-          <div className="lg:col-span-8 xl:col-span-8.5 p-6 sm:p-8 lg:p-10 bg-white flex flex-col justify-between">
+          <div className="lg:col-span-8 xl:col-span-8.5 p-6 sm:p-8 lg:p-10 bg-white rounded-b-3xl lg:rounded-bl-none lg:rounded-r-3xl flex flex-col justify-between min-w-0">
             <div>
               {activeTab === 'details' && (
                 <ProfilePersonalDetails

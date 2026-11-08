@@ -104,7 +104,7 @@ export default function OrderDetailsPage() {
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <Link
-            href="/orders"
+            href="/profile?tab=orders"
             className="inline-flex items-center gap-2 text-xs font-semibold text-stone-600 hover:text-black transition-colors"
           >
             <ArrowLeft size={14} />
@@ -135,13 +135,13 @@ export default function OrderDetailsPage() {
             </p>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/login?redirect=/orders"
+                href="/login?redirect=/profile?tab=orders"
                 className="px-6 py-2.5 rounded-full bg-[#1C1714] text-white text-xs font-bold uppercase tracking-wider hover:bg-black transition-colors"
               >
                 Sign In to Account
               </Link>
               <Link
-                href="/orders"
+                href="/profile?tab=orders"
                 className="px-6 py-2.5 rounded-full bg-white border border-stone-300 text-stone-700 text-xs font-semibold hover:border-black transition-colors"
               >
                 View My Orders
