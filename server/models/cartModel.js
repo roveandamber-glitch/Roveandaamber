@@ -461,6 +461,10 @@ export const CartModel = {
       throw new Error('Customer account not found.');
     }
 
+    if (user.isWalletDisabled) {
+      throw new Error(user.walletDisabledReason || 'Your patron privilege wallet has been temporarily suspended by boutique administration.');
+    }
+
     const patronPoints = user.rewardPoints || 0;
     const requestedPoints = Math.max(1, parseInt(points, 10) || 0);
 

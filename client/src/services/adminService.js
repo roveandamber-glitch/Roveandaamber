@@ -285,6 +285,21 @@ const adminService = {
     return response.data;
   },
 
+  getUserRewardHistory: async (userId) => {
+    const response = await api.get(`/admin/rewards/user/${userId}/history`);
+    return response.data;
+  },
+
+  adjustUserPoints: async (userId, data) => {
+    const response = await api.put(`/admin/rewards/user/${userId}/points`, data);
+    return response.data;
+  },
+
+  toggleUserWallet: async (userId, isWalletDisabled, reason = '') => {
+    const response = await api.put(`/admin/rewards/user/${userId}/wallet`, { isWalletDisabled, reason });
+    return response.data;
+  },
+
   /* --------------------------------------------------------------------------
      8. COUPONS & DISCOUNTS
      -------------------------------------------------------------------------- */

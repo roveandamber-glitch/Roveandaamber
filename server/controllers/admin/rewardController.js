@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { RewardRule, RewardTransaction } from '../../models/rewardModel.js';
 import { User } from '../../models/userModel.js';
 import { Order } from '../../models/orderModel.js';
@@ -157,5 +158,188 @@ export const updateRewardRules = async (req, res) => {
       success: false,
       message: error.message || 'Failed to update reward rules'
     });
+  }
+};
+
+// GET /api/admin/rewards/user/:userId/history
+export const getUserRewardHistory = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let user = null;
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      user = await User.findById(userId).select('-password').lean();
+    }
+    if (!user) {
+      user = await User.findOne({
+        $or: [{ email: userId.toLowerCase().trim() }, { name: userId.trim() }]
+      }).select('-password').lean();
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const query = {
+      $or: [
+        { userId: user._id },
+        { customerEmail: (user.email || '').toLowerCase().trim() },
+        { customerName: user.name }
+      ]
+    };
+
+    const transactions = await RewardTransaction.find(query).sort({ createdAt: -1 }).lean();
+
+    const formattedTxs = transactions.map(t => ({
+      id: String(t._id),
+      _id: String(t._id),
+      customer: t.customerName || user.name,
+      type: t.type,
+      points: t.points > 0 ? `+${t.points}` : `${t.points}`,
+      rawPoints: t.points,
+      orderId: t.orderId || 'ATELIER-PRIVILEGE',
+      date: new Date(t.createdAt).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }),
+      createdAt: t.createdAt,
+      status: t.status || 'Completed',
+      description: t.description || ''
+    }));
+
+    return res.json({
+      success: true,
+      data: {
+        user: {
+          id: String(user._id),
+          _id: String(user._id),
+          name: user.name,
+          email: user.email,
+          phone: user.phone || '',
+          rewardPoints: user.rewardPoints || 0,
+          isWalletDisabled: Boolean(user.isWalletDisabled),
+          walletDisabledReason: user.walletDisabledReason || ''
+        },
+        transactions: formattedTxs
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user reward history:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve user reward history.' });
+  }
+};
+
+// PUT /api/admin/rewards/user/:userId/points
+export const adjustUserPoints = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { action = 'increase', points = 0, reason = '' } = req.body;
+
+    let user = null;
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      user = await User.findById(userId);
+    }
+    if (!user) {
+      user = await User.findOne({
+        $or: [{ email: userId.toLowerCase().trim() }, { name: userId.trim() }]
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Customer account not found.' });
+    }
+
+    const currentPoints = user.rewardPoints || 0;
+    const numPoints = Math.abs(parseInt(points, 10) || 0);
+
+    let delta = 0;
+    let newPoints = currentPoints;
+
+    if (action === 'increase') {
+      delta = numPoints;
+      newPoints = currentPoints + delta;
+    } else if (action === 'decrease') {
+      delta = -Math.min(currentPoints, numPoints);
+      newPoints = Math.max(0, currentPoints - numPoints);
+    } else if (action === 'set') {
+      newPoints = Math.max(0, numPoints);
+      delta = newPoints - currentPoints;
+    }
+
+    user.rewardPoints = newPoints;
+    await user.save();
+
+    // Record adjustment transaction in ledger
+    if (delta !== 0) {
+      await RewardTransaction.record({
+        userId: user._id,
+        customerName: user.name,
+        customerEmail: user.email,
+        type: 'Adjustment',
+        points: delta,
+        orderId: `ADJ-${Date.now().toString().slice(-6)}`,
+        description: reason || `Administrative ${action} of points (${delta > 0 ? '+' : ''}${delta} pts)`
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: `Points updated successfully. New balance: ${newPoints.toLocaleString()} pts.`,
+      data: {
+        newPoints,
+        delta,
+        user: {
+          id: String(user._id),
+          _id: String(user._id),
+          name: user.name,
+          email: user.email,
+          rewardPoints: user.rewardPoints,
+          isWalletDisabled: Boolean(user.isWalletDisabled)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error adjusting user points:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Failed to adjust points.' });
+  }
+};
+
+// PUT /api/admin/rewards/user/:userId/wallet
+export const toggleUserWallet = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isWalletDisabled, reason = '' } = req.body;
+
+    let user = null;
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      user = await User.findById(userId);
+    }
+    if (!user) {
+      user = await User.findOne({
+        $or: [{ email: userId.toLowerCase().trim() }, { name: userId.trim() }]
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Customer account not found.' });
+    }
+
+    user.isWalletDisabled = Boolean(isWalletDisabled);
+    user.walletDisabledReason = isWalletDisabled ? (reason || 'Wallet suspended by boutique administration') : '';
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: isWalletDisabled 
+        ? `${user.name}'s wallet has been disabled.` 
+        : `${user.name}'s wallet has been enabled.`,
+      data: {
+        isWalletDisabled: user.isWalletDisabled,
+        walletDisabledReason: user.walletDisabledReason
+      }
+    });
+  } catch (error) {
+    console.error('Error toggling user wallet:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update user wallet status.' });
   }
 };

@@ -38,13 +38,19 @@ export default function ProfilePage() {
   const [initialProfile, setInitialProfile] = useState({
     name: '',
     phone: '',
-    address: ''
+    address: '',
+    city: '',
+    state: '',
+    pincode: ''
   });
 
   const [profileForm, setProfileForm] = useState({
     name: '',
     phone: '',
-    address: ''
+    address: '',
+    city: '',
+    state: '',
+    pincode: ''
   });
   const [savingProfile, setSavingProfile] = useState(false);
 
@@ -82,12 +88,16 @@ export default function ProfilePage() {
         ]);
 
         if (profileRes?.success && profileRes.user) {
+          const u = profileRes.user;
           const loadedData = {
-            name: profileRes.user.name || '',
-            phone: profileRes.user.phone || '',
-            address: profileRes.user.address || ''
+            name: u.name || '',
+            phone: u.phone || '',
+            address: u.address || '',
+            city: u.city || '',
+            state: u.state || '',
+            pincode: u.pincode || ''
           };
-          setUser(profileRes.user);
+          setUser(u);
           setProfileForm(loadedData);
           setInitialProfile(loadedData);
         } else if (storedUser) {
@@ -95,7 +105,10 @@ export default function ProfilePage() {
           const loadedData = {
             name: parsed.name || '',
             phone: parsed.phone || '',
-            address: parsed.address || ''
+            address: parsed.address || '',
+            city: parsed.city || '',
+            state: parsed.state || '',
+            pincode: parsed.pincode || ''
           };
           setUser(parsed);
           setProfileForm(loadedData);
@@ -119,7 +132,10 @@ export default function ProfilePage() {
   const isProfileChanged = 
     profileForm.name.trim() !== (initialProfile.name || '').trim() ||
     profileForm.phone.trim() !== (initialProfile.phone || '').trim() ||
-    profileForm.address.trim() !== (initialProfile.address || '').trim();
+    profileForm.address.trim() !== (initialProfile.address || '').trim() ||
+    profileForm.city.trim() !== (initialProfile.city || '').trim() ||
+    profileForm.state.trim() !== (initialProfile.state || '').trim() ||
+    profileForm.pincode.trim() !== (initialProfile.pincode || '').trim();
 
   const isProfileValid = profileForm.name.trim().length >= 2 && isProfileChanged;
 
@@ -131,15 +147,27 @@ export default function ProfilePage() {
     try {
       const res = await authService.updateProfile(profileForm);
       if (res?.success && res.user) {
+        const u = res.user;
         const updatedData = {
-          name: res.user.name || '',
-          phone: res.user.phone || '',
-          address: res.user.address || ''
+          name: u.name || profileForm.name,
+          phone: u.phone || profileForm.phone,
+          address: u.address || profileForm.address,
+          city: u.city || profileForm.city,
+          state: u.state || profileForm.state,
+          pincode: u.pincode || profileForm.pincode
         };
-        setUser(res.user);
+        setUser(u);
         setProfileForm(updatedData);
         setInitialProfile(updatedData);
-        localStorage.setItem('user', JSON.stringify(res.user));
+        localStorage.setItem('user', JSON.stringify({ ...u, ...updatedData }));
+        localStorage.setItem('rove_amber_saved_address', JSON.stringify({
+          customerName: updatedData.name,
+          phone: updatedData.phone,
+          address: updatedData.address,
+          city: updatedData.city,
+          state: updatedData.state,
+          pincode: updatedData.pincode
+        }));
         window.dispatchEvent(new Event('authChange'));
         message.success('Profile details updated successfully.');
       } else {
@@ -268,7 +296,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-3xl border border-[#E8E2D6] shadow-xs grid grid-cols-1 lg:grid-cols-12 min-h-[640px] items-start">
           
           {/* Left Column: Fixed / Sticky Sidebar Menu (No Scroll, Single Screen Fit) */}
-          <div className="lg:col-span-4 xl:col-span-3.5 bg-[#FCFBF8] border-b lg:border-b-0 lg:border-r border-[#ECE6D9] rounded-t-3xl lg:rounded-tr-none lg:rounded-l-3xl lg:sticky lg:top-24 lg:self-start overflow-hidden">
+          <div className="lg:col-span-4 xl:col-span-3.5 bg-[#FCFBF8] border-b lg:border-b-0 lg:border-r border-[#ECE6D9] rounded-t-3xl lg:rounded-tr-none lg:rounded-l-3xl lg:sticky lg:top-24 lg:self-start z-10">
             <ProfileSidebar
               user={user}
               orders={orders}

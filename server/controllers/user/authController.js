@@ -240,7 +240,10 @@ export const login = async (req, res) => {
         role: user.role,
         rewardPoints: user.rewardPoints || 0,
         phone: user.phone || null,
-        address: user.address || null
+        address: user.address || null,
+        city: user.city || null,
+        state: user.state || null,
+        pincode: user.pincode || null
       }
     });
   } catch (error) {
@@ -267,16 +270,25 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { name, phone, address } = req.body;
+    const { name, phone, address, city, state, pincode } = req.body;
     
-    if (!name || name.trim().length === 0) {
+    const userToUpdate = await UserModel.findById(req.user.id);
+    if (!userToUpdate) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const updatedName = name !== undefined ? name.trim() : userToUpdate.name;
+    if (!updatedName) {
       return res.status(400).json({ success: false, message: 'Name cannot be empty.' });
     }
 
     const updatedUser = await UserModel.updateProfile(req.user.id, {
-      name: name.trim(),
-      phone: phone ? phone.trim() : null,
-      address: address ? address.trim() : null
+      name: updatedName,
+      phone: phone !== undefined ? (phone ? phone.trim() : null) : userToUpdate.phone,
+      address: address !== undefined ? (address ? address.trim() : null) : userToUpdate.address,
+      city: city !== undefined ? (city ? city.trim() : null) : userToUpdate.city,
+      state: state !== undefined ? (state ? state.trim() : null) : userToUpdate.state,
+      pincode: pincode !== undefined ? (pincode ? pincode.trim() : null) : userToUpdate.pincode
     });
 
     return res.json({

@@ -36,19 +36,15 @@ export default function ProfileSidebar({
           </div>
         </div>
 
-        {/* Quick Metrics Bar (Orders, Bag, VIP) */}
-        <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-[#ECE5D8] text-center">
-          <div className="p-2 rounded-xl bg-white border border-[#EAE4D8]">
+        {/* Quick Metrics Bar (Orders & Bag) */}
+        <div className="grid grid-cols-2 gap-2.5 py-2.5 border-y border-[#ECE5D8] text-center">
+          <div className="p-2.5 rounded-xl bg-white border border-[#EAE4D8]">
             <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider block">Orders</span>
-            <span className="text-xs sm:text-sm font-bold text-black font-sans mt-0.5 block">{orders.length}</span>
+            <span className="text-sm font-bold text-black font-sans mt-0.5 block">{orders.length}</span>
           </div>
-          <div className="p-2 rounded-xl bg-white border border-[#EAE4D8]">
+          <div className="p-2.5 rounded-xl bg-white border border-[#EAE4D8]">
             <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider block">Bag</span>
-            <span className="text-xs sm:text-sm font-bold text-black font-sans mt-0.5 block">{cartItems.length}</span>
-          </div>
-          <div className="p-2 rounded-xl bg-white border border-[#EAE4D8]">
-            <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider block">Status</span>
-            <span className="text-xs font-bold text-[#8C6D1F] font-sans mt-0.5 block">VIP</span>
+            <span className="text-sm font-bold text-black font-sans mt-0.5 block">{cartItems.length}</span>
           </div>
         </div>
 

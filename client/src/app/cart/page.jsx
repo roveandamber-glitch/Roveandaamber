@@ -77,6 +77,7 @@ export default function CartPage() {
   const [rewardDiscountAmount, setRewardDiscountAmount] = useState(0);
   const [availableRewardPoints, setAvailableRewardPoints] = useState(0);
   const [rewardRate, setRewardRate] = useState(100);
+  const [pointsPerHundred, setPointsPerHundred] = useState(10);
   const [rewardLoading, setRewardLoading] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
@@ -122,6 +123,9 @@ export default function CartPage() {
       }
       if (summary.rewardRate) {
         setRewardRate(Number(summary.rewardRate) || 100);
+      }
+      if (summary.pointsPerHundred) {
+        setPointsPerHundred(Number(summary.pointsPerHundred) || 10);
       }
     } else {
       const user = authService.getUser();
@@ -877,6 +881,7 @@ export default function CartPage() {
                 handleToggleRewards={handleToggleRewards}
                 availableRewardPoints={availableRewardPoints}
                 rewardRate={rewardRate}
+                pointsPerHundred={pointsPerHundred}
                 handleStartCheckout={handleStartCheckout}
                 availableCoupons={availableCoupons}
                 onOpenCouponsModal={() => setIsCouponsModalOpen(true)}

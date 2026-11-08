@@ -73,17 +73,57 @@ export default function ProfilePersonalDetails({
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-2">Default Shipping Address</label>
-            <div className="relative">
-              <textarea
-                rows={3}
-                value={profileForm.address}
-                onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
-                placeholder="Apartment/Flat, Street name, City, State, PIN Code..."
-                className="w-full p-4 pl-10 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 text-xs bg-[#FAF8F5]/60 focus:bg-white transition-all resize-none outline-none"
-              />
-              <MapPin size={15} className="absolute left-3.5 top-4 text-gray-400" />
+          {/* Default Shipping Address */}
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-gray-700 block mb-2">Street Address, Apartment / Villa No.</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={profileForm.address || ''}
+                  onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                  placeholder="House / Flat No., Apartment / Society Name, Street / Avenue"
+                  className="w-full h-12 pl-10 pr-4 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 text-xs bg-[#FAF8F5]/60 focus:bg-white transition-all outline-none"
+                />
+                <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              </div>
+            </div>
+
+            {/* City, State, PIN Code (3-column layout matching checkout) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-2">City</label>
+                <input
+                  type="text"
+                  value={profileForm.city || ''}
+                  onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                  placeholder="e.g. Mumbai"
+                  className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 text-xs bg-[#FAF8F5]/60 focus:bg-white transition-all outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-2">State</label>
+                <input
+                  type="text"
+                  value={profileForm.state || ''}
+                  onChange={(e) => setProfileForm({ ...profileForm, state: e.target.value })}
+                  placeholder="e.g. Maharashtra"
+                  className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 text-xs bg-[#FAF8F5]/60 focus:bg-white transition-all outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-2">PIN Code</label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={profileForm.pincode || ''}
+                  onChange={(e) => setProfileForm({ ...profileForm, pincode: e.target.value.replace(/\D/g, '') })}
+                  placeholder="e.g. 400001"
+                  className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 text-xs bg-[#FAF8F5]/60 focus:bg-white transition-all outline-none font-mono"
+                />
+              </div>
             </div>
           </div>
         </div>

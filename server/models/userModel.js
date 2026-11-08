@@ -93,6 +93,21 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    city: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    state: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    pincode: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     isBlocked: {
       type: Boolean,
       default: false
@@ -109,6 +124,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 100,
       min: [0, 'Reward points cannot be negative']
+    },
+    isWalletDisabled: {
+      type: Boolean,
+      default: false
+    },
+    walletDisabledReason: {
+      type: String,
+      default: ''
     },
     addresses: [addressSchema]
   },
@@ -276,12 +299,15 @@ export const UserModel = {
     return { ...doc, id: user._id.toString(), _id: user._id.toString() };
   },
 
-  updateProfile: async (id, { name, phone, address }) => {
+  updateProfile: async (id, { name, phone, address, city, state, pincode }) => {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
     const updateData = {};
     if (name) updateData.name = name.trim();
     if (phone !== undefined) updateData.phone = phone;
     if (address !== undefined) updateData.address = address;
+    if (city !== undefined) updateData.city = city;
+    if (state !== undefined) updateData.state = state;
+    if (pincode !== undefined) updateData.pincode = pincode;
 
     const user = await User.findByIdAndUpdate(id, { $set: updateData }, { new: true }).select('-password');
     if (!user) return null;
@@ -302,6 +328,36 @@ export const UserModel = {
     user.isBlocked = Boolean(isBlocked);
     user.blockedReason = isBlocked ? (reason || 'Account suspended by administrator') : '';
     user.blockedAt = isBlocked ? new Date() : null;
+    await user.save();
+    const doc = user.toObject();
+    return { ...doc, id: user._id.toString(), _id: user._id.toString() };
+  },
+
+  updateUserPoints: async (id, pointsDelta, isAbsolute = false) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const user = await User.findById(id);
+    if (!user) return null;
+
+    let newPoints;
+    if (isAbsolute) {
+      newPoints = Math.max(0, parseInt(pointsDelta, 10) || 0);
+    } else {
+      newPoints = Math.max(0, (user.rewardPoints || 0) + (parseInt(pointsDelta, 10) || 0));
+    }
+
+    user.rewardPoints = newPoints;
+    await user.save();
+    const doc = user.toObject();
+    return { ...doc, id: user._id.toString(), _id: user._id.toString() };
+  },
+
+  toggleUserWallet: async (id, isWalletDisabled, reason = '') => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const user = await User.findById(id);
+    if (!user) return null;
+
+    user.isWalletDisabled = Boolean(isWalletDisabled);
+    user.walletDisabledReason = isWalletDisabled ? (reason || 'Wallet suspended by boutique administration') : '';
     await user.save();
     const doc = user.toObject();
     return { ...doc, id: user._id.toString(), _id: user._id.toString() };

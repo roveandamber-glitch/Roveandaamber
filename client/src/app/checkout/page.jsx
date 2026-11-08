@@ -26,7 +26,8 @@ import {
   Navigation,
   Compass,
   FileText,
-  Loader2
+  Loader2,
+  Home
 } from 'lucide-react';
 import { message, Form, Input, Spin } from 'antd';
 import cartService from '@/services/cartService';
@@ -97,15 +98,26 @@ export default function CheckoutPage() {
   const [rewardDiscountAmount, setRewardDiscountAmount] = useState(0);
   const [availableRewardPoints, setAvailableRewardPoints] = useState(0);
   const [rewardRate, setRewardRate] = useState(100);
+  const [pointsPerHundred, setPointsPerHundred] = useState(10);
   const [rewardLoading, setRewardLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [savedProfileAddress, setSavedProfileAddress] = useState(null);
   const [saveAddressForFuture, setSaveAddressForFuture] = useState(true);
 
-  const handleAutofillSavedAddress = () => {
+  const handleFillSavedAddress = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     if (savedProfileAddress) {
-      form.setFieldsValue(savedProfileAddress);
-      message.success('Delivery address autofilled from your boutique profile.');
+      form.setFieldsValue({
+        customerName: savedProfileAddress.customerName || '',
+        email: savedProfileAddress.email || '',
+        phone: savedProfileAddress.phone || '',
+        address: savedProfileAddress.address || '',
+        city: savedProfileAddress.city || '',
+        state: savedProfileAddress.state || '',
+        pincode: savedProfileAddress.pincode || '',
+        landmark: savedProfileAddress.landmark || ''
+      });
+      message.success('Saved address filled. You can edit any field below.');
     }
   };
 
@@ -138,6 +150,9 @@ export default function CheckoutPage() {
         }
         if (summary.rewardRate) {
           setRewardRate(Number(summary.rewardRate) || 100);
+        }
+        if (summary.pointsPerHundred) {
+          setPointsPerHundred(Number(summary.pointsPerHundred) || 10);
         }
       } else {
         const user = authService.getUser();
@@ -333,6 +348,14 @@ export default function CheckoutPage() {
             u.pincode = addrObj.pincode;
             localStorage.setItem('user', JSON.stringify(u));
           }
+
+          authService.updateProfile({
+            phone: addrObj.phone,
+            address: addrObj.address,
+            city: addrObj.city,
+            state: addrObj.state,
+            pincode: addrObj.pincode
+          }).catch(() => {});
         } catch (e) { console.debug(e); }
       }
 
@@ -485,6 +508,7 @@ export default function CheckoutPage() {
 
   const walletCashValue = Math.floor((availableRewardPoints || 0) * ((rewardRate || 100) / 100));
   const pointsPerRupee = (rewardRate || 100) > 0 ? Math.round(100 / (rewardRate || 100)) : 10;
+  const pointsToEarn = Math.floor(((finalTotal || 0) / 100) * (pointsPerHundred || 10));
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] font-sans text-black flex flex-col justify-between">
@@ -656,21 +680,52 @@ export default function CheckoutPage() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      {savedProfileAddress && (
-                        <button
-                          type="button"
-                          onClick={handleAutofillSavedAddress}
-                          className="text-[10.5px] font-bold text-[#8C6D1F] hover:text-[#1C1714] bg-[#FAF3E0] hover:bg-[#F5EAD0] border border-[#E0D0A5] px-2.5 py-0.5 rounded-full transition-colors cursor-pointer flex items-center gap-1"
-                        >
-                          <MapPin size={10} className="text-[#8C6D1F]" />
-                          <span>Autofill Address</span>
-                        </button>
-                      )}
                       <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                         Pan-India Delivery
                       </span>
                     </div>
                   </div>
+
+                  {/* SAVED ADDRESS SELECTION CARD */}
+                  {savedProfileAddress && (savedProfileAddress.address || savedProfileAddress.city) && (
+                    <div
+                      onClick={handleFillSavedAddress}
+                      role="button"
+                      tabIndex={0}
+                      className="p-3 sm:p-3.5 rounded-2xl bg-[#FCFAF6] hover:bg-[#F7F2E8] border border-[#D9CEBA] hover:border-[#B8860B] transition-all cursor-pointer shadow-2xs group flex items-center justify-between gap-3 text-left"
+                    >
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-[#1C1714] text-[#ECC880] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs group-hover:scale-105 transition-transform">
+                          <Home size={14} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-[#1C1714]">Saved Address</span>
+                            <span className="text-[10px] text-[#8C6D1F] bg-[#FAF1D9] border border-[#E5D7B3] px-2 py-0.5 rounded-full font-semibold">
+                              Click to Fill & Edit
+                            </span>
+                          </div>
+                          <p className="text-[11.5px] text-[#5C5248] mt-1 font-normal truncate">
+                            {[
+                              savedProfileAddress.customerName,
+                              savedProfileAddress.address,
+                              savedProfileAddress.city,
+                              savedProfileAddress.state,
+                              savedProfileAddress.pincode
+                            ].filter(Boolean).join(', ')}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleFillSavedAddress}
+                        className="px-3 py-1.5 rounded-lg bg-[#1C1714] text-[#ECC880] text-[11px] font-bold shrink-0 hover:bg-[#2E241E] transition-colors group-hover:shadow-xs cursor-pointer"
+                      >
+                        Use Address
+                      </button>
+                    </div>
+                  )}
 
                   {/* Subtle Gift Order Reassurance (Configured in Bag) */}
                   {giftOptions?.isGift && (
@@ -925,32 +980,49 @@ export default function CheckoutPage() {
                         ₹{finalTotal.toLocaleString('en-IN')}
                       </span>
                     </div>
+
+                    {/* Privilege Points Earned on this Purchase */}
+                    {pointsToEarn > 0 && (
+                      <div className="p-2.5 rounded-xl bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border border-[#E8DFC9] flex items-center justify-between gap-2 shadow-2xs mt-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 rounded-lg bg-[#FAF0D4] border border-[#E0D0A5] flex items-center justify-center text-[#B8860B] shrink-0">
+                            <Sparkles size={13} />
+                          </div>
+                          <span className="text-xs text-[#6B5115] font-medium leading-tight">
+                            You will earn <strong className="font-bold text-[#B8860B]">+{pointsToEarn.toLocaleString('en-IN')} Privilege Points</strong> on this order
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E8DEC8] shrink-0">
+                          +{pointsPerHundred} pts / ₹100
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Patron Privilege Wallet Toggle (Spacious Luxury Size & Real Money) */}
+                  {/* Patron Privilege Wallet Toggle (Compact & Simple) */}
                   <div 
                     onClick={handleToggleRewards}
-                    className={`p-3.5 sm:p-4 rounded-xl border transition-all duration-300 cursor-pointer select-none ${
+                    className={`p-2.5 sm:p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
                       rewardPointsUsed > 0 
-                        ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#D4AF37]/60 shadow-xs' 
+                        ? 'bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border-[#D4AF37]/70 shadow-2xs' 
                         : 'bg-white hover:bg-[#F9F7F2] border-[#E8DFC9] hover:border-[#B8860B]/60'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs ${
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border shadow-2xs transition-colors ${
                           rewardPointsUsed > 0 
                             ? 'bg-[#B8860B] text-white border-[#8C6D1F]' 
                             : 'bg-[#FAF7F2] text-[#B8860B] border-[#E5DAC6]'
                         }`}>
-                          <Wallet size={18} strokeWidth={1.8} />
+                          <Wallet size={15} strokeWidth={1.8} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs sm:text-sm font-bold text-[#1A1A1A]">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-[#1A1A1A]">
                               Patron Wallet
                             </span>
-                            <span className={`text-xs font-sans font-bold px-2.5 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
+                            <span className={`text-[11px] font-sans font-bold px-2 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
                               rewardPointsUsed > 0
                                 ? 'bg-[#B8860B] text-white'
                                 : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
@@ -960,21 +1032,18 @@ export default function CheckoutPage() {
                                 ({walletCashValue > 0 ? `₹${walletCashValue.toLocaleString('en-IN')}` : '₹0'})
                               </span>
                             </span>
-                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#FAF5E8] text-[#8C6D1F] border border-[#E8DFC8] shrink-0">
-                              1 ₹ = {pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'}
-                            </span>
                           </div>
-                          <p className="text-xs text-[#7A6B5D] font-light leading-snug mt-0.5 m-0">
+                          <p className="text-[11px] text-[#7A6B5D] font-light leading-tight mt-0.5 m-0 truncate">
                             {rewardPointsUsed > 0 
-                              ? `✓ Applied ${Number(rewardPointsUsed).toLocaleString('en-IN')} pts towards order (-₹${rewardDiscountAmount.toLocaleString('en-IN')}) • 1 ₹ = ${pointsPerRupee} ${pointsPerRupee === 1 ? 'pt' : 'pts'}` 
+                              ? `✓ Applied ${Number(rewardPointsUsed).toLocaleString('en-IN')} pts (-₹${rewardDiscountAmount.toLocaleString('en-IN')})` 
                               : walletCashValue > 0
-                                ? `Redeem ${Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹${walletCashValue.toLocaleString('en-IN')} off (${pointsPerRupee} ${pointsPerRupee === 1 ? 'pt' : 'pts'} = ₹1)`
-                                : `Earn wallet points on every order • 1 ₹ = ${pointsPerRupee} ${pointsPerRupee === 1 ? 'pt' : 'pts'}`}
+                                ? `Redeem ${Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹${walletCashValue.toLocaleString('en-IN')} off`
+                                : `Earn points on every order`}
                           </p>
                         </div>
                       </div>
 
-                      {/* Toggle Switch - Enhanced Touch Size */}
+                      {/* Toggle Switch */}
                       <button
                         type="button"
                         role="switch"
@@ -984,17 +1053,17 @@ export default function CheckoutPage() {
                           handleToggleRewards();
                         }}
                         disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-                        className={`relative inline-flex h-7.5 w-13 sm:w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out items-center disabled:opacity-40 disabled:cursor-not-allowed ${
-                          rewardPointsUsed > 0 ? 'bg-[#1C1714] shadow-[0_0_8px_rgba(212,175,55,0.45)]' : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
+                        className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out items-center disabled:opacity-40 disabled:cursor-not-allowed ${
+                          rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
                         }`}
                         title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
                       >
                         <span
-                          className={`pointer-events-none inline-flex items-center justify-center h-6.5 w-6.5 transform rounded-full bg-white shadow-md ring-0 transition-transform duration-300 ease-in-out ${
-                            rewardPointsUsed > 0 ? 'translate-x-5.5 sm:translate-x-6.5 bg-gradient-to-br from-[#F6D389] to-[#DEB368]' : 'translate-x-0.5'
+                          className={`pointer-events-none inline-flex items-center justify-center h-4.5 w-4.5 transform rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out ${
+                            rewardPointsUsed > 0 ? 'translate-x-4.5' : 'translate-x-0'
                           }`}
                         >
-                          {rewardLoading && <Loader2 size={12} className="animate-spin text-[#241306]" />}
+                          {rewardLoading && <Loader2 size={10} className="animate-spin text-[#241306]" />}
                         </span>
                       </button>
                     </div>
@@ -1070,27 +1139,23 @@ export default function CheckoutPage() {
                     </p>
                   </div>
 
-                  {/* Submit Pay Button - Prominent, Large Luxury Button Across Both Mobile & Desktop */}
+                  {/* Submit Pay Button - Sleek & Compact Luxury Button */}
                   <button
                     type="submit"
                     form="checkout-form"
                     disabled={loading}
                     onClick={() => form.submit()}
-                    className="w-full min-h-[56px] sm:min-h-[60px] px-6 py-4 bg-[#140E0A] hover:bg-black active:scale-[0.98] text-[#F3DFBE] rounded-2xl font-bold text-[15px] sm:text-base tracking-wide flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all cursor-pointer disabled:opacity-50 border-2 border-[#B8860B]/60 shadow-[0_4px_18px_rgba(184,134,11,0.22)]"
+                    className="w-full h-11 sm:h-12 px-5 bg-[#140E0A] hover:bg-black active:scale-[0.99] text-[#F3DFBE] rounded-xl font-bold text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all cursor-pointer disabled:opacity-50 border border-[#B8860B]/50"
                   >
                     {loading ? (
                       <>
-                        <Loader2 size={18} className="animate-spin text-[#ECC880]" />
-                        <span className="text-[15px] sm:text-base font-bold">Securing Order...</span>
+                        <Loader2 size={15} className="animate-spin text-[#ECC880]" />
+                        <span>Securing Order...</span>
                       </>
                     ) : (
                       <>
-                        <div className="w-7 h-7 rounded-full bg-[#FAF3E0]/15 flex items-center justify-center shrink-0 border border-[#ECC880]/30">
-                          <Lock size={15} className="text-[#ECC880]" />
-                        </div>
-                        <span className="text-[15px] sm:text-base font-bold tracking-wide">
-                          Pay ₹{finalTotal.toLocaleString('en-IN')} with Razorpay
-                        </span>
+                        <Lock size={14} className="text-[#ECC880]" />
+                        <span>Pay ₹{finalTotal.toLocaleString('en-IN')} with Razorpay</span>
                       </>
                     )}
                   </button>

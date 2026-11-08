@@ -34,12 +34,14 @@ export default function CartOrderSummary({
   handleToggleRewards,
   availableRewardPoints,
   rewardRate,
+  pointsPerHundred = 10,
   handleStartCheckout,
   availableCoupons = [],
   onOpenCouponsModal
 }) {
   const walletBalanceInRupees = Math.floor((availableRewardPoints || 0) * ((rewardRate || 100) / 100));
   const pointsPerRupee = (rewardRate || 100) > 0 ? Math.round(100 / (rewardRate || 100)) : 10;
+  const pointsToEarn = Math.floor(((finalTotal || 0) / 100) * (pointsPerHundred || 10));
 
   return (
     <div className="bg-[#FAF8F5] p-3.5 sm:p-6 flex flex-col justify-between h-full space-y-4">
@@ -117,6 +119,23 @@ export default function CartOrderSummary({
               ₹{finalTotal.toLocaleString('en-IN')}
             </span>
           </div>
+
+          {/* Privilege Points Earned on this Purchase */}
+          {pointsToEarn > 0 && (
+            <div className="p-2.5 rounded-xl bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border border-[#E8DFC9] flex items-center justify-between gap-2 shadow-2xs mt-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-lg bg-[#FAF0D4] border border-[#E0D0A5] flex items-center justify-center text-[#B8860B] shrink-0">
+                  <Sparkles size={12} />
+                </div>
+                <span className="text-xs text-[#6B5115] font-medium leading-tight">
+                  You will earn <strong className="font-bold text-[#B8860B]">+{pointsToEarn.toLocaleString('en-IN')} pts</strong> on this order
+                </span>
+              </div>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white text-[#8C6D1F] border border-[#E8DEC8] shrink-0">
+                +{pointsPerHundred} pts / ₹100
+              </span>
+            </div>
+          )}
         </div>
 
         {/* 1. COUPON SECTION (Enhanced Size & Prominence) */}
@@ -189,33 +208,33 @@ export default function CartOrderSummary({
           )}
         </div>
 
-        {/* 2. PATRON PRIVILEGE WALLET (Enhanced Size & Prominence) */}
+        {/* 2. PATRON PRIVILEGE WALLET (Compact & Clean) */}
         <div
           onClick={handleToggleRewards}
-          className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer select-none ${
+          className={`p-2.5 sm:p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
             rewardPointsUsed > 0
-              ? 'bg-gradient-to-r from-[#FAF6EC] via-[#FFFDF9] to-[#F5ECE0] border-[#B8860B] shadow-2xs'
+              ? 'bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] border-[#D4AF37]/70 shadow-2xs'
               : 'bg-white hover:bg-[#FAF8F5] border-[#E8DFC9] hover:border-[#B8860B]/60'
           }`}
         >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors border shadow-2xs ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border shadow-2xs transition-colors ${
                   rewardPointsUsed > 0
-                    ? 'bg-gradient-to-br from-[#E5B869] to-[#B8860B] text-white border-[#8C6D1F]'
+                    ? 'bg-[#B8860B] text-white border-[#8C6D1F]'
                     : 'bg-[#FAF3E0] text-[#B8860B] border-[#E0D0A5]'
                 }`}
               >
-                <Wallet size={18} strokeWidth={1.8} />
+                <Wallet size={15} strokeWidth={1.8} />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs sm:text-sm font-bold text-stone-900 tracking-tight">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-stone-900 tracking-tight">
                     Patron Wallet
                   </span>
                   <span
-                    className={`text-xs font-sans font-bold px-2.5 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
+                    className={`text-[11px] font-sans font-bold px-2 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
                       rewardPointsUsed > 0
                         ? 'bg-[#B8860B] text-white'
                         : 'bg-[#FAF0D4] text-[#8C6D1F] border border-[#E8DEC8]'
@@ -226,30 +245,24 @@ export default function CartOrderSummary({
                       ({walletBalanceInRupees > 0 ? `₹${walletBalanceInRupees.toLocaleString('en-IN')}` : '₹0'})
                     </span>
                   </span>
-                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#FAF5E8] text-[#8C6D1F] border border-[#E8DFC8] shrink-0">
-                    1 ₹ = {pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'}
-                  </span>
                 </div>
-                <p className="text-xs text-stone-500 m-0 mt-0.5 font-light leading-snug">
+                <p className="text-[11px] text-stone-500 m-0 mt-0.5 font-light leading-tight truncate">
                   {rewardPointsUsed > 0 ? (
                     <span className="text-emerald-800 font-semibold">
-                      ✓ Applied {Number(rewardPointsUsed).toLocaleString('en-IN')} pts towards order (-₹{rewardDiscountAmount.toLocaleString('en-IN')}) • 1 ₹ = {pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'}
+                      ✓ Applied {Number(rewardPointsUsed).toLocaleString('en-IN')} pts (-₹{rewardDiscountAmount.toLocaleString('en-IN')})
                     </span>
                   ) : walletBalanceInRupees > 0 ? (
                     <span>
                       Redeem {Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹{walletBalanceInRupees.toLocaleString('en-IN')} off
-                      <span className="text-stone-400 font-mono ml-1.5 font-normal">
-                        ({pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'} = ₹1)
-                      </span>
                     </span>
                   ) : (
-                    <span>Earn wallet points on every order • 1 ₹ = {pointsPerRupee} {pointsPerRupee === 1 ? 'pt' : 'pts'}</span>
+                    <span>Earn points on every order</span>
                   )}
                 </p>
               </div>
             </div>
 
-            {/* Toggle Switch - Enhanced Touch Size */}
+            {/* Toggle Switch */}
             <button
               type="button"
               role="switch"
@@ -259,21 +272,17 @@ export default function CartOrderSummary({
                 handleToggleRewards();
               }}
               disabled={rewardLoading || (availableRewardPoints <= 0 && rewardPointsUsed === 0)}
-              className={`relative inline-flex h-7.5 w-13 sm:w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed items-center ${
-                rewardPointsUsed > 0
-                  ? 'bg-[#1C1714] shadow-[0_0_8px_rgba(212,175,55,0.45)]'
-                  : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
+              className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out items-center disabled:opacity-40 disabled:cursor-not-allowed ${
+                rewardPointsUsed > 0 ? 'bg-[#1C1714]' : 'bg-[#D6CEC2] hover:bg-[#C9BFB0]'
               }`}
               title={rewardPointsUsed > 0 ? 'Click to remove privilege points' : 'Click to apply privilege points'}
             >
               <span
-                className={`pointer-events-none flex items-center justify-center h-6.5 w-6.5 transform rounded-full shadow-md ring-0 transition-transform duration-300 ease-in-out ${
-                  rewardPointsUsed > 0
-                    ? 'translate-x-5.5 sm:translate-x-6.5 bg-gradient-to-br from-[#F6D389] to-[#DEB368]'
-                    : 'translate-x-0.5 bg-white'
+                className={`pointer-events-none inline-flex items-center justify-center h-4.5 w-4.5 transform rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out ${
+                  rewardPointsUsed > 0 ? 'translate-x-4.5' : 'translate-x-0'
                 }`}
               >
-                {rewardLoading && <Loader2 size={12} className="animate-spin text-[#241306]" />}
+                {rewardLoading && <Loader2 size={10} className="animate-spin text-[#241306]" />}
               </span>
             </button>
           </div>
@@ -291,6 +300,13 @@ export default function CartOrderSummary({
           <span>Proceed to Checkout</span>
           <ArrowRight size={14} strokeWidth={2.2} className="group-hover:translate-x-1 transition-transform" />
         </button>
+
+        {pointsToEarn > 0 && (
+          <p className="text-[11px] text-center text-[#8C6D1F] font-medium mt-2 flex items-center justify-center gap-1.5 m-0 pt-1">
+            <Sparkles size={11} className="text-[#C49A45] shrink-0" />
+            <span>Earn <strong>+{pointsToEarn.toLocaleString('en-IN')} pts</strong> upon completing this purchase</span>
+          </p>
+        )}
       </div>
     </div>
   );

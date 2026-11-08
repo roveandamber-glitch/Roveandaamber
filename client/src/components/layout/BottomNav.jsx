@@ -4,12 +4,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Sparkles, Gift, User, ShoppingBag } from 'lucide-react';
 import cartService from '@/services/cartService';
+import { message } from 'antd';
 
 const BottomNav = () => {
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
   const [isVisible, setIsVisible] = useState(pathname !== '/');
+
+  useEffect(() => {
+    message.config({
+      top: 28,
+      duration: 3.5,
+      maxCount: 3
+    });
+  }, []);
 
   useEffect(() => {
     if (pathname !== '/') {
