@@ -213,6 +213,10 @@ const ProductDetails = () => {
     const prodId = product._id || product.id;
 
     const checkWishlist = () => {
+      if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+        setIsWishlisted(false);
+        return;
+      }
       try {
         const stored = localStorage.getItem('rove_amber_wishlist');
         if (stored) {
@@ -228,11 +232,22 @@ const ProductDetails = () => {
 
     checkWishlist();
     window.addEventListener('wishlistChange', checkWishlist);
-    return () => window.removeEventListener('wishlistChange', checkWishlist);
+    window.addEventListener('authChange', checkWishlist);
+    return () => {
+      window.removeEventListener('wishlistChange', checkWishlist);
+      window.removeEventListener('authChange', checkWishlist);
+    };
   }, [product]);
 
   const toggleWishlist = () => {
     if (!product) return;
+
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to save fragrances to your wishlist.');
+      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+
     const prodId = product._id || product.id;
     const displayName = product.name || 'Fragrance';
 

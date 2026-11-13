@@ -70,6 +70,10 @@ const Navbar = () => {
 
   const updateWishlistCount = () => {
     if (typeof window === 'undefined') return;
+    if (!authService.isAuthenticated()) {
+      setWishlistCount(0);
+      return;
+    }
     try {
       const stored = localStorage.getItem('rove_amber_wishlist');
       if (stored) {
@@ -89,10 +93,12 @@ const Navbar = () => {
     window.addEventListener('cartChange', updateCartCount);
     window.addEventListener('authChange', updateCartCount);
     window.addEventListener('wishlistChange', updateWishlistCount);
+    window.addEventListener('authChange', updateWishlistCount);
     return () => {
       window.removeEventListener('cartChange', updateCartCount);
       window.removeEventListener('authChange', updateCartCount);
       window.removeEventListener('wishlistChange', updateWishlistCount);
+      window.removeEventListener('authChange', updateWishlistCount);
     };
   }, []);
 

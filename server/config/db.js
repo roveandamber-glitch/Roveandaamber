@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { seedDatabase } from './seeder.js';
 
 dotenv.config();
 
@@ -53,12 +52,11 @@ export const connectDB = async () => {
 };
 
 /**
- * Initialize database connection and run data seeders
+ * Initialize database connection
  */
 export const initDB = async () => {
   try {
     await connectDB();
-    await seedDatabase();
   } catch (error) {
     console.error('❌ Database initialization error:', error.message);
   }

@@ -92,7 +92,7 @@ export default function CartOrderSummary({
                   <Sparkles size={10} className="text-[#B8860B]" />
                 </div>
                 <span className="font-semibold text-xs text-[#6B5115] tracking-wide truncate">
-                  Patron Wallet Credit
+                  Wallet Credit
                 </span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -146,7 +146,7 @@ export default function CartOrderSummary({
             </span>
             {availableCoupons && availableCoupons.length > 0 && (
               <span className="text-[10px] font-bold text-[#8C6D1F] bg-[#FAF3E0] px-2 py-0.5 rounded-full border border-[#E0D0A5]">
-                {availableCoupons.length} Available
+                {availableCoupons.filter(c => !c.isAlreadyUsed).length} Available
               </span>
             )}
           </div>
@@ -231,7 +231,7 @@ export default function CartOrderSummary({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-stone-900 tracking-tight">
-                    Patron Wallet
+                    Wallet
                   </span>
                   <span
                     className={`text-[11px] font-sans font-bold px-2 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
@@ -254,6 +254,11 @@ export default function CartOrderSummary({
                   ) : walletBalanceInRupees > 0 ? (
                     <span>
                       Redeem {Number(availableRewardPoints || 0).toLocaleString('en-IN')} pts for ₹{walletBalanceInRupees.toLocaleString('en-IN')} off
+                      {appliedCoupon?.code && (
+                        <span className="text-[#8C6D1F] font-medium ml-1">
+                          (replaces coupon)
+                        </span>
+                      )}
                     </span>
                   ) : (
                     <span>Earn points on every order</span>
@@ -302,6 +307,10 @@ export default function CartOrderSummary({
             )}
           </div>
         </div>
+
+        <p className="text-[10.5px] text-stone-500 font-light text-center m-0 -mt-1">
+          Note: Only one benefit (Promo Coupon or Wallet Points) can be applied per order.
+        </p>
       </div>
 
       {/* Checkout Action CTA */}

@@ -34,7 +34,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // ==========================================
 const startServer = async () => {
   try {
-    // Initialize Database and initial seeds
+    // Initialize Database connection
     await initDB();
 
     server = app.listen(PORT, () => {

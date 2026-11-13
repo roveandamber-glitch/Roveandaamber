@@ -292,7 +292,7 @@ export default function AdminRewardsPage() {
         saving={savingRules}
       />
 
-      {/* Patron Wallet & Points Management Modal */}
+      {/* Wallet & Points Management Modal */}
       <UserWalletModal
         open={walletModalOpen}
         onClose={() => setWalletModalOpen(false)}

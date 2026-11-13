@@ -164,7 +164,7 @@ export default function UserWalletModal({
             </div>
             <div>
               <h3 className="font-serif text-lg font-bold text-[#1A1A1A] tracking-tight m-0">
-                Patron Wallet & Points Management
+                Wallet & Points Management
               </h3>
               <p className="text-[11px] text-gray-500 font-normal m-0">
                 View points history, edit balance, and control wallet access.

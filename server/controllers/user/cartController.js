@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { CartModel } from '../../models/cartModel.js';
 import { Coupon } from '../../models/couponModel.js';
 
@@ -176,19 +177,62 @@ export const getAvailableCoupons = async (req, res) => {
       ]
     }).sort({ minOrderAmount: 1 }).lean();
 
-    const available = coupons.filter(c => {
-      if (c.usageLimit && c.usedCount >= c.usageLimit) return false;
-      return true;
-    }).map(c => ({
-      id: c._id.toString(),
-      code: c.code,
-      description: c.description || '',
-      discountType: c.discountType,
-      discountValue: c.discountValue,
-      minOrderAmount: c.minOrderAmount || 0,
-      maxDiscountAmount: c.maxDiscountAmount || null,
-      expiryDate: c.expiryDate ? c.expiryDate.toISOString().split('T')[0] : null
-    }));
+    const userId = req.user ? (req.user.id || req.user._id) : null;
+    const userEmail = req.user ? (req.user.email || '').trim().toLowerCase() : null;
+
+    // Check user's past redeemed coupon codes from Order collection
+    const usedCouponCodes = new Set();
+    if (userId || userEmail) {
+      try {
+        const Order = mongoose.models.Order;
+        if (Order) {
+          const conditions = [];
+          if (userId) conditions.push({ user_id: userId });
+          if (userEmail) conditions.push({ email: userEmail });
+
+          const pastOrders = await Order.find({
+            $or: conditions,
+            couponCode: { $exists: true, $ne: '' },
+            status: { $ne: 'Cancelled' }
+          }).select('couponCode').lean();
+
+          pastOrders.forEach(o => {
+            if (o.couponCode) usedCouponCodes.add(o.couponCode.trim().toUpperCase());
+          });
+        }
+      } catch (orderErr) {
+        console.warn('Error reading past order coupons:', orderErr.message);
+      }
+    }
+
+    const available = coupons.map(c => {
+      const codeUpper = (c.code || '').trim().toUpperCase();
+
+      // Check coupon.usedBy
+      let usedInCoupon = false;
+      if (userId || userEmail) {
+        usedInCoupon = Array.isArray(c.usedBy) && c.usedBy.some(u => {
+          const matchUser = userId && u.userId && u.userId.toString() === userId.toString();
+          const matchEmail = userEmail && u.email && u.email.toLowerCase() === userEmail;
+          return matchUser || matchEmail;
+        });
+      }
+
+      const isUsedByCustomer = usedInCoupon || usedCouponCodes.has(codeUpper);
+
+      return {
+        id: c._id.toString(),
+        code: c.code,
+        description: c.description || '',
+        discountType: c.discountType,
+        discountValue: c.discountValue,
+        minOrderAmount: c.minOrderAmount || 0,
+        maxDiscountAmount: c.maxDiscountAmount || null,
+        expiryDate: c.expiryDate ? c.expiryDate.toISOString().split('T')[0] : null,
+        isAlreadyUsed: Boolean(isUsedByCustomer),
+        usedReason: isUsedByCustomer ? 'Already redeemed on a previous order' : null
+      };
+    });
 
     return res.json({
       success: true,

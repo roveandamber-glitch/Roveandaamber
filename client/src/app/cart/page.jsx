@@ -162,9 +162,33 @@ export default function CartPage() {
 
     // Fetch active available promotional coupons
     cartService.getAvailableCoupons()
-      .then((coupons) => {
+      .then(async (coupons) => {
         if (Array.isArray(coupons)) {
-          setAvailableCoupons(coupons);
+          let enriched = [...coupons];
+          if (authService.isAuthenticated()) {
+            try {
+              const myOrdersRes = await orderService.getMyOrders();
+              const ordersList = myOrdersRes?.data || myOrdersRes?.orders || (Array.isArray(myOrdersRes) ? myOrdersRes : []);
+              const usedCodes = new Set(
+                ordersList
+                  .filter(o => o.status !== 'Cancelled' && o.couponCode)
+                  .map(o => String(o.couponCode).trim().toUpperCase())
+              );
+              if (usedCodes.size > 0) {
+                enriched = enriched.map(c => {
+                  const isUsed = c.isAlreadyUsed || usedCodes.has(String(c.code).trim().toUpperCase());
+                  return {
+                    ...c,
+                    isAlreadyUsed: Boolean(isUsed),
+                    usedReason: isUsed ? 'Already redeemed on a previous order' : null
+                  };
+                });
+              }
+            } catch (e) {
+              // Ignore secondary order lookup notice
+            }
+          }
+          setAvailableCoupons(enriched);
         }
       })
       .catch((err) => console.warn('Could not load available coupons:', err));
@@ -288,9 +312,14 @@ export default function CartPage() {
 
     setPromoLoading(true);
     try {
+      const hadRewards = rewardPointsUsed > 0;
       const res = await cartService.applyCoupon(cleanCode);
       if (res?.success) {
-        message.success(res.message || `Promotional code "${cleanCode}" applied successfully!`);
+        if (hadRewards) {
+          message.success(`Coupon "${cleanCode}" applied. Wallet discount removed (only one discount applies at a time).`);
+        } else {
+          message.success(res.message || `Promotional code "${cleanCode}" applied successfully!`);
+        }
         setPromoCode('');
         loadCart();
       } else {
@@ -339,8 +368,13 @@ export default function CartPage() {
 
       setRewardLoading(true);
       try {
+        const hadCoupon = Boolean(appliedCoupon?.code);
         await cartService.applyRewards(pointsToApply);
-        message.success(`${pointsToApply.toLocaleString()} privilege points applied! (Saved ₹${Math.floor(pointsToApply * (rewardRate / 100)).toLocaleString('en-IN')})`);
+        if (hadCoupon) {
+          message.success(`${pointsToApply.toLocaleString()} wallet points applied. Coupon removed (only one discount applies at a time).`);
+        } else {
+          message.success(`${pointsToApply.toLocaleString()} privilege points applied! (Saved ₹${Math.floor(pointsToApply * (rewardRate / 100)).toLocaleString('en-IN')})`);
+        }
         loadCart();
       } catch (err) {
         if (err?.isHandledAuth) return;

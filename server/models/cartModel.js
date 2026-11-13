@@ -232,10 +232,13 @@ const calculateCartSummary = async (cartDoc) => {
     }
 
     if (cartDoc.rewardPointsUsed > 0 && subtotal > 0) {
+      // Mutual exclusivity: if reward points are used, coupon discount is cleared
+      discountAmount = 0;
+      couponInfo = { code: null, discountAmount: 0, discountType: 'percentage', discountValue: 0 };
       const pointsToUse = Math.min(cartDoc.rewardPointsUsed, availableRewardPoints);
       const pointVal = rewardRate / 100;
       const calculatedRewardDiscount = Math.floor(pointsToUse * pointVal);
-      const maxRewardDiscount = Math.max(0, subtotal - discountAmount);
+      const maxRewardDiscount = subtotal;
       rewardDiscountAmount = Math.min(calculatedRewardDiscount, maxRewardDiscount);
       cartDoc.rewardDiscountAmount = rewardDiscountAmount;
     } else {
@@ -423,6 +426,10 @@ export const CartModel = {
       discountAmount: couponResult.discountAmount
     };
 
+    // Mutual exclusivity: only one can apply at a time (coupon or wallet)
+    cart.rewardPointsUsed = 0;
+    cart.rewardDiscountAmount = 0;
+
     await cart.save();
     const populated = await Cart.findById(cart._id).populate({
       path: 'items.productId',
@@ -474,7 +481,13 @@ export const CartModel = {
 
     await Cart.updateOne(
       { _id: cart._id },
-      { $set: { rewardPointsUsed: requestedPoints } }
+      { 
+        $set: { 
+          rewardPointsUsed: requestedPoints,
+          // Mutual exclusivity: only one can apply at a time (coupon or wallet)
+          appliedCoupon: { code: null, discountAmount: 0 }
+        } 
+      }
     );
 
     const populated = await Cart.findById(cart._id).populate({

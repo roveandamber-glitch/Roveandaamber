@@ -251,8 +251,13 @@ export default function CheckoutPage() {
 
       setRewardLoading(true);
       try {
+        const hadCoupon = Boolean(appliedCoupon?.code);
         await cartService.applyRewards(pointsToApply);
-        message.success(`${pointsToApply.toLocaleString()} privilege points applied! (Saved ₹${Math.floor(pointsToApply * (rewardRate / 100)).toLocaleString('en-IN')})`);
+        if (hadCoupon) {
+          message.success(`${pointsToApply.toLocaleString()} wallet points applied. Coupon removed (only one discount applies at a time).`);
+        } else {
+          message.success(`${pointsToApply.toLocaleString()} privilege points applied! (Saved ₹${Math.floor(pointsToApply * (rewardRate / 100)).toLocaleString('en-IN')})`);
+        }
         await loadCartState();
       } catch (err) {
         if (err?.isHandledAuth) return;
@@ -954,7 +959,7 @@ export default function CheckoutPage() {
                     {rewardDiscountAmount > 0 && (
                       <div className="flex justify-between items-center text-[#8C6D1F] bg-gradient-to-r from-[#FAF6EC] to-[#F5ECE0] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/50 shadow-2xs">
                         <span className="font-semibold text-xs text-[#6B5115] tracking-wide truncate">
-                          Patron Wallet Credit
+                          Wallet Credit
                         </span>
                         <div className="flex items-center gap-1 shrink-0">
                           <span className="font-sans font-bold text-xs text-[#8C6D1F]">-₹{rewardDiscountAmount.toLocaleString('en-IN')}</span>
@@ -1020,7 +1025,7 @@ export default function CheckoutPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-[#1A1A1A]">
-                              Patron Wallet
+                              Wallet
                             </span>
                             <span className={`text-[11px] font-sans font-bold px-2 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
                               rewardPointsUsed > 0

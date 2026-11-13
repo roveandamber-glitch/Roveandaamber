@@ -24,15 +24,27 @@ const FeaturedProducts = () => {
   const [addingId, setAddingId] = useState(null);
   const [cartTick, setCartTick] = useState(0);
 
-  useEffect(() => {
+  const updateWishlist = () => {
+    if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+      setWishlist([]);
+      return;
+    }
     try {
       const stored = localStorage.getItem('rove_amber_wishlist');
       if (stored) {
         setWishlist(JSON.parse(stored));
+      } else {
+        setWishlist([]);
       }
     } catch (e) {
-      // ignore
+      setWishlist([]);
     }
+  };
+
+  useEffect(() => {
+    updateWishlist();
+    window.addEventListener('wishlistChange', updateWishlist);
+    window.addEventListener('authChange', updateWishlist);
 
     const loadFeatured = async () => {
       try {
@@ -54,11 +66,23 @@ const FeaturedProducts = () => {
     };
 
     loadFeatured();
+
+    return () => {
+      window.removeEventListener('wishlistChange', updateWishlist);
+      window.removeEventListener('authChange', updateWishlist);
+    };
   }, []);
 
   const toggleWishlist = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to save fragrances to your wishlist.');
+      router.push(`/login?redirect=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/wishlist')}`);
+      return;
+    }
+
     try {
       let updated = [];
       if (wishlist.includes(id)) {

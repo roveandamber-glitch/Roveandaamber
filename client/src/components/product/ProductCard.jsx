@@ -21,6 +21,10 @@ const ProductCard = ({ product, onQuickView }) => {
   useEffect(() => {
     if (!productId) return;
     const checkWishlist = () => {
+      if (typeof window !== 'undefined' && !authService.isAuthenticated()) {
+        setIsWishlisted(false);
+        return;
+      }
       try {
         const stored = localStorage.getItem('rove_amber_wishlist');
         if (stored) {
@@ -36,7 +40,11 @@ const ProductCard = ({ product, onQuickView }) => {
 
     checkWishlist();
     window.addEventListener('wishlistChange', checkWishlist);
-    return () => window.removeEventListener('wishlistChange', checkWishlist);
+    window.addEventListener('authChange', checkWishlist);
+    return () => {
+      window.removeEventListener('wishlistChange', checkWishlist);
+      window.removeEventListener('authChange', checkWishlist);
+    };
   }, [productId]);
 
   // Check if item is in cart and listen to cartChange and authChange
@@ -80,6 +88,12 @@ const ProductCard = ({ product, onQuickView }) => {
   const toggleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!authService.isAuthenticated()) {
+      message.info('Please sign in to save fragrances to your wishlist.');
+      router.push(`/login?redirect=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/wishlist')}`);
+      return;
+    }
 
     try {
       const stored = localStorage.getItem('rove_amber_wishlist');

@@ -61,7 +61,9 @@ const authService = {
     localStorage.removeItem('user');
     localStorage.removeItem('userToken');
     localStorage.removeItem('token');
+    localStorage.removeItem('rove_amber_wishlist');
     window.dispatchEvent(new Event('authChange'));
+    window.dispatchEvent(new Event('wishlistChange'));
   },
 
   clearAdminSession: () => {

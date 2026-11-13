@@ -14,13 +14,13 @@ import {
   getCheckoutSummary,
   clearCart
 } from '../../controllers/user/cartController.js';
-import { protect } from '../../middlewares/authMiddleware.js';
+import { protect, optionalAuth } from '../../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Public: Retrieve active promotional coupons
-router.get('/coupons', getAvailableCoupons);
-router.get('/available-coupons', getAvailableCoupons);
+// Retrieve active promotional coupons (supports authenticated patron context via optionalAuth)
+router.get('/coupons', optionalAuth, getAvailableCoupons);
+router.get('/available-coupons', optionalAuth, getAvailableCoupons);
 
 // Support both logged-in and guest customers via optionalAuth
 // Strictly require authenticated customer account for all cart operations (Private Route)
