@@ -115,18 +115,11 @@ export const CouponModel = {
     }
 
     // Single-use per customer rule: User cannot use same coupon multiple times across orders
+    // A coupon is ONLY considered already redeemed if there is a confirmed/paid, non-cancelled order
     if (userId || email) {
       const normalizedEmail = email ? email.trim().toLowerCase() : null;
+      let alreadyInCompletedOrder = false;
 
-      // 1. Check coupon.usedBy array
-      const alreadyInUsedBy = coupon.usedBy && coupon.usedBy.some(u => {
-        const matchUser = userId && u.userId && u.userId.toString() === userId.toString();
-        const matchEmail = normalizedEmail && u.email && u.email.toLowerCase() === normalizedEmail;
-        return matchUser || matchEmail;
-      });
-
-      // 2. Cross-check completed or non-cancelled orders in Order collection
-      let alreadyInOrders = false;
       try {
         const Order = mongoose.models.Order;
         if (Order) {
@@ -135,13 +128,19 @@ export const CouponModel = {
           if (normalizedEmail) orConditions.push({ email: normalizedEmail });
 
           if (orConditions.length > 0) {
+            // Check for completed and paid order (or placed Cash on Delivery order) that was not cancelled
             const pastOrder = await Order.findOne({
               $or: orConditions,
               couponCode: new RegExp(`^${cleanCode}$`, 'i'),
-              status: { $ne: 'Cancelled' }
+              status: { $nin: ['Cancelled'] },
+              'cancellation.isCancelled': { $ne: true },
+              $or: [
+                { paymentStatus: 'Paid' },
+                { paymentMethod: 'Cash on Delivery', paymentStatus: { $ne: 'Failed' } }
+              ]
             });
             if (pastOrder) {
-              alreadyInOrders = true;
+              alreadyInCompletedOrder = true;
             }
           }
         }
@@ -149,7 +148,31 @@ export const CouponModel = {
         console.warn('Past order lookup warning for coupon verification:', err.message);
       }
 
-      if (alreadyInUsedBy || alreadyInOrders) {
+      // If no completed/paid order exists for this customer, purge any stale/unpaid records
+      // in coupon.usedBy (e.g. from an aborted, pending or cancelled checkout session)
+      if (!alreadyInCompletedOrder) {
+        if (coupon.usedBy && coupon.usedBy.length > 0) {
+          const hadStaleUsage = coupon.usedBy.some(u => {
+            const matchUser = userId && u.userId && u.userId.toString() === userId.toString();
+            const matchEmail = normalizedEmail && u.email && u.email.toLowerCase() === normalizedEmail;
+            return matchUser || matchEmail;
+          });
+
+          if (hadStaleUsage) {
+            const beforeCount = coupon.usedBy.length;
+            coupon.usedBy = coupon.usedBy.filter(u => {
+              const matchUser = userId && u.userId && u.userId.toString() === userId.toString();
+              const matchEmail = normalizedEmail && u.email && u.email.toLowerCase() === normalizedEmail;
+              return !(matchUser || matchEmail);
+            });
+            const removed = beforeCount - coupon.usedBy.length;
+            coupon.usedCount = Math.max(0, (coupon.usedCount || 0) - removed);
+            await coupon.save();
+          }
+        }
+      }
+
+      if (alreadyInCompletedOrder) {
         throw new Error(
           `You have already redeemed coupon "${coupon.code}". Each customer is limited to one use per promotional coupon.`
         );
@@ -182,18 +205,54 @@ export const CouponModel = {
     const coupon = await Coupon.findOne({ code: cleanCode });
     if (!coupon) return null;
 
-    coupon.usedCount = (coupon.usedCount || 0) + 1;
     if (!coupon.usedBy) coupon.usedBy = [];
-
     const normalizedEmail = email ? email.trim().toLowerCase() : null;
-    coupon.usedBy.push({
-      userId: userId || null,
-      email: normalizedEmail,
-      orderId: orderId || null,
-      usedAt: new Date()
+
+    // Prevent duplicate entries for the exact same order
+    const alreadyRecorded = coupon.usedBy.some(u => {
+      if (orderId && u.orderId && u.orderId === orderId) return true;
+      return false;
     });
 
-    await coupon.save();
+    if (!alreadyRecorded) {
+      coupon.usedCount = (coupon.usedCount || 0) + 1;
+      coupon.usedBy.push({
+        userId: userId || null,
+        email: normalizedEmail,
+        orderId: orderId || null,
+        usedAt: new Date()
+      });
+      await coupon.save();
+    }
+
+    return coupon;
+  },
+
+  releaseUsage: async (code, { userId = null, email = null, orderId = null } = {}) => {
+    if (!code) return null;
+    const cleanCode = code.toUpperCase().trim();
+    const coupon = await Coupon.findOne({ code: cleanCode });
+    if (!coupon || !coupon.usedBy || coupon.usedBy.length === 0) return coupon;
+
+    const normalizedEmail = email ? email.trim().toLowerCase() : null;
+    const initialLen = coupon.usedBy.length;
+
+    coupon.usedBy = coupon.usedBy.filter(u => {
+      if (orderId && u.orderId && u.orderId === orderId) return false;
+      if (!orderId) {
+        const matchUser = userId && u.userId && u.userId.toString() === userId.toString();
+        const matchEmail = normalizedEmail && u.email && u.email.toLowerCase() === normalizedEmail;
+        if (matchUser || matchEmail) return false;
+      }
+      return true;
+    });
+
+    const removedCount = initialLen - coupon.usedBy.length;
+    if (removedCount > 0) {
+      coupon.usedCount = Math.max(0, (coupon.usedCount || 0) - removedCount);
+      await coupon.save();
+    }
+
     return coupon;
   },
 

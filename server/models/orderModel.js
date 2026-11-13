@@ -388,7 +388,32 @@ export const OrderModel = {
 
     const orderHasSample = verifiedItems.some(i => i.hasSample) || Boolean(items.some(i => i.hasSample));
 
-    const calculatedTotal = Math.max(0, calculatedSubtotal - discountAmount - rewardDiscountAmount + shippingFee + giftWrapFee);
+    // Step 2: Ensure valid user ID or fallback
+    let effectiveUserId = userId;
+    if (!effectiveUserId || !mongoose.Types.ObjectId.isValid(effectiveUserId)) {
+      const existingUser = await User.findOne();
+      effectiveUserId = existingUser ? existingUser._id : new mongoose.Types.ObjectId();
+    }
+
+    let verifiedDiscount = Number(discountAmount) || 0;
+    let verifiedRewardDiscount = Number(rewardDiscountAmount) || 0;
+
+    // Step 2.5: Verify coupon and calculate exact authoritative discount
+    if (couponCode) {
+      try {
+        const couponResult = await CouponModel.validateAndCalculate(couponCode, calculatedSubtotal, {
+          userId: effectiveUserId,
+          email: email
+        });
+        if (couponResult && couponResult.discountAmount > 0) {
+          verifiedDiscount = couponResult.discountAmount;
+        }
+      } catch (cErr) {
+        console.warn('⚠️ [Coupon Validation Warning in createOrder]:', cErr.message);
+      }
+    }
+
+    const calculatedTotal = Math.max(0, calculatedSubtotal - verifiedDiscount - verifiedRewardDiscount + shippingFee + giftWrapFee);
 
     let pointsEarned = 0;
     try {
@@ -397,13 +422,6 @@ export const OrderModel = {
       const pointsPerHundred = rules.pointsPerHundred || 10;
       pointsEarned = Math.floor((calculatedTotal / 100) * pointsPerHundred);
     } catch (e) {}
-
-    // Step 2: Ensure valid user ID or fallback
-    let effectiveUserId = userId;
-    if (!effectiveUserId || !mongoose.Types.ObjectId.isValid(effectiveUserId)) {
-      const existingUser = await User.findOne();
-      effectiveUserId = existingUser ? existingUser._id : new mongoose.Types.ObjectId();
-    }
 
     // Generate readable orderId code
     const count = await Order.countDocuments();
@@ -433,14 +451,6 @@ export const OrderModel = {
       });
     }
 
-    // Step 2.5: Verify coupon single-use per customer if coupon is applied
-    if (couponCode) {
-      await CouponModel.validateAndCalculate(couponCode, calculatedSubtotal, {
-        userId: effectiveUserId,
-        email: email
-      });
-    }
-
     // Step 3: Create order document
     const order = await Order.create({
       orderId: displayOrderId,
@@ -450,10 +460,10 @@ export const OrderModel = {
       email: email || '',
       address: address || '',
       subtotal: calculatedSubtotal,
-      discountAmount,
+      discountAmount: verifiedDiscount,
       couponCode,
       rewardPointsUsed,
-      rewardDiscountAmount,
+      rewardDiscountAmount: verifiedRewardDiscount,
       rewardPointsEarned: pointsEarned,
       shippingFee,
       giftWrapFee,
@@ -493,8 +503,10 @@ export const OrderModel = {
       items: verifiedItems
     });
 
-    // Record coupon usage for this customer to enforce single-use rule
-    if (couponCode) {
+    // Record coupon usage only if order is immediately confirmed/paid (e.g. Cash on Delivery or Paid upfront)
+    // For online payments (Razorpay), usage will only be recorded in markAsPaid once payment is successful
+    const isImmediatelyConfirmed = paymentStatus === 'Paid' || paymentMethod === 'Cash on Delivery';
+    if (couponCode && isImmediatelyConfirmed) {
       try {
         await CouponModel.recordUsage(couponCode, {
           userId: effectiveUserId,
@@ -625,6 +637,19 @@ export const OrderModel = {
       }
     }
 
+    // Record coupon usage upon verified payment confirmation
+    if (order.couponCode && order.paymentStatus !== 'Paid') {
+      try {
+        await CouponModel.recordUsage(order.couponCode, {
+          userId: order.user_id,
+          email: order.email,
+          orderId: order.orderId
+        });
+      } catch (cErr) {
+        console.warn('⚠️ [Coupon Warning]: Failed to record coupon usage on payment confirmation:', cErr.message);
+      }
+    }
+
     order.paymentStatus = 'Paid';
     order.status = 'Processing';
     if (razorpayPaymentId) order.razorpayPaymentId = razorpayPaymentId;
@@ -667,6 +692,19 @@ export const OrderModel = {
     });
 
     if (!order) return null;
+
+    // Release any prematurely registered coupon usage on payment failure
+    if (order.couponCode) {
+      try {
+        await CouponModel.releaseUsage(order.couponCode, {
+          userId: order.user_id,
+          email: order.email,
+          orderId: order.orderId
+        });
+      } catch (cErr) {
+        console.warn('⚠️ [Coupon Warning]: Failed to release coupon usage on failure:', cErr.message);
+      }
+    }
 
     order.paymentStatus = 'Failed';
     order.paymentDetails = {

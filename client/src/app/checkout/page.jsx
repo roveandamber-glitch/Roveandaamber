@@ -380,6 +380,7 @@ export default function CheckoutPage() {
           address: giftOptions.recipientAddress || ''
         } : {},
         couponCode: appliedCoupon?.code || '',
+        discountAmount: discountAmount || 0,
         rewardPointsUsed: rewardPointsUsed || 0,
         rewardDiscountAmount: rewardDiscountAmount || 0,
         hasSample: cartItems.some(i => i.hasSample || String(i.size || '').toLowerCase().includes('2ml') || String(i.name || '').toLowerCase().includes('sample')),
@@ -467,6 +468,11 @@ export default function CheckoutPage() {
           ondismiss: function () {
             setLoading(false);
             message.info('Payment checkout window was closed.');
+            paymentService.recordPaymentFailure({
+              razorpay_order_id: razorpayOrderId,
+              orderId: orderId,
+              error: { description: 'Checkout window closed by customer' }
+            }).catch(() => {});
           }
         }
       };

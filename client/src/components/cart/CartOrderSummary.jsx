@@ -308,8 +308,8 @@ export default function CartOrderSummary({
           </div>
         </div>
 
-        <p className="text-[10.5px] text-stone-500 font-light text-center m-0 -mt-1">
-          Note: Only one benefit (Promo Coupon or Wallet Points) can be applied per order.
+        <p className="text-[9.5px] sm:text-[10px] text-stone-400 font-light text-center m-0 -mt-2 leading-none tracking-tight whitespace-nowrap">
+          Note: Only one discount (Coupon or Wallet) can be applied per order.
         </p>
       </div>
 

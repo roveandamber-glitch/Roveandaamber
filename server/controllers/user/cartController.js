@@ -193,7 +193,12 @@ export const getAvailableCoupons = async (req, res) => {
           const pastOrders = await Order.find({
             $or: conditions,
             couponCode: { $exists: true, $ne: '' },
-            status: { $ne: 'Cancelled' }
+            status: { $nin: ['Cancelled'] },
+            'cancellation.isCancelled': { $ne: true },
+            $or: [
+              { paymentStatus: 'Paid' },
+              { paymentMethod: 'Cash on Delivery', paymentStatus: { $ne: 'Failed' } }
+            ]
           }).select('couponCode').lean();
 
           pastOrders.forEach(o => {
@@ -208,17 +213,8 @@ export const getAvailableCoupons = async (req, res) => {
     const available = coupons.map(c => {
       const codeUpper = (c.code || '').trim().toUpperCase();
 
-      // Check coupon.usedBy
-      let usedInCoupon = false;
-      if (userId || userEmail) {
-        usedInCoupon = Array.isArray(c.usedBy) && c.usedBy.some(u => {
-          const matchUser = userId && u.userId && u.userId.toString() === userId.toString();
-          const matchEmail = userEmail && u.email && u.email.toLowerCase() === userEmail;
-          return matchUser || matchEmail;
-        });
-      }
-
-      const isUsedByCustomer = usedInCoupon || usedCouponCodes.has(codeUpper);
+      // A coupon is strictly considered redeemed only when an order with it is completed and paid
+      const isUsedByCustomer = usedCouponCodes.has(codeUpper);
 
       return {
         id: c._id.toString(),

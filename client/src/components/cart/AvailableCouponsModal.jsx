@@ -246,8 +246,8 @@ export default function AvailableCouponsModal({
         </div>
 
         {/* Footer Note */}
-        <div className="mt-4 pt-3 border-t border-[#ECE7DE] text-center text-[10.5px] text-stone-400">
-          Only one discount (Promo Coupon or Wallet Points) can be applied per order.
+        <div className="mt-4 pt-3 border-t border-[#ECE7DE] text-center text-[10px] text-stone-400 whitespace-nowrap">
+          Note: Only one discount (Coupon or Wallet) can be applied per order.
         </div>
       </div>
     </Modal>

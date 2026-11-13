@@ -1353,6 +1353,18 @@ export const updateOrderStatus = async (req, res) => {
     } else if (isCancelledTransition && !order.emailNotifications.cancelledSent) {
       order.emailNotifications.cancelledSent = true;
       await order.save();
+      if (order.couponCode) {
+        try {
+          const { CouponModel } = await import('../../models/couponModel.js');
+          await CouponModel.releaseUsage(order.couponCode, {
+            userId: order.user_id,
+            email: order.email,
+            orderId: order.orderId
+          });
+        } catch (cErr) {
+          console.warn('⚠️ [Coupon Warning]: Failed to release coupon on admin order cancellation:', cErr.message);
+        }
+      }
       emailService.sendCancellationNotification(order).catch(err => {
         console.warn('⚠️ Cancellation notification email failed:', err.message);
       });

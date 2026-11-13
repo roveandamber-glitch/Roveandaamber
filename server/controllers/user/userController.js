@@ -595,6 +595,20 @@ export const cancelOrder = async (req, res) => {
 
     await order.save();
 
+    // Release coupon usage if order was cancelled
+    if (order.couponCode) {
+      try {
+        const { CouponModel } = await import('../../models/couponModel.js');
+        await CouponModel.releaseUsage(order.couponCode, {
+          userId: order.user_id,
+          email: order.email,
+          orderId: order.orderId
+        });
+      } catch (cErr) {
+        console.warn('⚠️ [Coupon Warning]: Failed to release coupon on customer order cancellation:', cErr.message);
+      }
+    }
+
     // Trigger cancellation notification email
     emailService.sendTransactionalUpdate(order, {
       subject: `Order Cancelled: ${order.orderId}`,

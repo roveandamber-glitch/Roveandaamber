@@ -43,10 +43,23 @@ export const createPaymentOrder = async (req, res) => {
     } else {
       // Case B: Create new order directly from checkout request or active cart
       let orderItems = items;
-      let calculatedDiscount = 0;
-      let appliedCode = couponCode || '';
+      let calculatedDiscount = req.body.discountAmount ? Number(req.body.discountAmount) : 0;
+      let appliedCode = couponCode || req.body.couponCode || '';
       let rewardPointsUsed = req.body.rewardPointsUsed ? Number(req.body.rewardPointsUsed) : 0;
       let rewardDiscountAmount = req.body.rewardDiscountAmount ? Number(req.body.rewardDiscountAmount) : 0;
+
+      // Check active cart to populate any missing coupon or reward discounts
+      try {
+        const cart = await CartModel.getCart({ userId, guestId });
+        if (cart) {
+          if (!appliedCode && cart.coupon?.code) appliedCode = cart.coupon.code;
+          if (!calculatedDiscount && cart.discountAmount) calculatedDiscount = cart.discountAmount;
+          if (!rewardPointsUsed && cart.rewardPointsUsed) rewardPointsUsed = cart.rewardPointsUsed;
+          if (!rewardDiscountAmount && cart.rewardDiscountAmount) rewardDiscountAmount = cart.rewardDiscountAmount;
+        }
+      } catch (cErr) {
+        console.warn('Cart lookup in paymentController:', cErr.message);
+      }
 
       if (!orderItems || orderItems.length === 0) {
         const cart = await CartModel.getCart({ userId, guestId });
@@ -61,8 +74,8 @@ export const createPaymentOrder = async (req, res) => {
           size: i.size,
           quantity: i.quantity
         }));
-        calculatedDiscount = cart.discountAmount || 0;
-        appliedCode = cart.coupon ? cart.coupon.code : '';
+        if (!calculatedDiscount) calculatedDiscount = cart.discountAmount || 0;
+        if (!appliedCode) appliedCode = cart.coupon ? cart.coupon.code : '';
         if (!rewardPointsUsed) rewardPointsUsed = cart.rewardPointsUsed || 0;
         if (!rewardDiscountAmount) rewardDiscountAmount = cart.rewardDiscountAmount || 0;
         if (isGift === undefined) isGift = cart.isGift;
