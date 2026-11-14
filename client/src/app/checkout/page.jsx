@@ -1056,22 +1056,21 @@ export default function CheckoutPage() {
 
                       {/* Action: Apply / Remove Button */}
                       {rewardPointsUsed > 0 ? (
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                            ✓ Applied
-                          </span>
-                          <button
-                            type="button"
-                            disabled={rewardLoading}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleRewards();
-                            }}
-                            className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline px-1 py-0.5 cursor-pointer disabled:opacity-50"
-                          >
-                            {rewardLoading ? <Loader2 size={11} className="animate-spin inline" /> : 'Remove'}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          disabled={rewardLoading}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleRewards();
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200/80 text-rose-700 hover:text-rose-800 text-xs font-bold transition-all shadow-2xs shrink-0 cursor-pointer disabled:opacity-50 min-w-[66px] flex items-center justify-center gap-1"
+                        >
+                          {rewardLoading ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            'Remove'
+                          )}
+                        </button>
                       ) : (
                         <button
                           type="button"
